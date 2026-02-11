@@ -528,7 +528,7 @@ export const CLASSES = {
             }
         ],
         initial_ability_options: [
-            { name: "Trait Arcanique", cost: 8, cooldown: 0, level: 1, dice: "1d10", scaling: "int", range: 10, type: "Arcane", actionType: "Action", flavor: "Un dard de lumière azurée, crépitant d'énergie instable, s'élance de vos doigts vers le cœur de l'ennemi.", desc: "Projectile magique à longue portée.", vfx: "magic_bolt_blue" },
+            { name: "Trait Arcanique", cost: 8, cooldown: 1, level: 1, dice: "1d10", scaling: "int", range: 10, type: "Arcane", actionType: "Action", flavor: "Un dard de lumière azurée, crépitant d'énergie instable, s'élance de vos doigts vers le cœur de l'ennemi.", desc: "Projectile magique à longue portée.", vfx: "magic_bolt_blue" },
             { name: "Onde de Choc", cost: 15, cooldown: 2, level: 1, dice: "2d6", scaling: "int", range: 3, type: "Élémentaire", actionType: "Action", flavor: "Vous frappez l'air de vos paumes, créant une distorsion violente qui balaie tout sur son passage.", desc: "Repousse les ennemis proches de 2 cases.", vfx: "shockwave_purple" },
             { name: "Bouclier de Mana", cost: 5, cooldown: 3, level: 1, type: "Abjuration", actionType: "Réaction", flavor: "Au moment de l'impact, une membrane de géométrie éthérée se matérialise pour absorber le choc.", desc: "Consomme 1 MP pour chaque point de dégât absorbé.", vfx: "mana_shield" }
         ],
@@ -589,7 +589,7 @@ export const CLASSES = {
         initial_ability_options: [
             { name: "Attaque Sournoise", cost: 12, cooldown: 0, level: 1, dice: "1d6", scaling: "dex", type: "Précision", actionType: "Passif", flavor: "Vous profitez de la moindre seconde d'inattention pour loger votre lame entre deux vertèbres.", desc: "Ajoute +1d6 dégâts si vous avez l'avantage.", vfx: "slash_purple" },
             { name: "Disparition", cost: 15, cooldown: 4, level: 1, type: "Ombre", actionType: "Action Bonus", flavor: "Un mouvement fluide dans les angles morts, une ombre qui se fond dans les ténèbres... et vous n'êtes plus là.", desc: "Entrez en état d'invisibilité.", vfx: "smoke_puff" },
-            { name: "Lancer de Dague", cost: 5, cooldown: 0, level: 1, dice: "1d4", scaling: "dex", range: 8, type: "Physique", actionType: "Action", flavor: "Une lueur argentée, le sifflement du vent, et l'acier trouve sa cible avant même qu'elle n'ait pu crier.", desc: "Attaque rapide à distance.", vfx: "dagger_throw" }
+            { name: "Lancer de Dague", cost: 5, cooldown: 2, level: 1, dice: "1d4", scaling: "dex", range: 8, type: "Physique", actionType: "Action", flavor: "Une lueur argentée, le sifflement du vent, et l'acier trouve sa cible avant même qu'elle n'ait pu crier.", desc: "Attaque rapide à distance.", vfx: "dagger_throw" }
         ],
         subclasses: {
             "assassin": { label: "Assassin", desc: "Tueur silencieux.", details: { style: "Burst", feature: "Marque de Mort : Toute attaque portée contre une créature surprise est automatiquement un coup critique." } },
@@ -647,7 +647,7 @@ export const CLASSES = {
         ],
         initial_ability_options: [
             { name: "Mot de Guérison", cost: 15, cooldown: 2, level: 1, dice: "1d4", scaling: "wis", range: 6, type: "Lumière", actionType: "Action Bonus", flavor: "Une simple syllabe du Crystal Céleste suffit à refermer les plaies et à redonner espoir aux cœurs vaillants.", desc: "Soin rapide à distance.", vfx: "heal_gold" },
-            { name: "Flamme Sacrée", cost: 10, cooldown: 0, level: 1, dice: "1d8", scaling: "wis", range: 8, type: "Radieux", actionType: "Action", flavor: "Une colonne de feu blanc descend des cieux pour purifier ceux qui s'opposent à la volonté divine.", desc: "La cible ne bénéficie d'aucun bonus de couvert.", vfx: "holy_fire" },
+            { name: "Flamme Sacrée", cost: 10, cooldown: 1, level: 1, dice: "1d8", scaling: "wis", range: 8, type: "Radieux", actionType: "Action", flavor: "Une colonne de feu blanc descend des cieux pour purifier ceux qui s'opposent à la volonté divine.", desc: "La cible ne bénéficie d'aucun bonus de couvert.", vfx: "holy_fire" },
             { name: "Bénédiction", cost: 20, cooldown: 4, level: 1, range: 4, type: "Bénédiction", actionType: "Action", flavor: "Vous tracez un symbole sacré dans l'air, insufflant une fraction de la puissance du Crystal en vos alliés.", desc: "Donne +1d4 aux jets d'attaque de 3 alliés.", vfx: "bless_glow" }
         ],
         subclasses: {
@@ -664,7 +664,7 @@ export const CLASSES = {
             { name: "Sanctuaire", cost: 25, cooldown: 6, level: 6, range: 4, desc: "Protège un allié contre les attaques." },
             { name: "Mot de Rappel", cost: 60, cooldown: 10, level: 7, desc: "Téléporte le groupe en lieu sûr." },
             { name: "Guérison de Masse", cost: 80, cooldown: 8, level: 8, dice: "10d8", scaling: "wis", range: 6, desc: "Soigne tous les alliés à 6 cases." },
-            { name: "Résurrection", cost: 100, cooldown: 0, level: 9, desc: "Ramène un allié à la vie." },
+            { name: "Résurrection", cost: 100, cooldown: 50, level: 9, desc: "Ramène un allié à la vie (Cooldown massif)." },
             { name: "Intervention Divine", cost: 100, cooldown: 50, level: 10, desc: "ULTIME : Votre Dieu intervient directement (Effet aléatoire majeur)." },
             { name: "Saint-Suaire", cost: 0, cooldown: 0, level: 15, desc: "Immunité aux dégâts nécrotiques et résistance au poison (Passif)." },
             { name: "LÉGENDAIRE : Jugement Dernier", cost: 120, cooldown: 15, level: 20, dice: "15d10", scaling: "wis", range: 12, desc: "Un pilier de lumière s'abat, vaporisant les morts-vivants et soignant les alliés." },
@@ -706,7 +706,7 @@ export const CLASSES = {
         ],
         initial_ability_options: [
             { name: "Imposition des Mains", cost: 10, cooldown: 3, level: 1, heal: "10", scaling: "cha", type: "Sacré", actionType: "Action", flavor: "Votre foi est si pure qu'un seul toucher peut chasser les ombres et restaurer la vitalité d'un corps brisé.", desc: "Rend 5 PV par point de Charisme.", vfx: "heal_white" },
-            { name: "Châtiment Divin", cost: 25, cooldown: 0, level: 1, dice: "2d8", scaling: "cha", type: "Châtiment", actionType: "Passif", flavor: "Le Crystal guide votre lame, l'enveloppant d'une fureur sacrée qui réduit le mal en cendres.", desc: "Invoquez le châtiment pour +2d8 dégâts radiants.", vfx: "smite_yellow" },
+            { name: "Châtiment Divin", cost: 25, cooldown: 1, level: 1, dice: "2d8", scaling: "cha", type: "Châtiment", actionType: "Passif", flavor: "Le Crystal guide votre lame, l'enveloppant d'une fureur sacrée qui réduit le mal en cendres.", desc: "Invoquez le châtiment pour +2d8 dégâts radiants.", vfx: "smite_yellow" },
             { name: "Bouclier de Foi", cost: 15, cooldown: 4, level: 1, type: "Abjuration", actionType: "Action Bonus", flavor: "Une aura dorée vous enveloppe, tel un rempart invisible érigé par les mains de Solarius lui-même.", desc: "Augmente la CA d'un allié de 2.", vfx: "shield_glow_gold" }
         ],
         subclasses: {
@@ -764,7 +764,7 @@ export const CLASSES = {
         ],
         initial_ability_options: [
             { name: "Marque du Chasseur", cost: 15, cooldown: 3, level: 1, dice: "1d6", scaling: "dex", range: 7, type: "Traque", actionType: "Action Bonus", flavor: "Votre regard se fixe sur le point faible de votre proie. Aucun mouvement ne peut vous échapper dorénavant.", desc: "Ajoute +1d6 dégâts à toutes vos attaques sur la cible.", vfx: "mark_green" },
-            { name: "Tir Précis", cost: 10, cooldown: 0, level: 1, dice: "1d8", scaling: "dex", range: 10, type: "Précision", actionType: "Action", flavor: "Vous retenez votre souffle pendant que le monde s'efface, ne laissant que vous et le cœur de votre ennemi.", desc: "Ignore les bonus de couverture de la cible.", vfx: "arrow_yellow" },
+            { name: "Tir Précis", cost: 10, cooldown: 2, level: 1, dice: "1d8", scaling: "dex", range: 10, type: "Précision", actionType: "Action", flavor: "Vous retenez votre souffle pendant que le monde s'efface, ne laissant que vous et le cœur de votre ennemi.", desc: "Ignore les bonus de couverture de la cible.", vfx: "arrow_yellow" },
             { name: "Sens de la Bête", cost: 5, cooldown: 4, level: 1, type: "Primal", actionType: "Action", flavor: "Vous laissez vos sens s'évader au-delà de l'humain, ressentant chaque vibration du sol et chaque frémissement du vent.", desc: "+3 à la Perception et à l'Initiative.", vfx: "animal_eye" }
         ],
         subclasses: {
@@ -823,7 +823,7 @@ export const CLASSES = {
         initial_ability_options: [
             { name: "Inspiration Bardique", cost: 10, cooldown: 2, level: 1, type: "Soutien", actionType: "Action Bonus", flavor: "Une mélodie épique qui ravive la flamme dans le cœur de vos compagnons et les pousse au-delà de leurs limites.", desc: "Donne un bonus de +1d6 au prochain jet d'un allié.", vfx: "note_gold" },
             { name: "Mot de Guérison", cost: 15, cooldown: 2, level: 1, dice: "1d4", scaling: "cha", range: 6, type: "Sonore", actionType: "Action Bonus", flavor: "Un chant doux et apaisant qui calme les douleurs les plus vives et redonne la force de se battre.", desc: "Soin rapide par le chant.", vfx: "heal_pink" },
-            { name: "Moquerie Vicieuse", cost: 8, cooldown: 0, level: 1, dice: "1d4", scaling: "cha", range: 8, type: "Psychique", actionType: "Action", flavor: "Une insulte si cinglante qu'elle s'enracine dans l'esprit de l'adversaire, le faisant douter de ses propres forces.", desc: "La cible a un désavantage sur son prochain jet d'attaque.", vfx: "mock_purple" }
+            { name: "Moquerie Vicieuse", cost: 8, cooldown: 1, level: 1, dice: "1d4", scaling: "cha", range: 8, type: "Psychique", actionType: "Action", flavor: "Une insulte si cinglante qu'elle s'enracine dans l'esprit de l'adversaire, le faisant douter de ses propres forces.", desc: "La cible a un désavantage sur son prochain jet d'attaque.", vfx: "mock_purple" }
         ],
         subclasses: {
             "savoir": { label: "Collège du Savoir", desc: "Maître des secrets.", details: { style: "Magie", feature: "Mots Coupants : Utilisez votre réaction pour distraire une cible et réduire son jet d'attaque de 1d6." } },
@@ -880,8 +880,8 @@ export const CLASSES = {
             }
         ],
         initial_ability_options: [
-            { name: "Prodige", cost: 5, cooldown: 0, level: 1, dice: "1d10", scaling: "wis", range: 2, type: "Sauvage", actionType: "Action", flavor: "Vous invoquez la sève même des anciens arbres pour durcir vos bras comme du bois de fer.", desc: "Une attaque magique au corps à corps.", vfx: "leaf_green" },
-            { name: "Baies Nourricières", cost: 15, cooldown: 0, level: 1, type: "Nature", actionType: "Action", flavor: "Le sol s'ouvre pour offrir des baies imprégnées de la vitalité de la forêt, capables de régénérer les corps fatigués.", desc: "Crée des baies de survie.", vfx: "berry_red" },
+            { name: "Prodige", cost: 5, cooldown: 1, level: 1, dice: "1d10", scaling: "wis", range: 2, type: "Sauvage", actionType: "Action", flavor: "Vous invoquez la sève même des anciens arbres pour durcir vos bras comme du bois de fer.", desc: "Une attaque magique au corps à corps.", vfx: "leaf_green" },
+            { name: "Baies Nourricières", cost: 15, cooldown: 5, level: 1, type: "Nature", actionType: "Action", flavor: "Le sol s'ouvre pour offrir des baies imprégnées de la vitalité de la forêt, capables de régénérer les corps fatigués.", desc: "Crée des baies de survie.", vfx: "berry_red" },
             { name: "Forme Sauvage (Loup)", cost: 30, cooldown: 5, level: 1, type: "Mutation", actionType: "Action", flavor: "Vos os se brisent et se reforment, votre peau se couvre de poils... vous ne faites plus qu'un avec le prédateur.", desc: "Transformez-vous en loup pour le combat.", vfx: "morph_blue" }
         ],
         subclasses: {
@@ -915,6 +915,7 @@ export const BESTIARY = {
         type: "Humanoid (Goblinoid)",
         cr: "1/4",
         stats: { hp: 7, ac: 15, atk: 4 },
+        img: "/monsters/gobelin.png",
         desc: "Une petite créature vicieuse à la peau verte et aux dents pointues.",
         lore: `Les Gobelins d'Aethelgard ne sont pas des créatures naturelles de la faune locale. Selon les écrits de Kaelen, ils sont les descendants dégénérés des esclaves-travailleurs de l'Empire Ashka, abandonnés et laissés muter par les résidus de magie corrompue après la chute de l'Empire. Cette origine explique leur obsession maladive pour les métaux brillants et les mécanismes complexes, qu'ils tentent maladroitement de reproduire.
 
@@ -931,6 +932,7 @@ Ils vivent en tribus matriarcales dans les réseaux de cavernes des Monts Cœur-
         type: "Beast",
         cr: "1/4",
         stats: { hp: 11, ac: 13, atk: 4 },
+        img: "/monsters/loup.png",
         desc: "Un prédateur gris aux yeux jaunes perçants.",
         lore: `Le Loup des Forêts d'Aethelgard, particulièrement ceux de la Sylve d'Émeraude, est une créature dotée d'une sensibilité magique. On raconte que leurs ancêtres étaient les compagnons des premiers druides du Conseil des Chênes. Contrairement aux loups ordinaires, ils ne chassent que ce dont ils ont besoin pour survivre et semblent protéger instinctivement les lieux de pouvoir druidiques.
 
@@ -946,6 +948,7 @@ Leur pelage possède une propriété unique de réfraction de la lumière, ce qu
         type: "Humanoid",
         cr: "1/2",
         stats: { hp: 15, ac: 13, atk: 5 },
+        img: "/monsters/orc.png",
         desc: "Un guerrier massif à la peau grisâtre, avide de combat.",
         lore: "Les orcs d'Aethelgard sont des guerriers fiers qui vivent dans les steppes désolées du Sud. Ils respectent la force avant tout.",
         behavior: "Fonce dans le tas. Ne recule jamais.",
@@ -959,6 +962,7 @@ Leur pelage possède une propriété unique de réfraction de la lumière, ce qu
         type: "Undead",
         cr: "1/4",
         stats: { hp: 13, ac: 13, atk: 4 },
+        img: "/monsters/squelette.png",
         desc: "Des os animés par une magie impie, portant des restes d'armure.",
         lore: `Ces "Orcs" ne sont pas la race vivante des temps anciens, mais des Squelettes d'Orcs de l'ancienne Garde de Sang du Sud, réanimés par les vents nécrotiques qui soufflent depuis la Faille de l'Ombre.`,
         behavior: "Sans peur, sans pitié. Obéit aux ordres simples. Vulnérable aux dégâts contondants.",
@@ -972,6 +976,7 @@ Leur pelage possède une propriété unique de réfraction de la lumière, ce qu
         type: "Giant",
         cr: "2",
         stats: { hp: 59, ac: 11, atk: 6 },
+        img: "/monsters/ogre.png",
         desc: "Un géant de 3 mètres, stupide mais incroyablement fort.",
         lore: `L'Ogre est une anomalie biologique, souvent appelé "le fils raté des géants". On dit que lorsque les Géants des Tempêtes se sont retirés dans les cimes lors de l'Ère des Cendres, ceux qui sont restés dans les plaines ont dégénéré, perdant leur noblesse et leur magie pour ne garder que leur faim et leur taille. Ils vivent de manière solitaire ou en petits groupes familiaux, occupant souvent des grottes stratégiques ou des ruines de ponts impériaux.
 
@@ -988,6 +993,7 @@ Leur cuir est incroyablement épais, capable d'arrêter des flèches ordinaires,
         type: "Undead",
         cr: "3",
         stats: { hp: 45, ac: 12, atk: 5 },
+        img: "/monsters/spectre.png",
         desc: "Une forme fantomatique et terrifiante qui draine la vie.",
         lore: `Les spectres sont les résidus psychiques des victimes de la "Trahison des Sept", un événement sombre de la fin de l'Ère des Cendres où un régiment entier fut sacrifié par un commandant lâche. Ils ne sont pas composés de matière, mais d'une pure volonté négative qui cherche à refroidir tout ce qui brûle de vie. Leur passage laisse une traînée de givre noir sur le sol et fait flétrir les plantes en quelques secondes.
 
@@ -1003,6 +1009,7 @@ Leurs cris ne sont pas de simples bruits, mais des attaques soniques qui résonn
         type: "Dragon",
         cr: "10 (BOSS)",
         stats: { hp: 178, ac: 18, atk: 10 },
+        img: "/monsters/dragon.png",
         desc: "Une bête majestueuse et terrifiante aux écailles écarlates.",
         lore: `Le Jeune Dragon Rouge, bien qu'il ne soit qu'un "adolescent" selon les standards draconiens, possède déjà une envergure de quinze mètres et un souffle capable de faire fondre le fer le plus pur. Ils sont les descendants directs d'Ignis l'Ancien, le grand dévastateur de l'Empire Ashka. Pour un dragon rouge, le monde n'est qu'une collection d'objets à posséder ou à consumer. 
 

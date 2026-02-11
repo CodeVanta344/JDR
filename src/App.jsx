@@ -12,7 +12,7 @@ import { LootModal } from './components/LootModal';
 import { NPCDialogueModal } from './components/NPCDialogueModal';
 import { DiceChallengeModal } from './components/DiceChallengeModal';
 import { CombatDistanceModal } from './components/CombatDistanceModal';
-import { formatAIContent, calculateTotalStats, calculateMaxResource } from './utils/gameUtils';
+import { formatAIContent, calculateTotalStats, calculateMaxResource, resolvePlayerAbilities, generateArenaDecor } from './utils/gameUtils';
 import { AudioManager } from './components/AudioManager';
 import { GameHelperModal } from './components/GameHelperModal';
 import { LevelUpModal } from './components/LevelUpModal';
@@ -168,7 +168,9 @@ export default function App() {
             const hasStarted = msgData?.some(m => m.content.includes("START_ADVENTURE_TRIGGERED"));
             setAdventureStarted(hasStarted);
 
-            const filteredMsgs = (msgData || []).filter(m => !m.content?.startsWith('(MÉMOIRE:'));
+            const filteredMsgs = (msgData || []).filter(m =>
+                (!m.content?.startsWith('(MÉMOIRE:') || m.content.includes("START_ADVENTURE_TRIGGERED"))
+            );
             setMessages(filteredMsgs);
             const lastImg = [...(msgData || [])].reverse().find(m => m.role === 'image');
             if (lastImg) setSceneImage(lastImg.content);
@@ -202,8 +204,8 @@ export default function App() {
                 filter: `session_id=eq.${session.id}`
             }, (payload) => {
                 const newMsg = payload.new;
-                // Skip memory markers and duplicates
-                if (newMsg.content?.startsWith('(MEMOIRE:') || newMsg.content?.startsWith('(MÉMOIRE:')) return;
+                // Skip memory markers (except START trigger) and duplicates
+                if ((newMsg.content?.startsWith('(MEMOIRE:') || newMsg.content?.startsWith('(MÉMOIRE:')) && !newMsg.content.includes("START_ADVENTURE_TRIGGERED")) return;
 
                 setMessages(prev => {
                     // Check if message already exists
@@ -416,8 +418,10 @@ export default function App() {
                 initiative: Math.floor(Math.random() * 20) + 1, // Reset initiative
                 isEnemy: false, portrait_url: p.portrait_url,
                 posX: playerPositions[i].x, posY: playerPositions[i].y,
-                maxPM: 5, currentPM: 5, hasActed: false, facing: 'EAST',
-                spells: p.spells || [] // Ensure spells are passed
+                maxPM: Math.floor(((p.stats?.dex || 10) + (p.stats?.con || 10) - 20) / 4) + 5,
+                currentPM: Math.floor(((p.stats?.dex || 10) + (p.stats?.con || 10) - 20) / 4) + 5,
+                hasActed: false, facing: 'EAST',
+                spells: resolvePlayerAbilities(p)
             })),
             ...enemiesData.map((e, i) => {
                 const baseEnemy = BESTIARY[e.name.split(' ')[0]] || BESTIARY[e.class] || {};
@@ -445,12 +449,37 @@ export default function App() {
             turnIndex: 0,
             combatants: combatants,
             arenaConfig: arenaConfig,
+            decor: generateArenaDecor(arenaConfig),
             logs: [],
             updatedAt: Date.now()
         };
 
         await supabase.from('world_state').upsert({ key: `combat_${session.id}`, value: initialState });
     };
+
+    const handleDebugCombat = () => {
+        if (!session || !character) return;
+        const mockEnemies = [
+            { id: 'debug-1', name: 'Gobelin d\'Entrainement', hp: 20, max_hp: 20, atk: 4, ac: 11, cr: 0.25 },
+            { id: 'debug-2', name: 'Squelette Cible', hp: 15, max_hp: 15, atk: 3, ac: 12, cr: 0.5 }
+        ];
+        initializeHostCombat(mockEnemies);
+        // We don't strictly need to set mode/enemies here if the sync effect works, 
+        // but it provides immediate feedback (optimistic update)
+        setCombatEnemies(mockEnemies);
+        setCombatMode(true);
+    };
+
+    // SYNC: Auto-enter combat when shared state is active (Multiplayer Sync)
+    useEffect(() => {
+        if (syncedCombatState?.active) {
+            setCombatMode(true);
+            const enemies = syncedCombatState.combatants?.filter(c => c.isEnemy) || [];
+            if (enemies.length > 0) setCombatEnemies(enemies);
+        } else if (syncedCombatState && syncedCombatState.active === false) {
+            setCombatMode(false);
+        }
+    }, [syncedCombatState]);
 
     const updateSyncedCombat = async (newState) => {
         // Any client can request an update (e.g. they attacked), but ideally we check validity
@@ -986,12 +1015,13 @@ export default function App() {
         }
     }, [session, players, profile]);
 
-    const handleStartAdventure = async () => {
-        if (!session || players.length < 2 || STARTING_LOCKS.has(session.id)) return;
+    const handleStartAdventure = async (force = false) => {
+        if (!session || players.length < 2) return;
+        if (!force && STARTING_LOCKS.has(session.id)) return;
 
         // Additional safety: check if GM intro already exists (role is 'system' or 'assistant')
         const existingIntro = messages.find(m => (m.role === 'system' || m.role === 'assistant') && m.content && m.content.length > 200);
-        if (existingIntro) {
+        if (existingIntro && !force) {
             console.log("GM intro already exists, skipping START_ADVENTURE call");
             setAdventureStarted(true);
             return;
@@ -999,10 +1029,31 @@ export default function App() {
 
         STARTING_LOCKS.add(session.id);
         setLoading(true);
-        try {
-            // Mark session as started in DB
+
+        // Forced Start: Immediate UI feedback
+        if (force) {
+            setAdventureStarted(true);
+            // Ensure session is marked as started
             await supabase.from('sessions').update({ is_started: true }).eq('id', session.id);
             setSession(prev => ({ ...prev, is_started: true }));
+            // Inject start marker if missing
+            const hasMarker = messages.some(m => m.content && m.content.includes("START_ADVENTURE_TRIGGERED"));
+            if (!hasMarker) {
+                await supabase.from('messages').insert({
+                    id: session.id,
+                    session_id: session.id,
+                    role: 'system',
+                    content: "(MEMOIRE:SYSTEM) START_ADVENTURE_TRIGGERED"
+                }).catch(() => { }); // Ignore if exists
+            }
+        }
+
+        try {
+            // Mark session as started in DB (redundant if forced but safe)
+            if (!session.is_started) {
+                await supabase.from('sessions').update({ is_started: true }).eq('id', session.id);
+                setSession(prev => ({ ...prev, is_started: true }));
+            }
 
             // Trigger AI Intro
             const { data: aiResponse } = await supabase.functions.invoke('game-master', {
@@ -1034,6 +1085,9 @@ export default function App() {
             }
         } catch (e) {
             console.error("Start Adventure Error:", e);
+            // Unlock on error to allow retry
+            STARTING_LOCKS.delete(session.id);
+            if (!force) alert("Erreur lors du lancement. Le Maître du Jeu est peut-être indisponible.");
         } finally {
             setLoading(false);
             // We usually don't release the lock here as starting is a terminal transition
@@ -1042,13 +1096,13 @@ export default function App() {
 
     // Effect: Launch adventure when all players with class are ready
     useEffect(() => {
-        if (!session || !profile || players.length === 0 || !session.is_started) return;
+        if (!session || !profile || players.length === 0) return;
         if (!character?.class) return;
 
         const playersWithClass = players.filter(p => p.class);
         const allPlayersReady = playersWithClass.length === players.length && players.every(p => p.class && p.is_ready);
         const hasMarker = messages.some(m => m.content && m.content.includes("START_ADVENTURE_TRIGGERED"));
-        const hasGMIntro = messages.some(m => (m.role === 'system' || m.role === 'assistant') && m.content && m.content.length > 200);
+        const hasGMIntro = messages.some(m => m.role === 'gm' && m.content && m.content.length > 100 && !m.content.includes("START_ADVENTURE"));
 
         // If adventure already started (marker exists), sync ALL players
         if (hasMarker && !adventureStarted) {
@@ -1112,6 +1166,29 @@ export default function App() {
             });
         }
     }, [players, session, profile, adventureStarted, messages, character]);
+
+    // START ADVENTURE SYNC FIX
+    useEffect(() => {
+        if (!session || adventureStarted) return;
+
+        const channel = supabase.channel('session_status_sync')
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'sessions', filter: `id=eq.${session.id}` },
+                (payload) => {
+                    if (payload.new && payload.new.is_started === true) {
+                        console.log("SESSION STARTED DETECTED VIA REALTIME!");
+                        setSession(prev => ({ ...prev, is_started: true }));
+                        setAdventureStarted(true);
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [session, adventureStarted]);
 
     const handleUpdateInventory = async (newInventory, newGold = null) => {
         if (!character?.id) return;
@@ -2058,8 +2135,31 @@ export default function App() {
                             })}
                         </div>
 
+                        {/* Force Start Button for Host */}
+                        {session?.host_id === profile?.id && players.length >= 2 && character?.class && !loading && (
+                            <div style={{ marginBottom: '1rem' }}>
+                                <button
+                                    onClick={() => {
+                                        if (confirm("Forcer le lancement de l'aventure ?")) {
+                                            handleStartAdventure(true);
+                                        }
+                                    }}
+                                    className="btn-secondary"
+                                    style={{
+                                        padding: '0.5rem 1rem',
+                                        fontSize: '0.9rem',
+                                        border: '1px solid var(--text-muted)',
+                                        color: 'var(--text-muted)',
+                                        background: 'transparent'
+                                    }}
+                                >
+                                    ⚠️ Forcer le Lancement
+                                </button>
+                            </div>
+                        )}
+
                         {/* Ready Button for current player */}
-                        {character?.class && (
+                        {character?.class && !loading && (
                             <div style={{ marginBottom: '1.5rem' }}>
                                 <button
                                     onClick={handleToggleReady}
@@ -2075,6 +2175,19 @@ export default function App() {
                                 >
                                     {character.is_ready ? 'PRET !' : 'JE SUIS PRET'}
                                 </button>
+                            </div>
+                        )}
+
+                        {loading && (
+                            <div style={{ marginBottom: '1.5rem', color: 'var(--gold-primary)', fontStyle: 'italic', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                                <div style={{
+                                    width: '30px', height: '30px',
+                                    border: '3px solid var(--gold-dim)',
+                                    borderTopColor: 'var(--gold-primary)',
+                                    borderRadius: '50%',
+                                    animation: 'spin 1s linear infinite'
+                                }} />
+                                <span>Le Maître du Jeu prépare l'aventure...</span>
                             </div>
                         )}
 
@@ -2125,7 +2238,7 @@ export default function App() {
                             }}
                             onToggleHelper={() => setShowHelper(!showHelper)}
                             showHelper={showHelper}
-                            onDebugCombat={() => { }}
+                            onDebugCombat={handleDebugCombat}
                             connStatus={connStatus}
                             isGM={session && profile && session.gm_id === profile.id}
                             audioEnabled={audioEnabled}
@@ -2154,7 +2267,7 @@ export default function App() {
             {
                 combatMode && (
                     <CombatManager
-                        arenaConfig={getArenaConfig()}
+                        arenaConfig={syncedCombatState?.arenaConfig || getArenaConfig()}
                         players={players}
                         currentUserId={profile?.id}
                         initialEnemies={combatEnemies}
@@ -2168,10 +2281,13 @@ export default function App() {
                             }
 
                             // Ask the GM to narrate the combat outcome
-                            const defeatedNames = (result?.defeatedEnemies || combatEnemies).map(e => e.name).join(', ');
-                            const outcome = result?.victory ? 'VICTOIRE' : 'DEFAITE';
+                            const defeatedNames = (result?.defeatedEnemies || combatEnemies || []).map(e => e.name).join(', ');
+                            let outcome = result?.victory ? 'VICTOIRE' : 'DEFAITE';
+                            if (result?.flight) outcome = 'FUITE';
+                            if (result?.cancelled) return; // Silent close
+
                             const postCombatAction = '[SYSTEM] COMBAT TERMINE. Issue: ' + outcome
-                                + '. Ennemis vaincus: ' + defeatedNames
+                                + (defeatedNames ? '. Ennemis vaincus: ' + defeatedNames : '')
                                 + '. Decris l\'issue du combat et attribue les recompenses (XP, Loot) si victoire.';
 
                             try {
@@ -2243,8 +2359,11 @@ export default function App() {
                         onChat={(message, npcName) => {
                             handleNPCMessage(message, npcName);
                         }}
+                        messages={npcConversations[activeMerchant?.npcName] || []}
+                        loading={loading}
                         onClose={() => {
                             const merchantName = activeMerchant?.npcName || 'le marchand';
+                            setActiveMerchant(null);
                             supabase.from('world_state').upsert({
                                 key: `merchant_${session.id}`,
                                 value: { active: false }
@@ -2261,7 +2380,9 @@ export default function App() {
                         loot={activeLoot}
                         onCollect={(items) => {
                             triggerSFX('gold');
-                            handleUpdateInventory([...(character.inventory || []), ...items.map(i => ({ ...i, equipped: false }))]);
+                            const newInventory = [...(character.inventory || []), ...items.map(i => ({ ...i, equipped: false }))];
+                            const newGold = (character.gold || 0) + (activeLoot.gold || 0);
+                            handleUpdateInventory(newInventory, newGold);
                             setActiveLoot(null);
                         }}
                         onClose={() => setActiveLoot(null)}

@@ -839,6 +839,21 @@ Deno.serve(async (req: Request) => {
             gamePhase, timeLabel, partyList, playerInfo, context, lore, historyStr, partyDetails, playerBackstoryContext,
         });
 
+        // ── IDEMPOTENCY CHECK (START_ADVENTURE) ──
+        if (action === 'START_ADVENTURE') {
+            const { data: existingIntro } = await supabase
+                .from('messages')
+                .select('content')
+                .eq('session_id', sessionId)
+                .eq('role', 'system')
+                .not('content', 'ilike', '%START_ADVENTURE_TRIGGERED%')
+                .limit(1);
+
+            if (existingIntro && existingIntro.length > 0) {
+                return jsonResponse({ narrative: existingIntro[0].content });
+            }
+        }
+
         // ── Determine user message ──
         let userMsg = action;
         if (action !== 'intro' && !action.startsWith('[SYSTEM]') && !action.startsWith('START_ADVENTURE')) {

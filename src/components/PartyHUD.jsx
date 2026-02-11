@@ -46,7 +46,7 @@ export const PartyHUD = ({ players, currentPlayerId, onlineUsers }) => {
                         flexShrink: 0
                     }}>
                         <img
-                            src={member.portrait_url || 'https://via.placeholder.com/40'}
+                            src={member.portrait_url || 'https://placehold.co/40'}
                             alt={member.name}
                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />

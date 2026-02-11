@@ -1,7 +1,10 @@
 import React from 'react';
 
 export const LootModal = ({ loot, onCollect, onClose }) => {
-    if (!loot || loot.length === 0) return null;
+    const items = Array.isArray(loot) ? loot : (loot?.items || []);
+    const gold = Array.isArray(loot) ? 0 : (loot?.gold || 0);
+
+    if (!loot || (items.length === 0 && gold === 0)) return null;
 
     return (
         <div className="modal-overlay animate-fade-in" style={{
@@ -25,7 +28,24 @@ export const LootModal = ({ loot, onCollect, onClose }) => {
             }}>
                 <h2 style={{ color: 'var(--aether-blue)', marginBottom: '1.5rem' }}>BUTIN TROUVÉ !</h2>
                 <div style={{ display: 'grid', gap: '1rem', marginBottom: '2rem' }}>
-                    {loot.map((item, i) => (
+                    {gold > 0 && (
+                        <div style={{
+                            padding: '1rem',
+                            background: 'rgba(255,215,0,0.1)',
+                            border: '1px solid var(--gold-primary)',
+                            borderRadius: '4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '1rem'
+                        }}>
+                            <span style={{ fontSize: '1.5rem' }}>💰</span>
+                            <div style={{ textAlign: 'left' }}>
+                                <div style={{ fontWeight: 'bold', color: 'var(--gold-primary)' }}>{gold} Pièces d'or</div>
+                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Une bourse bien remplie.</div>
+                            </div>
+                        </div>
+                    )}
+                    {items.map((item, i) => (
                         <div key={i} style={{
                             padding: '1rem',
                             background: 'rgba(255,255,255,0.05)',
@@ -44,7 +64,7 @@ export const LootModal = ({ loot, onCollect, onClose }) => {
                     ))}
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                    <button className="btn-gold" style={{ flex: 1 }} onClick={() => onCollect(loot)}>TOUT RÉCUPÉRER</button>
+                    <button className="btn-gold" style={{ flex: 1 }} onClick={() => onCollect(items)}>TOUT RÉCUPÉRER</button>
                     <button className="btn-secondary" style={{ flex: 1 }} onClick={onClose}>LAISSER</button>
                 </div>
             </div>

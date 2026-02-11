@@ -73,3 +73,58 @@ export const calculateMaxResource = (className, level, stats) => {
     // Formula: Base 20 + (Level * 5) + (Stat Mod * 5) + (Stat Value)
     return 20 + (level * 5) + (statMod * 5) + statValue;
 };
+// Helper to get fully resolved ability objects from class lore
+export const resolvePlayerAbilities = (player) => {
+    const charClass = player.class?.split(' ')[0] || "Guerrier";
+    const classData = CLASSES[charClass];
+    if (!classData) return [];
+
+    const baseAbilities = classData.initial_ability_options || classData.abilities || [];
+    const classUnlockables = classData.unlockables || [];
+
+    const playerSpells = Array.isArray(player.spells) ? player.spells : [];
+    const playerAbilities = Array.isArray(player.abilities) ? player.abilities : [];
+
+    let combinedAbilities = [...playerAbilities, ...playerSpells].map(spell => {
+        const spellName = typeof spell === 'string' ? spell : (spell?.name || "Attaque");
+        const fromInitial = baseAbilities.find(a => a.name === spellName);
+        const fromUnlockables = classUnlockables.find(u => u.name === spellName);
+        const fullAbility = fromInitial || fromUnlockables;
+
+        if (fullAbility) {
+            return { ...fullAbility, range: fullAbility.range || 2 };
+        }
+        if (typeof spell === 'object' && spell.name) {
+            return { ...spell, range: spell.range || 2 };
+        }
+        return { name: spellName, desc: "Capacité", cost: 10, range: 2 };
+    });
+
+    if (combinedAbilities.length === 0) {
+        combinedAbilities = baseAbilities.map(a => ({ ...a, range: a.range || 2 }));
+    }
+    return combinedAbilities;
+};
+// Helper to generate decor for the combat arena
+export const generateArenaDecor = (arenaConfig) => {
+    const decorTypes = [
+        { name: 'Éclat de Vide', color: 'var(--aether-blue)', size: 40 },
+        { name: 'Pilier d\'Obsidienne', color: '#111', size: 60 },
+        { name: 'Rune Ancienne', color: 'var(--gold-dim)', size: 30 }
+    ];
+
+    const maxX = Math.floor(arenaConfig.blocksX / 2);
+    const maxY = Math.floor(arenaConfig.blocksY / 2);
+
+    return Array.from({ length: 5 }).map((_, i) => {
+        const x = Math.floor(Math.random() * (arenaConfig.blocksX - 2)) - Math.floor(arenaConfig.blocksX / 2) + 1;
+        const y = Math.floor(Math.random() * (arenaConfig.blocksY - 2)) - Math.floor(arenaConfig.blocksY / 2) + 1;
+
+        return {
+            id: `decor-${i}`,
+            ...decorTypes[Math.floor(Math.random() * decorTypes.length)],
+            posX: x,
+            posY: y
+        };
+    });
+};

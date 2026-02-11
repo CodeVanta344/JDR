@@ -1,12 +1,19 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
 
-export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, onSell, onClose, onChat, affinity = 0 }) => {
+export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, onSell, onClose, onChat, affinity = 0, messages = [], loading = false }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [activeTab, setActiveTab] = useState('buy');
     const [generating, setGenerating] = useState({});
     const [itemImages, setItemImages] = useState({});
     const [chatInput, setChatInput] = useState('');
+    const scrollRef = React.useRef(null);
+
+    React.useEffect(() => {
+        if (activeTab === 'chat' && scrollRef.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+    }, [messages, activeTab, loading]);
 
     const priceMultiplier = Math.max(0.5, Math.min(1.5, 1 - (affinity * 0.005)));
     const sellMultiplier = Math.max(0.1, Math.min(0.8, 0.5 + (affinity * 0.002)));
@@ -46,7 +53,7 @@ export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, on
     return (
         <>
             {!isExpanded && (
-                <div 
+                <div
                     className="merchant-icon animate-fade-in"
                     onClick={() => setIsExpanded(true)}
                     style={{
@@ -77,9 +84,9 @@ export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, on
                     }}
                 >
                     <span style={{ fontSize: '2rem' }}>🏪</span>
-                    <span style={{ 
-                        color: 'var(--gold-primary)', 
-                        fontWeight: 'bold', 
+                    <span style={{
+                        color: 'var(--gold-primary)',
+                        fontWeight: 'bold',
                         fontSize: '0.85rem',
                         textAlign: 'center',
                         maxWidth: '100px',
@@ -87,8 +94,8 @@ export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, on
                     }}>
                         {merchant.npcName}
                     </span>
-                    <span style={{ 
-                        fontSize: '0.7rem', 
+                    <span style={{
+                        fontSize: '0.7rem',
                         color: 'var(--gold-light)',
                         opacity: 0.8
                     }}>
@@ -97,7 +104,7 @@ export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, on
                 </div>
             )}
 
-            <div 
+            <div
                 className="merchant-panel"
                 style={{
                     position: 'fixed',
@@ -115,11 +122,11 @@ export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, on
                     overflow: 'hidden'
                 }}
             >
-                <div style={{ 
-                    padding: '1rem 1.2rem', 
-                    borderBottom: '1px solid var(--gold-dim)', 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
+                <div style={{
+                    padding: '1rem 1.2rem',
+                    borderBottom: '1px solid var(--gold-dim)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
                     background: 'rgba(212, 175, 55, 0.05)'
                 }}>
@@ -131,8 +138,8 @@ export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, on
                             {merchant.greeting || "Que puis-je pour vous ?"}
                         </p>
                     </div>
-                    <button 
-                        onClick={() => setIsExpanded(false)}
+                    <button
+                        onClick={handleClose}
                         style={{
                             background: 'none',
                             border: 'none',
@@ -146,8 +153,8 @@ export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, on
                     </button>
                 </div>
 
-                <div style={{ 
-                    padding: '0.8rem 1.2rem', 
+                <div style={{
+                    padding: '0.8rem 1.2rem',
                     background: 'rgba(0, 0, 0, 0.3)',
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -158,7 +165,7 @@ export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, on
                 </div>
 
                 <div style={{ display: 'flex', borderBottom: '1px solid var(--gold-dim)' }}>
-                    <button 
+                    <button
                         onClick={() => setActiveTab('buy')}
                         style={{
                             flex: 1,
@@ -175,7 +182,7 @@ export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, on
                     >
                         ACHETER
                     </button>
-                    <button 
+                    <button
                         onClick={() => setActiveTab('sell')}
                         style={{
                             flex: 1,
@@ -192,7 +199,7 @@ export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, on
                     >
                         VENDRE
                     </button>
-                    <button 
+                    <button
                         onClick={() => setActiveTab('chat')}
                         style={{
                             flex: 1,
@@ -227,7 +234,7 @@ export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, on
                                         gap: '1rem',
                                         alignItems: 'center'
                                     }}>
-                                        <div 
+                                        <div
                                             style={{
                                                 width: '60px',
                                                 height: '60px',
@@ -255,9 +262,9 @@ export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, on
                                         <div style={{ flex: 1, minWidth: 0 }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.3rem' }}>
                                                 <span style={{ fontWeight: 'bold', color: '#fff', fontSize: '0.9rem' }}>{item.name}</span>
-                                                <span style={{ 
-                                                    color: canAfford ? 'var(--gold-primary)' : '#ff6b6b', 
-                                                    fontWeight: 'bold', 
+                                                <span style={{
+                                                    color: canAfford ? 'var(--gold-primary)' : '#ff6b6b',
+                                                    fontWeight: 'bold',
                                                     fontSize: '0.9rem',
                                                     whiteSpace: 'nowrap'
                                                 }}>
@@ -267,12 +274,12 @@ export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, on
                                             <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '0 0 0.5rem 0', lineHeight: '1.3' }}>{item.desc}</p>
                                             <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                                                 {item.stats && Object.entries(item.stats).map(([k, v]) => (
-                                                    <span key={k} style={{ 
-                                                        fontSize: '0.6rem', 
-                                                        background: 'rgba(100, 200, 255, 0.15)', 
-                                                        padding: '2px 6px', 
-                                                        borderRadius: '4px', 
-                                                        color: 'var(--aether-blue)' 
+                                                    <span key={k} style={{
+                                                        fontSize: '0.6rem',
+                                                        background: 'rgba(100, 200, 255, 0.15)',
+                                                        padding: '2px 6px',
+                                                        borderRadius: '4px',
+                                                        color: 'var(--aether-blue)'
                                                     }}>
                                                         {k.toUpperCase()} {v > 0 ? `+${v}` : v}
                                                     </span>
@@ -281,8 +288,8 @@ export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, on
                                         </div>
                                         <button
                                             className="btn-gold"
-                                            style={{ 
-                                                padding: '0.5rem 1rem', 
+                                            style={{
+                                                padding: '0.5rem 1rem',
                                                 fontSize: '0.75rem',
                                                 opacity: canAfford ? 1 : 0.5,
                                                 cursor: canAfford ? 'pointer' : 'not-allowed'
@@ -326,13 +333,13 @@ export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, on
                                             </div>
                                         </div>
                                         <button
-                                            style={{ 
-                                                padding: '0.5rem 1rem', 
-                                                fontSize: '0.75rem', 
-                                                background: 'transparent', 
-                                                border: '1px solid #ff6b6b', 
-                                                color: '#ff6b6b', 
-                                                cursor: 'pointer', 
+                                            style={{
+                                                padding: '0.5rem 1rem',
+                                                fontSize: '0.75rem',
+                                                background: 'transparent',
+                                                border: '1px solid #ff6b6b',
+                                                color: '#ff6b6b',
+                                                cursor: 'pointer',
                                                 borderRadius: '4px',
                                                 transition: 'all 0.2s'
                                             }}
@@ -359,33 +366,63 @@ export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, on
 
                     {activeTab === 'chat' && (
                         <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                            <div style={{ 
-                                flex: 1, 
-                                padding: '1rem', 
-                                background: 'rgba(0,0,0,0.3)', 
-                                borderRadius: '8px',
-                                marginBottom: '1rem',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                textAlign: 'center',
-                                color: 'var(--text-muted)'
-                            }}>
-                                <span style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>💬</span>
-                                <p style={{ fontSize: '0.9rem', lineHeight: '1.5' }}>
-                                    Parlez à <strong style={{ color: 'var(--gold-primary)' }}>{merchant.npcName}</strong>
-                                </p>
-                                <p style={{ fontSize: '0.8rem', color: '#666' }}>
-                                    Vous pouvez négocier, demander des informations, ou simplement discuter.
-                                </p>
+                            <div
+                                ref={scrollRef}
+                                style={{
+                                    flex: 1,
+                                    overflowY: 'auto',
+                                    padding: '1rem',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '1rem',
+                                    marginBottom: '1rem',
+                                    background: 'rgba(0,0,0,0.2)',
+                                    borderRadius: '8px',
+                                    border: '1px solid rgba(255,255,255,0.05)'
+                                }}
+                            >
+                                {messages.length === 0 && (
+                                    <div style={{
+                                        textAlign: 'center',
+                                        color: 'var(--text-muted)',
+                                        marginTop: '2rem',
+                                        fontStyle: 'italic'
+                                    }}>
+                                        <span style={{ fontSize: '2rem', display: 'block', marginBottom: '0.5rem' }}>💬</span>
+                                        <p>Commencez la discussion avec {merchant.npcName}...</p>
+                                    </div>
+                                )}
+
+                                {messages.map((m, i) => (
+                                    <div key={i} style={{
+                                        alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
+                                        maxWidth: '85%',
+                                        padding: '0.8rem 1rem',
+                                        borderRadius: '8px',
+                                        background: m.role === 'user' ? 'rgba(212, 175, 55, 0.1)' : 'rgba(255,255,255,0.05)',
+                                        border: m.role === 'user' ? '1px solid var(--gold-dim)' : '1px solid rgba(255,255,255,0.1)',
+                                        color: m.role === 'user' ? 'var(--gold-primary)' : '#fff',
+                                        fontSize: '0.9rem',
+                                        lineHeight: '1.4'
+                                    }}>
+                                        {m.content}
+                                    </div>
+                                ))}
+
+                                {loading && (
+                                    <div style={{ alignSelf: 'flex-start', color: 'var(--text-muted)', fontSize: '0.8rem', fontStyle: 'italic', padding: '0.5rem' }}>
+                                        {merchant.npcName} écrit...
+                                    </div>
+                                )}
                             </div>
+
                             <form onSubmit={handleChatSubmit} style={{ display: 'flex', gap: '0.5rem' }}>
                                 <input
                                     type="text"
                                     value={chatInput}
                                     onChange={(e) => setChatInput(e.target.value)}
                                     placeholder="Parlez au marchand..."
+                                    disabled={loading}
                                     style={{
                                         flex: 1,
                                         padding: '0.8rem 1rem',
@@ -396,11 +433,11 @@ export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, on
                                         fontSize: '0.9rem'
                                     }}
                                 />
-                                <button 
+                                <button
                                     type="submit"
                                     className="btn-gold"
                                     style={{ padding: '0.8rem 1.2rem' }}
-                                    disabled={!chatInput.trim()}
+                                    disabled={!chatInput.trim() || loading}
                                 >
                                     ➤
                                 </button>
@@ -409,16 +446,16 @@ export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, on
                     )}
                 </div>
 
-                <div style={{ 
-                    padding: '1rem', 
-                    borderTop: '1px solid var(--gold-dim)', 
+                <div style={{
+                    padding: '1rem',
+                    borderTop: '1px solid var(--gold-dim)',
                     background: 'rgba(0,0,0,0.3)'
                 }}>
-                    <button 
-                        className="btn-secondary" 
+                    <button
+                        className="btn-secondary"
                         onClick={handleClose}
-                        style={{ 
-                            width: '100%', 
+                        style={{
+                            width: '100%',
                             padding: '0.8rem',
                             display: 'flex',
                             alignItems: 'center',
@@ -432,8 +469,8 @@ export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, on
             </div>
 
             {isExpanded && (
-                <div 
-                    onClick={() => setIsExpanded(false)}
+                <div
+                    onClick={handleClose}
                     style={{
                         position: 'fixed',
                         top: 0,

@@ -62,6 +62,61 @@ const TurnTracker = ({ combatants, currentTurnIndex }) => {
     );
 };
 
+
+
+const RemoteActionOverlay = ({ action, onComplete }) => {
+    useEffect(() => {
+        const timer = setTimeout(onComplete, 3000);
+        return () => clearTimeout(timer);
+    }, [onComplete]);
+
+    if (!action) return null;
+
+    return (
+        <div style={{
+            position: 'absolute', inset: 0, zIndex: 1900,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)',
+            animation: 'fadeIn 0.3s ease-out'
+        }}>
+            <div style={{
+                marginBottom: '20px', fontSize: '1.5rem', fontFamily: 'var(--font-display)',
+                color: 'var(--gold-light)', textShadow: '0 2px 4px rgba(0,0,0,0.8)'
+            }}>
+                {action.attackerName} utilise <span style={{ color: 'white' }}>{action.abilityName}</span>
+            </div>
+
+            <DieVisual
+                type="d20"
+                value={action.roll}
+                onComplete={() => { }} // Static display or purely visual
+                isResult={true}
+            />
+
+            <div style={{
+                marginTop: '20px', textAlign: 'center',
+                background: 'rgba(0,0,0,0.8)', padding: '10px 20px', borderRadius: '8px',
+                border: '1px solid var(--gold-dim)'
+            }}>
+                <div style={{ fontSize: '1.2rem', color: 'white' }}>
+                    {action.roll} + {action.modifier} = <span style={{ color: action.success ? '#00ff00' : '#ff4444', fontWeight: 'bold' }}>{action.roll + action.modifier}</span>
+                </div>
+                <div style={{ fontSize: '0.9rem', color: '#aaa', marginTop: '4px' }}>
+                    vs {action.targetName} ({action.threshold} AC)
+                </div>
+                {action.success && (
+                    <div style={{
+                        marginTop: '8px', fontSize: '1.1rem', color: '#ff4444', fontWeight: 'bold',
+                        animation: 'pulse 1s infinite'
+                    }}>
+                        💥 {action.damage} DÉGÂTS !
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
 export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeType: 'STANDARD' }, players, currentUserId, initialEnemies, syncedCombatState, onUpdateCombatState, onCombatEnd, onLogAction, onHPChange, onResourceChange, onGameOver, onRewards, onVFX, onSFX, sessionId }) => {
     const [combatants, setCombatants] = useState([]);
     const [currentTurnIndex, setCurrentTurnIndex] = useState(0);
@@ -77,8 +132,15 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
     const [cooldowns, setCooldowns] = useState({});
     const [logs, setLogs] = useState([]);
     const [decor, setDecor] = useState([]);
+    const [remoteAction, setRemoteAction] = useState(null); // { attackerName, abilityName, roll, modifier, targetName, threshold, success, damage, id }
     const logEndRef = useRef(null);
     const lastSyncRef = useRef(0);
+    const lastActionIdRef = useRef(null);
+    const combatantsRef = useRef(combatants);
+
+    useEffect(() => {
+        combatantsRef.current = combatants;
+    }, [combatants]);
 
     // Real-time combat sync subscription
     useEffect(() => {
@@ -102,6 +164,9 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                         setCurrentTurnIndex(newState.turnIndex || 0);
                         if (newState.logs && newState.logs.length > logs.length) {
                             setLogs(newState.logs);
+                        }
+                        if (newState.decor) {
+                            setDecor(newState.decor);
                         }
                         if (combatState === 'initiative') {
                             setCombatState('active');
@@ -134,9 +199,37 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
             setRound(syncedCombatState.round || 1);
             setCurrentTurnIndex(syncedCombatState.turnIndex || 0);
             setCombatState('active');
-            // If logs are synced, we could merge them, but for now we keep local logs or rely on system messages
+            if (syncedCombatState.decor) setDecor(syncedCombatState.decor);
+
+            // Check for new actions to verify
+            if (syncedCombatState.lastAction && syncedCombatState.lastAction.id !== lastActionIdRef.current) {
+                const action = syncedCombatState.lastAction;
+                lastActionIdRef.current = action.id;
+
+                // Only show overlay if we didn't do it ourselves (optional, maybe we want to see it too?)
+                // For now, let's show it to everyone for consistency, or skip if it's the local player who JUST acted
+                // But checking user_id might be loop-prone. Let's compare timestamp or just show it.
+                // If it's the local player, they already saw the "RollOverlay". 
+                // We should add a flag 'sourceUserId' to action to filter.
+
+                if (action.sourceUserId !== currentUserId) {
+                    setRemoteAction(action);
+
+                    // Also trigger SFX/VFX
+                    if (action.success) {
+                        if (onSFX) setTimeout(() => onSFX('damage'), 800);
+                        if (onVFX) onVFX('blood',
+                            window.innerWidth / 2, // Rough fallback - ideally we'd find the target element
+                            window.innerHeight / 2,
+                            '#ff0000'
+                        );
+                    } else {
+                        if (onVFX) onVFX('spark', window.innerWidth / 2, window.innerHeight / 2, '#ffff00');
+                    }
+                }
+            }
         }
-    }, [syncedCombatState]);
+    }, [syncedCombatState, currentUserId, onSFX, onVFX]);
 
     const getPosPercent = (pos, isY = false) => {
         const blocks = isY ? arenaConfig.blocksY : arenaConfig.blocksX;
@@ -191,7 +284,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                 // Player spells take priority - these are their actual chosen abilities
                 let playerSpells = [...(p.spells || [])];
                 let playerAbilities = [...(p.abilities || [])];
-                
+
                 // Build final ability list with full data from class definitions
                 let combinedAbilities = [...playerAbilities, ...playerSpells].map(spell => {
                     const spellName = typeof spell === 'string' ? spell : spell.name;
@@ -199,7 +292,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                     const fromInitial = baseAbilities.find(a => a.name === spellName);
                     const fromUnlockables = classUnlockables.find(u => u.name === spellName);
                     const fullAbility = fromInitial || fromUnlockables;
-                    
+
                     if (fullAbility) {
                         return { ...fullAbility, range: fullAbility.range || 2 };
                     }
@@ -312,8 +405,39 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
         }
     }, [combatState, players, initialEnemies, onLogAction, syncedCombatState]);
 
+    // CHECK VICTORY / DEFEAT
+    useEffect(() => {
+        if (combatState === 'active' && combatants.length > 0) {
+            const enemiesAlive = combatants.filter(u => u.isEnemy && u.hp > 0);
+            const playersAlive = combatants.filter(u => !u.isEnemy && u.hp > 0);
+
+            if (enemiesAlive.length === 0) {
+                setCombatState('finished');
+                const defeatedEnemies = combatants.filter(u => u.isEnemy);
+                if (onRewards) onRewards(defeatedEnemies);
+                onLogAction({ role: 'system', content: '🏆 **VICTOIRE !** Tous les ennemis ont été terrassés.' });
+
+                // Auto-close after short delay to return to narrative
+                const timer = setTimeout(() => {
+                    onCombatEnd({ victory: true, defeatedEnemies });
+                }, 5000);
+                return () => clearTimeout(timer);
+            } else if (playersAlive.length === 0) {
+                setCombatState('finished');
+                onGameOver();
+            }
+        }
+    }, [combatants, combatState, onRewards, onCombatEnd, onGameOver, onLogAction]);
+
     const currentActor = combatants[currentTurnIndex];
     const isLocalPlayerTurn = currentActor && currentActor.user_id === currentUserId;
+
+    useEffect(() => {
+        if (currentActor && currentActor.user_id) {
+            console.log(`[Combat] Current actor: ${currentActor.name} (user_id: ${currentActor.user_id}), Current local user: ${currentUserId}, Match: ${isLocalPlayerTurn}`);
+        }
+    }, [currentActor, currentUserId, isLocalPlayerTurn]);
+
     const canMove = isLocalPlayerTurn && currentActor && currentActor.currentPM > 0 && combatState === 'active';
     const canAct = isLocalPlayerTurn && currentActor && !currentActor.hasActed && combatState === 'active';
 
@@ -328,12 +452,16 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
     };
 
     const isTileOccupied = (x, y, excludeId) => {
-        return combatants.some(u => u.id !== excludeId && u.hp > 0 && u.posX === x && u.posY === y);
+        return combatantsRef.current.some(u => u.id !== excludeId && u.hp > 0 && u.posX === x && u.posY === y);
     };
 
     const executeMove = (direction) => {
-        const authorized = currentActor?.isEnemy || canMove;
-        if (!authorized || currentActor.currentPM <= 0) return;
+        const currentCombatants = combatantsRef.current;
+        const freshActor = currentCombatants.find(u => u.id === currentActor.id);
+        if (!freshActor) return;
+
+        const authorized = freshActor.isEnemy || canMove;
+        if (!authorized || freshActor.currentPM <= 0) return;
         const moveAmount = 1; // One tile at a time
         let dx = 0, dy = 0;
         switch (direction) {
@@ -341,11 +469,11 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
             case 'down': dy = moveAmount; break;
             case 'left': dx = -moveAmount; break;
             case 'right': dx = moveAmount; break;
-            case 'forward': dx = currentActor.isEnemy ? -moveAmount : moveAmount; break;
-            case 'backward': dx = currentActor.isEnemy ? moveAmount : -moveAmount; break;
+            case 'forward': dx = freshActor.isEnemy ? -moveAmount : moveAmount; break;
+            case 'backward': dx = freshActor.isEnemy ? moveAmount : -moveAmount; break;
         }
 
-        let newFacing = currentActor.facing;
+        let newFacing = freshActor.facing;
         if (dx > 0) newFacing = 'EAST';
         else if (dx < 0) newFacing = 'WEST';
         else if (dy > 0) newFacing = 'SOUTH';
@@ -353,25 +481,26 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
 
         const boundsX = Math.floor(arenaConfig.blocksX / 2);
         const boundsY = Math.floor(arenaConfig.blocksY / 2);
-        const newX = Math.max(-boundsX, Math.min(boundsX - 1, currentActor.posX + dx));
-        const newY = Math.max(-boundsY, Math.min(boundsY - 1, currentActor.posY + dy));
+        const newX = Math.max(-boundsX, Math.min(boundsX - 1, freshActor.posX + dx));
+        const newY = Math.max(-boundsY, Math.min(boundsY - 1, freshActor.posY + dy));
 
         // Boundary & Validity Check
-        if (!isTileValid(newX, newY) || isTileOccupied(newX, newY, currentActor.id)) {
-            if (onSFX && !currentActor.isEnemy) onSFX('error');
+        if (!isTileValid(newX, newY) || isTileOccupied(newX, newY, freshActor.id)) {
+            if (onSFX && !freshActor.isEnemy) onSFX('error');
             return;
         }
 
         // Only consume PM if position actually changed
-        const actualMove = (newX !== currentActor.posX || newY !== currentActor.posY);
+        const actualMove = (newX !== freshActor.posX || newY !== freshActor.posY);
         if (actualMove) {
-            const newCombatants = combatants.map(u => u.id === currentActor.id ? { ...u, posX: newX, posY: newY, currentPM: u.currentPM - 1, facing: newFacing, hasMoved: true } : u);
+            const newCombatants = currentCombatants.map(u => u.id === freshActor.id ? { ...u, posX: newX, posY: newY, currentPM: u.currentPM - 1, facing: newFacing, hasMoved: true } : u);
             setCombatants(newCombatants);
             lastSyncRef.current = Date.now();
             if (onUpdateCombatState) onUpdateCombatState({ combatants: newCombatants, turnIndex: currentTurnIndex, round, active: true, logs, updatedAt: lastSyncRef.current });
             if (onSFX) onSFX('footstep');
         }
     };
+
 
     const getTacticalModifier = (attacker, target) => {
         const dx = attacker.posX - target.posX;
@@ -395,7 +524,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
         }
 
         // Encirclement Check (Surrounded by 2+ enemies of the target)
-        const adjacentEnemies = combatants.filter(u =>
+        const adjacentEnemies = combatantsRef.current.filter(u =>
             u.id !== target.id &&
             u.hp > 0 &&
             u.isEnemy !== target.isEnemy &&
@@ -414,34 +543,37 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
 
     const executeAttack = async (target, actionOverride = null) => {
         const action = actionOverride || selectedAction;
-        if (!action || !currentActor) return;
-        const authorized = currentActor.isEnemy || canAct;
+        const currentCombatants = combatantsRef.current;
+        const freshActor = currentCombatants.find(u => u.id === currentActor.id);
+
+        if (!action || !freshActor) return;
+        const authorized = freshActor.isEnemy || canAct;
         if (!authorized) return;
 
-        const dx = currentActor.posX - target.posX;
-        const dy = currentActor.posY - target.posY;
+        const dx = freshActor.posX - target.posX;
+        const dy = freshActor.posY - target.posY;
         const distance = Math.sqrt(dx * dx + dy * dy);
         const range = action.range || 2;
         if (distance > range) {
             addLog({ role: 'system', content: `❌ **${target.name}** est trop loin (${distance.toFixed(1)}m) pour **${action.name}** (Portée: ${range}m) !` });
-            if (currentActor.isEnemy) setTimeout(finishTurn, 1000);
+            if (freshActor.isEnemy) setTimeout(finishTurn, 1000);
             return;
         }
 
         const cost = action.cost !== undefined ? action.cost : (action.name === 'Attaque' ? 0 : 20);
-        if (currentActor.resource < cost) {
-            addLog({ role: 'system', content: `❌ **${currentActor.name}** n'a pas assez de ressources !` });
-            if (currentActor.isEnemy) setTimeout(finishTurn, 1000);
+        if (freshActor.resource < cost) {
+            addLog({ role: 'system', content: `❌ **${freshActor.name}** n'a pas assez de ressources !` });
+            if (freshActor.isEnemy) setTimeout(finishTurn, 1000);
             return;
         }
 
-        const newResource = Math.max(0, currentActor.resource - cost);
-        setCombatants(prev => prev.map(u => u.id === currentActor.id ? { ...u, resource: newResource, hasActed: true } : u));
-        if (!currentActor.isEnemy && onResourceChange) onResourceChange(currentActor.id, newResource);
+        const newResource = Math.max(0, freshActor.resource - cost);
+        setCombatants(prev => prev.map(u => u.id === freshActor.id ? { ...u, resource: newResource, hasActed: true } : u));
+        if (!freshActor.isEnemy && onResourceChange) onResourceChange(freshActor.id, newResource);
 
         const roll = Math.floor(Math.random() * 20) + 1;
-        const baseModifier = currentActor.atk >= 5 ? 5 : 2;
-        const { bonus: tacticalBonus, reason: tacticalReason } = getTacticalModifier(currentActor, target);
+        const baseModifier = freshActor.atk >= 5 ? 5 : 2;
+        const { bonus: tacticalBonus, reason: tacticalReason } = getTacticalModifier(freshActor, target);
         const totalModifier = baseModifier + tacticalBonus;
         const success = (roll + totalModifier) >= target.ac;
 
@@ -478,8 +610,31 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                     const newCombatants = combatants.map(u => u.id === target.id ? { ...u, hp: newHp } : u);
                     setCombatants(newCombatants);
 
+                    // PREPARE SYNCED ACTION
+                    const actionEvent = {
+                        id: crypto.randomUUID(),
+                        sourceUserId: currentUserId,
+                        attackerName: currentActor.name,
+                        targetName: target.name,
+                        abilityName: action.name,
+                        roll,
+                        modifier,
+                        threshold,
+                        success: true,
+                        damage,
+                        timestamp: Date.now()
+                    };
+
                     lastSyncRef.current = Date.now();
-                    if (onUpdateCombatState) onUpdateCombatState({ combatants: newCombatants, turnIndex: currentTurnIndex, round, active: true, logs, updatedAt: lastSyncRef.current });
+                    if (onUpdateCombatState) onUpdateCombatState({
+                        combatants: newCombatants,
+                        turnIndex: currentTurnIndex,
+                        round,
+                        active: true,
+                        logs,
+                        updatedAt: lastSyncRef.current,
+                        lastAction: actionEvent
+                    });
 
                     if (action.cooldown > 0) {
                         setCooldowns(prev => ({ ...prev, [currentActor.id]: { ...(prev[currentActor.id] || {}), [action.name]: action.cooldown } }));
@@ -493,7 +648,36 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                 }, 250);
             } else {
                 if (onVFX) onVFX('spark', cx, cy, '#ffff00');
+
+                // SYNC MISS ACTION
+                const actionEvent = {
+                    id: crypto.randomUUID(),
+                    sourceUserId: currentUserId,
+                    attackerName: currentActor.name,
+                    targetName: target.name,
+                    abilityName: action.name,
+                    roll,
+                    modifier,
+                    threshold,
+                    success: false,
+                    damage: 0,
+                    timestamp: Date.now()
+                };
+
                 addLog({ role: 'system', content: `🎲 **${roll}**(+${modifier}) vs **${threshold}** AC | 💨 **${currentActor.name}** rate son attaque !` });
+
+                // Sync the miss
+                lastSyncRef.current = Date.now();
+                if (onUpdateCombatState) onUpdateCombatState({
+                    combatants, // No HP change
+                    turnIndex: currentTurnIndex,
+                    round,
+                    active: true,
+                    logs,
+                    updatedAt: lastSyncRef.current,
+                    lastAction: actionEvent
+                });
+
                 setTimeout(() => { if (currentActor?.isEnemy) finishTurn(); }, 1000);
             }
         }, 1000);
@@ -587,7 +771,14 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
     useEffect(() => {
         if (combatState === 'active' && currentActor && currentActor.isEnemy && !currentActor.hasActed) {
             const timer = setTimeout(async () => {
-                const playerTargets = combatants.filter(u => !u.isEnemy && u.hp > 0);
+                const currentCombatants = combatantsRef.current;
+                const freshActor = currentCombatants.find(u => u.id === currentActor.id);
+                if (!freshActor) {
+                    nextTurn();
+                    return;
+                }
+
+                const playerTargets = currentCombatants.filter(u => !u.isEnemy && u.hp > 0);
                 if (playerTargets.length === 0) {
                     nextTurn();
                     return;
@@ -596,55 +787,59 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                 // AI Always knows player position: target the closest one
                 const targetsWithDist = playerTargets.map(p => ({
                     unit: p,
-                    dist: Math.max(Math.abs(currentActor.posX - p.posX), Math.abs(currentActor.posY - p.posY))
+                    dist: Math.max(Math.abs(freshActor.posX - p.posX), Math.abs(freshActor.posY - p.posY))
                 })).sort((a, b) => a.dist - b.dist);
 
                 const primaryTarget = targetsWithDist[0].unit;
 
                 // --- STRATEGY: MOVEMENT ---
-                let enemyCanMove = currentActor.currentPM > 0;
+                let enemyCanMove = freshActor.currentPM > 0;
                 if (enemyCanMove) {
                     // Decide target destination
                     let targetX = primaryTarget.posX;
                     let targetY = primaryTarget.posY;
 
                     // If RANGED, try to stay away but in range
-                    if (currentActor.behavior_type === 'RANGED') {
+                    if (freshActor.behavior_type === 'RANGED') {
                         const preferredRange = 6;
                         const dist = targetsWithDist[0].dist;
                         if (dist < preferredRange) {
                             // Too close! Try to move away from primary target
-                            const dx = currentActor.posX - primaryTarget.posX;
-                            const dy = currentActor.posY - primaryTarget.posY;
+                            const dx = freshActor.posX - primaryTarget.posX;
+                            const dy = freshActor.posY - primaryTarget.posY;
                             const norm = Math.max(Math.abs(dx), Math.abs(dy)) || 1;
-                            targetX = currentActor.posX + Math.round((dx / norm) * 3);
-                            targetY = currentActor.posY + Math.round((dy / norm) * 3);
+                            targetX = freshActor.posX + Math.round((dx / norm) * 3);
+                            targetY = freshActor.posY + Math.round((dy / norm) * 3);
                         } else if (dist > 8) {
                             // Too far, close in slightly
-                            const dx = primaryTarget.posX - currentActor.posX;
-                            const dy = primaryTarget.posY - currentActor.posY;
+                            const dx = primaryTarget.posX - freshActor.posX;
+                            const dy = primaryTarget.posY - freshActor.posY;
                             const norm = Math.max(Math.abs(dx), Math.abs(dy)) || 1;
-                            targetX = currentActor.posX + Math.round((dx / norm) * 2);
-                            targetY = currentActor.posY + Math.round((dy / norm) * 2);
+                            targetX = freshActor.posX + Math.round((dx / norm) * 2);
+                            targetY = freshActor.posY + Math.round((dy / norm) * 2);
                         } else {
                             // In sweet spot
-                            targetX = currentActor.posX;
-                            targetY = currentActor.posY;
+                            targetX = freshActor.posX;
+                            targetY = freshActor.posY;
                         }
                     }
 
                     // Move step by step towards target destination
-                    let movesRemaining = currentActor.currentPM;
+                    let movesRemaining = freshActor.currentPM;
                     while (movesRemaining > 0) {
-                        const dx = Math.sign(targetX - currentActor.posX);
-                        const dy = Math.sign(targetY - currentActor.posY);
+                        // Refresh actor state in each loop iteration because executeMove updates it async
+                        const loopActor = combatantsRef.current.find(u => u.id === currentActor.id);
+                        if (!loopActor || loopActor.currentPM <= 0) break;
+
+                        const dx = Math.sign(targetX - loopActor.posX);
+                        const dy = Math.sign(targetY - loopActor.posY);
                         if (dx === 0 && dy === 0) break;
 
                         // Try to move closer
                         let moveX = 0, moveY = 0;
-                        if (dx !== 0 && isTileValid(currentActor.posX + dx, currentActor.posY) && !isTileOccupied(currentActor.posX + dx, currentActor.posY, currentActor.id)) {
+                        if (dx !== 0 && isTileValid(loopActor.posX + dx, loopActor.posY) && !isTileOccupied(loopActor.posX + dx, loopActor.posY, loopActor.id)) {
                             moveX = dx;
-                        } else if (dy !== 0 && isTileValid(currentActor.posX, currentActor.posY + dy) && !isTileOccupied(currentActor.posX, currentActor.posY + dy, currentActor.id)) {
+                        } else if (dy !== 0 && isTileValid(loopActor.posX, loopActor.posY + dy) && !isTileOccupied(loopActor.posX, loopActor.posY + dy, loopActor.id)) {
                             moveY = dy;
                         } else {
                             // Obstacle or reached target axis? Stop moving
@@ -654,24 +849,25 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                         if (moveX !== 0 || moveY !== 0) {
                             executeMove(moveX > 0 ? 'right' : moveX < 0 ? 'left' : moveY > 0 ? 'down' : 'up');
                             movesRemaining--;
-                            // Small delay for animation feel
+                            // Small delay for animation feel and state update
                             await new Promise(r => setTimeout(r, 300));
                         } else break;
                     }
                 }
 
                 // --- STRATEGY: ACTION ---
-                // Re-evaluate targets after move
-                const updatedTargets = combatants.filter(u => !u.isEnemy && u.hp > 0).map(p => ({
+                // Re-evaluate targets after move - using FRESH STATE
+                const postMoveActor = combatantsRef.current.find(u => u.id === currentActor.id) || freshActor;
+                const updatedTargets = combatantsRef.current.filter(u => !u.isEnemy && u.hp > 0).map(p => ({
                     unit: p,
-                    dist: Math.max(Math.abs(currentActor.posX - p.posX), Math.abs(currentActor.posY - p.posY))
+                    dist: Math.max(Math.abs(postMoveActor.posX - p.posX), Math.abs(postMoveActor.posY - p.posY))
                 })).sort((a, b) => a.dist - b.dist);
 
                 if (updatedTargets.length > 0) {
                     const bestTarget = updatedTargets[0];
                     // Pick best action
-                    const actions = currentActor.actions || [{ name: 'Attaque', range: 1.5, cost: 0 }];
-                    const availableActions = actions.filter(a => (a.cost || 0) <= currentActor.resource);
+                    const actions = postMoveActor.actions || [{ name: 'Attaque', range: 1.5, cost: 0 }];
+                    const availableActions = actions.filter(a => (a.cost || 0) <= postMoveActor.resource);
 
                     // Simple AI: use longest range if ranged, or highest damage if melee
                     let chosenAction = availableActions.find(a => bestTarget.dist <= (a.range || 1.5));
@@ -731,7 +927,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                 </div>
 
                 <div style={{ width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden', position: 'relative' }}>
-                    <img src={unit.portrait_url || 'https://via.placeholder.com/150'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={unit.name} />
+                    <img src={unit.portrait_url || 'https://placehold.co/150'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={unit.name} />
                     {/* Ring bars */}
                     <svg style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }} viewBox="0 0 100 100">
                         <circle cx="50" cy="50" r="48" fill="transparent" stroke="rgba(0,0,0,0.5)" strokeWidth="4" />
@@ -823,7 +1019,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                     <span style={{ fontSize: '0.8rem', color: '#888' }}>{combatants.filter(u => u.hp > 0).length} combattants en lice</span>
                 </div>
                 {combatants.length > 0 && <TurnTracker combatants={combatants} currentTurnIndex={currentTurnIndex} />}
-                <button onClick={onCombatEnd} style={{ color: '#ff4444', background: 'transparent', border: '1px solid #ff4444', padding: '6px 16px', borderRadius: '4px', cursor: 'pointer' }}>FUIR</button>
+                <button onClick={() => onCombatEnd({ victory: false, flight: true })} style={{ color: '#ff4444', background: 'transparent', border: '1px solid #ff4444', padding: '6px 16px', borderRadius: '4px', cursor: 'pointer' }}>FUIR</button>
             </div>
             <div style={{ flex: 1, display: 'flex', position: 'relative', overflow: 'hidden', background: '#0a0a0a' }}>
                 <div style={{
@@ -955,10 +1151,27 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                     </div>
                 </div>
                 <div style={{ width: '320px', background: 'rgba(0,0,0,0.9)', padding: '1.5rem', overflowY: 'auto', borderLeft: '2px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)' }}>
-                    {logs.map((l, i) => <div key={i} style={{ marginBottom: '0.6rem', fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', borderLeft: '2px solid var(--gold-dim)', paddingLeft: '8px' }}>{l.content}</div>)}
+                    {logs.map((l, i) => {
+                        const isImpact = l.content.includes('💥') || l.content.includes('💀');
+                        const isVictory = l.content.includes('🏆');
+                        return (
+                            <div key={i} style={{
+                                marginBottom: '0.8rem',
+                                fontSize: isVictory ? '1.1rem' : (isImpact ? '0.95rem' : '0.9rem'),
+                                color: isVictory ? 'var(--gold-primary)' : (isImpact ? '#fff' : 'rgba(255,255,255,0.8)'),
+                                borderLeft: isVictory ? '4px solid var(--gold-primary)' : '2px solid var(--gold-dim)',
+                                paddingLeft: '10px',
+                                background: isImpact ? 'rgba(255,0,0,0.1)' : 'transparent',
+                                borderRadius: '0 4px 4px 0'
+                            }}>
+                                {l.content}
+                            </div>
+                        );
+                    })}
                     <div ref={logEndRef} />
                 </div>
                 {rollOverlay && <RollOverlay {...rollOverlay} />}
+                {remoteAction && <RemoteActionOverlay action={remoteAction} onComplete={() => setRemoteAction(null)} />}
             </div>
             <div style={{ height: '220px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', padding: '1.5rem', background: 'linear-gradient(to top, #000, transparent)' }}>
                 {isLocalPlayerTurn ? (
@@ -970,7 +1183,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                             <button onClick={() => executeMove('right')} disabled={!canMove} className="btn-action" style={{ width: '40px', height: '40px' }}>➡️</button>
                         </div>
                         <div style={{ display: 'flex', gap: '1.5rem' }}>
-                            {[{ name: 'Attaque', desc: 'Attaque de base', range: 2 }, ...(currentActor.spells || [])].map((s, i) => <AbilityCard key={i} ability={typeof s === 'string' ? { name: s, range: 2 } : s} />)}
+                            {[{ name: 'Attaque', desc: 'Attaque de base', range: 2 }, ...(currentActor.spells || currentActor.abilities || [])].map((s, i) => <AbilityCard key={i} ability={typeof s === 'string' ? { name: s, range: 2 } : s} />)}
                             <button onClick={nextTurn} style={{ padding: '1rem 2rem', background: 'rgba(255,0,0,0.1)', border: '1px solid #ff4444', color: '#ff4444', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>FINIR LE TOUR</button>
                         </div>
                     </>

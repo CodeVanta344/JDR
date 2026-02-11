@@ -103,7 +103,7 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
             {/* Header */}
             <div className="sheet-header" style={{ padding: '1.2rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', gap: '1rem', alignItems: 'center' }}>
                 <div style={{ width: '55px', height: '55px', borderRadius: '50%', overflow: 'hidden', border: '2px solid var(--gold-primary)', background: '#000', boxShadow: '0 0 10px rgba(212,175,55,0.2)' }}>
-                    <img src={character.portrait_url || 'https://via.placeholder.com/60'} alt="Portrait" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={character.portrait_url || 'https://placehold.co/60'} alt="Portrait" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
                 <div>
                     <div style={{ fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--gold-primary)', letterSpacing: '0.5px' }}>{character.name}</div>
