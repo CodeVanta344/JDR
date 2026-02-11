@@ -1036,15 +1036,17 @@ export default function App() {
             return;
         }
 
-        // HOST: Trigger the actual start when all are ready
-        if (allPlayersReady && character?.is_ready && players.length >= 2) {
+        // HOST: Trigger the actual start when all are ready (ONLY ONCE)
+        if (allPlayersReady && character?.is_ready && players.length >= 2 && !hasMarker) {
+            // Immediately set adventureStarted to prevent multiple calls
+            setAdventureStarted(true);
+            
             supabase.from('messages').insert({
                 session_id: session.id,
                 role: 'system',
                 content: "(MEMOIRE:SYSTEM) START_ADVENTURE_TRIGGERED"
             }).then(({ error }) => {
                 if (!error) {
-                    setAdventureStarted(true);
                     handleStartAdventure();
                 }
             });
