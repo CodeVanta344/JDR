@@ -1114,7 +1114,7 @@ export default function App() {
     }, [players, session, profile, adventureStarted, messages, character]);
 
     const handleUpdateInventory = async (newInventory, newGold = null) => {
-        if (!character) return;
+        if (!character?.id) return;
         const updates = { inventory: newInventory };
         if (newGold !== null) updates.gold = newGold;
 
@@ -1198,7 +1198,7 @@ export default function App() {
     };
 
     const handleExperienceGain = async (amount, reason) => {
-        if (!character || !amount) return;
+        if (!character?.id || !amount) return;
         const newXp = (character.xp || 0) + amount;
         let newLevel = character.level || 1;
         let leveledUp = false;
