@@ -233,18 +233,30 @@ const RULES: string[] = [
     `  SI TU DECRIS UNE SCENE DE TENSION/VIOLENCE SANS ENVOYER "combat", TU AS ECHOUE.\n` +
     `  \n` +
     `  ⚠️ MOTS-CLES DE DECLENCHEMENT INSTANTANE ⚠️\n` +
-    `  Ces phrases = COMBAT OBLIGATOIRE, pas de narration sans "combat":\n` +
-    `  - "attaquer" / "attaquons" / "j'attaque" / "nous attaquons"\n` +
-    `  - "engager le combat" / "engage le combat" / "engagement"\n` +
-    `  - "frapper" / "frapons" / "je frappe"\n` +
-    `  - "degainer" / "sortir mon arme"\n` +
+    `  CES MOTS SEULS OU DANS UNE PHRASE = COMBAT OBLIGATOIRE IMMEDIATEMENT:\n` +
+    `  \n` +
+    `  VARIANTES "ATTAQUER":\n` +
+    `  - "attaque" / "attaquer" / "attaquons" / "j'attaque" / "nous attaquons" / "on attaque"\n` +
+    `  \n` +
+    `  VARIANTES "COMBAT":\n` +
+    `  - "combat" / "le combat" / "un combat" / "en combat" / "au combat"\n` +
+    `  - "engager le combat" / "engage le combat" / "engagement" / "j'engage le combat"\n` +
+    `  - "initier le combat" / "initie le combat" / "on initie le combat"\n` +
+    `  - "commencer le combat" / "commence le combat" / "lancer le combat"\n` +
+    `  \n` +
+    `  AUTRES DECLENCHEURS:\n` +
+    `  - "frapper" / "frapons" / "je frappe" / "nous frappons"\n` +
+    `  - "degainer" / "sortir mon arme" / "degaine"\n` +
     `  - "lancer un sort offensif" / "sort d'attaque"\n` +
-    `  - "charger" / "foncer sur"\n` +
-    `  - "se battre" / "me battre" / "battre"\n` +
-    `  - "initier" + "combat"\n` +
+    `  - "charger" / "foncer sur" / "charge"\n` +
+    `  - "se battre" / "me battre" / "battre" / "nous battre"\n` +
     `  - "entrer dans l'arene" / "rentrer dans l'arene" / "aller dans l'arene" / "arene"\n` +
     `  - "participer au tournoi" / "tournoi" / "s'inscrire au combat"\n` +
     `  - "accepter le duel" / "duel"\n` +
+    `  \n` +
+    `  ⚠️⚠️⚠️ REGLE ABSOLUE ⚠️⚠️⚠️\n` +
+    `  Si tu detectes UN SEUL de ces mots dans le message du joueur, tu DOIS inclure "combat" dans ta reponse JSON.\n` +
+    `  PAS D'EXCEPTION. PAS DE NARRATION SANS "combat".\n` +
     `  \n` +
     `  🏛️ EXCEPTION ARENES/TOURNOIS/DUELS (TRES IMPORTANT):\n` +
     `  Si le joueur demande a entrer dans une ARENE, un TOURNOI, ou accepte un DUEL,\n` +
