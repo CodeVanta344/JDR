@@ -691,10 +691,17 @@ Deno.serve(async (req: Request) => {
 
         // ── Save to DB (skip private contexts) ──
         if (context !== 'GAME_ASSISTANT' && context !== 'PRIVATE_NPC_CONVERSATION') {
+            // Extract narrative from result for clean display
+            const displayContent = typeof result === 'object' && result.narrative 
+                ? result.narrative 
+                : typeof result === 'string' 
+                    ? result 
+                    : JSON.stringify(result);
+
             await supabase.from('messages').insert([{
                 session_id: sessionId,
                 role: 'system',
-                content: JSON.stringify(result),
+                content: displayContent,
             }]);
         }
 
