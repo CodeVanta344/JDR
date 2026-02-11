@@ -558,7 +558,7 @@ export function CharacterCreation({ onCreate, onBack, generateImage, sessionId }
                                         </div>
 
                                         <div className="items-container" style={{ padding: '1.5rem', flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                            {opt.items.map((item, i) => {
+                                            {opt.items && opt.items.filter(item => item && typeof item === 'object').map((item, i) => {
                                                 const isWeapon = item.category?.toLowerCase().includes('martial') || item.category?.toLowerCase().includes('simple');
                                                 const isArmor = item.category?.toLowerCase().includes('heavy') || item.category?.toLowerCase().includes('medium') || item.category?.toLowerCase().includes('light') || item.category?.toLowerCase().includes('shield');
                                                 const icon = isWeapon ? '⚔️' : isArmor ? '🛡️' : '📦';
@@ -572,14 +572,14 @@ export function CharacterCreation({ onCreate, onBack, generateImage, sessionId }
                                                     }}>
                                                         <div style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                             {hasIcon ? (
-                                                                <img src={item.img} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 0 5px rgba(212, 175, 55, 0.5))' }} />
+                                                                <img src={item.img} alt={item.name || 'Item'} style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 0 5px rgba(212, 175, 55, 0.5))' }} />
                                                             ) : (
                                                                 <span style={{ fontSize: '1.5rem', filter: 'drop-shadow(0 0 5px var(--gold-dim))' }}>{icon}</span>
                                                             )}
                                                         </div>
                                                         <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                            <strong style={{ fontSize: '0.85rem', color: 'white' }}>{item.name}</strong>
-                                                            <small style={{ fontSize: '0.65rem', color: 'var(--gold-light)', opacity: 0.7, textTransform: 'uppercase' }}>{item.category}</small>
+                                                            <strong style={{ fontSize: '0.85rem', color: 'white' }}>{item.name || 'Objet'}</strong>
+                                                            <small style={{ fontSize: '0.65rem', color: 'var(--gold-light)', opacity: 0.7, textTransform: 'uppercase' }}>{item.category || 'Divers'}</small>
                                                         </div>
                                                     </div>
                                                 );
