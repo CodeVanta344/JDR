@@ -7,44 +7,34 @@ export const TradeModal = ({
     currentPlayer, 
     players, 
     sessionId,
-    onTradeComplete 
+    onTradeComplete,
+    incomingTrade,
+    onIncomingTradeHandled,
+    pendingTradeResponse,
+    onPendingResponseHandled
 }) => {
     const [selectedPlayer, setSelectedPlayer] = useState(null);
     const [offeredItems, setOfferedItems] = useState([]);
     const [offeredGold, setOfferedGold] = useState(0);
     const [pendingTrade, setPendingTrade] = useState(null);
-    const [incomingTrade, setIncomingTrade] = useState(null);
 
     const otherPlayers = players.filter(p => p.id !== currentPlayer?.id);
 
     useEffect(() => {
-        if (!sessionId || !currentPlayer?.id) return;
-
-        const channel = supabase
-            .channel(`trade_${sessionId}`)
-            .on('broadcast', { event: 'trade_offer' }, (payload) => {
-                if (payload.payload.targetId === currentPlayer.id) {
-                    setIncomingTrade(payload.payload);
-                }
-            })
-            .on('broadcast', { event: 'trade_response' }, (payload) => {
-                if (payload.payload.fromId === currentPlayer.id) {
-                    if (payload.payload.accepted) {
-                        onTradeComplete?.(payload.payload);
-                        setPendingTrade(null);
-                        onClose();
-                    } else {
-                        setPendingTrade(null);
-                        alert("L'echange a ete refuse.");
-                    }
-                }
-            })
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [sessionId, currentPlayer?.id]);
+        if (pendingTradeResponse && pendingTrade) {
+            if (pendingTradeResponse.accepted) {
+                onTradeComplete?.(pendingTradeResponse);
+                setPendingTrade(null);
+                setOfferedItems([]);
+                setOfferedGold(0);
+                onClose();
+            } else {
+                setPendingTrade(null);
+                alert("L'échange a été refusé.");
+            }
+            onPendingResponseHandled?.();
+        }
+    }, [pendingTradeResponse]);
 
     const toggleItemOffer = (item, index) => {
         const key = `${index}_${item.name}`;
@@ -116,11 +106,8 @@ export const TradeModal = ({
             }
         });
 
-        setIncomingTrade(null);
-        if (accepted) onClose();
+        onIncomingTradeHandled?.();
     };
-
-    if (!isOpen) return null;
 
     if (incomingTrade) {
         return (
@@ -131,10 +118,14 @@ export const TradeModal = ({
             }}>
                 <div className="glass-panel" style={{
                     width: '90%', maxWidth: '500px', padding: '2rem',
-                    border: '1px solid var(--gold-primary)', borderRadius: '12px'
+                    border: '2px solid var(--gold-primary)', borderRadius: '12px',
+                    boxShadow: '0 0 40px rgba(212, 175, 55, 0.3)'
                 }}>
+                    <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                        <span style={{ fontSize: '3rem' }}>🤝</span>
+                    </div>
                     <h2 style={{ color: 'var(--gold-primary)', marginBottom: '1.5rem', textAlign: 'center' }}>
-                        PROPOSITION D'ECHANGE
+                        PROPOSITION D'ÉCHANGE
                     </h2>
                     
                     <p style={{ color: '#fff', textAlign: 'center', marginBottom: '1rem' }}>
@@ -142,43 +133,57 @@ export const TradeModal = ({
                     </p>
 
                     {incomingTrade.gold > 0 && (
-                        <div style={{ textAlign: 'center', marginBottom: '1rem', color: 'var(--gold-primary)', fontSize: '1.2rem' }}>
-                            {incomingTrade.gold} pieces d'or
+                        <div style={{ 
+                            textAlign: 'center', 
+                            marginBottom: '1rem', 
+                            padding: '0.8rem',
+                            background: 'rgba(212, 175, 55, 0.1)',
+                            borderRadius: '8px',
+                            border: '1px solid var(--gold-dim)'
+                        }}>
+                            <span style={{ color: 'var(--gold-primary)', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                                {incomingTrade.gold}
+                            </span>
+                            <span style={{ color: 'var(--gold-light)', marginLeft: '0.5rem' }}>pièces d'or</span>
                         </div>
                     )}
 
-                    <div style={{ display: 'grid', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                        {incomingTrade.items.map((item, i) => (
-                            <div key={i} style={{
-                                padding: '0.8rem', background: 'rgba(255,255,255,0.05)',
-                                border: '1px solid var(--glass-border)', borderRadius: '6px'
-                            }}>
-                                <div style={{ color: '#fff', fontWeight: 'bold' }}>{item.name}</div>
-                                <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{item.desc}</div>
-                            </div>
-                        ))}
-                    </div>
+                    {incomingTrade.items.length > 0 && (
+                        <div style={{ display: 'grid', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                            {incomingTrade.items.map((item, i) => (
+                                <div key={i} style={{
+                                    padding: '0.8rem', background: 'rgba(255,255,255,0.05)',
+                                    border: '1px solid var(--glass-border)', borderRadius: '6px'
+                                }}>
+                                    <div style={{ color: '#fff', fontWeight: 'bold' }}>{item.name}</div>
+                                    {item.desc && <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{item.desc}</div>}
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
                     <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
                         <button 
                             className="btn-gold" 
                             onClick={() => respondToTrade(true)}
-                            style={{ padding: '0.8rem 2rem' }}
+                            style={{ padding: '0.8rem 2rem', fontSize: '1rem' }}
                         >
-                            ACCEPTER
+                            ✓ ACCEPTER
                         </button>
                         <button 
                             className="btn-secondary" 
                             onClick={() => respondToTrade(false)}
                             style={{ padding: '0.8rem 2rem' }}
                         >
-                            REFUSER
+                            ✕ REFUSER
                         </button>
                     </div>
                 </div>
             </div>
         );
     }
+
+    if (!isOpen) return null;
 
     if (pendingTrade) {
         return (
@@ -199,7 +204,7 @@ export const TradeModal = ({
                         }} />
                     </div>
                     <p style={{ color: '#fff' }}>
-                        En attente de la reponse de <strong style={{ color: 'var(--gold-light)' }}>{pendingTrade.targetName}</strong>...
+                        En attente de la réponse de <strong style={{ color: 'var(--gold-light)' }}>{pendingTrade.targetName}</strong>...
                     </p>
                     <button 
                         className="btn-secondary" 
@@ -225,7 +230,7 @@ export const TradeModal = ({
                 border: '1px solid var(--gold-dim)', borderRadius: '12px', overflow: 'hidden'
             }}>
                 <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--glass-border)' }}>
-                    <h2 style={{ color: 'var(--gold-primary)', margin: 0 }}>ECHANGER AVEC UN COMPAGNON</h2>
+                    <h2 style={{ color: 'var(--gold-primary)', margin: 0 }}>🤝 ÉCHANGER AVEC UN COMPAGNON</h2>
                 </div>
 
                 <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
@@ -234,7 +239,9 @@ export const TradeModal = ({
                             CHOISIR UN COMPAGNON
                         </label>
                         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                            {otherPlayers.map(p => (
+                            {otherPlayers.length === 0 ? (
+                                <p style={{ color: '#666', fontStyle: 'italic' }}>Aucun autre joueur dans la session.</p>
+                            ) : otherPlayers.map(p => (
                                 <button
                                     key={p.id}
                                     onClick={() => setSelectedPlayer(p)}
@@ -254,7 +261,7 @@ export const TradeModal = ({
 
                     <div style={{ marginBottom: '1.5rem' }}>
                         <label style={{ color: 'var(--text-muted)', fontSize: '0.8rem', display: 'block', marginBottom: '0.5rem' }}>
-                            OR A DONNER (Vous avez: {currentPlayer?.gold || 0})
+                            OR À DONNER (Vous avez: {currentPlayer?.gold || 0} ✧)
                         </label>
                         <input
                             type="number"
@@ -272,7 +279,7 @@ export const TradeModal = ({
 
                     <div>
                         <label style={{ color: 'var(--text-muted)', fontSize: '0.8rem', display: 'block', marginBottom: '0.5rem' }}>
-                            OBJETS A DONNER (cliquez pour selectionner)
+                            OBJETS À DONNER (cliquez pour sélectionner)
                         </label>
                         <div style={{ display: 'grid', gap: '0.5rem', maxHeight: '250px', overflowY: 'auto' }}>
                             {(currentPlayer?.inventory || []).map((item, i) => {
@@ -293,14 +300,17 @@ export const TradeModal = ({
                                     >
                                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                             <span style={{ color: '#fff', fontWeight: 'bold' }}>
-                                                {item.name} {item.equipped && '(Equipe)'}
+                                                {item.name} {item.equipped && '(Équipé)'}
                                             </span>
-                                            {isSelected && <span style={{ color: 'var(--gold-primary)' }}>SELECTIONNE</span>}
+                                            {isSelected && <span style={{ color: 'var(--gold-primary)' }}>✓ SÉLECTIONNÉ</span>}
                                         </div>
-                                        <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{item.desc}</div>
+                                        {item.desc && <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{item.desc}</div>}
                                     </div>
                                 );
                             })}
+                            {(!currentPlayer?.inventory || currentPlayer.inventory.length === 0) && (
+                                <p style={{ color: '#666', fontStyle: 'italic', padding: '1rem' }}>Votre inventaire est vide.</p>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -313,7 +323,7 @@ export const TradeModal = ({
                         disabled={!selectedPlayer || (offeredItems.length === 0 && offeredGold === 0)}
                         style={{ opacity: (!selectedPlayer || (offeredItems.length === 0 && offeredGold === 0)) ? 0.5 : 1 }}
                     >
-                        PROPOSER L'ECHANGE
+                        PROPOSER L'ÉCHANGE
                     </button>
                 </div>
             </div>

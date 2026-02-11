@@ -55,6 +55,8 @@ export default function App() {
     const [availableSessions, setAvailableSessions] = useState([]);
     const [gamePhase, setGamePhase] = useState('INTRO'); // INTRO, EXPLORATION, DRAMA
     const [showTradeModal, setShowTradeModal] = useState(false);
+    const [incomingTrade, setIncomingTrade] = useState(null);
+    const [pendingTradeResponse, setPendingTradeResponse] = useState(null);
 
     // ... (rest of state)
 
@@ -198,6 +200,34 @@ export default function App() {
             supabase.removeChannel(channel);
         };
     }, [session?.id]);
+
+    // --- TRADE CHANNEL LISTENER (global - not tied to modal) ---
+    useEffect(() => {
+        if (!session?.id || !character?.id) return;
+
+        const tradeChannel = supabase
+            .channel(`trade_${session.id}`)
+            .on('broadcast', { event: 'trade_offer' }, (payload) => {
+                if (payload.payload.targetId === character.id) {
+                    setIncomingTrade(payload.payload);
+                    triggerSFX('notification');
+                }
+            })
+            .on('broadcast', { event: 'trade_response' }, (payload) => {
+                if (payload.payload.fromId === character.id) {
+                    setPendingTradeResponse(payload.payload);
+                    if (payload.payload.accepted) {
+                        triggerSFX('gold');
+                        fetchSession();
+                    }
+                }
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(tradeChannel);
+        };
+    }, [session?.id, character?.id]);
 
     // --- AUTO-CREATE LOBBY PLAYER ---
     useEffect(() => {
@@ -2121,16 +2151,25 @@ export default function App() {
             }
 
             {
-                showTradeModal && (
+                (showTradeModal || incomingTrade) && (
                     <TradeModal
                         isOpen={showTradeModal}
                         onClose={() => setShowTradeModal(false)}
                         currentPlayer={character}
                         players={players}
                         sessionId={session?.id}
+                        incomingTrade={incomingTrade}
+                        onIncomingTradeHandled={() => setIncomingTrade(null)}
+                        pendingTradeResponse={pendingTradeResponse}
+                        onPendingResponseHandled={() => setPendingTradeResponse(null)}
                         onTradeComplete={(trade) => {
                             triggerSFX('gold');
                             fetchSession();
+                            addMessage({
+                                role: 'system',
+                                content: `[ÉCHANGE] Un échange a été effectué entre joueurs.`,
+                                timestamp: Date.now()
+                            });
                         }}
                     />
                 )
