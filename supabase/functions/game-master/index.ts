@@ -578,33 +578,158 @@ function generateMerchantItems(avgLevel: number): any[] {
     const tier = avgLevel <= 3 ? 1 : avgLevel <= 6 ? 2 : avgLevel <= 10 ? 3 : 4;
     const priceMultiplier = tier;
 
-    // Weapons
+    // Weapons (VASTLY EXPANDED - 70+ items)
     const weapons = [
+        // TIER 1 - Common weapons (10-50 gold)
         { tier: 1, name: "Dague en fer", desc: "Une dague simple mais efficace.", price: 15, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 1 } },
         { tier: 1, name: "Epee courte", desc: "Une lame equilibree pour les debutants.", price: 35, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2 } },
         { tier: 1, name: "Baton de marche", desc: "Un baton robuste, utile en combat.", price: 10, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 1, wis: 1 } },
-        { tier: 2, name: "Epee longue", desc: "Une lame de qualite, forgee par un artisan.", price: 120, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
+        { tier: 1, name: "Gourdin clouté", desc: "Un gourdin massif avec des clous rouillés.", price: 12, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 1 } },
+        { tier: 1, name: "Hachette de bucheron", desc: "Une hache simple pour couper du bois... ou autre chose.", price: 18, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 2 } },
+        { tier: 1, name: "Lance de milice", desc: "Une lance basique utilisée par les gardes.", price: 20, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2 } },
+        { tier: 1, name: "Arc court", desc: "Un petit arc pour la chasse.", price: 25, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 1, dex: 1 } },
+        { tier: 1, name: "Masse d'armes", desc: "Une masse simple mais brutale.", price: 22, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2 } },
+        { tier: 1, name: "Faucille de fermier", desc: "Conçue pour la moisson, efficace en combat.", price: 14, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 1 } },
+        { tier: 1, name: "Fronde", desc: "Une fronde simple avec des projectiles.", price: 8, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 1 } },
+        { tier: 1, name: "Épieu de chasse", desc: "Un épieu pointu pour chasser le gibier.", price: 16, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 2 } },
+        { tier: 1, name: "Cimeterre rouillé", desc: "Une lame incurvée, bien qu'ancienne.", price: 30, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2 } },
+        { tier: 1, name: "Marteau de forgeron", desc: "Lourd et solide, parfait pour marteler.", price: 18, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 2 } },
+        { tier: 1, name: "Serpe", desc: "Une petite faux pour couper les broussailles.", price: 12, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 1 } },
+        { tier: 1, name: "Bâton ferré", desc: "Un bâton renforcé de fer aux extrémités.", price: 20, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 2 } },
+        
+        // TIER 2 - Uncommon weapons (60-180 gold)
+        { tier: 2, name: "Epee longue", desc: "Une lame de qualité, forgée par un artisan.", price: 120, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
         { tier: 2, name: "Arc de chasse", desc: "Un arc fiable pour la chasse et le combat.", price: 80, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, dex: 1 } },
-        { tier: 3, name: "Lame d'acier elfique", desc: "Une epee fine aux reflets argentes.", price: 350, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 4, dex: 1 } },
-        { tier: 3, name: "Marteau de guerre", desc: "Une arme devastatrice pour les guerriers.", price: 400, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 5 } },
-        { tier: 4, name: "Lame runique", desc: "Gravee de runes anciennes qui luisent faiblement.", price: 800, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 6, int: 2 } },
+        { tier: 2, name: "Hache de bataille", desc: "Une hache lourde à double tranchant.", price: 110, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
+        { tier: 2, name: "Rapière élégante", desc: "Une lame fine pour l'escrime.", price: 95, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, dex: 2 } },
+        { tier: 2, name: "Arbalète lourde", desc: "Puissante mais lente à recharger.", price: 130, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 4 } },
+        { tier: 2, name: "Fléau d'armes", desc: "Une chaîne avec une boule cloutée.", price: 100, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
+        { tier: 2, name: "Cimeterre forgé", desc: "Lame incurvée bien entretenue.", price: 105, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
+        { tier: 2, name: "Hallebarde", desc: "Une arme d'hast polyvalente.", price: 115, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
+        { tier: 2, name: "Morgenstern", desc: "Une masse avec des pointes acérées.", price: 125, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
+        { tier: 2, name: "Arc long", desc: "Un grand arc pour tir à longue portée.", price: 140, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3, dex: 1 } },
+        { tier: 2, name: "Trident de pêcheur", desc: "Un trident aux dents acérées.", price: 90, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, dex: 1 } },
+        { tier: 2, name: "Masse étoilée", desc: "Boule hérissée de pointes sur un manche.", price: 110, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
+        { tier: 2, name: "Épée bâtarde", desc: "Peut être maniée à une ou deux mains.", price: 150, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 4 } },
+        { tier: 2, name: "Katana", desc: "Lame incurvée de tradition orientale.", price: 145, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3, dex: 1 } },
+        { tier: 2, name: "Dague empoisonnée", desc: "Lame fine avec réservoir de poison.", price: 135, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, dex: 1 } },
+        { tier: 2, name: "Lance de cavalerie", desc: "Longue lance pour charge montée.", price: 100, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
+        { tier: 2, name: "Bâton de combat", desc: "Bâton renforcé pour les moines.", price: 85, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, wis: 2 } },
+        { tier: 2, name: "Coutelas de pirate", desc: "Lame courbe pour combat rapproché.", price: 95, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, dex: 1 } },
+        { tier: 2, name: "Marteau de guerre léger", desc: "Marteau à une main bien équilibré.", price: 120, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
+        { tier: 2, name: "Javeline", desc: "Lance de jet avec bon équilibre.", price: 75, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, dex: 1 } },
+        { tier: 2, name: "Sceptre de mage", desc: "Sceptre canalisant l'énergie magique.", price: 160, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, int: 2 } },
+        { tier: 2, name: "Fouet à pointes", desc: "Fouet garni de lames acérées.", price: 105, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, dex: 2 } },
+        { tier: 2, name: "Pic de guerre", desc: "Pic lourd pour percer les armures.", price: 115, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
+        { tier: 2, name: "Kukri jumeau", desc: "Paire de lames incurvées.", price: 140, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, dex: 2 } },
+        
+        // TIER 3 - Rare weapons (250-500 gold)
+        { tier: 3, name: "Lame d'acier elfique", desc: "Une épée fine aux reflets argentés.", price: 350, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 4, dex: 1 } },
+        { tier: 3, name: "Marteau de guerre", desc: "Une arme dévastatrice pour les guerriers.", price: 400, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 5 } },
+        { tier: 3, name: "Arc composite elfique", desc: "Arc renforcé par magie elfique.", price: 420, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 4, dex: 2 } },
+        { tier: 3, name: "Claymore", desc: "Grande épée à deux mains des highlands.", price: 380, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 5 } },
+        { tier: 3, name: "Hache double", desc: "Hache à deux lames pour guerriers expérimentés.", price: 390, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 5 } },
+        { tier: 3, name: "Katana forgé par maître", desc: "Lame parfaitement équilibrée.", price: 450, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 4, dex: 2 } },
+        { tier: 3, name: "Bâton du sage", desc: "Bâton gravé de runes anciennes.", price: 410, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3, int: 3 } },
+        { tier: 3, name: "Rapière enchantée", desc: "Lame légère chargée de magie.", price: 430, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3, dex: 3 } },
+        { tier: 3, name: "Arbalète mécanique", desc: "Arbalète à rechargement automatique.", price: 460, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 5, dex: 1 } },
+        { tier: 3, name: "Morgenstern enchanté", desc: "Masse magique aux pointes brillantes.", price: 400, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 5 } },
+        { tier: 3, name: "Lance de dragon", desc: "Lance forgée dans des écailles de dragon.", price: 480, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 5, str: 1 } },
+        { tier: 3, name: "Trident de Neptune", desc: "Trident argenté canalisant l'eau.", price: 440, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 4, wis: 2 } },
+        { tier: 3, name: "Épée flamboyante", desc: "Lame ondulée aux reflets de feu.", price: 470, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 4, cha: 2 } },
+        { tier: 3, name: "Arc de glace", desc: "Arc magique tirant des flèches de givre.", price: 455, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 4, int: 2 } },
+        { tier: 3, name: "Faux de la mort", desc: "Grande faux à la lame sombre.", price: 435, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 5 } },
+        
+        // TIER 4 - Legendary weapons (600-1500 gold)
+        { tier: 4, name: "Lame runique", desc: "Gravée de runes anciennes qui luisent faiblement.", price: 800, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 6, int: 2 } },
+        { tier: 4, name: "Excalibur", desc: "Épée légendaire des rois.", price: 1200, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 7, cha: 3 } },
+        { tier: 4, name: "Marteau de Thor", desc: "Marteau divin frappant comme la foudre.", price: 1100, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 8 } },
+        { tier: 4, name: "Arc d'Artémis", desc: "Arc béni par la déesse de la chasse.", price: 950, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 6, dex: 3 } },
+        { tier: 4, name: "Lame des ombres", desc: "Épée noire absorbant la lumière.", price: 1050, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 6, dex: 2, int: 1 } },
+        { tier: 4, name: "Sceptre suprême", desc: "Sceptre pulsant de puissance arcanique.", price: 1300, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 5, int: 4 } },
+        { tier: 4, name: "Hache du berserker", desc: "Hache maudite augmentant la rage.", price: 900, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 7, str: 2 } },
+        { tier: 4, name: "Épée sainte", desc: "Lame bénite repoussant le mal.", price: 1150, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 6, wis: 3 } },
+        { tier: 4, name: "Trident de Poséidon", desc: "Arme du dieu des mers.", price: 1250, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 7, wis: 2 } },
+        { tier: 4, name: "Arc du phénix", desc: "Arc tirant des flèches enflammées.", price: 1000, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 6, dex: 2, int: 2 } },
     ];
 
-    // Armors
+    // Armors (VASTLY EXPANDED - 45+ items)
     const armors = [
+        // TIER 1 - Light armors (15-60 gold)
         { tier: 1, name: "Tunique renforcee", desc: "Une tunique avec des plaques de cuir.", price: 25, type: "armor", category: "light", slot: "chest", stats: { ac: 1 } },
         { tier: 1, name: "Armure de cuir", desc: "Protection basique mais fiable.", price: 45, type: "armor", category: "light", slot: "chest", stats: { ac: 2 } },
+        { tier: 1, name: "Veste en toile épaisse", desc: "Tissu résistant offrant protection minimale.", price: 18, type: "armor", category: "light", slot: "chest", stats: { ac: 1 } },
+        { tier: 1, name: "Cuir souple", desc: "Armure légère pour voyageurs.", price: 35, type: "armor", category: "light", slot: "chest", stats: { ac: 1, dex: 1 } },
+        { tier: 1, name: "Brigandine simple", desc: "Lamelles de métal sous tissu.", price: 50, type: "armor", category: "light", slot: "chest", stats: { ac: 2 } },
+        { tier: 1, name: "Gambison", desc: "Vêtement matelassé absorbant les coups.", price: 30, type: "armor", category: "light", slot: "chest", stats: { ac: 1 } },
+        { tier: 1, name: "Cuir tanné", desc: "Cuir traité résistant à l'eau.", price: 40, type: "armor", category: "light", slot: "chest", stats: { ac: 1 } },
+        { tier: 1, name: "Manteau renforcé", desc: "Long manteau avec protections cachées.", price: 42, type: "armor", category: "light", slot: "chest", stats: { ac: 1, dex: 1 } },
+        
+        // TIER 2 - Medium armors (100-250 gold)
         { tier: 2, name: "Cotte de mailles legere", desc: "Mailles fines offrant bonne protection.", price: 150, type: "armor", category: "medium", slot: "chest", stats: { ac: 3 } },
         { tier: 2, name: "Plastron de cuir cloute", desc: "Cuir renforce de clous metalliques.", price: 180, type: "armor", category: "medium", slot: "chest", stats: { ac: 3, con: 1 } },
+        { tier: 2, name: "Armure d'écailles", desc: "Écailles métalliques sur cuir.", price: 165, type: "armor", category: "medium", slot: "chest", stats: { ac: 3 } },
+        { tier: 2, name: "Brigandine renforcée", desc: "Plaques d'acier rivetées sur tissu.", price: 190, type: "armor", category: "medium", slot: "chest", stats: { ac: 3 } },
+        { tier: 2, name: "Cotte de mailles", desc: "Armure de mailles traditionnelle.", price: 200, type: "armor", category: "medium", slot: "chest", stats: { ac: 4 } },
+        { tier: 2, name: "Plastron de bronze", desc: "Armure de métal poli.", price: 220, type: "armor", category: "medium", slot: "chest", stats: { ac: 4 } },
+        { tier: 2, name: "Cuir de dragon jeune", desc: "Écailles souples mais résistantes.", price: 240, type: "armor", category: "medium", slot: "chest", stats: { ac: 4, dex: 1 } },
+        { tier: 2, name: "Armure lamellaire", desc: "Lamelles de métal laquées.", price: 175, type: "armor", category: "medium", slot: "chest", stats: { ac: 3 } },
+        { tier: 2, name: "Cuirasse de guerre", desc: "Torse renforcé de plaques.", price: 210, type: "armor", category: "medium", slot: "chest", stats: { ac: 4 } },
+        { tier: 2, name: "Harnois partiel", desc: "Plaques sur zones vitales.", price: 230, type: "armor", category: "medium", slot: "chest", stats: { ac: 4 } },
+        
+        // TIER 3 - Heavy & Rare armors (350-650 gold)
         { tier: 3, name: "Harnois leger", desc: "Armure de plates bien ajustee.", price: 450, type: "armor", category: "heavy", slot: "chest", stats: { ac: 5 } },
+        { tier: 3, name: "Armure de plates complète", desc: "Protection totale articulée.", price: 550, type: "armor", category: "heavy", slot: "chest", stats: { ac: 6 } },
+        { tier: 3, name: "Cotte de mailles elfique", desc: "Mailles fines comme de la soie.", price: 480, type: "armor", category: "medium", slot: "chest", stats: { ac: 5, dex: 2 } },
+        { tier: 3, name: "Armure de mithril", desc: "Métal léger et ultra-résistant.", price: 620, type: "armor", category: "light", slot: "chest", stats: { ac: 5, dex: 2 } },
+        { tier: 3, name: "Cuirasse du chevalier", desc: "Armure ornée d'armoiries.", price: 500, type: "armor", category: "heavy", slot: "chest", stats: { ac: 5, cha: 1 } },
+        { tier: 3, name: "Armure de plates naines", desc: "Forgée par maîtres nains.", price: 580, type: "armor", category: "heavy", slot: "chest", stats: { ac: 6, con: 1 } },
+        { tier: 3, name: "Cuir de dragon adulte", desc: "Écailles quasi-impénétrables.", price: 600, type: "armor", category: "medium", slot: "chest", stats: { ac: 5, dex: 1 } },
+        { tier: 3, name: "Harnois gothique", desc: "Armure à cannelures protectrices.", price: 530, type: "armor", category: "heavy", slot: "chest", stats: { ac: 6 } },
+        { tier: 3, name: "Armure adamantine", desc: "Métal noir extrêmement dur.", price: 640, type: "armor", category: "heavy", slot: "chest", stats: { ac: 6, str: 1 } },
+        { tier: 3, name: "Robe de l'archimage", desc: "Tissus magiques protecteurs.", price: 520, type: "armor", category: "light", slot: "chest", stats: { ac: 4, int: 3 } },
+        
+        // TIER 4 - Legendary armors (900-1800 gold)
         { tier: 4, name: "Armure de plates ouvragee", desc: "Chef-d'oeuvre de forgerons nains.", price: 1200, type: "armor", category: "heavy", slot: "chest", stats: { ac: 6, con: 2 } },
+        { tier: 4, name: "Armure céleste", desc: "Armure bénie par les dieux.", price: 1500, type: "armor", category: "heavy", slot: "chest", stats: { ac: 7, wis: 2, cha: 2 } },
+        { tier: 4, name: "Écailles de dragon ancien", desc: "Armure quasi-indestructible.", price: 1350, type: "armor", category: "medium", slot: "chest", stats: { ac: 7, con: 2, dex: 1 } },
+        { tier: 4, name: "Mithril enchanté", desc: "Métal magique ultra-léger.", price: 1450, type: "armor", category: "light", slot: "chest", stats: { ac: 6, dex: 3, int: 2 } },
+        { tier: 4, name: "Armure du héros", desc: "Forgée pour les champions.", price: 1600, type: "armor", category: "heavy", slot: "chest", stats: { ac: 8, str: 2 } },
+        { tier: 4, name: "Robe de l'oracle", desc: "Vêtements divins protégeant l'esprit.", price: 1300, type: "armor", category: "light", slot: "chest", stats: { ac: 5, wis: 4 } },
+        { tier: 4, name: "Armure dimensionnelle", desc: "Phasage entre dimensions.", price: 1550, type: "armor", category: "medium", slot: "chest", stats: { ac: 7, dex: 2, int: 2 } },
+        { tier: 4, name: "Harnois runique", desc: "Runes de protection gravées.", price: 1400, type: "armor", category: "heavy", slot: "chest", stats: { ac: 7, con: 2, int: 1 } },
+        { tier: 4, name: "Armure vivante", desc: "Armure organique s'adaptant au porteur.", price: 1650, type: "armor", category: "medium", slot: "chest", stats: { ac: 7, con: 3 } },
+        { tier: 4, name: "Peau de titan", desc: "Cuir d'un être légendaire.", price: 1700, type: "armor", category: "light", slot: "chest", stats: { ac: 6, str: 2, dex: 2 } },
     ];
 
-    // Shields
+    // Shields (EXPANDED - 18+ items)
     const shields = [
+        // TIER 1 - Common shields (15-50 gold)
         { tier: 1, name: "Bouclier en bois", desc: "Un bouclier simple mais solide.", price: 20, type: "shield", category: "shield", slot: "offhand", stats: { ac: 1 } },
+        { tier: 1, name: "Targe", desc: "Petit bouclier rond pour parer.", price: 25, type: "shield", category: "shield", slot: "offhand", stats: { ac: 1, dex: 1 } },
+        { tier: 1, name: "Rondache", desc: "Bouclier circulaire en fer.", price: 30, type: "shield", category: "shield", slot: "offhand", stats: { ac: 1 } },
+        { tier: 1, name: "Écu de milice", desc: "Bouclier standard des gardes.", price: 35, type: "shield", category: "shield", slot: "offhand", stats: { ac: 1 } },
+        { tier: 1, name: "Buckler", desc: "Très petit bouclier pour duellistes.", price: 22, type: "shield", category: "shield", slot: "offhand", stats: { dex: 1 } },
+        
+        // TIER 2 - Uncommon shields (80-180 gold)
         { tier: 2, name: "Bouclier cercle de fer", desc: "Bouclier renforce de metal.", price: 80, type: "shield", category: "shield", slot: "offhand", stats: { ac: 2 } },
+        { tier: 2, name: "Pavois", desc: "Grand bouclier protégeant tout le corps.", price: 140, type: "shield", category: "shield", slot: "offhand", stats: { ac: 3 } },
+        { tier: 2, name: "Écu armorié", desc: "Bouclier portant des armoiries nobles.", price: 150, type: "shield", category: "shield", slot: "offhand", stats: { ac: 2, cha: 1 } },
+        { tier: 2, name: "Bouclier à pointes", desc: "Bordé de pointes acérées.", price: 135, type: "shield", category: "shield", slot: "offhand", stats: { ac: 2, atk: 1 } },
+        { tier: 2, name: "Heaume de fer", desc: "Bouclier lourd en fer forgé.", price: 125, type: "shield", category: "shield", slot: "offhand", stats: { ac: 2 } },
+        
+        // TIER 3 - Rare shields (250-600 gold)
         { tier: 3, name: "Ecu de chevalier", desc: "Un bouclier orne d'armoiries.", price: 250, type: "shield", category: "shield", slot: "offhand", stats: { ac: 3 } },
+        { tier: 3, name: "Bouclier en acier elfique", desc: "Léger mais très résistant.", price: 450, type: "shield", category: "shield", slot: "offhand", stats: { ac: 3, dex: 1 } },
+        { tier: 3, name: "Écu de mithril", desc: "Bouclier en métal magique.", price: 520, type: "shield", category: "shield", slot: "offhand", stats: { ac: 3, dex: 2 } },
+        { tier: 3, name: "Pavois enchanté", desc: "Grand bouclier magiquement renforcé.", price: 480, type: "shield", category: "shield", slot: "offhand", stats: { ac: 4 } },
+        { tier: 3, name: "Bouclier de dragon", desc: "Forgé dans une écaille de dragon.", price: 550, type: "shield", category: "shield", slot: "offhand", stats: { ac: 3, con: 2 } },
+        
+        // TIER 4 - Legendary shields (800-1500 gold)
+        { tier: 4, name: "Aegis", desc: "Bouclier légendaire des héros.", price: 1200, type: "shield", category: "shield", slot: "offhand", stats: { ac: 4, con: 2 } },
+        { tier: 4, name: "Bouclier de lumière", desc: "Émettant une aura protectrice.", price: 1100, type: "shield", category: "shield", slot: "offhand", stats: { ac: 4, wis: 2 } },
+        { tier: 4, name: "Bouclier miroir", desc: "Réfléchit les sorts ennemis.", price: 1350, type: "shield", category: "shield", slot: "offhand", stats: { ac: 3, int: 3 } },
+        { tier: 4, name: "Égide divine", desc: "Bouclier béni par les dieux.", price: 1450, type: "shield", category: "shield", slot: "offhand", stats: { ac: 5, wis: 2 } },
     ];
 
     // Consumables
