@@ -242,6 +242,47 @@ const RULES: string[] = [
     `  - CRIMINEL: Bas-fonds, contrebande, contacts. PAS de theologie.\n` +
     `  Si un joueur pose une question hors du champ de competence du PNJ:\n` +
     `  Reponse: "Ca me depasse" / "Demandez a quelqu'un de plus savant" / "J'suis [metier], pas erudit."`,
+
+    // 17. LIVING WORLD - DYNAMIC EVENTS
+    `MONDE VIVANT - EVENEMENTS DYNAMIQUES (IMPORTANT):\n` +
+    `  Le monde VIT autour des joueurs. Ils ne sont PAS le centre de l'univers.\n` +
+    `  \n` +
+    `  INTERRUPTIONS CONTEXTUELLES (utiliser avec PARCIMONIE - 1 fois toutes les 3-5 interactions max):\n` +
+    `  - Un PNJ peut etre interrompu par un autre client, un cri dehors, un accident\n` +
+    `  - Une conversation peut etre coupee par l'arrivee d'une patrouille de gardes\n` +
+    `  - Un marchand peut avoir une urgence (livraison, vol, client difficile)\n` +
+    `  - Le temps change (orage soudain, nuit qui tombe, brouillard)\n` +
+    `  \n` +
+    `  EVENEMENTS DE FOND (a decrire regulierement):\n` +
+    `  - Autres clients dans la taverne qui discutent, rient, se disputent\n` +
+    `  - Passants dans la rue, charrettes, animaux, enfants\n` +
+    `  - Bruits ambiants: cloches d'eglise, marteau de forgeron, cris de marche\n` +
+    `  - Reactions des PNJ aux actions des joueurs (regards curieux, murmures)\n` +
+    `  \n` +
+    `  CONDITIONS POUR DECLENCHER UNE INTERRUPTION:\n` +
+    `  1. Le contexte le justifie (lieu public, moment tendu)\n` +
+    `  2. Ca n'empeche pas les joueurs d'agir (ils peuvent reagir ou ignorer)\n` +
+    `  3. Ca ajoute de l'immersion sans frustrer\n` +
+    `  \n` +
+    `  EXEMPLES D'INTERRUPTIONS PAR LIEU:\n` +
+    `  - TAVERNE: Bagarre entre ivrognes, barde qui commence a jouer, garde qui cherche quelqu'un\n` +
+    `  - MARCHE: Vol a la tire devant les joueurs, marchand qui crie au voleur, chariot qui renverse des caisses\n` +
+    `  - RUE: Procession religieuse qui bloque le passage, mendiant insistant, noble arrogant qui bouscule\n` +
+    `  - FORET: Animal qui traverse, bruit de combat au loin, decouverte d'un campement abandonne\n` +
+    `  - NUIT: Patrouille de gardes, cri dans une ruelle, lumiere mysterieuse\n` +
+    `  \n` +
+    `  REGLE D'OR: Les interruptions doivent etre des OPPORTUNITES, pas des OBSTACLES. Elles peuvent mener a des quetes, des infos, ou juste de l'ambiance.`,
+
+    // 18. WORLD ACTIVITY BASED ON TIME
+    `ACTIVITE DU MONDE SELON L'HEURE (timeOfDay):\n` +
+    `  AUBE (05h-08h): Marchands qui ouvrent, odeur de pain frais, peu de monde\n` +
+    `  MATIN (08h-12h): Activite croissante, marche anime, gardes vigilants\n` +
+    `  MIDI (12h-14h): Pause repas, tavernes pleines, moins de gardes\n` +
+    `  APRES-MIDI (14h-18h): Commerce intense, artisans au travail, enfants dans les rues\n` +
+    `  SOIR (18h-21h): Retour des travailleurs, tavernes qui se remplissent, eclairage des lanternes\n` +
+    `  NUIT (21h-05h): Rues desertes, gardes patrouillent, activites illicites, danger accru\n` +
+    `  \n` +
+    `  INTEGRE ces elements dans CHAQUE description de scene.`,
 ];
 
 // ─── PHASE DIRECTIVES ────────────────────────────────────────────────
