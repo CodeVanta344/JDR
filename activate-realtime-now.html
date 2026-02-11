@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Activer Realtime - 30 secondes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            max-width: 700px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        .sql-box {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+            position: relative;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .copy-btn:hover {
+            background: #5568d3;
+        }
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 10px 5px;
+        }
+        .btn:hover {
+            background: #5568d3;
+        }
+        .steps {
+            margin: 20px 0;
+            line-height: 2;
+        }
+        .step {
+            padding: 10px;
+            margin: 10px 0;
+            background: #f7fafc;
+            border-left: 4px solid #667eea;
+        }
+        .success {
+            background: #c6f6d5;
+            color: #22543d;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔔 Activation Realtime (30 secondes)</h1>
+        
+        <div class="steps">
+            <div class="step">
+                <strong>Étape 1:</strong> Le SQL ci-dessous a été copié automatiquement
+            </div>
+            
+            <div class="sql-box">
+                <button class="copy-btn" onclick="copySQL()">📋 Re-copier</button>
+                <pre id="sqlContent">ALTER PUBLICATION supabase_realtime ADD TABLE IF NOT EXISTS public.combat_locks;
+ALTER PUBLICATION supabase_realtime ADD TABLE IF NOT EXISTS public.world_state;</pre>
+            </div>
+            
+            <div class="step">
+                <strong>Étape 2:</strong> Cliquez sur le bouton pour ouvrir le SQL Editor
+                <br>
+                <button class="btn" onclick="openEditor()">📝 Ouvrir SQL Editor</button>
+            </div>
+            
+            <div class="step">
+                <strong>Étape 3:</strong> Collez (Ctrl+V) et cliquez sur <strong>"RUN"</strong>
+            </div>
+        </div>
+        
+        <div class="success" id="success">
+            ✅ Realtime activé ! La synchronisation combat est maintenant opérationnelle.
+        </div>
+    </div>
+
+    <script>
+        const SQL = `ALTER PUBLICATION supabase_realtime ADD TABLE IF NOT EXISTS public.combat_locks;
+ALTER PUBLICATION supabase_realtime ADD TABLE IF NOT EXISTS public.world_state;`;
+
+        // Auto-copy on load
+        window.onload = () => {
+            navigator.clipboard.writeText(SQL).then(() => {
+                console.log('SQL copied to clipboard');
+                
+                // Auto-open after 2 seconds
+                setTimeout(() => {
+                    if (confirm('Le SQL a été copié. Voulez-vous ouvrir le SQL Editor maintenant ?')) {
+                        openEditor();
+                        setTimeout(() => {
+                            document.getElementById('success').style.display = 'block';
+                        }, 5000);
+                    }
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+            });
+        };
+
+        function copySQL() {
+            navigator.clipboard.writeText(SQL).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                btn.textContent = '✅ Copié !';
+                btn.style.background = '#48bb78';
+                setTimeout(() => {
+                    btn.textContent = '📋 Re-copier';
+                    btn.style.background = '#667eea';
+                }, 2000);
+            });
+        }
+
+        function openEditor() {
+            window.open('https://supabase.com/dashboard/project/okanuafsmkuzyuyqibpu/sql/new', '_blank');
+        }
+    </script>
+</body>
+</html>
