@@ -330,6 +330,24 @@ STRUCTURE CHALLENGE (pour jets de des sociaux - UTILISE SOUVENT):
 }
 UTILISE "challenge" quand le joueur tente: negocier, intimider, convaincre, mentir, detecter un mensonge, chercher des indices, se cacher.
 
+STRUCTURE TRANSACTION (pour paiements/recompenses - APRES validation):
+"transaction": {
+  "amount": 50,
+  "type": "loss",
+  "reason": "Achat d'une epee longue",
+  "itemName": "Epee longue",
+  "originalPrice": 60,
+  "negotiated": true
+}
+REGLES TRANSACTION (CRITIQUES):
+1. NE PAS envoyer de transaction si le joueur NEGOCIE - d'abord challenge, puis transaction apres resultat.
+2. "amount" DOIT TOUJOURS etre un NOMBRE (jamais vide, null, ou string).
+3. "type": "loss" = le joueur PAIE, "gain" = le joueur RECOIT.
+4. Si negociation REUSSIE: "originalPrice" = prix initial, "amount" = prix reduit, "negotiated": true.
+5. Si negociation ECHOUEE: "amount" = prix initial (ou double si echec critique), "negotiated": false.
+6. TOUJOURS inclure "reason" pour expliquer la transaction.
+7. TOUJOURS inclure "itemName" si c'est un achat.
+
 STRUCTURE MARCHAND (si interaction commerciale):
 "merchant": {
   "npcName": "Nom du marchand",

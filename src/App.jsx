@@ -2094,6 +2094,7 @@ export default function App() {
                 pendingTransaction && (
                     <TransactionPrompt
                         transaction={pendingTransaction}
+                        playerGold={character?.gold || 0}
                         onConfirm={() => handleConfirmTransaction(true)}
                         onRefuse={() => handleConfirmTransaction(false)}
                     />
