@@ -1,7 +1,7 @@
 import React from 'react';
 import { CLASSES } from '../lore';
 
-export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onToggleSettings, onConsume, onLevelUpClick }) => {
+export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onToggleSettings, onConsume, onLevelUpClick, onTradeClick }) => {
     const statNames = {
         str: { full: "Force", desc: "Puissance et impact" },
         dex: { full: "Dextérité", desc: "Agilité et tir" },
@@ -63,16 +63,30 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
         const classData = CLASSES[character.class.split(' ')[0]] || CLASSES[character.class];
         if (!classData) return [];
 
-        const base = classData.abilities || [];
-        const unlocked = (classData.unlockables || []).filter(u => u.level <= character.level);
+        // Get player's chosen abilities from character creation (stored in spells or abilities)
+        const playerAbilities = [...(character.abilities || []), ...(character.spells || [])];
+        
+        // If player has chosen abilities, use those as base
+        let baseAbilities = [];
+        if (playerAbilities.length > 0) {
+            baseAbilities = playerAbilities.map(s => {
+                if (typeof s === 'string') {
+                    // Find full data from class definition
+                    const fromInitial = (classData.initial_ability_options || []).find(a => a.name === s);
+                    const fromUnlockables = (classData.unlockables || []).find(u => u.name === s);
+                    return fromInitial || fromUnlockables || { name: s, desc: "Aptitude apprise", level: 1, cost: 0 };
+                }
+                return s;
+            });
+        } else {
+            // Fallback to class base abilities if none chosen
+            baseAbilities = classData.initial_ability_options || classData.abilities || [];
+        }
 
-        // Merge with any persistent learned spells (avoiding duplicates)
-        const persistentSpells = (character.spells || []).map(s => {
-            if (typeof s === 'string') return { name: s, desc: "Aptitude apprise", level: 1 };
-            return s;
-        });
+        // Add unlocked abilities based on level
+        const unlocked = (classData.unlockables || []).filter(u => u.level <= (character.level || 1));
 
-        const all = [...base, ...unlocked, ...persistentSpells];
+        const all = [...baseAbilities, ...unlocked];
         // Unique by name
         return Array.from(new Map(all.map(item => [item.name, item])).values());
     };
@@ -205,7 +219,25 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                 {/* INVENTORY TAB */}
                 {activeTab === 'equip' && (
                     <div className="animate-fade-in gallery-view">
-                        <h4 style={{ fontSize: '0.7rem', color: 'var(--gold-dim)', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '1.5px' }}>Besace & Équipement</h4>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                            <h4 style={{ fontSize: '0.7rem', color: 'var(--gold-dim)', margin: 0, textTransform: 'uppercase', letterSpacing: '1.5px' }}>Besace & Equipement</h4>
+                            {onTradeClick && (
+                                <button
+                                    onClick={onTradeClick}
+                                    style={{
+                                        padding: '0.4rem 0.8rem',
+                                        fontSize: '0.7rem',
+                                        background: 'rgba(212,175,55,0.1)',
+                                        border: '1px solid var(--gold-dim)',
+                                        borderRadius: '4px',
+                                        color: 'var(--gold-primary)',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    ECHANGER
+                                </button>
+                            )}
+                        </div>
                         <div style={{ display: 'grid', gap: '0.8rem' }}>
                             {(character.inventory || []).map((item, i) => {
                                 const equipped = item.equipped;

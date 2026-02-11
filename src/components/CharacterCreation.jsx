@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CLASSES, CLASS_CATEGORIES } from '../lore';
+import { CLASSES, CLASS_CATEGORIES, ENRICHED_BACKSTORIES, getBackstoriesForClass, formatBackstoryForGM } from '../lore';
 
 // Utility: Roll 4d6 drop lowest
 const rollAttribute = () => {
@@ -43,8 +43,9 @@ export function CharacterCreation({ onCreate, onBack, generateImage, sessionId }
             if (CLASSES[selectedClass].subclasses) {
                 setSelectedSubclass(Object.keys(CLASSES[selectedClass].subclasses)[0]);
             }
-            if (CLASSES[selectedClass].backstory_options) {
-                setSelectedBackstory(CLASSES[selectedClass].backstory_options[0].id);
+            const availableBackstories = getBackstoriesForClass(selectedClass);
+            if (availableBackstories.length > 0) {
+                setSelectedBackstory(availableBackstories[0].id);
             }
             setSelectedEquipmentIndex(0);
             setSelectedAbilityNames([]);
@@ -92,13 +93,15 @@ export function CharacterCreation({ onCreate, onBack, generateImage, sessionId }
         const selectedEquipment = clsData.starting_equipment_options[selectedEquipmentIndex].items;
         const chosenAbilities = clsData.initial_ability_options.filter(a => selectedAbilityNames.includes(a.name));
 
-        const selectedBackstoryData = clsData.backstory_options.find(b => b.id === selectedBackstory);
+        const selectedBackstoryData = ENRICHED_BACKSTORIES.find(b => b.id === selectedBackstory);
         const finalStats = { ...attributes };
-        if (selectedBackstoryData.stats) {
+        if (selectedBackstoryData && selectedBackstoryData.stats) {
             Object.entries(selectedBackstoryData.stats).forEach(([stat, mod]) => {
                 finalStats[stat] = (finalStats[stat] || 0) + mod;
             });
         }
+
+        const gmBackstoryContext = selectedBackstoryData ? formatBackstoryForGM(selectedBackstoryData, name) : '';
 
         const charData = {
             name,
@@ -115,7 +118,12 @@ export function CharacterCreation({ onCreate, onBack, generateImage, sessionId }
             max_resource: 100,
             inventory: [...selectedEquipment],
             portrait_url: portraitUrl || classPortraits[selectedClass],
-            backstory: selectedBackstoryData
+            backstory: selectedBackstoryData,
+            backstory_gm_context: gmBackstoryContext,
+            starting_reputation: selectedBackstoryData?.starting_reputation || {},
+            known_npcs: selectedBackstoryData?.known_npcs || [],
+            faction_ties: selectedBackstoryData?.faction_ties || [],
+            personal_secrets: selectedBackstoryData?.personal_secrets || []
         };
         onCreate(charData);
     };
@@ -380,93 +388,136 @@ export function CharacterCreation({ onCreate, onBack, generateImage, sessionId }
 
                     {/* STEP 4: BACKSTORY */}
                     {step === 4 && (
-                        <div className="creation-step central-step">
-                            <h2 className="step-title text-gold" style={{ textAlign: 'center', fontSize: '2.5rem' }}>VOTRE ORIGINE</h2>
-                            <div className="backstory-grid" style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                                gap: '1.5rem',
-                                width: '100%',
-                                maxWidth: '1000px',
-                                margin: '0 auto'
-                            }}>
-                                {CLASSES[selectedClass].backstory_options.map(opt => (
-                                    <div
-                                        key={opt.id}
-                                        className={`backstory-card stone-panel ${selectedBackstory === opt.id ? 'active' : ''}`}
-                                        onClick={() => setSelectedBackstory(opt.id)}
-                                        style={{
-                                            padding: '2rem',
-                                            border: selectedBackstory === opt.id ? '2px solid var(--gold-primary)' : '1px solid rgba(212, 175, 55, 0.2)',
-                                            background: selectedBackstory === opt.id
-                                                ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(0, 0, 0, 0.7) 100%)'
-                                                : 'rgba(0, 0, 0, 0.6)',
-                                            color: '#eee',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                                            boxShadow: selectedBackstory === opt.id
-                                                ? '0 10px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(212, 175, 55, 0.2)'
-                                                : '0 5px 15px rgba(0, 0, 0, 0.4)',
-                                            transform: selectedBackstory === opt.id ? 'translateY(-5px) scale(1.02)' : 'none',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            justifyContent: 'space-between',
-                                            minHeight: '220px',
-                                            position: 'relative',
-                                            overflow: 'hidden'
-                                        }}
-                                    >
-                                        <h3 style={{
-                                            color: 'var(--gold-primary)',
-                                            marginBottom: '1rem',
-                                            fontSize: '1.2rem',
-                                            letterSpacing: '1.5px',
-                                            textTransform: 'uppercase',
-                                            textShadow: '0 2px 4px rgba(0,0,0,0.5)'
-                                        }}>{opt.label}</h3>
-                                        <p style={{
-                                            fontSize: '1rem',
-                                            margin: '0 0 2rem 0',
-                                            color: '#bbb',
-                                            lineHeight: '1.6',
-                                            fontStyle: 'italic',
-                                            flexGrow: 1
-                                        }}>{opt.desc}</p>
-                                        <div className="backstory-stats" style={{
-                                            display: 'flex',
-                                            gap: '0.75rem',
-                                            marginTop: 'auto',
-                                            flexWrap: 'wrap',
-                                            paddingTop: '1.5rem',
-                                            borderTop: '1px solid rgba(212, 175, 55, 0.1)'
-                                        }}>
-                                            {opt.stats && Object.entries(opt.stats).map(([stat, mod]) => (
-                                                <div key={stat} className={`stat-mod-tag ${mod > 0 ? 'pos' : 'neg'}`} style={{
-                                                    background: mod > 0
-                                                        ? 'linear-gradient(to right, rgba(77, 255, 136, 0.2), rgba(77, 255, 136, 0.05))'
-                                                        : 'linear-gradient(to right, rgba(255, 107, 107, 0.2), rgba(255, 107, 107, 0.05))',
-                                                    color: mod > 0 ? '#4dff88' : '#ff6b6b',
-                                                    padding: '5px 12px',
-                                                    borderRadius: '20px',
-                                                    fontSize: '0.8rem',
-                                                    fontWeight: '800',
-                                                    border: `1px solid ${mod > 0 ? 'rgba(77,255,136,0.3)' : 'rgba(255,107,107,0.3)'}`,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '6px',
-                                                    boxShadow: mod > 0 ? '0 0 10px rgba(77,255,136,0.1)' : '0 0 10px rgba(255,107,107,0.1)',
-                                                    textShadow: '0 0 5px currentColor'
-                                                }}>
-                                                    <span style={{ fontSize: '1rem' }}>{STAT_ICONS[stat]}</span>
-                                                    <span>{stat.toUpperCase()}</span>
-                                                    <span style={{ marginLeft: '2px' }}>{mod > 0 ? `+${mod}` : mod}</span>
-                                                </div>
-                                            ))}
+                        <div className="creation-step" style={{ display: 'flex', gap: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
+                            <section className="backstory-list stone-panel" style={{ flex: '0 0 45%', background: 'rgba(15, 15, 20, 0.95)', border: '2px solid var(--gold-dim)', padding: '1.5rem', overflowY: 'auto', maxHeight: '70vh' }}>
+                                <h2 style={{ color: 'var(--gold-primary)', fontSize: '1.4rem', letterSpacing: '2px', fontFamily: 'var(--font-display)', borderBottom: '1px solid rgba(212,175,55,0.2)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>VOTRE ORIGINE</h2>
+                                <div className="backstory-options" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                    {getBackstoriesForClass(selectedClass).map(opt => (
+                                        <div
+                                            key={opt.id}
+                                            className={`backstory-card stone-panel ${selectedBackstory === opt.id ? 'active' : ''}`}
+                                            onClick={() => setSelectedBackstory(opt.id)}
+                                            style={{
+                                                padding: '1.2rem',
+                                                border: selectedBackstory === opt.id ? '2px solid var(--gold-primary)' : '1px solid rgba(212, 175, 55, 0.2)',
+                                                background: selectedBackstory === opt.id ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(0, 0, 0, 0.7) 100%)' : 'rgba(0, 0, 0, 0.6)',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.3s ease'
+                                            }}
+                                        >
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                                <h3 style={{ color: 'var(--gold-primary)', fontSize: '1rem', margin: 0 }}>{opt.label}</h3>
+                                                <span style={{ fontSize: '0.7rem', padding: '2px 8px', background: 'rgba(212,175,55,0.2)', borderRadius: '10px', color: 'var(--gold-light)' }}>{opt.category}</span>
+                                            </div>
+                                            <p style={{ fontSize: '0.85rem', color: '#aaa', margin: 0, lineHeight: '1.4' }}>{opt.origin.region} - {opt.origin.settlement}</p>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="step-nav" style={{ marginTop: '2rem', display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                                    ))}
+                                </div>
+                            </section>
+
+                            <section className="backstory-details stone-panel" style={{ flex: 1, background: 'rgba(10, 10, 15, 0.95)', border: '2px solid var(--gold-dim)', padding: '1.5rem', overflowY: 'auto', maxHeight: '70vh' }}>
+                                {(() => {
+                                    const bs = ENRICHED_BACKSTORIES.find(b => b.id === selectedBackstory);
+                                    if (!bs) return <p>Sélectionnez une origine</p>;
+                                    return (
+                                        <>
+                                            <h2 className="text-gold" style={{ fontSize: '1.8rem', marginBottom: '0.5rem' }}>{bs.label}</h2>
+                                            <p style={{ fontStyle: 'italic', color: '#bbb', fontSize: '1rem', lineHeight: '1.6', marginBottom: '1.5rem', borderBottom: '1px solid var(--gold-dim)', paddingBottom: '1rem' }}>{bs.desc}</p>
+
+                                            <div className="backstory-section" style={{ marginBottom: '1.5rem' }}>
+                                                <h4 style={{ color: 'var(--gold-primary)', fontSize: '0.9rem', letterSpacing: '2px', marginBottom: '0.5rem' }}>ORIGINE GÉOGRAPHIQUE</h4>
+                                                <div style={{ background: 'rgba(0,0,0,0.4)', padding: '1rem', borderRadius: '4px', border: '1px solid var(--gold-dim)' }}>
+                                                    <p style={{ margin: 0, color: '#ddd' }}><strong style={{ color: 'var(--gold-light)' }}>{bs.origin.region}</strong> - {bs.origin.settlement}</p>
+                                                    <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem', color: '#999' }}>Connaissances: {bs.origin.regional_knowledge.join(', ')}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="backstory-section" style={{ marginBottom: '1.5rem' }}>
+                                                <h4 style={{ color: 'var(--gold-primary)', fontSize: '0.9rem', letterSpacing: '2px', marginBottom: '0.5rem' }}>CLASSE SOCIALE</h4>
+                                                <div style={{ background: 'rgba(0,0,0,0.4)', padding: '1rem', borderRadius: '4px', border: '1px solid var(--gold-dim)' }}>
+                                                    <p style={{ margin: 0, color: '#ddd' }}><strong style={{ color: 'var(--gold-light)' }}>{bs.social_class.label}</strong> ({bs.social_class.wealth})</p>
+                                                    <div style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>
+                                                        <span style={{ color: '#4dff88' }}>+ {bs.social_class.social_perks.join(', ')}</span>
+                                                    </div>
+                                                    <div style={{ marginTop: '0.3rem', fontSize: '0.85rem' }}>
+                                                        <span style={{ color: '#ff6b6b' }}>- {bs.social_class.social_penalties.join(', ')}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {bs.historical_events.length > 0 && (
+                                                <div className="backstory-section" style={{ marginBottom: '1.5rem' }}>
+                                                    <h4 style={{ color: 'var(--gold-primary)', fontSize: '0.9rem', letterSpacing: '2px', marginBottom: '0.5rem' }}>ÉVÉNEMENTS HISTORIQUES VÉCUS</h4>
+                                                    {bs.historical_events.map((ev, i) => (
+                                                        <div key={i} style={{ background: 'rgba(0,0,0,0.4)', padding: '1rem', borderRadius: '4px', border: '1px solid var(--gold-dim)', marginBottom: '0.5rem' }}>
+                                                            <p style={{ margin: 0, color: 'var(--gold-light)', fontWeight: 'bold' }}>{ev.name} <span style={{ color: '#888', fontWeight: 'normal' }}>({ev.year})</span></p>
+                                                            <p style={{ margin: '0.5rem 0', fontSize: '0.9rem', color: '#bbb' }}>{ev.desc}</p>
+                                                            <p style={{ margin: 0, fontSize: '0.8rem', color: '#4da6ff' }}>Conséquences: {ev.consequences.join(', ')}</p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            {bs.faction_ties.length > 0 && (
+                                                <div className="backstory-section" style={{ marginBottom: '1.5rem' }}>
+                                                    <h4 style={{ color: 'var(--gold-primary)', fontSize: '0.9rem', letterSpacing: '2px', marginBottom: '0.5rem' }}>AFFILIATIONS</h4>
+                                                    {bs.faction_ties.map((f, i) => (
+                                                        <div key={i} style={{ background: 'rgba(0,0,0,0.4)', padding: '1rem', borderRadius: '4px', border: '1px solid var(--gold-dim)', marginBottom: '0.5rem' }}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                                <strong style={{ color: 'var(--gold-light)' }}>{f.name}</strong>
+                                                                <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '10px', background: f.standing === 'enemy' ? 'rgba(255,100,100,0.3)' : f.standing === 'ally' ? 'rgba(100,255,100,0.3)' : 'rgba(150,150,150,0.3)', color: f.standing === 'enemy' ? '#ff6b6b' : f.standing === 'ally' ? '#4dff88' : '#aaa' }}>{f.standing} | Rep: {f.reputation}</span>
+                                                            </div>
+                                                            <p style={{ margin: '0.3rem 0 0', fontSize: '0.85rem', color: '#999' }}>Rôle: {f.role}</p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            <div className="backstory-section" style={{ marginBottom: '1.5rem' }}>
+                                                <h4 style={{ color: 'var(--gold-primary)', fontSize: '0.9rem', letterSpacing: '2px', marginBottom: '0.5rem' }}>PNJ CONNUS</h4>
+                                                <div style={{ background: 'rgba(0,0,0,0.4)', padding: '1rem', borderRadius: '4px', border: '1px solid var(--gold-dim)' }}>
+                                                    <p style={{ margin: 0, color: '#ddd', fontSize: '0.9rem' }}>{bs.known_npcs.join(' | ')}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="backstory-section" style={{ marginBottom: '1.5rem' }}>
+                                                <h4 style={{ color: 'var(--gold-primary)', fontSize: '0.9rem', letterSpacing: '2px', marginBottom: '0.5rem' }}>MODIFICATEURS DE STATS</h4>
+                                                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                                                    {bs.stats && Object.entries(bs.stats).map(([stat, mod]) => (
+                                                        <div key={stat} style={{
+                                                            background: mod > 0 ? 'linear-gradient(to right, rgba(77, 255, 136, 0.2), rgba(77, 255, 136, 0.05))' : 'linear-gradient(to right, rgba(255, 107, 107, 0.2), rgba(255, 107, 107, 0.05))',
+                                                            color: mod > 0 ? '#4dff88' : '#ff6b6b',
+                                                            padding: '5px 12px',
+                                                            borderRadius: '20px',
+                                                            fontSize: '0.8rem',
+                                                            fontWeight: '800',
+                                                            border: `1px solid ${mod > 0 ? 'rgba(77,255,136,0.3)' : 'rgba(255,107,107,0.3)'}`,
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '6px'
+                                                        }}>
+                                                            <span style={{ fontSize: '1rem' }}>{STAT_ICONS[stat]}</span>
+                                                            <span>{stat.toUpperCase()}</span>
+                                                            <span>{mod > 0 ? `+${mod}` : mod}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="backstory-section" style={{ marginBottom: '1rem' }}>
+                                                <h4 style={{ color: 'var(--gold-primary)', fontSize: '0.9rem', letterSpacing: '2px', marginBottom: '0.5rem' }}>HOOKS DE ROLEPLAY</h4>
+                                                <div style={{ background: 'rgba(0,0,0,0.4)', padding: '1rem', borderRadius: '4px', border: '1px solid var(--gold-dim)' }}>
+                                                    <ul style={{ margin: 0, paddingLeft: '1.2rem', color: '#bbb', fontSize: '0.9rem' }}>
+                                                        {bs.roleplay_hooks.map((h, i) => <li key={i} style={{ marginBottom: '0.3rem' }}>{h}</li>)}
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </>
+                                    );
+                                })()}
+                            </section>
+
+                            <div className="step-nav" style={{ position: 'absolute', bottom: '2rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '1rem' }}>
                                 <button onClick={() => setStep(3)} className="btn-medieval" style={{ width: '200px' }}>RETOUR</button>
                                 <button onClick={() => setStep(5)} className="btn-gold" style={{ padding: '0.8rem 4rem' }}>CONFIRMER</button>
                             </div>

@@ -1,5 +1,7 @@
 export const WORLD_NAME = "Aethelgard";
 
+export { ENRICHED_BACKSTORIES, getBackstoriesForClass, formatBackstoryForGM, HISTORICAL_EVENTS } from './lore/backstories';
+
 /**
  * PHASE 21.1: DEEP WORLD HISTORY & CHRONOLOGY
  * Documentation of the major epochs and founding myths.

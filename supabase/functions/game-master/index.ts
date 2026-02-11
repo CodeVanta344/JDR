@@ -189,6 +189,59 @@ const RULES: string[] = [
 
     // 12. Start adventure
     `START_ADVENTURE: Si cette action est declenchee, les joueurs viennent de se reunir. Decris l'arrivee de CHAQUE personnage en te basant sur son BACKSTORY. Force une rencontre concrete (taverne, clairiere, prison). Decris les odeurs, les sons et l'atmosphere.`,
+
+    // 13. SOCIAL DICE ROLLS (CRITICAL - ALWAYS APPLY)
+    `LANCERS DE DES SOCIAUX (OBLIGATOIRE):\n` +
+    `  Quand un joueur tente une action sociale, tu DOIS demander un jet de des via le champ "challenge".\n` +
+    `  ACTIONS NECESSITANT UN JET:\n` +
+    `  - NEGOCIATION/MARCHANDAGE: Jet de Charisme (CHA), DD selon difficulte (10=facile, 15=moyen, 20=difficile)\n` +
+    `  - INTIMIDATION: Jet de Force (FOR) ou Charisme (CHA), DD selon puissance du PNJ\n` +
+    `  - PERSUASION: Jet de Charisme (CHA), DD selon disposition du PNJ\n` +
+    `  - TROMPERIE/MENSONGE: Jet de Charisme (CHA) contre Sagesse du PNJ\n` +
+    `  - PERSPICACITE (detecter mensonge): Jet de Sagesse (SAG), DD = Charisme du menteur\n` +
+    `  - INVESTIGATION (trouver indices): Jet d'Intelligence (INT), DD selon difficulte\n` +
+    `  - DISCRÉTION: Jet de Dexterite (DEX), DD selon vigilance des ennemis\n` +
+    `  IMPORTANT: NE DECIDE PAS le resultat toi-meme. Demande le jet et ATTENDS le resultat.`,
+
+    // 14. CRITICAL SUCCESS/FAILURE
+    `CRITIQUES (1 ET 20 NATURELS):\n` +
+    `  REUSSITE CRITIQUE (20): Succes spectaculaire avec bonus.\n` +
+    `  - Negociation: Prix reduit de 50%, le marchand offre un item bonus\n` +
+    `  - Intimidation: La cible est terrorisee, fuit ou revele tout\n` +
+    `  - Persuasion: La cible devient un allie loyal temporairement\n` +
+    `  - Perspicacite: Revele un secret cache en plus du mensonge\n` +
+    `  ECHEC CRITIQUE (1): Echec desastreux avec consequences.\n` +
+    `  - Negociation: Le marchand est offense, prix doubles ou refuse de vendre\n` +
+    `  - Intimidation: La cible appelle des renforts ou attaque\n` +
+    `  - Persuasion: La cible devient hostile, reputation endommagee\n` +
+    `  - Tromperie: Le mensonge est decouvert, consequences graves\n` +
+    `  TOUJOURS decrire les consequences dans la narration.`,
+
+    // 15. STRICT LORE CONSISTENCY - NO INVENTION
+    `COHERENCE DU LORE (REGLE ABSOLUE - TRES IMPORTANT):\n` +
+    `  Les PNJ ne peuvent PAS inventer de lore, d'evenements historiques, de batailles, ou d'histoires personnelles qui ne sont PAS dans le LORE fourni.\n` +
+    `  SI un joueur pose une question sur quelque chose qui N'EST PAS dans le lore:\n` +
+    `  - Le PNJ dit qu'il ne sait pas: "Je n'ai jamais entendu parler de ca..." ou "Cette histoire m'est inconnue."\n` +
+    `  - Le PNJ peut specul mais en le disant clairement: "On raconte que... mais je ne sais pas si c'est vrai."\n` +
+    `  - Le PNJ peut rediriger: "Vous devriez demander a [autre PNJ] qui connait mieux ces choses."\n` +
+    `  INTERDIT:\n` +
+    `  - Inventer des batailles (ex: "Bataille du Gouffre de X")\n` +
+    `  - Inventer des royaumes ou villes non documentes\n` +
+    `  - Creer des backstories de PNJ qui ne sont pas dans leur fiche\n` +
+    `  - Ajouter des evenements historiques non mentionnes dans WORLD_HISTORY\n` +
+    `  UTILISE UNIQUEMENT: WORLD_HISTORY, FACTION_LORE, WORLD_MYTHS, NPC_TEMPLATES (secrets, motivations) fournis.`,
+
+    // 16. NPC KNOWLEDGE LIMITS
+    `LIMITES DE CONNAISSANCE DES PNJ:\n` +
+    `  Chaque PNJ ne connait QUE ce qui est logique pour son role:\n` +
+    `  - TAVERNIER: Rumeurs locales, clients reguliers, prix des boissons. PAS de secrets militaires.\n` +
+    `  - MARCHAND: Son commerce, prix, fournisseurs. PAS d'histoire ancienne detaillee.\n` +
+    `  - NOBLE: Politique, lignees, intrigues de cour. PAS de magie profonde.\n` +
+    `  - ERUDIT/MAGE: Histoire, magie, artefacts. PAS de potins de rue.\n` +
+    `  - PAYSAN: Sa region immediate, saisons, recoltes. PAS de grands evenements lointains.\n` +
+    `  - CRIMINEL: Bas-fonds, contrebande, contacts. PAS de theologie.\n` +
+    `  Si un joueur pose une question hors du champ de competence du PNJ:\n` +
+    `  Reponse: "Ca me depasse" / "Demandez a quelqu'un de plus savant" / "J'suis [metier], pas erudit."`,
 ];
 
 // ─── PHASE DIRECTIVES ────────────────────────────────────────────────
@@ -210,6 +263,7 @@ const RESPONSE_FORMAT = `FORMAT DE REPONSE (JSON STRICT, pas de texte autour):
   "consequences": { "hp_change": 0, "xp_gain": 0, "item_update": null },
   "weather": "clear",
   "combat": null,
+  "challenge": null,
   "unlock": [],
   "stats": {},
   "item": null,
@@ -220,7 +274,117 @@ const RESPONSE_FORMAT = `FORMAT DE REPONSE (JSON STRICT, pas de texte autour):
 }
 
 STRUCTURE COMBAT (si hostile):
-"combat": { "enemies": [{ "name": "Gobelin", "hp": 15, "atk": 4, "ac": 12, "id": "e1" }], "reason": "...", "trigger": true }`;
+"combat": { "enemies": [{ "name": "Gobelin", "hp": 15, "atk": 4, "ac": 12, "id": "e1" }], "reason": "...", "trigger": true }
+
+STRUCTURE CHALLENGE (pour jets de des sociaux - UTILISE SOUVENT):
+"challenge": {
+  "type": "negotiation/intimidation/persuasion/deception/insight/investigation/stealth",
+  "stat": "cha/str/wis/int/dex",
+  "dc": 12,
+  "description": "Jet de Charisme DD 12 pour negocier un meilleur prix",
+  "success_hint": "Le marchand baisse ses prix de 20%",
+  "failure_hint": "Le marchand refuse de negocier",
+  "critical_success": "Prix -50%, item bonus offert",
+  "critical_failure": "Le marchand est offense et double ses prix"
+}
+UTILISE "challenge" quand le joueur tente: negocier, intimider, convaincre, mentir, detecter un mensonge, chercher des indices, se cacher.
+
+STRUCTURE MARCHAND (si interaction commerciale):
+"merchant": {
+  "npcName": "Nom du marchand",
+  "greeting": "Phrase d'accueil roleplay",
+  "inventory": [
+    { "id": "item1", "name": "Nom", "desc": "Description", "price": 50, "type": "weapon/armor/consumable/misc", "category": "simple/martial/light/medium/heavy", "slot": "mainhand/chest/head/ring/none", "rarity": "commun/peu commun/rare", "stats": { "atk": 2 } }
+  ]
+}
+
+EQUILIBRAGE MARCHAND (OBLIGATOIRE):
+- Niveau 1-3: Items communs, prix 10-100 or. Stats: +1 a +2 max. Potions basiques.
+- Niveau 4-6: Items peu communs, prix 50-300 or. Stats: +2 a +3.
+- Niveau 7-10: Items rares, prix 200-800 or. Stats: +3 a +5.
+- Niveau 11+: Items tres rares, prix 500-2000 or. Stats: +4 a +6.
+- TOUJOURS inclure: 2-3 armes, 1-2 armures, 2-4 consommables (potions de soin, antidotes).
+- Les prix doivent etre ACCESSIBLES au niveau du joueur (gold moyen = niveau * 100).`;
+
+// ─── MERCHANT ITEM TABLES ────────────────────────────────────────────
+
+function generateMerchantItems(avgLevel: number): any[] {
+    const items: any[] = [];
+    
+    // Base items scaled to level
+    const tier = avgLevel <= 3 ? 1 : avgLevel <= 6 ? 2 : avgLevel <= 10 ? 3 : 4;
+    const priceMultiplier = tier;
+    
+    // Weapons
+    const weapons = [
+        { tier: 1, name: "Dague en fer", desc: "Une dague simple mais efficace.", price: 15, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 1 } },
+        { tier: 1, name: "Epee courte", desc: "Une lame equilibree pour les debutants.", price: 35, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2 } },
+        { tier: 1, name: "Baton de marche", desc: "Un baton robuste, utile en combat.", price: 10, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 1, wis: 1 } },
+        { tier: 2, name: "Epee longue", desc: "Une lame de qualite, forgee par un artisan.", price: 120, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
+        { tier: 2, name: "Arc de chasse", desc: "Un arc fiable pour la chasse et le combat.", price: 80, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, dex: 1 } },
+        { tier: 3, name: "Lame d'acier elfique", desc: "Une epee fine aux reflets argentes.", price: 350, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 4, dex: 1 } },
+        { tier: 3, name: "Marteau de guerre", desc: "Une arme devastatrice pour les guerriers.", price: 400, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 5 } },
+        { tier: 4, name: "Lame runique", desc: "Gravee de runes anciennes qui luisent faiblement.", price: 800, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 6, int: 2 } },
+    ];
+    
+    // Armors
+    const armors = [
+        { tier: 1, name: "Tunique renforcee", desc: "Une tunique avec des plaques de cuir.", price: 25, type: "armor", category: "light", slot: "chest", stats: { ac: 1 } },
+        { tier: 1, name: "Armure de cuir", desc: "Protection basique mais fiable.", price: 45, type: "armor", category: "light", slot: "chest", stats: { ac: 2 } },
+        { tier: 2, name: "Cotte de mailles legere", desc: "Mailles fines offrant bonne protection.", price: 150, type: "armor", category: "medium", slot: "chest", stats: { ac: 3 } },
+        { tier: 2, name: "Plastron de cuir cloute", desc: "Cuir renforce de clous metalliques.", price: 180, type: "armor", category: "medium", slot: "chest", stats: { ac: 3, con: 1 } },
+        { tier: 3, name: "Harnois leger", desc: "Armure de plates bien ajustee.", price: 450, type: "armor", category: "heavy", slot: "chest", stats: { ac: 5 } },
+        { tier: 4, name: "Armure de plates ouvragee", desc: "Chef-d'oeuvre de forgerons nains.", price: 1200, type: "armor", category: "heavy", slot: "chest", stats: { ac: 6, con: 2 } },
+    ];
+    
+    // Shields
+    const shields = [
+        { tier: 1, name: "Bouclier en bois", desc: "Un bouclier simple mais solide.", price: 20, type: "shield", category: "shield", slot: "offhand", stats: { ac: 1 } },
+        { tier: 2, name: "Bouclier cercle de fer", desc: "Bouclier renforce de metal.", price: 80, type: "shield", category: "shield", slot: "offhand", stats: { ac: 2 } },
+        { tier: 3, name: "Ecu de chevalier", desc: "Un bouclier orne d'armoiries.", price: 250, type: "shield", category: "shield", slot: "offhand", stats: { ac: 3 } },
+    ];
+    
+    // Consumables
+    const consumables = [
+        { tier: 1, name: "Potion de soin mineure", desc: "Restaure 2d4+2 PV.", price: 25, type: "consumable", slot: "none", stats: {}, effect: "heal", healDice: "2d4+2" },
+        { tier: 1, name: "Antidote", desc: "Guerit les poisons mineurs.", price: 30, type: "consumable", slot: "none", stats: {}, effect: "cure_poison" },
+        { tier: 1, name: "Ration de voyage", desc: "Nourriture pour une journee.", price: 5, type: "consumable", slot: "none", stats: {} },
+        { tier: 2, name: "Potion de soin", desc: "Restaure 4d4+4 PV.", price: 75, type: "consumable", slot: "none", stats: {}, effect: "heal", healDice: "4d4+4" },
+        { tier: 2, name: "Potion d'energie", desc: "Restaure 20 points de ressource.", price: 60, type: "consumable", slot: "none", stats: {}, effect: "restore_resource" },
+        { tier: 3, name: "Potion de soin superieure", desc: "Restaure 8d4+8 PV.", price: 200, type: "consumable", slot: "none", stats: {}, effect: "heal", healDice: "8d4+8" },
+        { tier: 3, name: "Elixir de force", desc: "+2 FOR pendant 1 heure.", price: 150, type: "consumable", slot: "none", stats: { str: 2 }, effect: "buff_temp" },
+        { tier: 4, name: "Potion de soin supreme", desc: "Restaure 10d4+20 PV.", price: 500, type: "consumable", slot: "none", stats: {}, effect: "heal", healDice: "10d4+20" },
+    ];
+    
+    // Accessories
+    const accessories = [
+        { tier: 2, name: "Anneau de protection", desc: "Un anneau qui renforce les defenses.", price: 100, type: "ring", slot: "ring", stats: { ac: 1 } },
+        { tier: 2, name: "Amulette de vitalite", desc: "Augmente la resistance.", price: 120, type: "amulet", slot: "neck", stats: { con: 1 } },
+        { tier: 3, name: "Cape de l'ombre", desc: "Aide a se fondre dans l'obscurite.", price: 300, type: "cloak", slot: "back", stats: { dex: 2 } },
+        { tier: 4, name: "Anneau de puissance", desc: "Renforce les attaques magiques.", price: 600, type: "ring", slot: "ring", stats: { int: 3 } },
+    ];
+    
+    // Select items based on tier
+    const selectItems = (arr: any[], count: number) => {
+        const available = arr.filter(i => i.tier <= tier);
+        const selected: any[] = [];
+        for (let i = 0; i < count && available.length > 0; i++) {
+            const idx = Math.floor(Math.random() * available.length);
+            const item = { ...available[idx], id: `item_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 5)}`, rarity: available[idx].tier <= 1 ? "commun" : available[idx].tier <= 2 ? "peu commun" : "rare" };
+            selected.push(item);
+            available.splice(idx, 1);
+        }
+        return selected;
+    };
+    
+    items.push(...selectItems(weapons, 2 + Math.floor(Math.random() * 2)));
+    items.push(...selectItems(armors, 1 + Math.floor(Math.random() * 2)));
+    items.push(...selectItems(shields, 1));
+    items.push(...selectItems(consumables, 3 + Math.floor(Math.random() * 2)));
+    if (tier >= 2) items.push(...selectItems(accessories, 1 + Math.floor(Math.random() * 2)));
+    
+    return items;
+}
 
 // ─── PROMPT BUILDER ──────────────────────────────────────────────────
 
@@ -232,8 +396,10 @@ function buildSystemPrompt(opts: {
     context: string;
     lore: any;
     historyStr: string;
+    partyDetails?: any[];
+    playerBackstoryContext?: string;
 }): string {
-    const { gamePhase, timeLabel, partyList, playerInfo, context, lore, historyStr } = opts;
+    const { gamePhase, timeLabel, partyList, playerInfo, context, lore, historyStr, partyDetails, playerBackstoryContext } = opts;
 
     const sections: string[] = [];
 
@@ -244,8 +410,23 @@ function buildSystemPrompt(opts: {
         `PHASE ACTUELLE: ${gamePhase} | HEURE: ${timeLabel}`,
     );
 
-    // Group awareness
-    sections.push(`GROUPE: Tu t'adresses a un GROUPE (${partyList}). Utilise VOUS (pluriel).`);
+    // CRITICAL: Clear distinction between Players and NPCs
+    sections.push(`\n=== JOUEURS REELS (PAS DES PNJ) ===`);
+    sections.push(`IMPORTANT: Les personnages suivants sont des JOUEURS HUMAINS REELS qui jouent ensemble en EQUIPE.`);
+    sections.push(`Ils ne sont PAS des PNJ. Tu dois les traiter comme une equipe cooperative.`);
+    sections.push(`Quand tu t'adresses au groupe, utilise VOUS (pluriel) et inclus TOUS les joueurs.`);
+    
+    if (partyDetails && partyDetails.length > 0) {
+        partyDetails.forEach((p: any, idx: number) => {
+            const spellList = (p.spells || []).map((s: any) => typeof s === 'string' ? s : s.name).join(', ');
+            sections.push(`  JOUEUR ${idx + 1}: ${p.name} | Classe: ${p.class} | Niveau: ${p.level || 1} | Aptitudes: [${spellList || 'Aucune'}]`);
+        });
+    } else {
+        sections.push(`GROUPE: ${partyList}`);
+    }
+    
+    sections.push(`\nREGLE EQUIPE: Ces joueurs COOPERENT. En combat, ils combattent ENSEMBLE contre les ennemis.`);
+    sections.push(`Si un joueur attaque, les autres peuvent aussi participer. Ne les mets JAMAIS en opposition.`);
 
     // Rules (auto-numbered)
     sections.push("\nREGLES ABSOLUES:");
@@ -269,6 +450,18 @@ function buildSystemPrompt(opts: {
     const loreSummary = summarizeLore(lore);
     if (loreSummary) {
         sections.push(`\nLORE DU MONDE:\n${loreSummary.substring(0, 8000)}`);
+    }
+
+    // Player backstory context (enriched)
+    if (playerBackstoryContext) {
+        sections.push(`\n=== BACKSTORY DU JOUEUR ACTIF (A EXPLOITER EN JEU) ===`);
+        sections.push(playerBackstoryContext);
+        sections.push(`\nUTILISATION BACKSTORY:`);
+        sections.push(`- Les PNJ connus peuvent reconnaitre le joueur et reagir a son passe`);
+        sections.push(`- Les factions ennemies peuvent envoyer des agents ou creer des obstacles`);
+        sections.push(`- Les hooks de roleplay sont des opportunites de quetes secondaires`);
+        sections.push(`- Les secrets personnels peuvent etre reveles progressivement`);
+        sections.push(`- La reputation de depart influence les interactions sociales`);
     }
 
     // History
@@ -308,10 +501,11 @@ Deno.serve(async (req: Request) => {
 
         // ── Fetch player info ──
         let playerInfo = "";
+        let playerBackstoryContext = "";
         if (playerId) {
             const { data: p } = await supabase
                 .from('players')
-                .select('name, class, level, gold, spells, inventory, backstory')
+                .select('name, class, level, gold, spells, inventory, backstory, backstory_gm_context, starting_reputation, known_npcs, faction_ties')
                 .eq('id', playerId)
                 .single();
 
@@ -323,20 +517,33 @@ Deno.serve(async (req: Request) => {
                     `GOLD: ${p.gold || 0}`,
                     `INV: ${JSON.stringify(p.inventory || [])}`,
                     `SPELLS: ${JSON.stringify(p.spells || [])}`,
-                    `BACKSTORY: ${JSON.stringify(p.backstory || "Inconnu")}`,
+                    `ORIGIN: ${p.backstory?.label || "Inconnu"}`,
                 ].join(' | ');
+                
+                if (p.backstory_gm_context) {
+                    playerBackstoryContext = p.backstory_gm_context;
+                }
             }
         }
 
-        // ── Fetch party ──
+        // ── Fetch party with full details including spells ──
         const { data: party } = await supabase
             .from('players')
-            .select('name, class, backstory')
+            .select('name, class, backstory, level, spells, abilities')
             .eq('session_id', sessionId);
 
         const partyList = (party || [])
             .map((p: any) => `${p.name} (${p.class}) [${p.backstory?.label || "?"}]`)
             .join(' | ') || "Aucun";
+
+        // Detailed party info for proper player recognition
+        const partyDetails = (party || []).map((p: any) => ({
+            name: p.name,
+            class: p.class,
+            level: p.level || 1,
+            spells: p.spells || [],
+            abilities: p.abilities || []
+        }));
 
         // ── Build history string ──
         const historyStr = history.length > 0
@@ -345,7 +552,7 @@ Deno.serve(async (req: Request) => {
 
         // ── Build system prompt ──
         const prompt = buildSystemPrompt({
-            gamePhase, timeLabel, partyList, playerInfo, context, lore, historyStr,
+            gamePhase, timeLabel, partyList, playerInfo, context, lore, historyStr, partyDetails, playerBackstoryContext,
         });
 
         // ── Determine user message ──
@@ -387,6 +594,14 @@ Deno.serve(async (req: Request) => {
             result = JSON.parse(clean);
         } catch (_e) {
             result = { narrative: raw, new_context: "parse error" };
+        }
+
+        // ── Inject balanced merchant inventory if merchant is present ──
+        if (result.merchant && (!result.merchant.inventory || result.merchant.inventory.length === 0)) {
+            const avgLevel = partyDetails.length > 0 
+                ? Math.round(partyDetails.reduce((sum: number, p: any) => sum + (p.level || 1), 0) / partyDetails.length)
+                : 1;
+            result.merchant.inventory = generateMerchantItems(avgLevel);
         }
 
         // ── Save to DB (skip private contexts) ──

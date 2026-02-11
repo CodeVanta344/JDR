@@ -19,70 +19,99 @@ export const NarrationPanel = ({
         !players.every(p => p.is_ready) &&
         !messages.some(m => m.role === 'system' && m.content.includes("START_ADVENTURE_TRIGGERED"));
 
+    const extractNarrative = (rawContent) => {
+        if (!rawContent) return '';
+        
+        let raw = typeof rawContent === 'string' ? rawContent : JSON.stringify(rawContent);
+        
+        // Skip memory markers
+        if (raw.startsWith('(MEMOIRE:') || raw.startsWith('(MÉMOIRE:')) {
+            return null;
+        }
+        
+        // Not JSON? Return as-is
+        if (!raw.trim().startsWith('{') && !raw.trim().startsWith('[')) {
+            return raw;
+        }
+        
+        // Clean markdown code blocks
+        let cleaned = raw.replace(/```json\n?/gi, '').replace(/```\n?/g, '').trim();
+        
+        // Method 1: Extract narrative with regex (most robust for escaped strings)
+        const narrativeMatch = cleaned.match(/"narrative"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+        if (narrativeMatch) {
+            return narrativeMatch[1]
+                .replace(/\\"/g, '"')
+                .replace(/\\n/g, '\n')
+                .replace(/\\t/g, '\t')
+                .replace(/\\\\/g, '\\')
+                .replace(/\\'/g, "'");
+        }
+        
+        // Method 2: Try JSON.parse
+        try {
+            const parsed = JSON.parse(cleaned);
+            if (parsed.narrative && typeof parsed.narrative === 'string') {
+                return parsed.narrative;
+            }
+            if (typeof parsed === 'string') {
+                return parsed;
+            }
+            // Use formatAIContent for complex objects
+            return formatAIContent(parsed);
+        } catch (e) {
+            // Method 3: Manual extraction as last resort
+            const startIdx = cleaned.indexOf('"narrative"');
+            if (startIdx !== -1) {
+                const colonIdx = cleaned.indexOf(':', startIdx);
+                const quoteStart = cleaned.indexOf('"', colonIdx + 1);
+                if (quoteStart !== -1) {
+                    let quoteEnd = quoteStart + 1;
+                    while (quoteEnd < cleaned.length) {
+                        if (cleaned[quoteEnd] === '"' && cleaned[quoteEnd - 1] !== '\\') break;
+                        quoteEnd++;
+                    }
+                    const narrative = cleaned.substring(quoteStart + 1, quoteEnd);
+                    return narrative
+                        .replace(/\\"/g, '"')
+                        .replace(/\\n/g, '\n')
+                        .replace(/\\\\/g, '\\');
+                }
+            }
+        }
+        
+        return raw;
+    };
+
     return (
         <section className="narration-section">
             <div className="messages-container" ref={chatRef}>
-                {messages.filter(m => !m.content?.startsWith?.('(MÉMOIRE:')).map((m, i) => (
-                    <div key={i} className={`chat-message ${m.role}`}>
-                        <span className="msg-author">
-                            {m.role === 'user' ? (players.find(p => p.id === m.player_id)?.name || 'HÉROS') : 'RÉCIT'}
-                        </span>
-                        <div className="msg-content">
-                            {(() => {
-                                if (m.role === 'image') return <img src={m.content} alt="Vision" style={{ width: '100%', borderRadius: '4px' }} />;
-
-                                let content = "";
-                                let challenge = null;
-
-                                try {
-                                    // Robust parsing for possible JSON or string content
-                                    const raw = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
-                                    if (raw && (raw.startsWith('{') || raw.startsWith('['))) {
-                                        const parsed = JSON.parse(raw.replace(/```[a-z]*\n?/gi, '').replace(/```/g, ''));
-                                        content = parsed.narrative || formatAIContent(parsed);
-                                        challenge = parsed.challenge;
-                                    } else {
-                                        content = raw;
-                                    }
-                                } catch (e) {
-                                    content = String(m.content || '');
-                                }
-
-                                // Final safety check to avoid React Error #31 (rendering objects directly)
-                                const renderableContent = (typeof content === 'object' && content !== null)
-                                    ? JSON.stringify(content)
-                                    : String(content || '');
-
-                                return (
-                                    <>
-                                        {i === messages.length - 1 && m.role !== 'user' ? (
-                                            <TypewriterText text={renderableContent} speed={15} />
-                                        ) : (
-                                            <div style={{ whiteSpace: 'pre-wrap' }}>{renderableContent}</div>
-                                        )}
-                                        {challenge && (
-                                            <button
-                                                className="btn-gold"
-                                                style={{ marginTop: '0.8rem', padding: '0.5rem' }}
-                                                onClick={() => {
-                                                    const roll = Math.floor(Math.random() * 20) + 1;
-                                                    const mod = Math.floor(((character?.stats?.[challenge.stat] || 10) - 10) / 2);
-                                                    onSubmit(null, `Roll Result: ${roll} (Total: ${roll + mod}) for ${challenge.label}`);
-                                                }}
-                                            >
-                                                🎲 {challenge.label} ({challenge.stat?.toUpperCase()})
-                                            </button>
-                                        )}
-                                    </>
-                                );
-                            })()}
+                {messages.filter(m => !m.content?.startsWith?.('(MÉMOIRE:')).map((m, i) => {
+                    const content = extractNarrative(m.content);
+                    if (content === null || !content?.trim()) return null;
+                    
+                    return (
+                        <div key={i} className={`chat-message ${m.role} ${m.role === 'system' ? 'system-msg' : ''}`}>
+                            <span className="msg-author">
+                                {m.role === 'user' ? (players.find(p => p.id === m.player_id)?.name || 'HEROS') :
+                                    m.role === 'system' ? 'RECIT DU MJ' : 'ARCHIVES'}
+                            </span>
+                            <div className="msg-content">
+                                {m.role === 'image' ? (
+                                    <img src={m.content} alt="Vision" style={{ width: '100%', borderRadius: '4px' }} />
+                                ) : i === messages.length - 1 && m.role !== 'user' ? (
+                                    <TypewriterText text={content} speed={15} />
+                                ) : (
+                                    <div style={{ whiteSpace: 'pre-wrap' }}>{content}</div>
+                                )}
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
                 {loading && (
                     <div className="chat-message system">
                         <span className="msg-content italic" style={{ color: 'var(--aether-blue)' }}>
-                            Le destin s'écrit...
+                            Le destin s'ecrit...
                         </span>
                     </div>
                 )}
@@ -99,7 +128,7 @@ export const NarrationPanel = ({
                         fontStyle: 'italic',
                         animation: 'pulse 1.5s infinite'
                     }}>
-                        ✨ {typingUsers.join(', ')} {typingUsers.length > 1 ? 'écrivent' : 'écrit'}...
+                        {typingUsers.join(', ')} {typingUsers.length > 1 ? 'ecrivent' : 'ecrit'}...
                     </div>
                 )}
                 <input
@@ -129,7 +158,7 @@ export const NarrationPanel = ({
                             transition: 'all 0.3s'
                         }}
                     >
-                        {character?.is_ready ? 'PRÊT !' : 'SE PRÉPARER'}
+                        {character?.is_ready ? 'PRET !' : 'SE PREPARER'}
                     </button>
                 )}
             </form>

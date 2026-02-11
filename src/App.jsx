@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from './supabaseClient';
-import { WORLD_CONTEXT, BESTIARY, LEVEL_THRESHOLDS, CLASSES, ENVIRONMENTAL_RULES, NPC_TEMPLATES, QUEST_HOOKS, TAVERNS_AND_LOCATIONS, RUMORS_AND_GOSSIP, RANDOM_ENCOUNTERS, BESTIARY_EXTENDED, WORLD_MYTHS_EXTENDED, LEGENDARY_ITEMS, WORLD_HISTORY, FACTION_LORE, WORLD_MYTHS_AND_LEGENDS, CULTURAL_LORE } from './lore';
+import { WORLD_CONTEXT, BESTIARY, LEVEL_THRESHOLDS, CLASSES, ENVIRONMENTAL_RULES, EQUIPMENT_RULES, NPC_TEMPLATES, QUEST_HOOKS, TAVERNS_AND_LOCATIONS, RUMORS_AND_GOSSIP, RANDOM_ENCOUNTERS, BESTIARY_EXTENDED, WORLD_MYTHS_EXTENDED, LEGENDARY_ITEMS, WORLD_HISTORY, FACTION_LORE, WORLD_MYTHS_AND_LEGENDS, CULTURAL_LORE } from './lore';
 import { CharacterCreation } from './components/CharacterCreation';
 import { CharacterSheet } from './components/CharacterSheet';
 import { SessionLobby } from './components/SessionLobby';
@@ -17,6 +17,7 @@ import { AudioManager } from './components/AudioManager';
 import { GameHelperModal } from './components/GameHelperModal';
 import { LevelUpModal } from './components/LevelUpModal';
 import { TransactionPrompt } from './components/TransactionPrompt';
+import { TradeModal } from './components/TradeModal';
 import { HUDHeader } from './components/HUD/HUDHeader';
 import { NarrationPanel } from './components/HUD/NarrationPanel';
 import { WeatherOverlay } from './components/WeatherOverlay';
@@ -53,6 +54,7 @@ export default function App() {
     // Weather moved to useGameState
     const [availableSessions, setAvailableSessions] = useState([]);
     const [gamePhase, setGamePhase] = useState('INTRO'); // INTRO, EXPLORATION, DRAMA
+    const [showTradeModal, setShowTradeModal] = useState(false);
 
     // ... (rest of state)
 
@@ -61,6 +63,7 @@ export default function App() {
     const typingTimeoutRef = useRef(null);
     const creatingPlayerRef = useRef(false);
     const chatRef = useRef(null);
+    const lastActivityRef = useRef(Date.now());
 
     const [lastSFX, setLastSFX] = useState(null);
     const [activeVFX, setActiveVFX] = useState(null);
@@ -128,6 +131,73 @@ export default function App() {
             speakText(spokenText);
         }
     }, [messages, voiceEnabled, activeNPC]);
+
+    // --- DATA FETCHING ---
+    const fetchData = React.useCallback(async () => {
+        if (!session?.id) return;
+        try {
+            // Fetch initial weather
+            const { data: wData } = await supabase.from('world_state').select('value').eq('key', `weather_${session.id}`).maybeSingle();
+            if (wData) setWeather(wData.value);
+
+            const { data: sData } = await supabase.from('sessions').select('*').eq('id', session.id).maybeSingle();
+            if (sData) setSession(sData);
+
+            const { data: msgData } = await supabase.from('messages').select('*').eq('session_id', session.id).order('created_at', { ascending: true });
+
+            // Check for start marker in RAW data before filtering
+            const hasStarted = msgData?.some(m => m.content.includes("START_ADVENTURE_TRIGGERED"));
+            setAdventureStarted(hasStarted);
+
+            const filteredMsgs = (msgData || []).filter(m => !m.content?.startsWith('(MÉMOIRE:'));
+            setMessages(filteredMsgs);
+            const lastImg = [...(msgData || [])].reverse().find(m => m.role === 'image');
+            if (lastImg) setSceneImage(lastImg.content);
+
+            const { data: pData } = await supabase.from('players').select('*').eq('session_id', session.id);
+            setPlayers(pData || []);
+            const pc = pData?.find(p => p.user_id === profile?.id);
+            if (pc) setCharacter(pc);
+        } catch (err) {
+            console.error("Fetch error:", err);
+        }
+    }, [session?.id, profile?.id, setWeather, setSession, setAdventureStarted, setMessages, setSceneImage, setPlayers, setCharacter]);
+
+    // Re-fetch everything when adventure officially starts
+    useEffect(() => {
+        if (adventureStarted) {
+            fetchData();
+        }
+    }, [adventureStarted, fetchData]);
+
+    // --- REAL-TIME MESSAGE SUBSCRIPTION ---
+    useEffect(() => {
+        if (!session?.id) return;
+
+        const channel = supabase
+            .channel(`messages_${session.id}`)
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'messages',
+                filter: `session_id=eq.${session.id}`
+            }, (payload) => {
+                const newMsg = payload.new;
+                // Skip memory markers and duplicates
+                if (newMsg.content?.startsWith('(MEMOIRE:') || newMsg.content?.startsWith('(MÉMOIRE:')) return;
+                
+                setMessages(prev => {
+                    // Check if message already exists
+                    if (prev.some(m => m.id === newMsg.id)) return prev;
+                    return [...prev, newMsg];
+                });
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [session?.id]);
 
     // --- AUTO-CREATE LOBBY PLAYER ---
     useEffect(() => {
@@ -426,9 +496,9 @@ export default function App() {
     }, [session?.id, session?.host_id, profile?.id]);
 
     useEffect(() => {
-        if (!session) return;
-        let channel;
+        if (!session?.id || !profile?.id) return;
 
+        let channel;
         const setupRealtime = () => {
             setConnStatus('connecting');
             channel = supabase
@@ -438,42 +508,9 @@ export default function App() {
                     schema: 'public',
                     table: 'messages',
                     filter: `session_id=eq.${session.id}`
-                }, (payload) => {
-                    setMessages(prev => {
-                        if (prev.some(m => m.id === payload.new.id)) return prev;
-                        if (payload.new.content?.startsWith('(MÉMOIRE:')) {
-                            if (payload.new.content.includes("START_ADVENTURE_TRIGGERED")) {
-                                setAdventureStarted(true);
-                            }
-                            return prev;
-                        }
-                        return [...prev, payload.new];
-                    });
-                    if (payload.new.role === 'image') setSceneImage(payload.new.content);
-
-                    // Multiplayer Sync (Combat & Weather)
-                    if (payload.new.role === 'system') {
-                        try {
-                            const parsed = JSON.parse(payload.new.content);
-
-                            // Combat
-                            if (parsed.combat) {
-                                if (session.host_id === profile.id) {
-                                    initializeHostCombat(parsed.combat.enemies);
-                                } else {
-                                    handleCombatDistanceCheck(parsed.combat);
-                                }
-                            }
-
-                            // Weather
-                            if (parsed.weather) {
-                                setWeather(parsed.weather);
-                                if (session.host_id === profile.id) {
-                                    supabase.from('world_state').upsert({ key: `weather_${session.id}`, value: parsed.weather });
-                                }
-                            }
-                        } catch (e) { }
-                    }
+                }, () => {
+                    // Optimized sync: just fetch everything to ensure consistency
+                    fetchData();
                 })
                 .on('postgres_changes', {
                     event: '*',
@@ -490,11 +527,8 @@ export default function App() {
                     schema: 'public',
                     table: 'players',
                     filter: `session_id=eq.${session.id}`
-                }, async () => {
-                    const { data } = await supabase.from('players').select('*').eq('session_id', session.id);
-                    setPlayers(data || []);
-                    const pc = data?.find(p => p.user_id === profile?.id);
-                    if (pc) setCharacter(pc);
+                }, () => {
+                    fetchData();
                 })
                 .on('presence', { event: 'sync' }, () => {
                     const state = channel.presenceState();
@@ -511,7 +545,6 @@ export default function App() {
                     setOnlineUsers([...new Set(presences)]);
                     setTypingUsers([...new Set(typers)]);
                 })
-                // --- LISTEN FOR SESSION CHANGES (start, deactivation, etc.) ---
                 .on('postgres_changes', {
                     event: 'UPDATE',
                     schema: 'public',
@@ -519,7 +552,6 @@ export default function App() {
                     filter: `id=eq.${session.id}`
                 }, (payload) => {
                     if (payload.new.active === false) {
-                        // The host has left — kick everyone back to lobby
                         setSession(null);
                         setCharacter(null);
                         setMessages([]);
@@ -527,82 +559,48 @@ export default function App() {
                         setCombatMode(false);
                         window.history.pushState({}, '', window.location.pathname);
                     } else {
-                        // Sync session state (e.g. is_started) for all players
                         setSession(prev => ({ ...prev, ...payload.new }));
                     }
                 })
                 .subscribe(async (status) => {
                     if (status === 'SUBSCRIBED') {
                         setConnStatus('connected');
-                        if (profile?.id) {
-                            await channel.track({
-                                user_id: profile.id,
-                                name: character?.name || profile.name,
-                                online_at: new Date().toISOString(),
-                                is_typing: false
-                            });
-                        }
+                        await channel.track({
+                            user_id: profile.id,
+                            name: character?.name || profile.name,
+                            online_at: new Date().toISOString(),
+                            is_typing: false
+                        });
                     } else if (status === 'TIMED_OUT' || status === 'CLOSED') {
                         setConnStatus('polling');
                     }
                 });
 
-            // Expose channel for typing updates
             window.activeChannel = channel;
         };
 
-        const fetchData = async () => {
-            try {
-                // Fetch initial weather
-                const { data: wData } = await supabase.from('world_state').select('value').eq('key', `weather_${session.id}`).maybeSingle();
-                if (wData) setWeather(wData.value);
-
-                const { data: sData } = await supabase.from('sessions').select('*').eq('id', session.id).maybeSingle();
-                if (sData) setSession(sData);
-
-                const { data: msgData } = await supabase.from('messages').select('*').eq('session_id', session.id).order('created_at', { ascending: true });
-
-                // Check for start marker in RAW data before filtering
-                const hasStarted = msgData?.some(m => m.content.includes("START_ADVENTURE_TRIGGERED"));
-                setAdventureStarted(hasStarted);
-
-                const filteredMsgs = (msgData || []).filter(m => !m.content?.startsWith('(MÉMOIRE:'));
-                setMessages(filteredMsgs);
-                const lastImg = [...(msgData || [])].reverse().find(m => m.role === 'image');
-                if (lastImg) setSceneImage(lastImg.content);
-
-                const { data: pData } = await supabase.from('players').select('*').eq('session_id', session.id);
-                setPlayers(pData || []);
-                const pc = pData?.find(p => p.user_id === profile?.id);
-                if (pc) setCharacter(pc);
-
-                // Auto-init is handled by startAdventure when all players are ready (line ~786)
-                // No need for a separate intro call here.
-            } catch (err) {
-                console.error("Fetch error:", err);
-            }
-        };
-
-        if (profile) {
-            setupRealtime();
-            fetchData();
-        }
+        setupRealtime();
+        fetchData();
 
         return () => {
             if (channel) supabase.removeChannel(channel);
-            if (pollInterval.current) clearInterval(pollInterval.current);
         };
-    }, [session?.id, profile?.id]);
+    }, [session?.id, profile?.id, fetchData]);
 
     // --- PLAYER LIST POLLING FALLBACK (Hub phase only) ---
     useEffect(() => {
         if (!session?.id || adventureStarted) return;
         const refreshPlayers = async () => {
-            const { data } = await supabase.from('players').select('*').eq('session_id', session.id);
-            if (data) {
-                setPlayers(data);
-                const pc = data.find(p => p.user_id === profile?.id);
+            const { data: pData } = await supabase.from('players').select('*').eq('session_id', session.id);
+            if (pData) {
+                setPlayers(pData);
+                const pc = pData.find(p => p.user_id === profile?.id);
                 if (pc) setCharacter(prev => prev?.id === pc.id && prev?.is_ready === pc.is_ready ? prev : pc);
+            }
+            // Also poll session state to ensure is_started sync
+            const { data: sData } = await supabase.from('sessions').select('*').eq('id', session.id).maybeSingle();
+            if (sData) {
+                setSession(prev => prev?.is_started === sData.is_started && prev?.active === sData.active ? prev : sData);
             }
         };
         const interval = setInterval(refreshPlayers, 5000);
@@ -782,9 +780,14 @@ export default function App() {
                 xp: (charData.xp || 0) + bonusXp,
                 gold: (charData.gold || 100) + bonusGold,
                 backstory: charData.backstory,
+                backstory_gm_context: charData.backstory_gm_context || '',
+                starting_reputation: charData.starting_reputation || {},
+                known_npcs: charData.known_npcs || [],
+                faction_ties: charData.faction_ties || [],
+                personal_secrets: charData.personal_secrets || [],
                 session_id: session.id,
                 user_id: profile.id,
-                is_ready: true
+                is_ready: false
             };
 
             const { data, error } = await supabase
@@ -836,6 +839,22 @@ export default function App() {
         }
     };
 
+    // Effect: When all players are ready in SessionHub, advance to character creation
+    useEffect(() => {
+        if (!session || session.is_started || players.length < 2) return;
+        if (!profile || session.host_id !== profile.id) return;
+
+        const allReady = players.every(p => p.is_ready);
+        if (allReady) {
+            // Small delay to show "LANCEMENT EN COURS"
+            const timer = setTimeout(async () => {
+                await supabase.from('sessions').update({ is_started: true }).eq('id', session.id);
+                setSession(prev => ({ ...prev, is_started: true }));
+            }, 1500);
+            return () => clearTimeout(timer);
+        }
+    }, [session, players, profile]);
+
     const handleStartAdventure = async () => {
         if (!session || players.length < 2) return;
 
@@ -870,38 +889,66 @@ export default function App() {
             });
 
             if (aiResponse) {
-                // The GM message is recorded to DB by the function, 
-                // and will arrive via real-time.
+                // Force a final sync to ensure the intro is visible immediately
+                await fetchData();
             }
         } catch (e) { console.error("Start Adventure Error:", e); }
         finally { setLoading(false); }
     };
 
+    // Effect: Launch adventure when all players with class are ready
     useEffect(() => {
-        if (!session || !profile || players.length === 0) return;
+        if (!session || !profile || players.length === 0 || !session.is_started) return;
+        if (!character?.class) return;
 
-        // Strict Host Check: Only the host can start the adventure
-        if (session.host_id !== profile.id) return;
+        const playersWithClass = players.filter(p => p.class);
+        const allPlayersReady = playersWithClass.length === players.length && players.every(p => p.class && p.is_ready);
+        const hasMarker = messages.some(m => m.content && m.content.includes("START_ADVENTURE_TRIGGERED"));
+        
+        // If adventure already started (marker exists), sync ALL players
+        if (hasMarker && !adventureStarted) {
+            setAdventureStarted(true);
+            return;
+        }
 
-        if (players.every(p => p.is_ready)) {
-            // Robust check: Ensure we haven't started locally OR in DB
-            // We check messages for the marker to be sure, using the latest messages state
-            const hasMarker = messages.some(m => m.content && m.content.includes("START_ADVENTURE_TRIGGERED"));
-            const alreadyStarted = adventureStarted || hasMarker || messages.length > 5;
+        // Already started locally, don't re-trigger
+        if (adventureStarted) return;
 
-            if (!alreadyStarted && character?.is_ready && players.length >= 2) {
-                // We add a hidden marker to the DB via a system message to silence future triggers
-                supabase.from('messages').insert({
-                    session_id: session.id,
-                    role: 'system',
-                    content: "(MÉMOIRE:SYSTEM) START_ADVENTURE_TRIGGERED"
-                }).then(({ error }) => {
-                    if (!error) {
-                        setAdventureStarted(true); // Immediate local update
-                        handleStartAdventure();
+        // NON-HOST PLAYERS: Check if all are ready and wait for marker
+        if (session.host_id !== profile.id) {
+            // If all players with class are ready, poll messages more frequently to catch marker
+            if (allPlayersReady) {
+                const pollInterval = setInterval(async () => {
+                    const { data } = await supabase
+                        .from('messages')
+                        .select('content')
+                        .eq('session_id', session.id)
+                        .ilike('content', '%START_ADVENTURE_TRIGGERED%')
+                        .limit(1);
+                    
+                    if (data && data.length > 0) {
+                        setAdventureStarted(true);
+                        clearInterval(pollInterval);
                     }
-                });
+                }, 1000);
+                
+                return () => clearInterval(pollInterval);
             }
+            return;
+        }
+
+        // HOST: Trigger the actual start when all are ready
+        if (allPlayersReady && character?.is_ready && players.length >= 2) {
+            supabase.from('messages').insert({
+                session_id: session.id,
+                role: 'system',
+                content: "(MEMOIRE:SYSTEM) START_ADVENTURE_TRIGGERED"
+            }).then(({ error }) => {
+                if (!error) {
+                    setAdventureStarted(true);
+                    handleStartAdventure();
+                }
+            });
         }
     }, [players, session, profile, adventureStarted, messages, character]);
 
@@ -1609,6 +1656,9 @@ export default function App() {
                     setActiveNPC(aiResponse.npc);
                 }
             }
+
+            // FORCED SYNC: Always reload after AI interaction to handle complex system states
+            await fetchData();
         } catch (e) { console.error(e); }
         finally { setLoading(false); }
     };
@@ -1764,7 +1814,7 @@ export default function App() {
                     sessionId={session.id}
                 />
             ) : !adventureStarted ? (
-                /* WAITING SCREEN: Player has created character, waiting for others */
+                /* WAITING ROOM: Player has created character, waiting for all to be ready */
                 <div className="creation-overlay" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <div className="stone-panel ornate-border" style={{
                         maxWidth: '700px',
@@ -1774,52 +1824,92 @@ export default function App() {
                         background: 'rgba(10, 10, 15, 0.95)',
                         animation: 'fadeIn 0.8s ease-out'
                     }}>
-                        <div className="category-tag" style={{ color: 'var(--gold-primary)', letterSpacing: '3px', fontSize: '0.8rem', marginBottom: '1rem' }}>PRÉPARATION</div>
-                        <h2 className="text-gold" style={{ fontSize: '2rem', letterSpacing: '4px', marginBottom: '2rem' }}>EN ATTENTE DES HÉROS</h2>
+                        <div className="category-tag" style={{ color: 'var(--gold-primary)', letterSpacing: '3px', fontSize: '0.8rem', marginBottom: '1rem' }}>SALLE D'ATTENTE</div>
+                        <h2 className="text-gold" style={{ fontSize: '2rem', letterSpacing: '4px', marginBottom: '2rem' }}>RASSEMBLEMENT DES HEROS</h2>
 
                         <div style={{ marginBottom: '2rem' }}>
-                            {players.map(p => (
-                                <div key={p.id} style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    padding: '0.8rem 1.2rem',
-                                    marginBottom: '0.5rem',
-                                    background: p.class ? 'rgba(77, 255, 136, 0.05)' : 'rgba(255, 255, 255, 0.02)',
-                                    border: `1px solid ${p.class ? 'rgba(77, 255, 136, 0.2)' : 'rgba(255,255,255,0.05)'}`,
-                                    borderRadius: '4px'
-                                }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                        {p.portrait_url ? (
-                                            <img src={p.portrait_url} alt="" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--gold-dim)' }} />
-                                        ) : (
-                                            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--void-panel)', border: '1px solid var(--gold-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>👤</div>
-                                        )}
+                            {players.map(p => {
+                                const hasClass = !!p.class;
+                                const isReady = p.class && p.is_ready;
+                                const isYou = p.id === character?.id;
+                                return (
+                                    <div key={p.id} style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        padding: '0.8rem 1.2rem',
+                                        marginBottom: '0.5rem',
+                                        background: isReady ? 'rgba(77, 255, 136, 0.05)' : isYou ? 'rgba(212,175,55,0.05)' : 'rgba(255, 255, 255, 0.02)',
+                                        border: `1px solid ${isReady ? 'rgba(77, 255, 136, 0.2)' : isYou ? 'var(--gold-dim)' : 'rgba(255,255,255,0.05)'}`,
+                                        borderRadius: '4px'
+                                    }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                            {p.portrait_url ? (
+                                                <img src={p.portrait_url} alt="" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--gold-dim)' }} />
+                                            ) : (
+                                                <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--void-panel)', border: '1px solid var(--gold-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>?</div>
+                                            )}
+                                            <div>
+                                                <div style={{ color: '#fff', fontSize: '1rem' }}>
+                                                    {p.name} {isYou && <span style={{ color: 'var(--gold-primary)', fontSize: '0.7rem' }}>(VOUS)</span>}
+                                                </div>
+                                                <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{p.class || 'Cree son personnage...'}</div>
+                                            </div>
+                                        </div>
                                         <div>
-                                            <div style={{ color: '#fff', fontSize: '1rem' }}>{p.name}</div>
-                                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{p.class || 'Forge son destin...'}</div>
+                                            {!hasClass ? (
+                                                <div style={{
+                                                    width: '20px', height: '20px',
+                                                    border: '2px solid var(--gold-dim)',
+                                                    borderTopColor: 'var(--gold-primary)',
+                                                    borderRadius: '50%',
+                                                    animation: 'spin 1s linear infinite'
+                                                }} />
+                                            ) : isReady ? (
+                                                <span style={{ color: '#4dff88', fontSize: '0.8rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                    PRET <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#4dff88', boxShadow: '0 0 8px #4dff88' }}></span>
+                                                </span>
+                                            ) : (
+                                                <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>EN ATTENTE</span>
+                                            )}
                                         </div>
                                     </div>
-                                    {p.class ? (
-                                        <span style={{ color: '#4dff88', fontSize: '0.8rem', fontWeight: 'bold' }}>PRÊT ✓</span>
-                                    ) : (
-                                        <div style={{
-                                            width: '20px', height: '20px',
-                                            border: '2px solid var(--gold-dim)',
-                                            borderTopColor: 'var(--gold-primary)',
-                                            borderRadius: '50%',
-                                            animation: 'spin 1s linear infinite'
-                                        }} />
-                                    )}
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
 
+                        {/* Ready Button for current player */}
+                        {character?.class && (
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <button
+                                    onClick={handleToggleReady}
+                                    className={character.is_ready ? 'btn-gold' : 'btn-medieval'}
+                                    style={{
+                                        padding: '1rem 3rem',
+                                        fontSize: '1.1rem',
+                                        letterSpacing: '2px',
+                                        background: character.is_ready ? 'rgba(77, 255, 136, 0.15)' : 'transparent',
+                                        border: `2px solid ${character.is_ready ? '#4dff88' : 'var(--gold-primary)'}`,
+                                        color: character.is_ready ? '#4dff88' : 'var(--gold-primary)'
+                                    }}
+                                >
+                                    {character.is_ready ? 'PRET !' : 'JE SUIS PRET'}
+                                </button>
+                            </div>
+                        )}
+
                         <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic' }}>
-                            {players.every(p => p.class)
-                                ? "✨ Tous les héros sont prêts ! L'aventure va commencer..."
-                                : `${players.filter(p => p.class).length} / ${players.length} héros ont forgé leur légende`
-                            }
+                            {(() => {
+                                const withClass = players.filter(p => p.class);
+                                const ready = players.filter(p => p.class && p.is_ready);
+                                if (withClass.length < players.length) {
+                                    return `${withClass.length} / ${players.length} heros ont cree leur personnage`;
+                                }
+                                if (ready.length === players.length) {
+                                    return "Tous les heros sont prets ! L'aventure commence...";
+                                }
+                                return `${ready.length} / ${players.length} heros sont prets`;
+                            })()}
                         </p>
 
                         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
@@ -1838,14 +1928,16 @@ export default function App() {
                         onToggleSettings={() => setShowSettings(!showSettings)}
                         onConsume={handleConsumeItem}
                         onLevelUpClick={() => setShowLevelUp(true)}
+                        onTradeClick={() => setShowTradeModal(true)}
                     />
 
                     <section className="hud-bottom glass-panel animate-fade-in">
                         <HUDHeader
                             gameTime={gameTime}
+                            getTimeLabel={getTimeLabel}
                             tension={tension}
                             realTimeSync={realTimeSync}
-                            onToggleSync={() => setRealTimeSync(!realTimeSync)}
+                            onToggleRealTime={() => setRealTimeSync(!realTimeSync)}
                             onInvite={() => {
                                 const url = window.location.origin + window.location.pathname + '?s=' + session.id;
                                 navigator.clipboard.writeText(url);
@@ -1853,6 +1945,7 @@ export default function App() {
                             }}
                             onToggleHelper={() => setShowHelper(!showHelper)}
                             showHelper={showHelper}
+                            onDebugCombat={() => { }}
                             connStatus={connStatus}
                             isGM={session && profile && session.gm_id === profile.id}
                             audioEnabled={audioEnabled}
@@ -1887,6 +1980,7 @@ export default function App() {
                         initialEnemies={combatEnemies}
                         syncedCombatState={syncedCombatState}
                         onUpdateCombatState={updateSyncedCombat}
+                        sessionId={session?.id}
                         onCombatEnd={async (result) => {
                             setCombatMode(false);
                             if (session.host_id === profile.id) {
@@ -2002,6 +2096,22 @@ export default function App() {
                         transaction={pendingTransaction}
                         onConfirm={() => handleConfirmTransaction(true)}
                         onRefuse={() => handleConfirmTransaction(false)}
+                    />
+                )
+            }
+
+            {
+                showTradeModal && (
+                    <TradeModal
+                        isOpen={showTradeModal}
+                        onClose={() => setShowTradeModal(false)}
+                        currentPlayer={character}
+                        players={players}
+                        sessionId={session?.id}
+                        onTradeComplete={(trade) => {
+                            triggerSFX('gold');
+                            fetchSession();
+                        }}
                     />
                 )
             }

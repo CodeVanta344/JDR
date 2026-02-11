@@ -1,4 +1,7 @@
+import React, { useState, useEffect, useRef } from 'react';
 import { CLASSES, BESTIARY } from '../lore';
+import { supabase } from '../supabaseClient';
+import { DieVisual } from './DieVisual';
 
 const DamagePopup = ({ amount, onDone }) => {
     useEffect(() => {
@@ -59,7 +62,7 @@ const TurnTracker = ({ combatants, currentTurnIndex }) => {
     );
 };
 
-export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeType: 'STANDARD' }, players, currentUserId, initialEnemies, syncedCombatState, onUpdateCombatState, onCombatEnd, onLogAction, onHPChange, onResourceChange, onGameOver, onRewards, onVFX, onSFX }) => {
+export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeType: 'STANDARD' }, players, currentUserId, initialEnemies, syncedCombatState, onUpdateCombatState, onCombatEnd, onLogAction, onHPChange, onResourceChange, onGameOver, onRewards, onVFX, onSFX, sessionId }) => {
     const [combatants, setCombatants] = useState([]);
     const [currentTurnIndex, setCurrentTurnIndex] = useState(0);
     const [round, setRound] = useState(1);
@@ -75,6 +78,45 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
     const [logs, setLogs] = useState([]);
     const [decor, setDecor] = useState([]);
     const logEndRef = useRef(null);
+    const lastSyncRef = useRef(0);
+
+    // Real-time combat sync subscription
+    useEffect(() => {
+        if (!sessionId) return;
+
+        const channel = supabase
+            .channel(`combat_sync_${sessionId}`)
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'world_state',
+                filter: `key=eq.combat_${sessionId}`
+            }, (payload) => {
+                if (payload.new && payload.new.value && payload.new.value.active) {
+                    const newState = payload.new.value;
+                    // Avoid applying our own updates (check timestamp)
+                    if (newState.updatedAt && newState.updatedAt > lastSyncRef.current) {
+                        lastSyncRef.current = newState.updatedAt;
+                        setCombatants(newState.combatants || []);
+                        setRound(newState.round || 1);
+                        setCurrentTurnIndex(newState.turnIndex || 0);
+                        if (newState.logs && newState.logs.length > logs.length) {
+                            setLogs(newState.logs);
+                        }
+                        if (combatState === 'initiative') {
+                            setCombatState('active');
+                        }
+                    }
+                } else if (payload.new && payload.new.value && !payload.new.value.active) {
+                    setCombatState('finished');
+                }
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [sessionId, combatState, logs.length]);
 
     useEffect(() => {
         logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -142,10 +184,37 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                 const dexMod = Math.floor((stats.dex - 10) / 2);
                 const charClass = p.class?.split(' ')[0] || "Guerrier";
                 const classData = CLASSES[charClass];
-                const baseAbilities = classData?.abilities || [];
+                const baseAbilities = classData?.initial_ability_options || classData?.abilities || [];
+                const classUnlockables = classData?.unlockables || [];
 
-                let combinedAbilities = [...(p.abilities || []), ...(p.spells || [])];
-                if (combinedAbilities.length === 0) combinedAbilities = baseAbilities;
+                // Merge player's chosen spells with their base abilities
+                // Player spells take priority - these are their actual chosen abilities
+                let playerSpells = [...(p.spells || [])];
+                let playerAbilities = [...(p.abilities || [])];
+                
+                // Build final ability list with full data from class definitions
+                let combinedAbilities = [...playerAbilities, ...playerSpells].map(spell => {
+                    const spellName = typeof spell === 'string' ? spell : spell.name;
+                    // Find full ability data from class definition
+                    const fromInitial = baseAbilities.find(a => a.name === spellName);
+                    const fromUnlockables = classUnlockables.find(u => u.name === spellName);
+                    const fullAbility = fromInitial || fromUnlockables;
+                    
+                    if (fullAbility) {
+                        return { ...fullAbility, range: fullAbility.range || 2 };
+                    }
+                    // If spell is already an object with data, use it
+                    if (typeof spell === 'object' && spell.name) {
+                        return { ...spell, range: spell.range || 2 };
+                    }
+                    // Fallback for unknown spells
+                    return { name: spellName, desc: "Capacite", cost: 10, range: 2 };
+                });
+
+                // If no abilities, use base class abilities
+                if (combinedAbilities.length === 0) {
+                    combinedAbilities = baseAbilities.map(a => ({ ...a, range: a.range || 2 }));
+                }
 
                 let arrivalTurns = 0;
                 let status = 'arrived';
@@ -167,17 +236,11 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                     maxHp: p.max_hp,
                     resource: p.resource ?? 100,
                     maxResource: p.max_resource ?? 100,
-                    resourceName: "Énergie",
+                    resourceName: "Energie",
                     initiative: Math.floor(Math.random() * 20) + 1 + dexMod,
                     isEnemy: false,
                     portrait_url: p.portrait_url,
-                    spells: combinedAbilities.map(s => {
-                        if (typeof s === 'string') {
-                            const found = classData?.abilities?.find(a => a.name === s) || classData?.unlockables?.find(u => u.name === s);
-                            return found || { name: s, desc: "Capacité", cost: 10 };
-                        }
-                        return s;
-                    }),
+                    spells: combinedAbilities,
                     arrivalTurns,
                     travelStatus: status,
                     posX: pos.x,
@@ -304,7 +367,8 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
         if (actualMove) {
             const newCombatants = combatants.map(u => u.id === currentActor.id ? { ...u, posX: newX, posY: newY, currentPM: u.currentPM - 1, facing: newFacing, hasMoved: true } : u);
             setCombatants(newCombatants);
-            if (onUpdateCombatState) onUpdateCombatState({ combatants: newCombatants, turnIndex: currentTurnIndex, round, active: true });
+            lastSyncRef.current = Date.now();
+            if (onUpdateCombatState) onUpdateCombatState({ combatants: newCombatants, turnIndex: currentTurnIndex, round, active: true, logs, updatedAt: lastSyncRef.current });
             if (onSFX) onSFX('footstep');
         }
     };
@@ -414,7 +478,8 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                     const newCombatants = combatants.map(u => u.id === target.id ? { ...u, hp: newHp } : u);
                     setCombatants(newCombatants);
 
-                    if (onUpdateCombatState) onUpdateCombatState({ combatants: newCombatants, turnIndex: currentTurnIndex, round, active: true });
+                    lastSyncRef.current = Date.now();
+                    if (onUpdateCombatState) onUpdateCombatState({ combatants: newCombatants, turnIndex: currentTurnIndex, round, active: true, logs, updatedAt: lastSyncRef.current });
 
                     if (action.cooldown > 0) {
                         setCooldowns(prev => ({ ...prev, [currentActor.id]: { ...(prev[currentActor.id] || {}), [action.name]: action.cooldown } }));
@@ -482,7 +547,8 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                     addLog({ role: 'system', content: `🕓 **${nextActor.name}** approche... (${newTurns} tours restants)` });
                     // If traveling, we set state and skip to next
                     setCombatants(newCombatants);
-                    if (onUpdateCombatState) onUpdateCombatState({ combatants: newCombatants, turnIndex: nextIndex, round: (nextIndex < currentTurnIndex ? round + 1 : round), active: true });
+                    lastSyncRef.current = Date.now();
+                    if (onUpdateCombatState) onUpdateCombatState({ combatants: newCombatants, turnIndex: nextIndex, round: (nextIndex < currentTurnIndex ? round + 1 : round), active: true, logs, updatedAt: lastSyncRef.current });
                     setTimeout(nextTurn, 1000);
                     return;
                 }
@@ -506,11 +572,14 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
             setCombatants(newCombatants);
 
             // SYNC TURN CHANGE
+            lastSyncRef.current = Date.now();
             if (onUpdateCombatState) onUpdateCombatState({
                 combatants: newCombatants,
                 turnIndex: nextIndex,
                 round: (nextIndex < currentTurnIndex ? round + 1 : round),
-                active: true
+                active: true,
+                logs,
+                updatedAt: lastSyncRef.current
             });
         }
     };

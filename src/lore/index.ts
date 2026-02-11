@@ -9,6 +9,7 @@ export * from './encounters';
 export * from './items';
 export * from './rules';
 export * from './culture';
+export * from './backstories';
 
 // Helper to get all creatures from both bestiaries
 import { BESTIARY } from './bestiary';
