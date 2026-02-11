@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migration Automatique - Combat Sync</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 900px;
+            width: 100%;
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .header h1 { font-size: 32px; margin-bottom: 10px; }
+        .header p { font-size: 18px; opacity: 0.9; }
+        .content { padding: 40px; }
+        .sql-container {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 20px 0;
+            position: relative;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .copy-btn:hover { background: #5568d3; }
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            transition: transform 0.2s;
+            margin: 10px 5px;
+            border: none;
+            cursor: pointer;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .btn-success { background: #48bb78; }
+        .step { margin: 30px 0; }
+        .step-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            width: 35px;
+            height: 35px;
+            line-height: 35px;
+            text-align: center;
+            border-radius: 50%;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .step-title { font-size: 20px; font-weight: 600; margin-bottom: 10px; }
+        .step-desc { color: #4a5568; line-height: 1.6; }
+        .success-box {
+            background: #c6f6d5;
+            color: #22543d;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+        }
+        .status { margin-top: 20px; text-align: center; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Migration Automatique</h1>
+            <p>Optimisation de la synchronisation combat</p>
+        </div>
+        
+        <div class="content">
+            <div class="step">
+                <span class="step-number">1</span>
+                <div style="display: inline-block; vertical-align: top; width: calc(100% - 50px);">
+                    <div class="step-title">Copier le SQL automatiquement</div>
+                    <div class="step-desc">Le SQL a été copié dans votre presse-papiers !</div>
+                </div>
+            </div>
+
+            <div class="sql-container" id="sqlContainer">
+                <button class="copy-btn" onclick="copySQLManual()">📋 Re-copier</button>
+                <pre id="sqlContent"></pre>
+            </div>
+
+            <div class="step">
+                <span class="step-number">2</span>
+                <div style="display: inline-block; vertical-align: top; width: calc(100% - 50px);">
+                    <div class="step-title">Ouvrir le SQL Editor et exécuter</div>
+                    <button class="btn" onclick="openSQLEditor()">
+                        📝 Ouvrir SQL Editor
+                    </button>
+                    <div class="step-desc" style="margin-top: 10px;">
+                        Dans l'éditeur qui s'ouvre :
+                        <ol style="margin-left: 20px; margin-top: 10px;">
+                            <li>Collez le SQL (Ctrl+V)</li>
+                            <li>Cliquez sur "RUN"</li>
+                            <li>Attendez le message de succès</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">3</span>
+                <div style="display: inline-block; vertical-align: top; width: calc(100% - 50px);">
+                    <div class="step-title">Activer Realtime</div>
+                    <button class="btn btn-success" onclick="openRealtime()">
+                        🔔 Activer Realtime
+                    </button>
+                    <div class="step-desc" style="margin-top: 10px;">
+                        Cochez la case "combat_locks" dans la liste
+                    </div>
+                </div>
+            </div>
+
+            <div class="status" id="status"></div>
+            
+            <div class="success-box" id="successBox">
+                🎉 Migration terminée ! Les rollbacks en combat sont maintenant éliminés.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SQL = `-- Combat Sync Migration
+CREATE TABLE IF NOT EXISTS public.combat_locks (
+    session_id UUID PRIMARY KEY REFERENCES public.sessions(id) ON DELETE CASCADE,
+    locked_by TEXT NOT NULL,
+    locked_at TIMESTAMPTZ DEFAULT NOW(),
+    turn_index INTEGER NOT NULL,
+    round INTEGER NOT NULL
+);
+
+ALTER TABLE public.combat_locks ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow authenticated users to read combat_locks" ON public.combat_locks;
+DROP POLICY IF EXISTS "Allow authenticated users to manage combat_locks" ON public.combat_locks;
+
+CREATE POLICY "Allow authenticated users to read combat_locks"
+    ON public.combat_locks FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Allow authenticated users to manage combat_locks"
+    ON public.combat_locks FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+ALTER TABLE public.world_state ADD COLUMN IF NOT EXISTS version INTEGER DEFAULT 0;
+
+CREATE OR REPLACE FUNCTION public.increment_world_state_version()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.version = COALESCE(OLD.version, 0) + 1;
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS increment_world_state_version_trigger ON public.world_state;
+
+CREATE TRIGGER increment_world_state_version_trigger
+    BEFORE UPDATE ON public.world_state
+    FOR EACH ROW
+    EXECUTE FUNCTION public.increment_world_state_version();`;
+
+        document.getElementById('sqlContent').textContent = SQL;
+
+        // Auto-copy on load
+        window.onload = () => {
+            navigator.clipboard.writeText(SQL).then(() => {
+                document.getElementById('status').textContent = '✅ SQL copié automatiquement !';
+                document.getElementById('status').style.color = '#48bb78';
+                
+                // Auto-open SQL Editor after 2 seconds
+                setTimeout(() => {
+                    if (confirm('Voulez-vous ouvrir automatiquement le SQL Editor maintenant ?')) {
+                        openSQLEditor();
+                    }
+                }, 2000);
+            }).catch(() => {
+                document.getElementById('status').textContent = '⚠️ Veuillez copier manuellement le SQL';
+                document.getElementById('status').style.color = '#f59e0b';
+            });
+        };
+
+        function copySQLManual() {
+            navigator.clipboard.writeText(SQL).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                btn.textContent = '✅ Copié !';
+                btn.style.background = '#48bb78';
+                setTimeout(() => {
+                    btn.textContent = '📋 Re-copier';
+                    btn.style.background = '#667eea';
+                }, 2000);
+            });
+        }
+
+        function openSQLEditor() {
+            window.open('https://supabase.com/dashboard/project/okanuafsmkuzyuyqibpu/sql/new', '_blank');
+            document.getElementById('status').textContent = '⏳ En attente de l\'exécution SQL...';
+            document.getElementById('status').style.color = '#667eea';
+        }
+
+        function openRealtime() {
+            window.open('https://supabase.com/dashboard/project/okanuafsmkuzyuyqibpu/database/replication', '_blank');
+            document.getElementById('successBox').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
