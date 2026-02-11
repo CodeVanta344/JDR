@@ -95,8 +95,8 @@
             
             <div class="sql-box">
                 <button class="copy-btn" onclick="copySQL()">📋 Re-copier</button>
-                <pre id="sqlContent">ALTER PUBLICATION supabase_realtime ADD TABLE IF NOT EXISTS public.combat_locks;
-ALTER PUBLICATION supabase_realtime ADD TABLE IF NOT EXISTS public.world_state;</pre>
+                <pre id="sqlContent">ALTER PUBLICATION supabase_realtime ADD TABLE public.combat_locks;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.world_state;</pre>
             </div>
             
             <div class="step">
@@ -116,8 +116,8 @@ ALTER PUBLICATION supabase_realtime ADD TABLE IF NOT EXISTS public.world_state;<
     </div>
 
     <script>
-        const SQL = `ALTER PUBLICATION supabase_realtime ADD TABLE IF NOT EXISTS public.combat_locks;
-ALTER PUBLICATION supabase_realtime ADD TABLE IF NOT EXISTS public.world_state;`;
+        const SQL = `ALTER PUBLICATION supabase_realtime ADD TABLE public.combat_locks;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.world_state;`;
 
         // Auto-copy on load
         window.onload = () => {
