@@ -446,23 +446,23 @@ export function CharacterCreation({ onCreate, onBack, generateImage, sessionId }
                                                 </div>
                                             </div>
 
-                                            {bs.historical_events.length > 0 && (
+                                            {bs.historical_events && bs.historical_events.length > 0 && (
                                                 <div className="backstory-section" style={{ marginBottom: '1.5rem' }}>
                                                     <h4 style={{ color: 'var(--gold-primary)', fontSize: '0.9rem', letterSpacing: '2px', marginBottom: '0.5rem' }}>ÉVÉNEMENTS HISTORIQUES VÉCUS</h4>
-                                                    {bs.historical_events.map((ev, i) => (
+                                                    {bs.historical_events.filter(ev => ev && ev.name).map((ev, i) => (
                                                         <div key={i} style={{ background: 'rgba(0,0,0,0.4)', padding: '1rem', borderRadius: '4px', border: '1px solid var(--gold-dim)', marginBottom: '0.5rem' }}>
                                                             <p style={{ margin: 0, color: 'var(--gold-light)', fontWeight: 'bold' }}>{ev.name} <span style={{ color: '#888', fontWeight: 'normal' }}>({ev.year})</span></p>
                                                             <p style={{ margin: '0.5rem 0', fontSize: '0.9rem', color: '#bbb' }}>{ev.desc}</p>
-                                                            <p style={{ margin: 0, fontSize: '0.8rem', color: '#4da6ff' }}>Conséquences: {ev.consequences.join(', ')}</p>
+                                                            <p style={{ margin: 0, fontSize: '0.8rem', color: '#4da6ff' }}>Conséquences: {ev.consequences?.join(', ') || 'Aucune'}</p>
                                                         </div>
                                                     ))}
                                                 </div>
                                             )}
 
-                                            {bs.faction_ties.length > 0 && (
+                                            {bs.faction_ties && bs.faction_ties.length > 0 && (
                                                 <div className="backstory-section" style={{ marginBottom: '1.5rem' }}>
                                                     <h4 style={{ color: 'var(--gold-primary)', fontSize: '0.9rem', letterSpacing: '2px', marginBottom: '0.5rem' }}>AFFILIATIONS</h4>
-                                                    {bs.faction_ties.map((f, i) => (
+                                                    {bs.faction_ties.filter(f => f && f.name).map((f, i) => (
                                                         <div key={i} style={{ background: 'rgba(0,0,0,0.4)', padding: '1rem', borderRadius: '4px', border: '1px solid var(--gold-dim)', marginBottom: '0.5rem' }}>
                                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                                 <strong style={{ color: 'var(--gold-light)' }}>{f.name}</strong>
@@ -477,7 +477,7 @@ export function CharacterCreation({ onCreate, onBack, generateImage, sessionId }
                                             <div className="backstory-section" style={{ marginBottom: '1.5rem' }}>
                                                 <h4 style={{ color: 'var(--gold-primary)', fontSize: '0.9rem', letterSpacing: '2px', marginBottom: '0.5rem' }}>PNJ CONNUS</h4>
                                                 <div style={{ background: 'rgba(0,0,0,0.4)', padding: '1rem', borderRadius: '4px', border: '1px solid var(--gold-dim)' }}>
-                                                    <p style={{ margin: 0, color: '#ddd', fontSize: '0.9rem' }}>{bs.known_npcs.join(' | ')}</p>
+                                                    <p style={{ margin: 0, color: '#ddd', fontSize: '0.9rem' }}>{bs.known_npcs && bs.known_npcs.length > 0 ? bs.known_npcs.join(' | ') : 'Aucun'}</p>
                                                 </div>
                                             </div>
 
@@ -509,7 +509,7 @@ export function CharacterCreation({ onCreate, onBack, generateImage, sessionId }
                                                 <h4 style={{ color: 'var(--gold-primary)', fontSize: '0.9rem', letterSpacing: '2px', marginBottom: '0.5rem' }}>HOOKS DE ROLEPLAY</h4>
                                                 <div style={{ background: 'rgba(0,0,0,0.4)', padding: '1rem', borderRadius: '4px', border: '1px solid var(--gold-dim)' }}>
                                                     <ul style={{ margin: 0, paddingLeft: '1.2rem', color: '#bbb', fontSize: '0.9rem' }}>
-                                                        {bs.roleplay_hooks.map((h, i) => <li key={i} style={{ marginBottom: '0.3rem' }}>{h}</li>)}
+                                                        {bs.roleplay_hooks && bs.roleplay_hooks.length > 0 ? bs.roleplay_hooks.map((h, i) => <li key={i} style={{ marginBottom: '0.3rem' }}>{h}</li>) : <li>Aucun hook disponible</li>}
                                                     </ul>
                                                 </div>
                                             </div>
