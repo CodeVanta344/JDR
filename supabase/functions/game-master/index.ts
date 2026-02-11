@@ -188,27 +188,53 @@ const RULES: string[] = [
 
     // 9. COMBAT TRIGGER (CRITICAL - ALWAYS APPLY)
     `DECLENCHEMENT DE COMBAT (REGLE CRITIQUE - OBLIGATOIRE):\n` +
-    `  QUAND DES ENNEMIS HOSTILES APPARAISSENT, TU DOIS TOUJOURS inclure le champ "combat" dans ta reponse JSON.\n` +
+    `  TU DOIS TOUJOURS inclure le champ "combat" dans ta reponse JSON dans ces situations:\n` +
+    `  1. ENNEMIS HOSTILES APPARAISSENT (monstres, bandits, creatures)\n` +
+    `  2. JOUEURS INITIENT L'HOSTILITE (menaces, attaques, intimidation aggressive)\n` +
+    `  3. PNJ DEVIENNENT HOSTILES (marchands attaques, gardes provoques, civils menaces)\n` +
+    `  \n` +
+    `  DETECTION D'HOSTILITE JOUEUR:\n` +
+    `  - Phrases comme "J'attaque", "Je le menace", "Je degaine mon arme", "Je frappe"\n` +
+    `  - Tentatives d'intimidation avec arme/violence\n` +
+    `  - Vol avec confrontation\n` +
+    `  - Toute action provocant une riposte physique\n` +
+    `  \n` +
     `  STRUCTURE OBLIGATOIRE:\n` +
     `  "combat": {\n` +
     `    "enemies": [\n` +
     `      { "name": "Gobelin Eclaireur", "hp": 15, "max_hp": 15, "atk": 4, "ac": 12, "id": "e1", "cr": 1 },\n` +
-    `      { "name": "Loup Affame", "hp": 11, "max_hp": 11, "atk": 5, "ac": 13, "id": "e2", "cr": 0.5 }\n` +
+    `      { "name": "Marchand Effraie", "hp": 22, "max_hp": 22, "atk": 3, "ac": 11, "id": "e2", "cr": 0.125 }\n` +
     `    ],\n` +
-    `    "reason": "Des gobelins surgissent des buissons!",\n` +
+    `    "reason": "Le marchand degaine un couteau et appelle les gardes!",\n` +
     `    "trigger": true\n` +
     `  }\n` +
-    `  EXEMPLES D'ENNEMIS:\n` +
+    `  \n` +
+    `  COHERENCE DES ENNEMIS:\n` +
+    `  - Analyse le CONTEXTE de la conversation pour determiner qui/combien d'ennemis\n` +
+    `  - Si le joueur parle a UN marchand seul, cree 1 ennemi "Marchand"\n` +
+    `  - Si les joueurs sont dans une taverne, ajoute "Clients de la taverne" (2-3 ennemis)\n` +
+    `  - Si c'est une embuscade decrite plus tot, utilise le nombre mentionne\n` +
+    `  - Si un PNJ a ete decrit comme "entoure de gardes", ajoute 2-4 Gardes\n` +
+    `  \n` +
+    `  EXEMPLES DE STATS PAR TYPE:\n` +
+    `  MONSTRES:\n` +
     `  - Gobelin (HP: 7-15, ATK: 3-5, AC: 13-15, CR: 0.25-1)\n` +
     `  - Loup (HP: 11, ATK: 5, AC: 13, CR: 0.25)\n` +
-    `  - Bandit (HP: 11, ATK: 5, AC: 12, CR: 0.125)\n` +
     `  - Squelette (HP: 13, ATK: 5, AC: 13, CR: 0.25)\n` +
     `  - Ogre (HP: 59, ATK: 8, AC: 11, CR: 2)\n` +
+    `  \n` +
+    `  HUMANOIDES:\n` +
+    `  - Bandit (HP: 11, ATK: 5, AC: 12, CR: 0.125)\n` +
+    `  - Garde (HP: 16, ATK: 6, AC: 16, CR: 0.5)\n` +
+    `  - Marchand (HP: 18-22, ATK: 3, AC: 10-11, CR: 0.125)\n` +
+    `  - Civil Enrage (HP: 8-10, ATK: 2, AC: 10, CR: 0)\n` +
+    `  \n` +
     `  IMPORTANT:\n` +
     `  - Utilise le BESTIAIRE fourni dans le lore pour les stats exactes\n` +
-    `  - Adapte le nombre d'ennemis au niveau du groupe (1-2 ennemis pour groupe niveau 1)\n` +
+    `  - Adapte le nombre d'ennemis au niveau du groupe ET au contexte narratif\n` +
     `  - TOUJOURS mettre "trigger": true pour lancer le combat\n` +
-    `  - Si tu decris un combat dans la narrative, TU DOIS envoyer "combat"`,
+    `  - Si tu decris un combat dans la narrative, TU DOIS envoyer "combat"\n` +
+    `  - Les PNJ non-combattants (marchands, civils) ont des stats FAIBLES`,
 
     // 10. Equipment affinity
     `AFFINITE EQUIPEMENT:\n` +
