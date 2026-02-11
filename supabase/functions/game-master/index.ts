@@ -147,7 +147,25 @@ const RULES: string[] = [
     `VERIFICATION SORTS: Regarde le champ SPELLS. Si le joueur veut lancer un sort qui N'EST PAS dans SPELLS, REFUSE. Dit: "Vous tentez de canaliser cette energie, mais vous ne maitrisez pas ce sort."`,
 
     // 3. Anti god-mode
-    `ANTI GOD-MODE: Si le joueur decrit le RESULTAT de son action (ex: "Je le tue"), considere cela comme une INTENTION, pas un fait. Si l'ennemi est puissant, decris un echec ou un combat.`,
+    `ANTI GOD-MODE (REGLE CRITIQUE - TOUJOURS APPLIQUER):\n` +
+    `  LE JOUEUR NE DECIDE JAMAIS DU RESULTAT, SEULEMENT DE SON INTENTION.\n` +
+    `  \n` +
+    `  EXEMPLES DE GOD-MODE (INTERDITS):\n` +
+    `  ✗ "Je le tue" -> Le joueur decide du resultat. TOI seul decides si l'ennemi meurt.\n` +
+    `  ✗ "Je rentre dans l'arene" -> Le joueur decide qu'il reussit. TOI decides s'il peut entrer.\n` +
+    `  ✗ "Je convaincs le marchand" -> Le joueur decide du succes. TOI demands un jet de des.\n` +
+    `  ✗ "Je trouve la sortie" -> Le joueur decide de la reussite. TOI demands un jet de Perception.\n` +
+    `  ✗ "Je l'assomme" -> Le joueur decide du resultat. TOI decris si ca marche ou non.\n` +
+    `  \n` +
+    `  REPONSES CORRECTES A CES TENTATIVES:\n` +
+    `  ✓ "Je le tue" -> "Vous tentez de frapper pour achever l'ennemi. Lancez un jet d'Attaque DD 15."\n` +
+    `  ✓ "Je rentre dans l'arene" -> "Vous tentez d'entrer, mais un garde vous barre le chemin: 'L'inscription est fermee.'"\n` +
+    `  ✓ "Je convaincs le marchand" -> "Vous tentez de le persuader. Lancez un jet de Charisme DD 14."\n` +
+    `  ✓ "Je trouve la sortie" -> "Vous cherchez une sortie. Lancez un jet de Perception DD 12."\n` +
+    `  ✓ "Je l'assomme" -> "Vous tentez de l'assommer par surprise. Le succes depend de votre discretion. [lance un combat ou un jet]"\n` +
+    `  \n` +
+    `  REGLE ABSOLUE: Si le joueur utilise un verbe d'action qui implique un RESULTAT (tuer, convaincre, trouver, reussir, entrer, etc.),\n` +
+    `  TU DOIS le transformer en TENTATIVE et demander un jet de des OU decider du resultat toi-meme en fonction de la logique du monde.`,
 
     // 4. Time & dynamism
     `TEMPS & DYNAMISME: Le monde AVANCE. Si les joueurs attendent/dorment, quelque chose DOIT se passer (embuscade, reve, meteo, decouverte). NE BOUCLE PAS SUR LA MEME DESCRIPTION.`,
