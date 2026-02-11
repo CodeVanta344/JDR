@@ -449,11 +449,7 @@ export const CLASSES = {
         },
         stats: { str: 18, dex: 12, con: 16, int: 8, wis: 10, cha: 10 },
         protection: { armor: ["light", "medium", "heavy"], weapons: ["simple", "martial"], shields: true },
-        backstory_options: [
-            { id: "soldat", label: "Vétéran de la Garde d'Or", desc: "Vous avez servi dans l'armée régulière de Sol-Aureus avant d'être congédié sans solde. Vous cherchez une raison de continuer à porter l'acier.", stats: { str: 2, int: -2 } },
-            { id: "gladiateur", label: "Briseur de Chaînes", desc: "Évadé des fosses de combat de l'Empire Ashka, vous ne connaissez que la violence comme langage, mais aspirez à une liberté chèrement acquise.", stats: { con: 2, cha: -2 } },
-            { id: "mercenaire", label: "Lame à Louer", desc: "Votre honneur a un prix. Vous avez parcouru Aethelgard sous tous les climats, protégeant des caravanes pour quelques pièces de cuivre.", stats: { str: 2, wis: -2 } }
-        ],
+
         starting_equipment_options: [
             {
                 label: "Le Chevalier d'Acier",
@@ -513,11 +509,7 @@ export const CLASSES = {
         },
         stats: { str: 6, dex: 12, con: 8, int: 18, wis: 14, cha: 12 },
         protection: { armor: ["none"], weapons: ["simple", "arcane"], shields: false },
-        backstory_options: [
-            { id: "apprenti", label: "Banni de l'Académie", desc: "Vos recherches sur la Surcharge Arcanique ont été jugées trop dangereuses. On vous a retiré vos titres, mais pas votre savoir.", stats: { int: 2, con: -2 } },
-            { id: "heritier", label: "Dernier Sang-pur", desc: "Vous descendez d'une lignée de mages d'avant l'Ère des Cendres. Les échos de vos ancêtres vous guident vers les ruines oubliées.", stats: { wis: 2, str: -2 } },
-            { id: "autodidacte", label: "Sorcier des Terres Brûlées", desc: "Vous avez appris la magie seul, en observant les tempêtes d'éther. Votre pouvoir est sauvage, imprévisible et pur.", stats: { int: 2, cha: -2 } }
-        ],
+
         starting_equipment_options: [
             {
                 label: "L'Érudit Arcanique",
@@ -575,11 +567,7 @@ export const CLASSES = {
         },
         stats: { str: 10, dex: 18, con: 12, int: 12, wis: 10, cha: 14 },
         protection: { armor: ["light"], weapons: ["simple", "finesse"], shields: false },
-        backstory_options: [
-            { id: "orphelin", label: "Ombre des Bas-fonds", desc: "Né dans la misère de la Cité Haute, vous avez survécu en volant ceux qui ignoraient votre existence. La discrétion est votre seule amie.", stats: { dex: 2, cha: -2 } },
-            { id: "espion", label: "Agent Délaissé", desc: "Vous travailliez pour une puissance étrangère avant que votre réseau ne soit démantelé. Vous êtes maintenant un fantôme cherchant un nouveau but.", stats: { int: 2, str: -2 } },
-            { id: "noblesse", label: "Gentleman Cambrioleur", desc: "Issu d'une famille déchue, vous volez pour restaurer votre nom ou simplement pour prouver que vous êtes le meilleur.", stats: { cha: 2, con: -2 } }
-        ],
+
         starting_equipment_options: [
             {
                 label: "L'Assassin de l'Ombre",
@@ -613,7 +601,7 @@ export const CLASSES = {
             { name: "Disparition", cost: 15, cooldown: 4, level: 2, desc: "Action bonus pour se cacher en plein combat." },
             { name: "Esquive Étrange", cost: 20, cooldown: 3, level: 3, desc: "Réduit de moitié les dégâts d'une attaque perçue." },
             { name: "Expertise", cost: 0, cooldown: 0, level: 4, desc: "+2 à tous les jets de compétences (Passif)." },
-            { name: "Coup Bas", cost: 15, cooldown: 2, range: 1, desc: "Aveugle l'ennemi adjacent (1 case) pour 1 tour." },
+            { name: "Coup Bas", cost: 15, cooldown: 2, level: 5, range: 1, desc: "Aveugle l'ennemi adjacent (1 case) pour 1 tour." },
             { name: "Pas de l'Ombre", cost: 25, cooldown: 3, level: 6, range: 6, desc: "Téléportation de 6 cases d'une ombre à l'autre." },
             { name: "Poison Mortel", cost: 20, cooldown: 4, level: 7, dice: "2d6", scaling: "dex", desc: "Applique un poison au contact." },
             { name: "Assassinat", cost: 50, cooldown: 5, level: 8, dice: "x3", scaling: "dex", desc: "Attaque qui inflige x3 dégâts si caché." },
@@ -638,11 +626,7 @@ export const CLASSES = {
         },
         stats: { str: 14, dex: 10, con: 14, int: 10, wis: 16, cha: 12 },
         protection: { armor: ["light", "medium", "heavy"], weapons: ["simple"], shields: true },
-        backstory_options: [
-            { id: "missionnaire", label: "Voix de la Lumière", desc: "Vous parcourez les terres désolées pour apporter l'espoir là où règnent les ombres.", stats: { wis: 2, str: -2 } },
-            { id: "inquisiteur", label: "Marteau des Hérétiques", desc: "Vous traquez les cultistes de l'Ombre avec une dévotion absolue.", stats: { wis: 2, dex: -2 } },
-            { id: "ermite", label: "Gardien des Écritures", desc: "Vous avez passé des décennies à méditer sur les anciens textes du Crystal.", stats: { int: 2, cha: -2 } }
-        ],
+
         starting_equipment_options: [
             {
                 label: "Le Gardien de la Foi",
@@ -701,11 +685,7 @@ export const CLASSES = {
         },
         stats: { str: 16, dex: 10, con: 14, int: 8, wis: 12, cha: 14 },
         protection: { armor: ["light", "medium", "heavy"], weapons: ["simple", "martial"], shields: true },
-        backstory_options: [
-            { id: "errant", label: "Chevalier de la Route", desc: "Sans domaine ni seigneur, vous suivez votre code d'honneur personnel pour protéger les faibles et les opprimés.", stats: { con: 2, int: -2 } },
-            { id: "vengeur", label: "Scalp de l'Injustice", desc: "Votre famille a été massacrée par des pillards. Vous avez prêté un serment de sang pour ne jamais laisser un tel crime impuni.", stats: { str: 2, cha: -2 } },
-            { id: "templier", label: "Garde du Temple Sacré", desc: "Ancien défenseur d'un lieu saint maintenant en ruines, vous cherchez à purifier le monde pour restaurer la glory de votre dieu.", stats: { wis: 2, dex: -2 } }
-        ],
+
         starting_equipment_options: [
             {
                 label: "Le Croisé Impérial",
@@ -763,11 +743,7 @@ export const CLASSES = {
         },
         stats: { str: 12, dex: 16, con: 14, int: 10, wis: 14, cha: 8 },
         protection: { armor: ["light", "medium"], weapons: ["simple", "martial", "finesse"], shields: true },
-        backstory_options: [
-            { id: "chasseur", label: "Traqueur de Monstres", desc: "Les créatures de la nuit n'ont aucun secret pour vous. Vous vivez pour la chasse, et votre arc ne manque jamais sa cible.", stats: { dex: 2, cha: -2 } },
-            { id: "guide", label: "Sentinelle des Confins", desc: "Vous connaissez les passages secrets à travers les Monts Cœur-de-Fer. Vous avez guidé bien des voyageurs vers la sécurité.", stats: { wis: 2, con: -2 } },
-            { id: "exile", label: "Enfant de la Sylve", desc: "Banni de votre forêt natale pour un crime que vous n'avez pas commis, vous cherchez un nouveau territoire à protéger.", stats: { dex: 2, str: -2 } }
-        ],
+
         starting_equipment_options: [
             {
                 label: "L'Archer Sylvestre",
@@ -825,11 +801,7 @@ export const CLASSES = {
         },
         stats: { str: 8, dex: 14, con: 12, int: 12, wis: 10, cha: 18 },
         protection: { armor: ["light"], weapons: ["simple", "finesse", "arcane"], shields: false },
-        backstory_options: [
-            { id: "menestrel", label: "Chanteur de Légendes", desc: "Vous colportez les histoires de héros disparus. Chaque taverne est une scène pour vos récits épiques.", stats: { cha: 2, wis: -2 } },
-            { id: "informateur", label: "Oreille de la Cour", desc: "La musique n'est qu'une couverture pour votre véritable métier : collecter des secrets et manipuler les puissants.", stats: { cha: 2, str: -2 } },
-            { id: "pelerin", label: "Voyageur de l'Écho", desc: "Vous cherchez la 'Note Primordiale', le son qui aurait créé le monde. Votre quête vous mène vers les lieux les plus étranges.", stats: { wis: 2, con: -2 } }
-        ],
+
         starting_equipment_options: [
             {
                 label: "Le Troubadour Errant",
@@ -888,11 +860,7 @@ export const CLASSES = {
         },
         stats: { str: 10, dex: 12, con: 14, int: 10, wis: 18, cha: 12 },
         protection: { armor: ["light", "medium"], weapons: ["simple", "arcane"], shields: true },
-        backstory_options: [
-            { id: "ermite", label: "Gardien du Bosquet", desc: "Vous avez passé des vies entières loin de la civilisation, protégeant un lieu de pouvoir naturel contre la corruption.", stats: { wis: 2, str: -2 } },
-            { id: "exile", label: "Esprit de la Meute", desc: "Élevé par les loups dans la Sylve d'Émeraude, vous comprenez le langage des bêtes mieux que celui des hommes.", stats: { con: 2, int: -2 } },
-            { id: "cercle", label: "Initié du Cercle de Pierre", desc: "Membre d'une ancienne hiérarchie druidique, vous cherchez à maintenir l'équilibre entre la vie et la mort.", stats: { wis: 2, cha: -2 } }
-        ],
+
         starting_equipment_options: [
             {
                 label: "Le Défenseur du Bosquet",

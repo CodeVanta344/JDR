@@ -579,11 +579,269 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
       "Connaissance du commerce utile en jeu",
       "Liens avec l'intrigue de la Guerre des Guildes"
     ]
+  },
+  {
+    id: "apprenti_exile",
+    label: "Apprenti Arcanique Exilé",
+    category: "arcane",
+    compatible_classes: ["Mage", "Barde"],
+    desc: "Vos recherches sur les harmoniques de l'Aether ont été jugées 'déviantes' par l'Académie de Sol-Aureus. Vous avez été banni avant d'avoir pu terminer votre thèse, emportant vos notes et une soif de prouver que vos théories étaient justes.",
+    stats: { int: 2, cha: 1, wis: -1 },
+    origin: {
+      id: "val_dore_academie",
+      region: "Val Doré",
+      settlement: "Sol-Aureus (Quartier Arcanique)",
+      climate_bonus: ["Bibliothèques", "Zones à forte résonance"],
+      regional_knowledge: ["Théorie de la magie", "Hiérarchie de l'Académie"]
+    },
+    social_class: {
+      id: "intellectuel_dechu",
+      label: "Intellectuel Déchu",
+      wealth: "poor",
+      starting_gold_modifier: 0.8,
+      social_perks: ["Savoir académique", "Reconnaissance d'autres mages"],
+      social_penalties: ["Persona non grata à l'Académie", "Méfiance des autorités"]
+    },
+    faction_ties: [
+      {
+        id: "guilde_arcanes",
+        name: "Guilde des Arcanes",
+        role: "Étudiant expulsé",
+        standing: "enemy",
+        reputation: -20,
+        secrets_known: ["Emplacement d'un laboratoire secret", "Usage d'une faille dans le Voile"]
+      }
+    ],
+    historical_events: [HISTORICAL_EVENTS["purge_cercle_cendres"]],
+    personal_secrets: ["Vous avez volé un tome interdit avant de partir", "Votre recherche portait sur le Miroir des Ombres"],
+    known_npcs: ["Kaelith la Tisseuse", "Maître Malchor"],
+    starting_reputation: { "Guilde des Arcanes": -20, "Bibliothécaires": 10 },
+    roleplay_hooks: [
+      "Un ancien camarade vous contacte en secret",
+      "Un agent de l'Académie vous suit pour récupérer vos notes",
+      "Vous trouvez un indice confirmant votre théorie bannie"
+    ],
+    gm_notes: ["Fasciné par la théorie magique", "Peut identifier des objets étranges", "Lien possible avec Malakor"]
+  },
+  {
+    id: "heritier_astral",
+    label: "Héritier de la Lignée Astrale",
+    category: "noble",
+    compatible_classes: ["Mage", "Clerc", "Paladin"],
+    desc: "Votre famille prétend descendre directement des Gardiens de la Lumière. Que ce soit vrai ou non, vous possédez une affinité innée avec le cosmos. Vos parents ont tout sacrifié pour cacher votre existence aux yeux de l'Inquisition.",
+    stats: { wis: 2, int: 1, str: -1 },
+    origin: {
+      id: "cote_orages_astral",
+      region: "Côte des Orages",
+      settlement: "Kuldahar (Hauts quartiers)",
+      climate_bonus: ["Clair de lune", "Sommets élevés"],
+      regional_knowledge: ["Astronomie", "Légendes des Primordiaux"]
+    },
+    social_class: {
+      id: "aristocrate_caché",
+      label: "Aristocrate Caché",
+      wealth: "comfortable",
+      starting_gold_modifier: 1.5,
+      social_perks: ["Éducation de haute volée", "Insigne de famille"],
+      social_penalties: ["Traqué par l'Inquisition", "Responsabilités lourdes"]
+    },
+    faction_ties: [
+      {
+        id: "inquisition",
+        name: "Inquisition du Soleil",
+        role: "Cible prioritaire",
+        standing: "enemy",
+        reputation: -30,
+        secrets_known: ["L'Inquisition cache un fragment du Maillon d'Or"]
+      }
+    ],
+    historical_events: [HISTORICAL_EVENTS["eclipse_kuldahar"]],
+    personal_secrets: ["Vous avez des visions de l'Archipel Astrale", "Votre sang brille d'une lueur bleutée sous la lune"],
+    known_npcs: ["Lysandre Murmure-d'Étoile", "Reine Elara"],
+    starting_reputation: { "Inquisition": -30, "Gardiens de la Lumière": 15 },
+    roleplay_hooks: [
+      "Vos visions deviennent de plus en plus précises",
+      "Un chasseur de l'Inquisition vous retrouve",
+      "Un héritage familial vous attend dans l'Archipel Astrale"
+    ],
+    gm_notes: ["Nature mystique", "Fort potentiel pour des quêtes épiques", "Lien avec Ignis Rex"]
+  },
+  {
+    id: "sentinelle_frontieres",
+    label: "Sentinelle des Frontières Sauvages",
+    category: "wilderness",
+    compatible_classes: ["Rôdeur", "Guerrier", "Druide"],
+    desc: "Vous avez passé la majeure partie de votre vie à la lisière des Terres Brûlées, empêchant les créatures de l'ombre d'attaquer les colonies frontalières. Le silence de la forêt est votre langue natale, et la traque est votre religion.",
+    stats: { dex: 2, con: 1, int: -1 },
+    origin: {
+      id: "terres_brulees_frontiere",
+      region: "Terres Brûlées",
+      settlement: "Avant-poste de Cendre",
+      climate_bonus: ["Forêts denses", "Zones de désolation"],
+      regional_knowledge: ["Pistes de monstres", "Plantes de survie"]
+    },
+    social_class: {
+      id: "survivant",
+      label: "Survivant des Frontières",
+      wealth: "modest",
+      starting_gold_modifier: 0.9,
+      social_perks: ["Instinct de survie", "Respect des locaux"],
+      social_penalties: ["Manque de manières sociales", "Méfiance des citadins"]
+    },
+    faction_ties: [
+      {
+        id: "garde_frontiere",
+        name: "Garde des Cendres",
+        role: "Récluseur",
+        standing: "ally",
+        reputation: 20,
+        secrets_known: ["Points faibles des Wyverns", "Chemins secrets vers le sud"]
+      }
+    ],
+    historical_events: [HISTORICAL_EVENTS["chute_ashka_echo"]],
+    personal_secrets: ["Vous avez été marqué par une abomination de l'Abysse", "Vous parlez une langue animale oubliée"],
+    known_npcs: ["Zara la Rouge", "Bram Tonnelier"],
+    starting_reputation: { "Garde des Cendres": 20, "Pilleurs de Tombes": -15 },
+    roleplay_hooks: [
+      "Une vague de créatures anormales arrive du sud",
+      "Un ancien compagnon a disparu en mission",
+      "L'ombre dans votre sang commence à s'éveiller"
+    ],
+    gm_notes: ["Expert en pistage", "Utile pour la navigation en extérieur", "Lien avec le Seigneur de la Cendre"]
+  },
+  {
+    id: "inquisiteur_repenti",
+    label: "Inquisiteur Repenti",
+    category: "religious",
+    compatible_classes: ["Clerc", "Paladin", "Guerrier"],
+    desc: "Vous étiez un bras armé de l'Inquisition du Soleil, mais après avoir participé à un massacre d'innocents sous prétexte d'hérésie, votre foi s'est brisée. Vous cherchez maintenant la rédemption, tout en utilisant les compétences et les secrets de votre ancienne vie.",
+    stats: { wis: 2, str: 1, dex: -1 },
+    origin: {
+      id: "val_dore_cathedrale",
+      region: "Val Doré",
+      settlement: "Sol-Aureus (Grand Temple)",
+      climate_bonus: ["Temples", "Lieux de mémoire"],
+      regional_knowledge: ["Droit canonique", "Protocoles de torture/interrogatoire"]
+    },
+    social_class: {
+      id: "clergé_militaire",
+      label: "Ancien Clergé Militaire",
+      wealth: "modest",
+      starting_gold_modifier: 1.1,
+      social_perks: ["Connaissance des dogmes", "Autorité naturelle"],
+      social_penalties: ["Excommunié", "Trahi par ses anciens frères"]
+    },
+    faction_ties: [
+      {
+        id: "inquisition",
+        name: "Inquisition du Soleil",
+        role: "Déserteur",
+        standing: "enemy",
+        reputation: -40,
+        secrets_known: ["Identité des mouchards", "Les vrais objectifs de l'Archinquisiteur"]
+      }
+    ],
+    historical_events: [HISTORICAL_EVENTS["purge_cercle_cendres"]],
+    personal_secrets: ["Vous avez sauvé l'un des 'hérétiques' que vous deviez tuer", "Vous avez gardé un reliquaire sacré maudit"],
+    known_npcs: ["Capitaine Aldric", "Silène la Voilée"],
+    starting_reputation: { "Inquisition": -40, "Victimes de la Purge": 15 },
+    roleplay_hooks: [
+      "La personne que vous avez sauvée vous retrouve",
+      "Un inquisiteur fanatique est envoyé pour vous exécuter",
+      "Le reliquaire maudit commence à murmurer"
+    ],
+    gm_notes: ["En quête de rédemption", "Connaît les ficelles de l'Inquisition", "Dilemme moral constant"]
+  },
+  {
+    id: "briseur_chaines",
+    label: "Briseur de Chaînes",
+    category: "criminal",
+    compatible_classes: ["Guerrier", "Voleur"],
+    desc: "Ancien esclave des fonderies clandestines sous Hammerdeep, vous avez mené une révolte sanglante pour gagner votre liberté. Vos muscles sont forgés par le travail forcé et votre volonté est plus dure que l'acier que vous frappiez.",
+    stats: { con: 2, str: 1, int: -1 },
+    origin: {
+      id: "monts_coeur_fer_mines",
+      region: "Monts Cœur-de-Fer",
+      settlement: "Hammerdeep (Niveaux inférieurs)",
+      climate_bonus: ["Souterrains", "Zones de chaleur intense"],
+      regional_knowledge: ["Géologie des mines", "Réseaux criminels souterrains"]
+    },
+    social_class: {
+      id: "esclave_évadé",
+      label: "Esclave Évadé",
+      wealth: "poor",
+      starting_gold_modifier: 0.5,
+      social_perks: ["Solidarité des parias", "Force de travail"],
+      social_penalties: ["Recherché par les propriétaires de mines", "Cicatrices visibles"]
+    },
+    faction_ties: [
+      {
+        id: "guilde_minière",
+        name: "Oligarchie des Guildes",
+        role: "Main d'œuvre en fuite",
+        standing: "enemy",
+        reputation: -25,
+        secrets_known: ["Passages secrets entre les niveaux", "L'emplacement du Niveau 16"]
+      }
+    ],
+    historical_events: [HISTORICAL_EVENTS["effondrement_level_12"]],
+    personal_secrets: ["Vous avez tué votre ancien contremaître", "Vous avez gardé la clé de vos chaînes"],
+    known_npcs: ["Goruk Dent-de-Fer", "Helga Poing-de-Pierre"],
+    starting_reputation: { "Guilde Minière": -25, "Ouvriers Rebelles": 30 },
+    roleplay_hooks: [
+      "Un avis de recherche est placardé en ville",
+      "Des nouvelles d'autres captifs arrivent",
+      "L'entrée du Niveau 16 est découverte"
+    ],
+    gm_notes: ["Motivé par la liberté", "Solide physiquement", "Se méfie des autorités"]
+  },
+  {
+    id: "savant_ashkan",
+    label: "Savant de l'Hégémonie d'Ashka",
+    category: "arcane",
+    compatible_classes: ["Mage", "Clerc", "Barde"],
+    desc: "Vous êtes l'un des rares rescapés (ou descendant direct) des expéditions ayant réveillé les savoirs d'Ashka. Vous portez en vous une version de l'histoire que les livres officiels ont tenté d'occulter, et vous maîtrisez des bribes d'une langue qui peut changer la réalité.",
+    stats: { int: 2, wis: 1, con: -1 },
+    origin: {
+      id: "terres_brulees_archives",
+      region: "Terres Brûlées",
+      settlement: "Ruines d'Ashka",
+      climate_bonus: ["Lieux antiques", "Tempêtes de cendres"],
+      regional_knowledge: ["Ashkan Archaïque", "Cartographie pré-Cendres"]
+    },
+    social_class: {
+      id: "chercheur_interdit",
+      label: "Chercheur Interdit",
+      wealth: "modest",
+      starting_gold_modifier: 1.2,
+      social_perks: ["Déchiffrement de langues anciennes", "Instinct arcanique"],
+      social_penalties: ["Craint par les superstitieux", "Cible de la Main Noire"]
+    },
+    faction_ties: [
+      {
+        id: "main_noire",
+        name: "La Main Noire",
+        role: "Cible de chantage",
+        standing: "enemy",
+        reputation: -15,
+        secrets_known: ["Code de décryptage des stèles", "La Main Noire cherche à recréer l'Hégémonie"]
+      }
+    ],
+    historical_events: [HISTORICAL_EVENTS["chute_ashka_echo"]],
+    personal_secrets: ["Vous avez découvert la véritable cause de la Chute", "Vous avez un fragment du Trône d'Ashka"],
+    known_npcs: ["Prophète Sans Nom", "Kaelith la Tisseuse"],
+    starting_reputation: { "Main Noire": -15, "Académies": 5 },
+    roleplay_hooks: [
+      "Vous trouvez une écriture que vous seul pouvez lire",
+      "La Main Noire essaie de vous kidnapper pour votre savoir",
+      "Un portail Ashkan commence à vibrer en votre présence"
+    ],
+    gm_notes: ["Savoir encyclopédique", "Capacité unique de traduction", "Lien direct avec l'intrigue principale"]
   }
 ];
 
 export function getBackstoriesForClass(className: string): EnrichedBackstory[] {
-  return ENRICHED_BACKSTORIES.filter(b => 
+  return ENRICHED_BACKSTORIES.filter(b =>
     b.compatible_classes.includes(className) || b.compatible_classes.length === 0
   );
 }
@@ -598,7 +856,7 @@ export function formatBackstoryForGM(backstory: EnrichedBackstory, playerName: s
   const npcs = backstory.known_npcs.join(', ');
   const secrets = backstory.personal_secrets.join(' | ');
   const hooks = backstory.roleplay_hooks.join(' | ');
-  
+
   return `
 ## BACKSTORY DE ${playerName.toUpperCase()}
 **Origine**: ${backstory.label} (${backstory.category})

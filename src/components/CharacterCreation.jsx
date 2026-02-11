@@ -683,7 +683,7 @@ export function CharacterCreation({ onCreate, onBack, generateImage, sessionId }
                                 margin: '0 auto'
                             }}>
                                 {Object.entries(attributes).map(([key, val]) => {
-                                    const backstoryBonus = CLASSES[selectedClass].backstory_options.find(b => b.id === selectedBackstory).stats?.[key] || 0;
+                                    const backstoryBonus = ENRICHED_BACKSTORIES.find(b => b.id === selectedBackstory)?.stats?.[key] || 0;
                                     return (
                                         <div key={key} className="stat-roll-card stone-panel ornate-border" style={{ padding: '1.5rem', textAlign: 'center', background: 'rgba(0,0,0,0.5)' }}>
                                             <label className="text-gold" style={{ fontSize: '0.8rem', letterSpacing: '2px', display: 'block', marginBottom: '1rem' }}>
@@ -726,7 +726,7 @@ export function CharacterCreation({ onCreate, onBack, generateImage, sessionId }
                     {/* STEP 8: FINAL */}
                     {step === 8 && (() => {
                         const clsData = CLASSES[selectedClass];
-                        const selectedBackstoryData = clsData.backstory_options.find(b => b.id === selectedBackstory);
+                        const selectedBackstoryData = ENRICHED_BACKSTORIES.find(b => b.id === selectedBackstory);
                         const finalStats = { ...attributes };
                         if (selectedBackstoryData.stats) {
                             Object.entries(selectedBackstoryData.stats).forEach(([stat, mod]) => {
