@@ -200,18 +200,39 @@ const RULES: string[] = [
     `RECUPERATION DE STAGNATION (Context: GM_STAGNATION_RECOVERY): Si ce contexte est actif, DECLENCHE UN INCIDENT immediat (cri, attaque, PNJ). Force les joueurs a REAGIR.`,
 
     // 9. COMBAT TRIGGER (CRITICAL - ALWAYS APPLY)
-    `DECLENCHEMENT DE COMBAT (REGLE CRITIQUE - OBLIGATOIRE - NE PAS IGNORER):\n` +
+    `🚨🚨🚨 DECLENCHEMENT DE COMBAT - REGLE ABSOLUE - NE JAMAIS IGNORER 🚨🚨🚨\n` +
     `  \n` +
-    `  ⚠️ ALERTE CRITIQUE ⚠️\n` +
-    `  SI LE JOUEUR UTILISE L'UN DE CES MOTS, TU DOIS DECLENCHER LE COMBAT IMMEDIATEMENT:\n` +
-    `  - "initier le combat" / "initier combat" / "on initie le combat"\n` +
-    `  - "nous attaquons" / "j'attaque" / "on attaque"\n` +
-    `  - "nous frappons" / "je frappe" / "on frappe"\n` +
-    `  - "degainer" / "sortir mon arme" / "brandir"\n` +
-    `  - "lancer un sort offensif"\n` +
+    `  EXEMPLE CONCRET (CE QUI DOIT SE PASSER):\n` +
+    `  Joueur dit: "nous attaquons"\n` +
+    `  TON OBLIGATION IMMEDIATE: Inclure "combat": { "enemies": [...], "trigger": true } dans ta reponse JSON\n` +
+    `  \n` +
+    `  Joueur dit: "j'engage le combat"\n` +
+    `  TON OBLIGATION IMMEDIATE: Inclure "combat": { "enemies": [...], "trigger": true } dans ta reponse JSON\n` +
+    `  \n` +
+    `  Joueur dit: "je veux me battre"\n` +
+    `  TON OBLIGATION IMMEDIATE: Inclure "combat": { "enemies": [...], "trigger": true } dans ta reponse JSON\n` +
+    `  \n` +
+    `  SI TU DECRIS UNE SCENE DE TENSION/VIOLENCE SANS ENVOYER "combat", TU AS ECHOUE.\n` +
+    `  \n` +
+    `  ⚠️ MOTS-CLES DE DECLENCHEMENT INSTANTANE ⚠️\n` +
+    `  Ces phrases = COMBAT OBLIGATOIRE, pas de narration sans "combat":\n` +
+    `  - "attaquer" / "attaquons" / "j'attaque" / "nous attaquons"\n` +
+    `  - "engager le combat" / "engage le combat" / "engagement"\n` +
+    `  - "frapper" / "frapons" / "je frappe"\n` +
+    `  - "degainer" / "sortir mon arme"\n` +
+    `  - "lancer un sort offensif" / "sort d'attaque"\n` +
     `  - "charger" / "foncer sur"\n` +
+    `  - "se battre" / "me battre" / "battre"\n` +
+    `  - "initier" + "combat"\n` +
     `  \n` +
-    `  CES MOTS = COMBAT INSTANTANE. PAS DE NARRATION SUPPLEMENTAIRE SANS LE CHAMP "combat".\n` +
+    `  COMMENT CREER LES ENNEMIS:\n` +
+    `  1. LIS L'HISTORIQUE: Qui est present dans la scene ?\n` +
+    `  2. ANALYSE LA NARRATION: As-tu mentionne "tavernier", "clients", "gardes", "voyageurs" ?\n` +
+    `  3. CREE DES ENNEMIS CORRESPONDANTS:\n` +
+    `     - Si tu as dit "Le tavernier se prepare a se defendre" -> Ennemi: "Tavernier Robuste"\n` +
+    `     - Si tu as dit "Les clients se figent" -> Ennemis: "Client de taverne 1", "Client de taverne 2"\n` +
+    `     - Si tu as dit "Des hommes armés les entourent" -> Ennemis: "Bandit 1", "Bandit 2", "Bandit 3"\n` +
+    `  4. SCALE LA DIFFICULTE: Niveau moyen des joueurs = difficulte des ennemis\n` +
     `  \n` +
     `  TU DOIS TOUJOURS inclure le champ "combat" dans ta reponse JSON dans ces situations:\n` +
     `  1. ENNEMIS HOSTILES APPARAISSENT (monstres, bandits, creatures)\n` +
@@ -260,7 +281,26 @@ const RULES: string[] = [
     `  - Adapte le nombre d'ennemis au niveau du groupe ET au contexte narratif\n` +
     `  - TOUJOURS mettre "trigger": true pour lancer le combat\n` +
     `  - Si tu decris un combat dans la narrative, TU DOIS envoyer "combat"\n` +
-    `  - Les PNJ non-combattants (marchands, civils) ont des stats FAIBLES`,
+    `  - Les PNJ non-combattants (marchands, civils) ont des stats FAIBLES\n` +
+    `  - LE JOUEUR PEUT SE BATTRE AVEC N'IMPORTE QUI: marchand, tavernier, voyageur, garde, animal, etc.\n` +
+    `  - SI LE JOUEUR VEUT COMBATTRE, CREE IMMEDIATEMENT DES ENNEMIS a partir de qui est present dans ta narration\n` +
+    `  \n` +
+    `  EXEMPLE COMPLET D'UNE REPONSE DE COMBAT CORRECTE:\n` +
+    `  Joueur: "nous attaquons"\n` +
+    `  Ta reponse JSON DOIT contenir:\n` +
+    `  {\n` +
+    `    "narrative": "Vous degainez vos armes ! Le tavernier hurle et degaine un gourdin. Les clients paniques se levent, certains fuient, d'autres sortent des couteaux. Le combat eclate !",\n` +
+    `    "combat": {\n` +
+    `      "enemies": [\n` +
+    `        { "name": "Tavernier en Colere", "hp": 28, "max_hp": 28, "atk": 6, "ac": 13, "id": "e1", "cr": 0.5 },\n` +
+    `        { "name": "Client Arme 1", "hp": 12, "max_hp": 12, "atk": 4, "ac": 11, "id": "e2", "cr": 0.125 },\n` +
+    `        { "name": "Client Arme 2", "hp": 10, "max_hp": 10, "atk": 3, "ac": 10, "id": "e3", "cr": 0.125 }\n` +
+    `      ],\n` +
+    `      "reason": "Vous avez provoque une bagarre generale dans la taverne !",\n` +
+    `      "trigger": true\n` +
+    `    },\n` +
+    `    "new_context": "Combat dans la taverne"\n` +
+    `  }`,
 
     // 10. Equipment affinity
     `AFFINITE EQUIPEMENT:\n` +
