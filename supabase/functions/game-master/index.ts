@@ -876,6 +876,62 @@ Deno.serve(async (req: Request) => {
             result = { narrative: raw, new_context: "parse error" };
         }
 
+        // ── FORCE COMBAT DETECTION (failsafe if GM ignores rules) ──
+        const combatKeywords = [
+            'attaque', 'attaquer', 'attaquons', 'j\'attaque', 'nous attaquons', 'on attaque',
+            'combat', 'le combat', 'engager le combat', 'initier le combat', 'lancer le combat',
+            'frapper', 'frappe', 'frappons',
+            'battre', 'se battre', 'me battre', 'nous battre',
+            'arene', 'arène', 'tournoi', 'duel',
+            'charger', 'charge', 'foncer'
+        ];
+        const actionLower = action.toLowerCase();
+        const hasCombatKeyword = combatKeywords.some(kw => actionLower.includes(kw));
+        
+        // If player used combat keyword but GM didn't send combat, FORCE IT
+        if (hasCombatKeyword && (!result.combat || !result.combat.trigger)) {
+            const avgLevel = partyDetails.length > 0
+                ? Math.round(partyDetails.reduce((sum: number, p: any) => sum + (p.level || 1), 0) / partyDetails.length)
+                : 1;
+            
+            // Generate appropriate enemies based on context
+            const isArena = actionLower.includes('arene') || actionLower.includes('arène') || actionLower.includes('tournoi');
+            const isTavern = (result.narrative || '').toLowerCase().includes('tavern') || 
+                             (result.narrative || '').toLowerCase().includes('auberge') ||
+                             historyStr.toLowerCase().includes('tavern') ||
+                             historyStr.toLowerCase().includes('auberge');
+            
+            let enemies = [];
+            if (isArena) {
+                enemies = [
+                    { name: "Gladiateur Veteran", hp: 25 + avgLevel * 5, max_hp: 25 + avgLevel * 5, atk: 5 + avgLevel, ac: 14, id: "e1", cr: avgLevel },
+                    { name: "Combattant de l'Arene", hp: 18 + avgLevel * 3, max_hp: 18 + avgLevel * 3, atk: 4 + avgLevel, ac: 13, id: "e2", cr: avgLevel * 0.5 }
+                ];
+            } else if (isTavern) {
+                enemies = [
+                    { name: "Tavernier en Colere", hp: 22, max_hp: 22, atk: 5, ac: 12, id: "e1", cr: 0.5 },
+                    { name: "Client Arme 1", hp: 11, max_hp: 11, atk: 4, ac: 11, id: "e2", cr: 0.125 },
+                    { name: "Client Arme 2", hp: 11, max_hp: 11, atk: 4, ac: 11, id: "e3", cr: 0.125 }
+                ];
+            } else {
+                enemies = [
+                    { name: "Adversaire Hostile", hp: 15 + avgLevel * 4, max_hp: 15 + avgLevel * 4, atk: 4 + avgLevel, ac: 12, id: "e1", cr: avgLevel * 0.5 },
+                    { name: "Ennemi", hp: 12 + avgLevel * 3, max_hp: 12 + avgLevel * 3, atk: 3 + avgLevel, ac: 11, id: "e2", cr: avgLevel * 0.25 }
+                ];
+            }
+            
+            result.combat = {
+                enemies: enemies,
+                reason: "Le combat est inévitable !",
+                trigger: true
+            };
+            
+            // Append combat notice to narrative if not already mentioning combat
+            if (result.narrative && !result.narrative.toLowerCase().includes('combat')) {
+                result.narrative += " Le combat s'engage !";
+            }
+        }
+
         // ── Inject balanced merchant inventory if merchant is present ──
         if (result.merchant && (!result.merchant.inventory || result.merchant.inventory.length === 0)) {
             const avgLevel = partyDetails.length > 0
