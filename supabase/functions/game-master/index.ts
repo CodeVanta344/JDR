@@ -242,6 +242,15 @@ const RULES: string[] = [
     `  - "charger" / "foncer sur"\n` +
     `  - "se battre" / "me battre" / "battre"\n` +
     `  - "initier" + "combat"\n` +
+    `  - "entrer dans l'arene" / "rentrer dans l'arene" / "aller dans l'arene" / "arene"\n` +
+    `  - "participer au tournoi" / "tournoi" / "s'inscrire au combat"\n` +
+    `  - "accepter le duel" / "duel"\n` +
+    `  \n` +
+    `  🏛️ EXCEPTION ARENES/TOURNOIS/DUELS (TRES IMPORTANT):\n` +
+    `  Si le joueur demande a entrer dans une ARENE, un TOURNOI, ou accepte un DUEL,\n` +
+    `  TU NE DOIS PAS JUSTE DECRIRE LA SCENE. TU DOIS DECLENCHER LE COMBAT IMMEDIATEMENT.\n` +
+    `  Exemple: "Je rentre dans l'arene" -> Cree 1-3 ennemis (gladiateurs/combattants niveau approprie) et envoie "combat": { "trigger": true }.\n` +
+    `  NE DEMANDE PAS de jet de des pour entrer. LANCE DIRECTEMENT LE COMBAT.\n` +
     `  \n` +
     `  COMMENT CREER LES ENNEMIS:\n` +
     `  1. LIS L'HISTORIQUE: Qui est present dans la scene ?\n` +
@@ -740,6 +749,23 @@ Deno.serve(async (req: Request) => {
         }
 
         const supabase = createClient(supabaseUrl, supabaseKey);
+
+        // --- IDEMPOTENCY CHECK FOR ADVENTURE START ---
+        if (action === "START_ADVENTURE") {
+            const { data: existingIntro } = await supabase
+                .from('messages')
+                .select('narrative:content')
+                .eq('session_id', sessionId)
+                .eq('role', 'system')
+                .ilike('content', '%RECIT DU MJ%') // Check for narrative patterns
+                .limit(1)
+                .maybeSingle();
+
+            if (existingIntro) {
+                console.log("Adventure already started for this session. Returning existing intro.");
+                return jsonResponse({ narrative: existingIntro.narrative, skipped: true });
+            }
+        }
 
         // ── Fetch player info ──
         let playerInfo = "";

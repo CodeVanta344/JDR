@@ -25,7 +25,7 @@ import { SceneBackground } from './components/SceneBackground';
 import { ParticleSystem } from './components/ParticleSystem';
 import { useGameState } from './hooks/useGameState';
 import { extractSpokenText, speakText, initSpeech } from './utils/speechUtils';
-
+const STARTING_LOCKS = new Set();
 
 
 export default function App() {
@@ -64,7 +64,6 @@ export default function App() {
     const pollInterval = useRef(null);
     const typingTimeoutRef = useRef(null);
     const creatingPlayerRef = useRef(false);
-    const isStartingAdventureRef = useRef(false);
     const chatRef = useRef(null);
     const lastActivityRef = useRef(Date.now());
 
@@ -999,8 +998,12 @@ export default function App() {
                 // Force a final sync to ensure the intro is visible immediately
                 await fetchData();
             }
-        } catch (e) { console.error("Start Adventure Error:", e); }
-        finally { setLoading(false); }
+        } catch (e) {
+            console.error("Start Adventure Error:", e);
+        } finally {
+            setLoading(false);
+            // We usually don't release the lock here as starting is a terminal transition
+        }
     };
 
     // Effect: Launch adventure when all players with class are ready
@@ -1046,21 +1049,27 @@ export default function App() {
         }
 
         // HOST: Trigger the actual start when all are ready (ONLY ONCE)
-        if (allPlayersReady && character?.is_ready && players.length >= 2 && !hasMarker && !hasGMIntro && !isStartingAdventureRef.current) {
-            // Immediately set adventureStarted and the ref to prevent multiple calls
-            isStartingAdventureRef.current = true;
+        if (allPlayersReady && character?.is_ready && players.length >= 2 && !hasMarker && !hasGMIntro && !STARTING_LOCKS.has(session.id)) {
+            // Immediately set local and module locks
+            STARTING_LOCKS.add(session.id);
             setAdventureStarted(true);
 
+            // Attempt to insert the singleton marker using the session UUID as the message ID.
+            // This leverages the database's unique constraint to prevent race conditions.
             supabase.from('messages').insert({
+                id: session.id, // Deterministic ID
                 session_id: session.id,
                 role: 'system',
                 content: "(MEMOIRE:SYSTEM) START_ADVENTURE_TRIGGERED"
             }).then(({ error }) => {
-                if (!error) {
-                    handleStartAdventure();
+                // If error is 23505 (Unique Violation), it means another call already won.
+                if (!error || error.code === '23505') {
+                    if (!hasGMIntro) {
+                        handleStartAdventure();
+                    }
                 } else {
-                    // Reset on error
-                    isStartingAdventureRef.current = false;
+                    console.error("Failed to insert start marker:", error);
+                    STARTING_LOCKS.delete(session.id);
                     setAdventureStarted(false);
                 }
             });
