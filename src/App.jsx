@@ -2041,13 +2041,32 @@ export default function App() {
                         playerInventory={character?.inventory || []}
                         onBuy={(item) => {
                             triggerSFX('gold');
-                            handleUpdateInventory([...(character.inventory || []), { ...item, equipped: false }], (character.gold || 0) - item.price);
+                            const newInventory = [...(character.inventory || []), { ...item, equipped: false }];
+                            handleUpdateInventory(newInventory, (character.gold || 0) - item.price);
+                            addMessage({
+                                role: 'system',
+                                content: `[ACHAT] ${character.name} a acheté ${item.name} pour ${item.price} Or.`,
+                                timestamp: Date.now()
+                            });
                         }}
                         onSell={(item, idx) => {
                             triggerSFX('gold');
-                            handleUpdateInventory(character.inventory.filter((_, i) => i !== idx), (character.gold || 0) + Math.floor((item.price || 50) * 0.5));
+                            const sellPrice = Math.floor((item.price || 50) * 0.5);
+                            handleUpdateInventory(character.inventory.filter((_, i) => i !== idx), (character.gold || 0) + sellPrice);
+                            addMessage({
+                                role: 'system',
+                                content: `[VENTE] ${character.name} a vendu ${item.name} pour ${sellPrice} Or.`,
+                                timestamp: Date.now()
+                            });
                         }}
-                        onClose={() => setActiveMerchant(null)}
+                        onChat={(message, npcName) => {
+                            handleNPCMessage(message, npcName);
+                        }}
+                        onClose={() => {
+                            const merchantName = activeMerchant?.npcName || 'le marchand';
+                            setActiveMerchant(null);
+                            handleSubmit(null, `[FIN DE COMMERCE] ${character?.name || 'Le joueur'} quitte ${merchantName}. Que souhaitez-vous faire ensuite ?`);
+                        }}
                     />
                 )
             }

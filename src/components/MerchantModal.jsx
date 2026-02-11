@@ -1,19 +1,33 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
 
-export const MerchantModal = ({ merchant, playerGold, playerInventory, onBuy, onSell, onClose, affinity = 0 }) => {
-    const [generating, setGenerating] = useState({}); // { itemId: boolean }
-    const [itemImages, setItemImages] = useState({}); // { itemId: url }
+export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, onSell, onClose, onChat, affinity = 0 }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [activeTab, setActiveTab] = useState('buy');
+    const [generating, setGenerating] = useState({});
+    const [itemImages, setItemImages] = useState({});
+    const [chatInput, setChatInput] = useState('');
 
-    // Calculate price modifier: 1 point = 0.5% discount/markup. Max +/- 50%
     const priceMultiplier = Math.max(0.5, Math.min(1.5, 1 - (affinity * 0.005)));
     const sellMultiplier = Math.max(0.1, Math.min(0.8, 0.5 + (affinity * 0.002)));
 
     if (!merchant) return null;
 
+    const handleClose = () => {
+        setIsExpanded(false);
+        onClose();
+    };
+
+    const handleChatSubmit = (e) => {
+        e.preventDefault();
+        if (chatInput.trim() && onChat) {
+            onChat(chatInput, merchant.npcName);
+            setChatInput('');
+        }
+    };
+
     const generateItemImage = async (item) => {
         if (!item.visual_prompt || itemImages[item.id] || generating[item.id]) return;
-
         setGenerating(prev => ({ ...prev, [item.id]: true }));
         try {
             const { data } = await supabase.functions.invoke('game-master', {
@@ -30,120 +44,250 @@ export const MerchantModal = ({ merchant, playerGold, playerInventory, onBuy, on
     };
 
     return (
-        <div className="modal-overlay animate-fade-in" style={{
-            position: 'fixed',
-            top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.85)',
-            backdropFilter: 'blur(10px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '2rem'
-        }}>
-            <div className="glass-panel" style={{
-                width: '100%',
-                maxWidth: '900px',
-                height: '85vh',
-                display: 'flex',
-                flexDirection: 'column',
-                border: '1px solid var(--gold-dim)',
-                boxShadow: '0 0 40px rgba(0,0,0,0.5)',
-                position: 'relative'
-            }}>
-                {/* Header */}
-                <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <>
+            {!isExpanded && (
+                <div 
+                    className="merchant-icon animate-fade-in"
+                    onClick={() => setIsExpanded(true)}
+                    style={{
+                        position: 'fixed',
+                        right: '20px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        zIndex: 900,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '1rem',
+                        background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(0, 0, 0, 0.8) 100%)',
+                        border: '2px solid var(--gold-primary)',
+                        borderRadius: '12px',
+                        boxShadow: '0 0 20px rgba(212, 175, 55, 0.3)',
+                        transition: 'all 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-50%) scale(1.05)';
+                        e.currentTarget.style.boxShadow = '0 0 30px rgba(212, 175, 55, 0.5)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+                        e.currentTarget.style.boxShadow = '0 0 20px rgba(212, 175, 55, 0.3)';
+                    }}
+                >
+                    <span style={{ fontSize: '2rem' }}>🏪</span>
+                    <span style={{ 
+                        color: 'var(--gold-primary)', 
+                        fontWeight: 'bold', 
+                        fontSize: '0.85rem',
+                        textAlign: 'center',
+                        maxWidth: '100px',
+                        lineHeight: '1.2'
+                    }}>
+                        {merchant.npcName}
+                    </span>
+                    <span style={{ 
+                        fontSize: '0.7rem', 
+                        color: 'var(--gold-light)',
+                        opacity: 0.8
+                    }}>
+                        Cliquez pour ouvrir
+                    </span>
+                </div>
+            )}
+
+            <div 
+                className="merchant-panel"
+                style={{
+                    position: 'fixed',
+                    right: isExpanded ? '0' : '-450px',
+                    top: '0',
+                    bottom: '0',
+                    width: '450px',
+                    background: 'linear-gradient(180deg, rgba(15, 15, 20, 0.98) 0%, rgba(5, 5, 10, 0.98) 100%)',
+                    borderLeft: '2px solid var(--gold-dim)',
+                    boxShadow: '-5px 0 30px rgba(0, 0, 0, 0.5)',
+                    zIndex: 950,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    transition: 'right 0.3s ease',
+                    overflow: 'hidden'
+                }}
+            >
+                <div style={{ 
+                    padding: '1rem 1.2rem', 
+                    borderBottom: '1px solid var(--gold-dim)', 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    background: 'rgba(212, 175, 55, 0.05)'
+                }}>
                     <div>
-                        <h2 style={{ margin: 0, color: 'var(--gold-primary)', fontSize: '1.5rem' }}>{merchant.npcName}</h2>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <p style={{ margin: '0.2rem 0 0 0', color: 'var(--text-secondary)', fontStyle: 'italic' }}>{merchant.greeting || "Que puis-je pour vous ?"}</p>
-                            {affinity !== 0 && (
-                                <span style={{ fontSize: '0.8rem', padding: '2px 6px', borderRadius: '4px', background: affinity > 0 ? 'rgba(0, 255, 0, 0.1)' : 'rgba(255, 0, 0, 0.1)', color: affinity > 0 ? '#4ade80' : '#ef4444' }}>
-                                    {affinity > 0 ? `Amitié: ${affinity}` : `Méfiance: ${affinity}`}
-                                </span>
-                            )}
-                        </div>
+                        <h2 style={{ margin: 0, color: 'var(--gold-primary)', fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span>🏪</span> {merchant.npcName}
+                        </h2>
+                        <p style={{ margin: '0.2rem 0 0 0', color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.85rem' }}>
+                            {merchant.greeting || "Que puis-je pour vous ?"}
+                        </p>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block' }}>VOTRE SOLDE</span>
-                        <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--gold-primary)' }}>{playerGold} ÉCLATS ✧</span>
-                    </div>
+                    <button 
+                        onClick={() => setIsExpanded(false)}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--text-muted)',
+                            fontSize: '1.5rem',
+                            cursor: 'pointer',
+                            padding: '0.5rem'
+                        }}
+                    >
+                        ✕
+                    </button>
                 </div>
 
-                {/* Body */}
-                <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 0.8fr)', overflow: 'hidden' }}>
-                    {/* Merchant Inventory */}
-                    <div style={{ borderRight: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', minWidth: 0, background: 'rgba(0,0,0,0.2)' }}>
-                        <div style={{ padding: '1rem', background: 'rgba(212, 175, 55, 0.05)', fontWeight: 'bold', color: 'var(--gold-dim)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                            Marchandises
-                        </div>
-                        <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem', alignContent: 'start' }}>
+                <div style={{ 
+                    padding: '0.8rem 1.2rem', 
+                    background: 'rgba(0, 0, 0, 0.3)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>VOTRE BOURSE</span>
+                    <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--gold-primary)' }}>{playerGold} OR ✧</span>
+                </div>
+
+                <div style={{ display: 'flex', borderBottom: '1px solid var(--gold-dim)' }}>
+                    <button 
+                        onClick={() => setActiveTab('buy')}
+                        style={{
+                            flex: 1,
+                            padding: '0.8rem',
+                            background: activeTab === 'buy' ? 'rgba(212, 175, 55, 0.1)' : 'transparent',
+                            border: 'none',
+                            borderBottom: activeTab === 'buy' ? '2px solid var(--gold-primary)' : '2px solid transparent',
+                            color: activeTab === 'buy' ? 'var(--gold-primary)' : 'var(--text-muted)',
+                            cursor: 'pointer',
+                            fontSize: '0.85rem',
+                            fontWeight: 'bold',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        ACHETER
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('sell')}
+                        style={{
+                            flex: 1,
+                            padding: '0.8rem',
+                            background: activeTab === 'sell' ? 'rgba(212, 175, 55, 0.1)' : 'transparent',
+                            border: 'none',
+                            borderBottom: activeTab === 'sell' ? '2px solid var(--gold-primary)' : '2px solid transparent',
+                            color: activeTab === 'sell' ? 'var(--gold-primary)' : 'var(--text-muted)',
+                            cursor: 'pointer',
+                            fontSize: '0.85rem',
+                            fontWeight: 'bold',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        VENDRE
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('chat')}
+                        style={{
+                            flex: 1,
+                            padding: '0.8rem',
+                            background: activeTab === 'chat' ? 'rgba(212, 175, 55, 0.1)' : 'transparent',
+                            border: 'none',
+                            borderBottom: activeTab === 'chat' ? '2px solid var(--gold-primary)' : '2px solid transparent',
+                            color: activeTab === 'chat' ? 'var(--gold-primary)' : 'var(--text-muted)',
+                            cursor: 'pointer',
+                            fontSize: '0.85rem',
+                            fontWeight: 'bold',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        PARLER
+                    </button>
+                </div>
+
+                <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
+                    {activeTab === 'buy' && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                             {merchant.inventory && merchant.inventory.map((item) => {
                                 const realPrice = Math.ceil(item.price * priceMultiplier);
+                                const canAfford = playerGold >= realPrice;
                                 return (
-                                    <div key={item.id} className="item-card" style={{
-                                        padding: '0.8rem',
+                                    <div key={item.id} style={{
+                                        padding: '1rem',
                                         background: 'rgba(255,255,255,0.03)',
                                         border: '1px solid var(--glass-border)',
                                         borderRadius: '8px',
                                         display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: '0.5rem',
-                                        position: 'relative',
-                                        overflow: 'hidden'
+                                        gap: '1rem',
+                                        alignItems: 'center'
                                     }}>
-                                        {/* Image Area */}
-                                        <div
+                                        <div 
                                             style={{
-                                                width: '100%',
-                                                height: '120px',
+                                                width: '60px',
+                                                height: '60px',
                                                 background: '#0a0a0a',
-                                                borderRadius: '4px',
+                                                borderRadius: '6px',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
+                                                flexShrink: 0,
                                                 cursor: item.visual_prompt ? 'pointer' : 'default',
-                                                border: '1px solid rgba(255,255,255,0.05)',
-                                                position: 'relative'
+                                                border: '1px solid rgba(255,255,255,0.1)'
                                             }}
                                             onClick={() => generateItemImage(item)}
                                         >
                                             {itemImages[item.id] ? (
-                                                <img src={itemImages[item.id]} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                                <img src={itemImages[item.id]} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '4px' }} />
                                             ) : (
                                                 generating[item.id] ? (
-                                                    <div className="animate-spin" style={{ width: '20px', height: '20px', border: '2px solid var(--gold-dim)', borderTopColor: 'transparent', borderRadius: '50%' }} />
+                                                    <div className="animate-spin" style={{ width: '16px', height: '16px', border: '2px solid var(--gold-dim)', borderTopColor: 'transparent', borderRadius: '50%' }} />
                                                 ) : (
-                                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textAlign: 'center', padding: '0.5rem' }}>
-                                                        {item.visual_prompt ? "Cliquez pour voir" : "Pas d'image"}
-                                                    </span>
+                                                    <span style={{ fontSize: '1.5rem' }}>📦</span>
                                                 )
                                             )}
                                         </div>
-
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                                            <span style={{ fontWeight: 'bold', color: '#fff', fontSize: '0.9rem' }}>{item.name}</span>
-                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                                                {realPrice !== item.price && (
-                                                    <span style={{ color: 'var(--text-muted)', textDecoration: 'line-through', fontSize: '0.7rem' }}>{item.price} ✧</span>
-                                                )}
-                                                <span style={{ color: realPrice < item.price ? '#4ade80' : (realPrice > item.price ? '#ef4444' : 'var(--gold-primary)'), fontWeight: 'bold', fontSize: '0.9rem' }}>{realPrice} ✧</span>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.3rem' }}>
+                                                <span style={{ fontWeight: 'bold', color: '#fff', fontSize: '0.9rem' }}>{item.name}</span>
+                                                <span style={{ 
+                                                    color: canAfford ? 'var(--gold-primary)' : '#ff6b6b', 
+                                                    fontWeight: 'bold', 
+                                                    fontSize: '0.9rem',
+                                                    whiteSpace: 'nowrap'
+                                                }}>
+                                                    {realPrice} ✧
+                                                </span>
+                                            </div>
+                                            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '0 0 0.5rem 0', lineHeight: '1.3' }}>{item.desc}</p>
+                                            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                                                {item.stats && Object.entries(item.stats).map(([k, v]) => (
+                                                    <span key={k} style={{ 
+                                                        fontSize: '0.6rem', 
+                                                        background: 'rgba(100, 200, 255, 0.15)', 
+                                                        padding: '2px 6px', 
+                                                        borderRadius: '4px', 
+                                                        color: 'var(--aether-blue)' 
+                                                    }}>
+                                                        {k.toUpperCase()} {v > 0 ? `+${v}` : v}
+                                                    </span>
+                                                ))}
                                             </div>
                                         </div>
-                                        <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.2' }}>{item.desc}</p>
-
-                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: 'auto' }}>
-                                            {item.stats && Object.entries(item.stats).map(([k, v]) => (
-                                                <span key={k} style={{ fontSize: '0.65rem', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', color: 'var(--aether-blue)', textTransform: 'uppercase' }}>
-                                                    {k} {v > 0 ? `+${v}` : v}
-                                                </span>
-                                            ))}
-                                        </div>
-
                                         <button
                                             className="btn-gold"
-                                            style={{ width: '100%', padding: '0.5rem', fontSize: '0.8rem', marginTop: '0.5rem' }}
-                                            disabled={playerGold < realPrice}
+                                            style={{ 
+                                                padding: '0.5rem 1rem', 
+                                                fontSize: '0.75rem',
+                                                opacity: canAfford ? 1 : 0.5,
+                                                cursor: canAfford ? 'pointer' : 'not-allowed'
+                                            }}
+                                            disabled={!canAfford}
                                             onClick={() => onBuy({ ...item, price: realPrice })}
                                         >
                                             ACHETER
@@ -151,57 +295,158 @@ export const MerchantModal = ({ merchant, playerGold, playerInventory, onBuy, on
                                     </div>
                                 );
                             })}
+                            {(!merchant.inventory || merchant.inventory.length === 0) && (
+                                <div style={{ padding: '2rem', textAlign: 'center', color: '#666', fontStyle: 'italic' }}>
+                                    Aucun article disponible.
+                                </div>
+                            )}
                         </div>
-                    </div>
+                    )}
 
-                    {/* Player Inventory (To Sell) */}
-                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                        <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', fontWeight: 'bold', color: 'var(--text-muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                            Votre Sac (Vendre)
-                        </div>
-                        <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'grid', gap: '0.8rem' }}>
-                            {playerInventory.map((item, i) => {
-                                const isObj = typeof item === 'object';
-                                if (!isObj) return null;
-                                const sellPrice = Math.floor((item.price || 50) * 0.5);
+                    {activeTab === 'sell' && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                            {playerInventory && playerInventory.filter(item => typeof item === 'object').map((item, i) => {
+                                const sellPrice = Math.floor((item.price || 50) * sellMultiplier);
                                 return (
                                     <div key={i} style={{
-                                        padding: '0.8rem',
-                                        background: 'rgba(255,255,255,0.02)',
+                                        padding: '1rem',
+                                        background: 'rgba(255,255,255,0.03)',
                                         border: '1px solid var(--glass-border)',
-                                        borderRadius: '4px',
+                                        borderRadius: '8px',
                                         display: 'flex',
                                         justifyContent: 'space-between',
                                         alignItems: 'center'
                                     }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                            <span style={{ fontWeight: 'bold', color: 'var(--text-muted)', fontSize: '0.9rem' }}>{item.name} {item.equipped && "(Équipé)"}</span>
-                                            <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.7rem', color: '#666' }}>
-                                                <span>Val: {item.price || 50}</span>
-                                                <span style={{ color: 'var(--aether-blue)' }}>Vente: {sellPrice}</span>
+                                        <div>
+                                            <span style={{ fontWeight: 'bold', color: '#fff', fontSize: '0.9rem' }}>
+                                                {item.name} {item.equipped && <span style={{ color: 'var(--gold-dim)', fontSize: '0.75rem' }}>(Équipé)</span>}
+                                            </span>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                                                Valeur: {item.price || 50} ✧ → Vente: <span style={{ color: '#4dff88' }}>{sellPrice} ✧</span>
                                             </div>
                                         </div>
                                         <button
-                                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', background: 'transparent', border: '1px solid #ff4757', color: '#ff4757', cursor: 'pointer', borderRadius: '4px' }}
+                                            style={{ 
+                                                padding: '0.5rem 1rem', 
+                                                fontSize: '0.75rem', 
+                                                background: 'transparent', 
+                                                border: '1px solid #ff6b6b', 
+                                                color: '#ff6b6b', 
+                                                cursor: 'pointer', 
+                                                borderRadius: '4px',
+                                                transition: 'all 0.2s'
+                                            }}
                                             onClick={() => onSell(item, i)}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.background = 'rgba(255, 107, 107, 0.1)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.background = 'transparent';
+                                            }}
                                         >
                                             VENDRE
                                         </button>
                                     </div>
                                 );
                             })}
-                            {(!playerInventory || playerInventory.length === 0) && (
-                                <div style={{ padding: '2rem', textAlign: 'center', color: '#666', fontStyle: 'italic' }}>Votre sac est vide.</div>
+                            {(!playerInventory || playerInventory.filter(item => typeof item === 'object').length === 0) && (
+                                <div style={{ padding: '2rem', textAlign: 'center', color: '#666', fontStyle: 'italic' }}>
+                                    Votre sac est vide.
+                                </div>
                             )}
                         </div>
-                    </div>
+                    )}
+
+                    {activeTab === 'chat' && (
+                        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                            <div style={{ 
+                                flex: 1, 
+                                padding: '1rem', 
+                                background: 'rgba(0,0,0,0.3)', 
+                                borderRadius: '8px',
+                                marginBottom: '1rem',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                textAlign: 'center',
+                                color: 'var(--text-muted)'
+                            }}>
+                                <span style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>💬</span>
+                                <p style={{ fontSize: '0.9rem', lineHeight: '1.5' }}>
+                                    Parlez à <strong style={{ color: 'var(--gold-primary)' }}>{merchant.npcName}</strong>
+                                </p>
+                                <p style={{ fontSize: '0.8rem', color: '#666' }}>
+                                    Vous pouvez négocier, demander des informations, ou simplement discuter.
+                                </p>
+                            </div>
+                            <form onSubmit={handleChatSubmit} style={{ display: 'flex', gap: '0.5rem' }}>
+                                <input
+                                    type="text"
+                                    value={chatInput}
+                                    onChange={(e) => setChatInput(e.target.value)}
+                                    placeholder="Parlez au marchand..."
+                                    style={{
+                                        flex: 1,
+                                        padding: '0.8rem 1rem',
+                                        background: 'rgba(0,0,0,0.4)',
+                                        border: '1px solid var(--gold-dim)',
+                                        borderRadius: '6px',
+                                        color: '#fff',
+                                        fontSize: '0.9rem'
+                                    }}
+                                />
+                                <button 
+                                    type="submit"
+                                    className="btn-gold"
+                                    style={{ padding: '0.8rem 1.2rem' }}
+                                    disabled={!chatInput.trim()}
+                                >
+                                    ➤
+                                </button>
+                            </form>
+                        </div>
+                    )}
                 </div>
 
-                {/* Footer */}
-                <div style={{ padding: '1rem', borderTop: '1px solid var(--glass-border)', textAlign: 'center' }}>
-                    <button className="btn-secondary" onClick={onClose} style={{ padding: '0.8rem 2rem' }}>QUITTER LE MARCHÉ</button>
+                <div style={{ 
+                    padding: '1rem', 
+                    borderTop: '1px solid var(--gold-dim)', 
+                    background: 'rgba(0,0,0,0.3)'
+                }}>
+                    <button 
+                        className="btn-secondary" 
+                        onClick={handleClose}
+                        style={{ 
+                            width: '100%', 
+                            padding: '0.8rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.5rem'
+                        }}
+                    >
+                        <span>👋</span> QUITTER LE MARCHAND
+                    </button>
                 </div>
             </div>
-        </div>
+
+            {isExpanded && (
+                <div 
+                    onClick={() => setIsExpanded(false)}
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: '450px',
+                        bottom: 0,
+                        background: 'rgba(0,0,0,0.3)',
+                        zIndex: 940
+                    }}
+                />
+            )}
+        </>
     );
 };
+
+export const MerchantModal = MerchantPanel;
