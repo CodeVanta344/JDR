@@ -142,6 +142,12 @@ export default function App() {
             const { data: wData } = await supabase.from('world_state').select('value').eq('key', `weather_${session.id}`).maybeSingle();
             if (wData) setWeather(wData.value);
 
+            // Fetch initial merchant state (for sync)
+            const { data: mData } = await supabase.from('world_state').select('value').eq('key', `merchant_${session.id}`).maybeSingle();
+            if (mData && mData.value && mData.value.active !== false) {
+                setActiveMerchant(mData.value);
+            }
+
             const { data: sData } = await supabase.from('sessions').select('*').eq('id', session.id).maybeSingle();
             if (sData) setSession(sData);
 
@@ -614,6 +620,20 @@ export default function App() {
                 }, (payload) => {
                     if (payload.new && payload.new.value) {
                         setWeather(payload.new.value);
+                    }
+                })
+                .on('postgres_changes', {
+                    event: '*',
+                    schema: 'public',
+                    table: 'world_state',
+                    filter: `key=eq.merchant_${session.id}`
+                }, (payload) => {
+                    if (payload.new && payload.new.value) {
+                        if (payload.new.value.active === false) {
+                            setActiveMerchant(null);
+                        } else {
+                            setActiveMerchant(payload.new.value);
+                        }
                     }
                 })
                 .on('postgres_changes', {
@@ -1603,7 +1623,12 @@ export default function App() {
                 if (aiResponse.combat?.trigger) {
                     initializeHostCombat(aiResponse.combat.enemies || []);
                 }
-                if (aiResponse.merchant) setActiveMerchant(aiResponse.merchant);
+                if (aiResponse.merchant) {
+                    await supabase.from('world_state').upsert({ 
+                        key: `merchant_${session.id}`, 
+                        value: { ...aiResponse.merchant, active: true } 
+                    });
+                }
                 if (aiResponse.loot) setActiveLoot(aiResponse.loot);
                 if (aiResponse.transaction) {
                     setPendingTransaction({
@@ -1734,7 +1759,12 @@ export default function App() {
                 if (aiResponse.combat?.trigger) {
                     initializeHostCombat(aiResponse.combat.enemies || []);
                 }
-                if (aiResponse.merchant) setActiveMerchant(aiResponse.merchant);
+                if (aiResponse.merchant) {
+                    await supabase.from('world_state').upsert({ 
+                        key: `merchant_${session.id}`, 
+                        value: { ...aiResponse.merchant, active: true } 
+                    });
+                }
                 if (aiResponse.loot) setActiveLoot(aiResponse.loot);
                 if (aiResponse.transaction) {
                     setPendingTransaction({
@@ -2198,7 +2228,10 @@ export default function App() {
                         }}
                         onClose={() => {
                             const merchantName = activeMerchant?.npcName || 'le marchand';
-                            setActiveMerchant(null);
+                            supabase.from('world_state').upsert({ 
+                                key: `merchant_${session.id}`, 
+                                value: { active: false } 
+                            });
                             handleSubmit(null, `[FIN DE COMMERCE] ${character?.name || 'Le joueur'} quitte ${merchantName}. Que souhaitez-vous faire ensuite ?`);
                         }}
                     />
