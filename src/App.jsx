@@ -670,10 +670,17 @@ export default function App() {
                     filter: `key=eq.merchant_${session.id}`
                 }, (payload) => {
                     if (payload.new && payload.new.value) {
-                        if (payload.new.value.active === false) {
+                        const val = payload.new.value;
+                        if (val.active === false) {
                             setActiveMerchant(null);
                         } else {
-                            setActiveMerchant(payload.new.value);
+                            // Only open/update if I am in the visitors list (or if list doesn't exist for legacy compatibility)
+                            if (!val.visitors || (character?.id && val.visitors.includes(character.id))) {
+                                setActiveMerchant(val);
+                            } else {
+                                // If the shop is active but I am NOT in the visitors list, close it for me.
+                                setActiveMerchant(null);
+                            }
                         }
                     }
                 })
@@ -1019,8 +1026,23 @@ export default function App() {
         if (!session || players.length < 2) return;
         if (!force && STARTING_LOCKS.has(session.id)) return;
 
+        const lastStartAttempt = sessionStorage.getItem(`start_attempt_${session.id}`);
+        const now = Date.now();
+        if (!force && lastStartAttempt && (now - parseInt(lastStartAttempt) < 10000)) {
+            console.log("Start attempt debounced");
+            return;
+        }
+        if (!force) sessionStorage.setItem(`start_attempt_${session.id}`, now.toString());
+
         // Additional safety: check if GM intro already exists (role is 'system' or 'assistant')
-        const existingIntro = messages.find(m => (m.role === 'system' || m.role === 'assistant') && m.content && m.content.length > 200);
+        // We look for a message that is sufficiently long to be an intro, excluding the trigger marker itself
+        const existingIntro = messages.find(m =>
+            (m.role === 'system' || m.role === 'assistant') &&
+            m.content &&
+            m.content.length > 100 &&
+            !m.content.includes("START_ADVENTURE") &&
+            !m.content.includes('(MÉMOIRE:')
+        );
         if (existingIntro && !force) {
             console.log("GM intro already exists, skipping START_ADVENTURE call");
             setAdventureStarted(true);
@@ -1251,19 +1273,48 @@ export default function App() {
             }
 
             // Slot Conflict Resolution
-            const slot = item.slot;
+            // INFERS SLOT FROM TYPE IF NOT DEFINED to prevent "double amulet" etc.
+            let slot = item.slot;
+            if (!slot && item.type) {
+                const lowerType = item.type.toLowerCase();
+                if (lowerType.includes('amulette') || lowerType.includes('collier') || lowerType.includes('medal')) slot = 'neck';
+                else if (lowerType.includes('anneau') || lowerType.includes('bague')) slot = 'finger'; // Note: Only 1 ring for now with this logic
+                else if (lowerType.includes('cape') || lowerType.includes('manteau')) slot = 'back';
+                else if (lowerType.includes('botte') || lowerType.includes('chaussure')) slot = 'feet';
+                else if (lowerType.includes('gant') || lowerType.includes('moufle')) slot = 'hands';
+                else if (lowerType.includes('casque') || lowerType.includes('coiffe') || lowerType.includes('chapeau')) slot = 'head';
+                else if (lowerType.includes('ceinture')) slot = 'waist';
+                else if (lowerType.includes('armure') || lowerType.includes('plastron') || lowerType.includes('robe') || lowerType.includes('tunique')) slot = 'body';
+                else if (lowerType.includes('bouclier')) slot = 'offhand';
+            }
+
             if (slot) {
                 const newInventory = character.inventory.map((invItem, i) => {
-                    if (i === index) return { ...invItem, equipped: true };
+                    if (i === index) return { ...invItem, equipped: true, slot: slot }; // Assign inferred slot
                     // If same slot, unequip
-                    if (invItem.equipped && invItem.slot === slot) {
+                    // Check explicit slot OR inferred slot of the other item
+                    let otherSlot = invItem.slot;
+                    if (!otherSlot && invItem.type) {
+                        const ot = invItem.type.toLowerCase();
+                        if (ot.includes('amulette') || ot.includes('collier')) otherSlot = 'neck';
+                        else if (ot.includes('anneau') || ot.includes('bague')) otherSlot = 'finger';
+                        else if (ot.includes('cape') || ot.includes('manteau')) otherSlot = 'back';
+                        else if (ot.includes('botte') || ot.includes('chaussure')) otherSlot = 'feet';
+                        else if (ot.includes('gant')) otherSlot = 'hands';
+                        else if (ot.includes('casque') || ot.includes('coiffe') || ot.includes('chapeau')) otherSlot = 'head';
+                        else if (ot.includes('ceinture')) otherSlot = 'waist';
+                        else if (ot.includes('armure') || ot.includes('plastron') || ot.includes('robe')) otherSlot = 'body';
+                        else if (ot.includes('bouclier')) otherSlot = 'offhand';
+                    }
+
+                    if (invItem.equipped && otherSlot === slot) {
                         return { ...invItem, equipped: false };
                     }
                     return invItem;
                 });
                 handleUpdateInventory(newInventory);
             } else {
-                // No slot defined, just toggle (shouldn't happen for equippables)
+                // No slot defined/inferred (e.g. general item), allow simple toggle
                 const newInventory = character.inventory.map((invItem, i) => i === index ? { ...invItem, equipped: true } : invItem);
                 handleUpdateInventory(newInventory);
             }
@@ -1720,7 +1771,11 @@ export default function App() {
                 if (aiResponse.merchant) {
                     await supabase.from('world_state').upsert({
                         key: `merchant_${session.id}`,
-                        value: { ...aiResponse.merchant, active: true }
+                        value: {
+                            ...aiResponse.merchant,
+                            active: true,
+                            visitors: players.map(p => p.id) // Initialize with all current players
+                        }
                     });
                 }
                 if (aiResponse.loot) setActiveLoot(aiResponse.loot);
@@ -2361,14 +2416,48 @@ export default function App() {
                         }}
                         messages={npcConversations[activeMerchant?.npcName] || []}
                         loading={loading}
-                        onClose={() => {
+                        onClose={async () => {
                             const merchantName = activeMerchant?.npcName || 'le marchand';
+
+                            // 1. Close locally first to prevent UI flicker
                             setActiveMerchant(null);
-                            supabase.from('world_state').upsert({
-                                key: `merchant_${session.id}`,
-                                value: { active: false }
-                            });
-                            handleSubmit(null, `[FIN DE COMMERCE] ${character?.name || 'Le joueur'} quitte ${merchantName}. Que souhaitez-vous faire ensuite ?`);
+
+                            try {
+                                // 2. Fetch current state to handle synchronization
+                                const { data } = await supabase.from('world_state').select('value').eq('key', `merchant_${session.id}`).single();
+                                const currentMerchant = data?.value;
+
+                                if (currentMerchant && currentMerchant.active) {
+                                    // 3. Remove self from visitors
+                                    const currentVisitors = currentMerchant.visitors || [];
+                                    const newVisitors = currentVisitors.filter(id => id !== character.id);
+
+                                    if (newVisitors.length > 0) {
+                                        // Others remain - just update the list
+                                        await supabase.from('world_state').upsert({
+                                            key: `merchant_${session.id}`,
+                                            value: { ...currentMerchant, visitors: newVisitors }
+                                        });
+                                        // Optional: System message for leaving
+                                        addMessage({
+                                            role: 'system',
+                                            content: `🚪 **${character.name}** quitte la boutique.`,
+                                            timestamp: Date.now()
+                                        });
+                                    } else {
+                                        // Last one out - Close shop and Trigger Narrative
+                                        await supabase.from('world_state').upsert({
+                                            key: `merchant_${session.id}`,
+                                            value: { ...currentMerchant, active: false, visitors: [] }
+                                        });
+
+                                        // Trigger GM Narrative
+                                        handleSubmit(null, `[FIN DE COMMERCE] Le groupe quitte ${merchantName}. Décris notre sortie.`);
+                                    }
+                                }
+                            } catch (e) {
+                                console.error("Merchant Close Error", e);
+                            }
                         }}
                     />
                 )

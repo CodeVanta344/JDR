@@ -58,49 +58,63 @@ export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, on
                     onClick={() => setIsExpanded(true)}
                     style={{
                         position: 'fixed',
-                        right: '20px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
+                        right: '30px',
+                        top: '20%',
                         zIndex: 900,
                         cursor: 'pointer',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                         gap: '0.5rem',
-                        padding: '1rem',
-                        background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(0, 0, 0, 0.8) 100%)',
+                        padding: '0.8rem',
+                        background: 'linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%)',
                         border: '2px solid var(--gold-primary)',
-                        borderRadius: '12px',
-                        boxShadow: '0 0 20px rgba(212, 175, 55, 0.3)',
-                        transition: 'all 0.3s ease'
+                        borderRadius: '50%',
+                        width: '80px',
+                        height: '80px',
+                        justifyContent: 'center',
+                        boxShadow: '0 0 20px rgba(212, 175, 55, 0.4), inset 0 0 20px rgba(0,0,0,0.8)',
+                        transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
                     }}
                     onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-50%) scale(1.05)';
-                        e.currentTarget.style.boxShadow = '0 0 30px rgba(212, 175, 55, 0.5)';
+                        e.currentTarget.style.transform = 'scale(1.1) rotate(5deg)';
+                        e.currentTarget.style.boxShadow = '0 0 30px rgba(212, 175, 55, 0.6), inset 0 0 10px rgba(212, 175, 55, 0.1)';
+                        e.currentTarget.style.borderColor = '#fff';
                     }}
                     onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
-                        e.currentTarget.style.boxShadow = '0 0 20px rgba(212, 175, 55, 0.3)';
+                        e.currentTarget.style.transform = 'scale(1) rotate(0deg)';
+                        e.currentTarget.style.boxShadow = '0 0 20px rgba(212, 175, 55, 0.4), inset 0 0 20px rgba(0,0,0,0.8)';
+                        e.currentTarget.style.borderColor = 'var(--gold-primary)';
                     }}
                 >
-                    <span style={{ fontSize: '2rem' }}>🏪</span>
-                    <span style={{
-                        color: 'var(--gold-primary)',
-                        fontWeight: 'bold',
-                        fontSize: '0.85rem',
-                        textAlign: 'center',
-                        maxWidth: '100px',
-                        lineHeight: '1.2'
-                    }}>
-                        {merchant.npcName}
-                    </span>
-                    <span style={{
-                        fontSize: '0.7rem',
+                    {/* Thematic Icon (Money Bag) */}
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M11 15h2a2 2 0 1 0 0-4h-2V7h2" />
+                        <path d="M3 21h18a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2z" />
+                        <path d="M16 11V3L8 11" />
+                        <path d="M5 21v-8" />
+                        <path d="M19 21v-8" />
+                        <path d="M9 11l-3 6" />
+                        <path d="M15 11l3 6" />
+                    </svg>
+
+                    <div style={{
+                        position: 'absolute',
+                        bottom: '-35px',
+                        background: 'rgba(0,0,0,0.8)',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        border: '1px solid var(--gold-dim)',
+                        whiteSpace: 'nowrap',
                         color: 'var(--gold-light)',
-                        opacity: 0.8
+                        fontSize: '0.75rem',
+                        fontWeight: 'bold',
+                        pointerEvents: 'none',
+                        textAlign: 'center'
                     }}>
-                        Cliquez pour ouvrir
-                    </span>
+                        <span style={{ display: 'block', color: 'var(--gold-primary)', fontSize: '0.85rem' }}>{merchant.npcName}</span>
+                        <span style={{ fontSize: '0.65rem', opacity: 0.8 }}>COMMERCER</span>
+                    </div>
                 </div>
             )}
 
@@ -123,30 +137,48 @@ export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, on
                 }}
             >
                 <div style={{
-                    padding: '1rem 1.2rem',
-                    borderBottom: '1px solid var(--gold-dim)',
+                    padding: '1.5rem',
+                    borderBottom: '2px solid var(--gold-dim)',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    background: 'rgba(212, 175, 55, 0.05)'
+                    background: 'linear-gradient(90deg, rgba(212, 175, 55, 0.1) 0%, rgba(0,0,0,0) 100%)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
                 }}>
                     <div>
-                        <h2 style={{ margin: 0, color: 'var(--gold-primary)', fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span>🏪</span> {merchant.npcName}
+                        <h2 style={{
+                            margin: 0,
+                            color: 'var(--gold-primary)',
+                            fontSize: '1.6rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.8rem',
+                            fontFamily: 'serif',
+                            fontWeight: 'bold',
+                            textShadow: '0 2px 4px rgba(0,0,0,0.8)'
+                        }}>
+                            {merchant.npcName}
                         </h2>
-                        <p style={{ margin: '0.2rem 0 0 0', color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.85rem' }}>
-                            {merchant.greeting || "Que puis-je pour vous ?"}
+                        <p style={{ margin: '0.4rem 0 0 0', color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.9rem', borderLeft: '2px solid var(--gold-dim)', paddingLeft: '0.8rem' }}>
+                            "{merchant.greeting || "Que puis-je pour vous ?"}"
                         </p>
                     </div>
                     <button
                         onClick={handleClose}
+                        className="hover-glow"
                         style={{
-                            background: 'none',
-                            border: 'none',
-                            color: 'var(--text-muted)',
-                            fontSize: '1.5rem',
+                            background: 'transparent',
+                            border: '1px solid var(--gold-dim)',
+                            color: 'var(--gold-primary)',
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
                             cursor: 'pointer',
-                            padding: '0.5rem'
+                            fontSize: '1.2rem',
+                            transition: 'all 0.2s'
                         }}
                     >
                         ✕
@@ -154,68 +186,41 @@ export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, on
                 </div>
 
                 <div style={{
-                    padding: '0.8rem 1.2rem',
-                    background: 'rgba(0, 0, 0, 0.3)',
+                    padding: '1rem 1.5rem',
+                    background: 'rgba(0, 0, 0, 0.4)',
                     display: 'flex',
                     justifyContent: 'space-between',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    borderBottom: '1px solid rgba(255,255,255,0.05)'
                 }}>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>VOTRE BOURSE</span>
-                    <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--gold-primary)' }}>{playerGold} OR ✧</span>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', letterSpacing: '1px', textTransform: 'uppercase' }}>MA BOURSE</span>
+                    <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--gold-primary)', textShadow: '0 0 10px rgba(212,175,55,0.3)' }}>{playerGold} 🪙</span>
                 </div>
 
-                <div style={{ display: 'flex', borderBottom: '1px solid var(--gold-dim)' }}>
-                    <button
-                        onClick={() => setActiveTab('buy')}
-                        style={{
-                            flex: 1,
-                            padding: '0.8rem',
-                            background: activeTab === 'buy' ? 'rgba(212, 175, 55, 0.1)' : 'transparent',
-                            border: 'none',
-                            borderBottom: activeTab === 'buy' ? '2px solid var(--gold-primary)' : '2px solid transparent',
-                            color: activeTab === 'buy' ? 'var(--gold-primary)' : 'var(--text-muted)',
-                            cursor: 'pointer',
-                            fontSize: '0.85rem',
-                            fontWeight: 'bold',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        ACHETER
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('sell')}
-                        style={{
-                            flex: 1,
-                            padding: '0.8rem',
-                            background: activeTab === 'sell' ? 'rgba(212, 175, 55, 0.1)' : 'transparent',
-                            border: 'none',
-                            borderBottom: activeTab === 'sell' ? '2px solid var(--gold-primary)' : '2px solid transparent',
-                            color: activeTab === 'sell' ? 'var(--gold-primary)' : 'var(--text-muted)',
-                            cursor: 'pointer',
-                            fontSize: '0.85rem',
-                            fontWeight: 'bold',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        VENDRE
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('chat')}
-                        style={{
-                            flex: 1,
-                            padding: '0.8rem',
-                            background: activeTab === 'chat' ? 'rgba(212, 175, 55, 0.1)' : 'transparent',
-                            border: 'none',
-                            borderBottom: activeTab === 'chat' ? '2px solid var(--gold-primary)' : '2px solid transparent',
-                            color: activeTab === 'chat' ? 'var(--gold-primary)' : 'var(--text-muted)',
-                            cursor: 'pointer',
-                            fontSize: '0.85rem',
-                            fontWeight: 'bold',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        PARLER
-                    </button>
+                <div style={{ display: 'flex', gap: '0.5rem', padding: '0 1.5rem', marginTop: '1rem' }}>
+                    {['buy', 'sell', 'chat'].map(tab => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab)}
+                            style={{
+                                flex: 1,
+                                padding: '0.6rem',
+                                background: activeTab === tab ? 'var(--gold-primary)' : 'rgba(255,255,255,0.05)',
+                                border: '1px solid',
+                                borderColor: activeTab === tab ? 'var(--gold-primary)' : 'var(--gold-dim)',
+                                color: activeTab === tab ? '#000' : 'var(--text-muted)',
+                                cursor: 'pointer',
+                                fontSize: '0.85rem',
+                                fontWeight: 'bold',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.5px',
+                                transition: 'all 0.2s',
+                                clipPath: 'polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)'
+                            }}
+                        >
+                            {tab === 'buy' ? 'ACHETER' : tab === 'sell' ? 'VENDRE' : 'DISCUTER'}
+                        </button>
+                    ))}
                 </div>
 
                 <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
@@ -227,13 +232,27 @@ export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, on
                                 return (
                                     <div key={item.id} style={{
                                         padding: '1rem',
-                                        background: 'rgba(255,255,255,0.03)',
-                                        border: '1px solid var(--glass-border)',
+                                        background: 'linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
+                                        border: '1px solid',
+                                        borderColor: canAfford ? 'rgba(212, 175, 55, 0.2)' : 'rgba(255, 100, 100, 0.1)',
                                         borderRadius: '8px',
                                         display: 'flex',
                                         gap: '1rem',
-                                        alignItems: 'center'
-                                    }}>
+                                        alignItems: 'center',
+                                        transition: 'all 0.2s',
+                                        boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                                    }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.transform = 'translateX(5px)';
+                                            e.currentTarget.style.borderColor = 'var(--gold-primary)';
+                                            e.currentTarget.style.background = 'linear-gradient(145deg, rgba(212, 175, 55, 0.05) 0%, rgba(0,0,0,0.2) 100%)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.transform = 'translateX(0)';
+                                            e.currentTarget.style.borderColor = canAfford ? 'rgba(212, 175, 55, 0.2)' : 'rgba(255, 100, 100, 0.1)';
+                                            e.currentTarget.style.background = 'linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)';
+                                        }}
+                                    >
                                         <div
                                             style={{
                                                 width: '60px',
@@ -317,13 +336,23 @@ export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, on
                                 return (
                                     <div key={i} style={{
                                         padding: '1rem',
-                                        background: 'rgba(255,255,255,0.03)',
-                                        border: '1px solid var(--glass-border)',
+                                        background: 'linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
+                                        border: '1px solid rgba(255,255,255,0.05)',
                                         borderRadius: '8px',
                                         display: 'flex',
                                         justifyContent: 'space-between',
-                                        alignItems: 'center'
-                                    }}>
+                                        alignItems: 'center',
+                                        transition: 'all 0.2s'
+                                    }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.borderColor = 'var(--gold-dim)';
+                                            e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)';
+                                            e.currentTarget.style.background = 'linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)';
+                                        }}
+                                    >
                                         <div>
                                             <span style={{ fontWeight: 'bold', color: '#fff', fontSize: '0.9rem' }}>
                                                 {item.name} {item.equipped && <span style={{ color: 'var(--gold-dim)', fontSize: '0.75rem' }}>(Équipé)</span>}

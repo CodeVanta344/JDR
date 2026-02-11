@@ -764,22 +764,34 @@ Deno.serve(async (req: Request) => {
 
         // --- IDEMPOTENCY CHECK FOR ADVENTURE START ---
         if (action === "START_ADVENTURE") {
+            // 1. Check for the specific START trigger marker
+            const { data: triggerMsg } = await supabase
+                .from('messages')
+                .select('created_at')
+                .eq('session_id', sessionId)
+                .ilike('content', '%START_ADVENTURE_TRIGGERED%')
+                .single();
+
+            // 2. Check for any recent large system message (potential duplicate intro)
             const { data: existingMsgs } = await supabase
                 .from('messages')
-                .select('content')
+                .select('content, created_at')
                 .eq('session_id', sessionId)
                 .in('role', ['system', 'assistant'])
                 .order('created_at', { ascending: false })
-                .limit(10);
+                .limit(5);
 
-            // Filter for large narratives that look like intros
             const actualIntro = (existingMsgs || []).find((m: any) =>
                 m.content && m.content.length > 200 && !m.content.includes('(MÉMOIRE:')
             );
 
+            // If we have an intro, OR if the trigger is very old (meaning this is a re-run but we already have an intro? no, wait. if trigger exists, we might still need intro if it failed effectively. But if intro exists, STOP.)
             if (actualIntro) {
-                console.log("Adventure already started for this session. Returning existing intro.");
-                return jsonResponse({ narrative: actualIntro.content, skipped: true });
+                console.log("Adventure already started (intro found). Returning existing intro.");
+                return jsonResponse({
+                    narrative: actualIntro.content,
+                    skipped: true
+                });
             }
         }
 
