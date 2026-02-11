@@ -152,6 +152,19 @@ const RULES: string[] = [
     // 4. Time & dynamism
     `TEMPS & DYNAMISME: Le monde AVANCE. Si les joueurs attendent/dorment, quelque chose DOIT se passer (embuscade, reve, meteo, decouverte). NE BOUCLE PAS SUR LA MEME DESCRIPTION.`,
 
+    // 4b. NO REPETITION (CRITICAL)
+    `INTERDICTION DE REPETITION (REGLE CRITIQUE):\n` +
+    `  Si tu viens de decrire une scene ou situation, NE LA REDIS PAS.\n` +
+    `  EXEMPLES D'ERREURS A EVITER:\n` +
+    `  ✗ Decrire 2 fois la meme attaque du joueur\n` +
+    `  ✗ Repeter la reaction d'un PNJ deja decrite\n` +
+    `  ✗ Re-expliquer une situation deja claire\n` +
+    `  \n` +
+    `  REGLE: Chaque narration doit FAIRE AVANCER la scene.\n` +
+    `  - Si le joueur a declare une action, decris le RESULTAT, pas l'action elle-meme\n` +
+    `  - Si le combat est initie, DECLENCHE-LE immediatement avec "combat", ne le re-decris pas\n` +
+    `  - Si une question a ete posee, REPONDS directement, ne re-contextualise pas`,
+
     // 5. Language
     `LANGUE: TOUJOURS repondre en FRANCAIS.`,
 
@@ -187,7 +200,19 @@ const RULES: string[] = [
     `RECUPERATION DE STAGNATION (Context: GM_STAGNATION_RECOVERY): Si ce contexte est actif, DECLENCHE UN INCIDENT immediat (cri, attaque, PNJ). Force les joueurs a REAGIR.`,
 
     // 9. COMBAT TRIGGER (CRITICAL - ALWAYS APPLY)
-    `DECLENCHEMENT DE COMBAT (REGLE CRITIQUE - OBLIGATOIRE):\n` +
+    `DECLENCHEMENT DE COMBAT (REGLE CRITIQUE - OBLIGATOIRE - NE PAS IGNORER):\n` +
+    `  \n` +
+    `  ⚠️ ALERTE CRITIQUE ⚠️\n` +
+    `  SI LE JOUEUR UTILISE L'UN DE CES MOTS, TU DOIS DECLENCHER LE COMBAT IMMEDIATEMENT:\n` +
+    `  - "initier le combat" / "initier combat" / "on initie le combat"\n` +
+    `  - "nous attaquons" / "j'attaque" / "on attaque"\n` +
+    `  - "nous frappons" / "je frappe" / "on frappe"\n` +
+    `  - "degainer" / "sortir mon arme" / "brandir"\n` +
+    `  - "lancer un sort offensif"\n` +
+    `  - "charger" / "foncer sur"\n` +
+    `  \n` +
+    `  CES MOTS = COMBAT INSTANTANE. PAS DE NARRATION SUPPLEMENTAIRE SANS LE CHAMP "combat".\n` +
+    `  \n` +
     `  TU DOIS TOUJOURS inclure le champ "combat" dans ta reponse JSON dans ces situations:\n` +
     `  1. ENNEMIS HOSTILES APPARAISSENT (monstres, bandits, creatures)\n` +
     `  2. JOUEURS INITIENT L'HOSTILITE (menaces, attaques, intimidation aggressive)\n` +
@@ -198,6 +223,7 @@ const RULES: string[] = [
     `  - Tentatives d'intimidation avec arme/violence\n` +
     `  - Vol avec confrontation\n` +
     `  - Toute action provocant une riposte physique\n` +
+    `  - TOUTE phrase contenant les mots-cles ci-dessus\n` +
     `  \n` +
     `  STRUCTURE OBLIGATOIRE:\n` +
     `  "combat": {\n` +
