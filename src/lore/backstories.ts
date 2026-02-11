@@ -837,6 +837,476 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
       "Un portail Ashkan commence à vibrer en votre présence"
     ],
     gm_notes: ["Savoir encyclopédique", "Capacité unique de traduction", "Lien direct avec l'intrigue principale"]
+  },
+  {
+    id: "touche_miroir",
+    label: "Touché par le Miroir",
+    category: "arcane",
+    compatible_classes: ["Mage", "Barde", "Voleur"],
+    desc: "Vous avez survécu à une exposition directe au Miroir des Ombres. Votre reflet ne vous ressemble plus tout à fait, et vous entendez parfois des voix venant des surfaces réfléchissantes. Cette malédiction est aussi votre plus grande force.",
+    stats: { int: 1, cha: 1, wis: -1 },
+    origin: {
+      id: "miroir_faille",
+      region: "Terres Brûlées",
+      settlement: "La Faille Vive",
+      climate_bonus: ["Zones de distorsion", "Ténèbres"],
+      regional_knowledge: ["Géographie du Miroir", "Entités de l'Ombre"]
+    },
+    social_class: {
+      id: "errant_maudit",
+      label: "Errant Maudit",
+      wealth: "poor",
+      starting_gold_modifier: 0.6,
+      social_perks: ["Instinct pour le surnaturel", "Reconnaissance des autres touchés"],
+      social_penalties: ["Effraye les animaux", "Méfiance instinctive des gens"]
+    },
+    faction_ties: [
+      {
+        id: "miroir_ombres",
+        name: "Entités du Miroir",
+        role: "Vaisseau",
+        standing: "ally",
+        reputation: 10,
+        secrets_known: ["Le Miroir cherche à se stabiliser", "Certains reflets sont des espions"]
+      }
+    ],
+    historical_events: [HISTORICAL_EVENTS["eclipse_kuldahar"]],
+    personal_secrets: ["Votre reflet a sa propre volonté", "Vous pouvez voir à travers les yeux d'un autre reflet"],
+    known_npcs: ["Silène la Voilée", "Le Prophète Sans Nom"],
+    starting_reputation: { "Entités du Miroir": 10, "Inquisition": -50 },
+    roleplay_hooks: [
+      "Votre reflet vous parle d'un danger imminent",
+      "Une surface réfléchissante devient un portail temporaire",
+      "L'Inquisition détecte votre signature éthérée"
+    ],
+    gm_notes: ["Phénomènes paranormaux fréquents", "Lien avec le Miroir des Ombres", "Peut servir de relais pour le MJ"]
+  },
+  {
+    id: "chirurgien_guerre",
+    label: "Chirurgien de Campagne",
+    category: "military",
+    compatible_classes: ["Clerc", "Guerrier", "Mage"],
+    desc: "Vous avez passé des années à recoudre des soldats au milieu de la boue et du sang. Pour vous, un corps est une machine complexe. Vous avez sauvé d'innombrables vies, mais le cri des blessés hante encore vos nuits.",
+    stats: { int: 1, con: 1, cha: -1 },
+    origin: {
+      id: "frontiere_sud",
+      region: "Le Val Doré",
+      settlement: "Hôpitaux Militaires",
+      climate_bonus: ["Zones urbaines", "Champs de bataille"],
+      regional_knowledge: ["Anatomie", "Premier secours", "Logistique militaire"]
+    },
+    social_class: {
+      id: "medecin_militaire",
+      label: "Médecin Militaire",
+      wealth: "modest",
+      starting_gold_modifier: 1.1,
+      social_perks: ["Respect des soldats", "Priorité de soins", "Connaissance médicale"],
+      social_penalties: ["Cynisme désabusé", "Mains tachées (stigmate)"]
+    },
+    faction_ties: [
+      {
+        id: "bouclier_argent",
+        name: "Bouclier d'Argent",
+        role: "Ancien Praticien",
+        standing: "member",
+        reputation: 20,
+        secrets_known: ["Vrais bilans des pertes sacrifiés", "Usage de drogues expérimentales sur les recrues"]
+      }
+    ],
+    historical_events: [HISTORICAL_EVENTS["siege_sol_aureus"]],
+    personal_secrets: ["Vous avez pratiqué une euthanasie interdite sur un noble", "Vous connaissez la faiblesse anatomique d'un général"],
+    known_npcs: ["Capitaine Aldric", "Goruk Dent-de-Fer"],
+    starting_reputation: { "Bouclier d'Argent": 20, "Peuple": 30 },
+    roleplay_hooks: [
+      "Un ancien patient vous demande une opération impossible",
+      "On vous accuse de faute médicale intentionnelle",
+      "Une épidémie mystérieuse frappe une ville"
+    ],
+    gm_notes: ["Expert en survie et santé", "Peut identifier des causes de mort", "Liens avec les vétérans"]
+  },
+  {
+    id: "diplomate_sol_aureus",
+    label: "Diplomate de Sol-Aureus",
+    category: "noble",
+    compatible_classes: ["Barde", "Paladin", "Mage"],
+    desc: "Vous étiez la voix de Sol-Aureus, négociant des traités entre les cités-états et les factions elfiques. Vous savez que les mots sont bien plus tranchants que n'importe quelle lame de mithril.",
+    stats: { cha: 2, wis: 1, str: -2 },
+    origin: {
+      id: "sol_aureus_palais",
+      region: "Val Doré",
+      settlement: "Quartier des Ambassades",
+      climate_bonus: ["Salles de conseil", "Villes"],
+      regional_knowledge: ["Droit international", "Héraldique", "Langues de cour"]
+    },
+    social_class: {
+      id: "emissaire",
+      label: "Émissaire Royal",
+      wealth: "wealthy",
+      starting_gold_modifier: 1.8,
+      social_perks: ["Immunité diplomatique partielle", "Accès aux hautes sphères", "Négociateur né"],
+      social_penalties: ["Cible des assassins", "Détesté par les opprimés"]
+    },
+    faction_ties: [
+      {
+        id: "cour_royale",
+        name: "Conseil des Ministres",
+        role: "Ancien Attaché",
+        standing: "ally",
+        reputation: 40,
+        secrets_known: ["Alliance secrète avec Kuldahar", "Détournement de fonds de la Guilde"]
+      }
+    ],
+    historical_events: [HISTORICAL_EVENTS["revelation_reine"]],
+    personal_secrets: ["Vous avez signé un traité sous la contrainte", "Vous parlez couramment la langue des démons"],
+    known_npcs: ["Reine Elara", "Chancelier Malaric"],
+    starting_reputation: { "Cour Royale": 40, "Guilde des Marchands": 25, "Main Noire": -20 },
+    roleplay_hooks: [
+      "Vous devez négocier une trêve urgente",
+      "Un scandale menace de révéler vos anciens mensonges",
+      "Une faction cherche à vous acheter pour influencer un vote"
+    ],
+    gm_notes: ["Expert social", "A de l'or et des contacts", "Cible de la Main Noire"]
+  },
+  {
+    id: "pilleur_epaves",
+    label: "Pilleur d'Épaves de la Côte",
+    category: "wilderness",
+    compatible_classes: ["Voleur", "Rôdeur", "Guerrier"],
+    desc: "Les tempêtes de la Côte des Orages rejettent souvent des trésors et des secrets. Vous avez survécu en récupérant ce que l'Océan des Murmures ne voulait plus. Vous avez appris à lire les vagues et à craindre ce qui rampe sous l'écume.",
+    stats: { dex: 1, wis: 1, int: 1 },
+    origin: {
+      id: "cote_orages_plages",
+      region: "Côte des Orages",
+      settlement: "Épaves de la Baie Perdue",
+      climate_bonus: ["Zones côtières", "Brouillard marin"],
+      regional_knowledge: ["Navigation côtière", "Créatures marines", "Légendes sombres"]
+    },
+    social_class: {
+      id: "recupeerateur",
+      label: "Récupérateur",
+      wealth: "modest",
+      starting_gold_modifier: 1.0,
+      social_perks: ["Trouve des objets insolites", "Résistance à l'humidité", "Agilité"],
+      social_penalties: ["Considéré comme un charognard", "Méfiance des marins"]
+    },
+    faction_ties: [
+      {
+        id: "pirates_murmures",
+        name: "Libres-Marins",
+        role: "Recycleur",
+        standing: "former",
+        reputation: 15,
+        secrets_known: ["Position de l'épave de l'Espérance", "Code des signaux lumineux"]
+      }
+    ],
+    historical_events: [HISTORICAL_EVENTS["eclipse_kuldahar"]],
+    personal_secrets: ["Vous avez trouvé un objet qui ne devrait pas exister", "Vous avez laissé un survivant se noyer"],
+    known_npcs: ["Lysandre Murmure-d'Étoile", "Bram Tonnelier"],
+    starting_reputation: { "Libres-Marins": 15, "Garde Côtière": -10 },
+    roleplay_hooks: [
+      "Une épave légendaire est signalée",
+      "Un habitant de l'océan vous réclame un objet volé",
+      "Une tempête rejette un portail à la dérive"
+    ],
+    gm_notes: ["Familiarisé avec l'océan", "Inventaire souvent rempli de 'camelote' utile", "Lien avec le Marcheur Blanc"]
+  },
+  {
+    id: "bibliothecaire_profond",
+    label: "Bibliothécaire des Profondeurs",
+    category: "common",
+    compatible_classes: ["Mage", "Clerc", "Barde"],
+    desc: "Dans les niveaux les plus calmes de Hammerdeep se trouvent les Grands Archives de Pierre. Vous étiez chargé de cataloguer les généalogies naines et les découvertes minières. Vous connaissez les secrets enterrés sous des tonnes de granit.",
+    stats: { int: 2, wis: 1, str: -1 },
+    origin: {
+      id: "hammerdeep_archives",
+      region: "Monts Cœur-de-Fer",
+      settlement: "Hammerdeep (Cité de Pierre)",
+      climate_bonus: ["Lieux confinés", "Souterrain"],
+      regional_knowledge: ["Généalogie naine", "Histoire des mines", "Langue de pierre"]
+    },
+    social_class: {
+      id: "archiviste",
+      label: "Archiviste Nain",
+      wealth: "comfortable",
+      starting_gold_modifier: 1.2,
+      social_perks: ["Accès aux bibliothèques", "Savoir encyclopédique", "Respect des aînés"],
+      social_penalties: ["Sensible à la lumière vive", "Physique fragile"]
+    },
+    faction_ties: [
+      {
+        id: "guilde_erudits",
+        name: "Consilium du Granit",
+        role: "Scribre de Pierre",
+        standing: "member",
+        reputation: 45,
+        secrets_known: ["Le Niveau Perdu contient des archives vivantes", "Thundrak avait un deuxième marteau"]
+      }
+    ],
+    historical_events: [HISTORICAL_EVENTS["effondrement_niveau_12"]],
+    personal_secrets: ["Vous avez effacé une branche généalogique entière", "Vous avez trouvé un texte Ashkan prédisant l'effondrement"],
+    known_npcs: ["Goruk Dent-de-Fer", "Archiviste Kaelith"],
+    starting_reputation: { "Consilium du Granit": 45, "Guilde des Forgerons": 20 },
+    roleplay_hooks: [
+      "Un fragment de tablette volé doit être retrouvé",
+      "Une famille noble naine conteste vos archives",
+      "Le Niveau Perdu vous appelle par son nom"
+    ],
+    gm_notes: ["Source d'informations historiques", "Expert en recherche", "Lien avec les secrets de Hammerdeep"]
+  },
+  {
+    id: "espion_murmures",
+    label: "Espion des Murmures",
+    category: "criminal",
+    compatible_classes: ["Voleur", "Barde", "Mage"],
+    desc: "Vous étiez l'un des 'Murmures' de Sol-Aureus, un espion de haut vol spécialisé dans l'interception de secrets politiques. Votre couverture a été grillée lors d'une mission délicate à la Cour Royale, et vous avez dû fuir les bas-fonds que vous connaissiez si bien.",
+    stats: { int: 1, cha: 1, str: -1 },
+    origin: {
+      id: "sol_aureus_ombre",
+      region: "Val Doré",
+      settlement: "Sol-Aureus (Quartier des Plaisirs)",
+      climate_bonus: ["Urbain", "Brouillard"],
+      regional_knowledge: ["Cryptographie", "Réseaux d'information", "Politique locale"]
+    },
+    social_class: {
+      id: "informateur_dechu",
+      label: "Informateur Déchu",
+      wealth: "modest",
+      starting_gold_modifier: 1.1,
+      social_perks: ["Sait obtenir des informations", "Lit les intentions"],
+      social_penalties: ["Considéré comme un traître", "Visage recherché"]
+    },
+    faction_ties: [
+      {
+        id: "cour_royale",
+        name: "Cour Royale",
+        role: "Ancien infiltré",
+        standing: "enemy",
+        reputation: -30,
+        secrets_known: ["La liste des agents dormants de la Main Noire", "Le secret de polichinelle du Chancelier"]
+      },
+      {
+        id: "main_noire",
+        name: "Main Noire",
+        role: "Cible de nettoyage",
+        standing: "enemy",
+        reputation: -25,
+        secrets_known: ["Emplacement du Rats-Bazar"]
+      }
+    ],
+    historical_events: [HISTORICAL_EVENTS["revelation_reine"], HISTORICAL_EVENTS["guerre_guildes"]],
+    personal_secrets: ["Vous avez gardé une lettre compromettante de la Reine", "Votre propre frère est un Inquisiteur"],
+    known_npcs: ["Chancelier Malaric", "Matriarche des Ombres", "Garde corrompu Harlan"],
+    starting_reputation: { "Cour Royale": -30, "Main Noire": -25, "Bourse de l'Ombre": 15 },
+    roleplay_hooks: [
+      "Un ancien contact vous demande une dernière fuite",
+      "La Main Noire met votre tête à prix",
+      "Votre identité est sur le point d'être révélée par un rival"
+    ],
+    gm_notes: ["Maître de l'infiltration", "Peut servir de lien pour des intrigues politiques", "Le Chancelier le veut mort"]
+  },
+  {
+    id: "garde_corps_guilde",
+    label: "Garde du Corps de la Guilde",
+    category: "military",
+    compatible_classes: ["Guerrier", "Rôdeur", "Paladin"],
+    desc: "Vous avez passé cinq ans à protéger les caravanes les plus précieuses de la Guilde des Marchands à travers les Terres Brûlées. Vous avez survécu à des embuscades de Wyverns et à des pilleurs de tombes, mais un échec récent vous a laissé sans emploi et avec une dette de vie envers un marchand influent.",
+    stats: { str: 1, con: 1, wis: -1 },
+    origin: {
+      id: "caravanes_routes",
+      region: "Terres Brûlées",
+      settlement: "Routes des Caravanes",
+      climate_bonus: ["Désert", "Grandes routes"],
+      regional_knowledge: ["Logistique de voyage", "Points d'embuscade", "Marché du mercenariat"]
+    },
+    social_class: {
+      id: "mercenaire_guilde",
+      label: "Mercenaire de la Guilde",
+      wealth: "comfortable",
+      starting_gold_modifier: 1.4,
+      social_perks: ["Respect des marchands", "Priorité aux péages"],
+      social_penalties: ["Cible des bandits", "Considéré comme un pion des riches"]
+    },
+    faction_ties: [
+      {
+        id: "guilde_marchands",
+        name: "Guilde des Marchands",
+        role: "Protecteur de convoi",
+        standing: "member",
+        reputation: 30,
+        secrets_known: ["L'emplacement d'une cache de marchandises interdites", "Certains marchands paient tribut aux Wyverns"]
+      },
+      {
+        id: "garde_cendres",
+        name: "Garde des Cendres",
+        role: "Allié externe",
+        standing: "ally",
+        reputation: 15,
+        secrets_known: ["Points faibles des Wyverns"]
+      }
+    ],
+    historical_events: [HISTORICAL_EVENTS["chute_ashka_echo"], HISTORICAL_EVENTS["guerre_guildes"]],
+    personal_secrets: ["Vous avez laissé brûler une caravane pour sauver un enfant", "Le marchand Cornelius vous en veut personnellement"],
+    known_npcs: ["Cornelius (négociant)", "Zara la Rouge", "Bram Tonnelier"],
+    starting_reputation: { "Guilde des Marchands": 30, "Pilleurs": -20, "Garde des Cendres": 15 },
+    roleplay_hooks: [
+      "Le marchand que vous avez sauvé demande un service périlleux",
+      "Une caravane n'est pas arrivée, vous êtes le seul capable de la retrouver",
+      "Le secret de votre dette de vie refait surface"
+    ],
+    gm_notes: ["Expert en combat défensif", "Connaît bien les dangers des routes", "Lien avec Cornelius pour des quêtes économiques"]
+  },
+  {
+    id: "ermite_faille",
+    label: "Ermite de la Faille Vive",
+    category: "wilderness",
+    compatible_classes: ["Mage", "Druide", "Clerc"],
+    desc: "Vivant en isolation près de la Faille Vive dans les Terres Brûlées, vous avez passé des décennies à observer les vibrations du Miroir des Ombres. Le silence vous a parlé plus que n'importe quel traité d'alchimie. Vous êtes sorti de votre retraite car la Faille a commencé à 'saigner'.",
+    stats: { wis: 1, int: 1, con: -1 },
+    origin: {
+      id: "faille_vive_isolé",
+      region: "Terres Brûlées",
+      settlement: "Cabane de la Faille Vive",
+      climate_bonus: ["Zones de distorsion", "Silence absolu"],
+      regional_knowledge: ["Botanique ésotérique", "Entités spectrales", "Survie extrême"]
+    },
+    social_class: {
+      id: "ermite",
+      label: "Ermite",
+      wealth: "poor",
+      starting_gold_modifier: 0.5,
+      social_perks: ["Impassible face à la peur", "Communie avec la nature"],
+      social_penalties: ["Maladresse sociale extrême", "Apparence inquiétante"]
+    },
+    faction_ties: [
+      {
+        id: "miroir_ombres",
+        name: "Entités du Miroir",
+        role: "Observateur",
+        standing: "ally",
+        reputation: 20,
+        secrets_known: ["La Faille se nourrit des regrets", "Le Marcheur Blanc approche"]
+      },
+      {
+        id: "conseil_chenes",
+        name: "Conseil des Chênes",
+        role: "Ancien Druide",
+        standing: "former",
+        reputation: 10,
+        secrets_known: ["Une corruption ronge le cœur de la forêt"]
+      }
+    ],
+    historical_events: [HISTORICAL_EVENTS["eclipse_kuldahar"], HISTORICAL_EVENTS["chute_ashka_echo"]],
+    personal_secrets: ["Vous n'avez pas vieilli depuis 20 ans", "Une voix dans la Faille vous appelle par votre vrai nom"],
+    known_npcs: ["Archidruide Sylvanus", "Le Prophète Sans Nom", "Silène la Voilée"],
+    starting_reputation: { "Conseil des Chênes": 10, "Entités du Miroir": 20, "Inquisition": -30 },
+    roleplay_hooks: [
+      "La Faille vous envoie une vision d'un village en flammes",
+      "Les druides du Conseil cherchent à vous rapatrier",
+      "Le Marcheur Blanc vous a marqué durant votre sommeil"
+    ],
+    gm_notes: ["Très utile pour donner des avertissements mystiques", "Connaissances arcaniques très spécifiques", "Peut être perçu comme fou par les autres PJ"]
+  },
+  {
+    id: "reliquaire_orphelinat",
+    label: "Reliquaire de l'Orphelinat",
+    category: "religious",
+    compatible_classes: ["Clerc", "Paladin", "Barde"],
+    desc: "Fidèle serviteur d'un orphelinat tenu par le Clergé de Solarius, vous avez découvert une relique oubliée dans les fondations du temple. Pour la protéger de l'Inquisition, vous l'avez 'fusionnée' avec votre propre essence. Vous portez désormais le fardeau de la lumière et la responsabilité de ces enfants.",
+    stats: { wis: 1, con: 1, dex: -1 },
+    origin: {
+      id: "orphelinat_temple",
+      region: "Val Doré",
+      settlement: "Orphelinat de Sainte-Claire",
+      climate_bonus: ["Temples", "Lieux sacrés"],
+      regional_knowledge: ["Théologie de Solarius", "Soins des démunis", "Histoire des reliques"]
+    },
+    social_class: {
+      id: "gardien_foi",
+      label: "Gardien de la Foi",
+      wealth: "modest",
+      starting_gold_modifier: 0.9,
+      social_perks: ["Béni par les humbles", "Pureté apparente"],
+      social_penalties: ["Cible de l'Inquisition", "Lumière difficile à cacher"]
+    },
+    faction_ties: [
+      {
+        id: "clerge_solarius",
+        name: "Clergé de Solarius",
+        role: "Dévot",
+        standing: "member",
+        reputation: 35,
+        secrets_known: ["L'Inquisition a exécuté des innocents", "Une prophétie parle d'un porteur de lumière"]
+      },
+      {
+        id: "inquisition",
+        name: "Inquisition du Soleil",
+        role: "Sujet d'enquête",
+        standing: "enemy",
+        reputation: -20,
+        secrets_known: ["L'Inquisition cache un fragment du Maillon d'Or"]
+      }
+    ],
+    historical_events: [HISTORICAL_EVENTS["purge_cercle_cendres"], HISTORICAL_EVENTS["siege_sol_aureus"]],
+    personal_secrets: ["La relique se nourrit de votre force vitale", "Les enfants de l'orphelinat sont en danger à cause de vous"],
+    known_npcs: ["Mère Greta", "Grand Prêtre Aldous", "Inquisiteur Malthus"],
+    starting_reputation: { "Clergé de Solarius": 35, "Peuple": 25, "Inquisition": -20 },
+    roleplay_hooks: [
+      "Un inquisiteur commence à poser des questions à l'orphelinat",
+      "La relique en vous commence à briller à l'approche du mal",
+      "Un ancien orphelin devenu puissant cherche à vous protéger"
+    ],
+    gm_notes: ["Porteur d'un objet sacré puissant (potentiel narratif)", "Dévouement moral total", "Lien fort avec l'Inquisition comme antagoniste"]
+  },
+  {
+    id: "cultiste_repenti",
+    label: "Cultiste Repenti du Cercle",
+    category: "criminal",
+    compatible_classes: ["Voleur", "Mage", "Clerc"],
+    desc: "Vous faisiez partie du Cercle des Cendres, séduit par leurs promesses de pouvoir sur le Miroir des Ombres. Mais après avoir été témoin d'un rituel de sacrifice particulièrement atroce lors de l'Arrivée de l'Ombre, vous avez trahi vos frères. Vous êtes en fuite, avec leurs secrets et leur marque sur votre peau.",
+    stats: { int: 1, dex: 1, cha: -1 },
+    origin: {
+      id: "repaire_cercle",
+      region: "Terres Brûlées",
+      settlement: "Repaire des Cendres (Clandestin)",
+      climate_bonus: ["Ténèbres", "Sites rituels"],
+      regional_knowledge: ["Occultisme", "Rites du Cercle", "Langage des ombres"]
+    },
+    social_class: {
+      id: "fugitif_occulte",
+      label: "Fugitif Occulte",
+      wealth: "modest",
+      starting_gold_modifier: 0.8,
+      social_perks: ["Identifie les rituels", "Sait se cacher dans l'ombre"],
+      social_penalties: ["Marqué physiquement par le mal", "Hanté par ses crimes"]
+    },
+    faction_ties: [
+      {
+        id: "cercle_cendres",
+        name: "Cercle des Cendres",
+        role: "Traître",
+        standing: "enemy",
+        reputation: -60,
+        secrets_known: ["L'emplacement des Cinq Scellés", "L'identité de plusieurs infiltrés dans Sol-Aureus"]
+      },
+      {
+        id: "inquisition",
+        name: "Inquisition du Soleil",
+        role: "Cible prioritaire",
+        standing: "enemy",
+        reputation: -40,
+        secrets_known: ["L'Inquisition a exécuté des innocents"]
+      }
+    ],
+    historical_events: [HISTORICAL_EVENTS["purge_cercle_cendres"], HISTORICAL_EVENTS["eclipse_kuldahar"]],
+    personal_secrets: ["Vous avez le nom d'un Grand Maître du Cercle", "La marque sur votre bras vous brûle quand ils sont proches"],
+    known_npcs: ["Le Prophète Sans Nom", "Inquisiteur Malthus", "Matriarche des Ombres"],
+    starting_reputation: { "Cercle des Cendres": -60, "Inquisition": -40, "Victimes du Cercle": 10 },
+    roleplay_hooks: [
+      "Vos anciens frères rituels vous ont retrouvé",
+      "L'Inquisition vous propose un marché pour votre tête",
+      "Un rituel commencé par vous doit être stoppé"
+    ],
+    gm_notes: ["Héros tragique", "Connaissance approfondie des antagonistes", "Dilemme constant entre fuite et rédemption"]
   }
 ];
 

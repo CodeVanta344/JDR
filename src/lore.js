@@ -1319,6 +1319,15 @@ export const NPC_TEMPLATES = {
 };
 
 /**
+ * IMPORTANT NPCS FLAT MAP
+ * Flattens NPC_TEMPLATES for easy O(1) lookup by name.
+ */
+export const IMPORTANT_NPCS = Object.values(NPC_TEMPLATES).flat().reduce((acc, npc) => {
+    acc[npc.name] = npc;
+    return acc;
+}, {});
+
+/**
  * QUEST HOOKS BY REGION
  * Adventure seeds the GM can deploy based on where the players are.
  */

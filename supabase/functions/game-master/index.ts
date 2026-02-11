@@ -164,7 +164,31 @@ const RULES: string[] = [
     // 8. Stagnation recovery
     `RECUPERATION DE STAGNATION (Context: GM_STAGNATION_RECOVERY): Si ce contexte est actif, DECLENCHE UN INCIDENT immediat (cri, attaque, PNJ). Force les joueurs a REAGIR.`,
 
-    // 9. Equipment affinity
+    // 9. COMBAT TRIGGER (CRITICAL - ALWAYS APPLY)
+    `DECLENCHEMENT DE COMBAT (REGLE CRITIQUE - OBLIGATOIRE):\n` +
+    `  QUAND DES ENNEMIS HOSTILES APPARAISSENT, TU DOIS TOUJOURS inclure le champ "combat" dans ta reponse JSON.\n` +
+    `  STRUCTURE OBLIGATOIRE:\n` +
+    `  "combat": {\n` +
+    `    "enemies": [\n` +
+    `      { "name": "Gobelin Eclaireur", "hp": 15, "max_hp": 15, "atk": 4, "ac": 12, "id": "e1", "cr": 1 },\n` +
+    `      { "name": "Loup Affame", "hp": 11, "max_hp": 11, "atk": 5, "ac": 13, "id": "e2", "cr": 0.5 }\n` +
+    `    ],\n` +
+    `    "reason": "Des gobelins surgissent des buissons!",\n` +
+    `    "trigger": true\n` +
+    `  }\n` +
+    `  EXEMPLES D'ENNEMIS:\n` +
+    `  - Gobelin (HP: 7-15, ATK: 3-5, AC: 13-15, CR: 0.25-1)\n` +
+    `  - Loup (HP: 11, ATK: 5, AC: 13, CR: 0.25)\n` +
+    `  - Bandit (HP: 11, ATK: 5, AC: 12, CR: 0.125)\n` +
+    `  - Squelette (HP: 13, ATK: 5, AC: 13, CR: 0.25)\n` +
+    `  - Ogre (HP: 59, ATK: 8, AC: 11, CR: 2)\n` +
+    `  IMPORTANT:\n` +
+    `  - Utilise le BESTIAIRE fourni dans le lore pour les stats exactes\n` +
+    `  - Adapte le nombre d'ennemis au niveau du groupe (1-2 ennemis pour groupe niveau 1)\n` +
+    `  - TOUJOURS mettre "trigger": true pour lancer le combat\n` +
+    `  - Si tu decris un combat dans la narrative, TU DOIS envoyer "combat"`,
+
+    // 10. Equipment affinity
     `AFFINITE EQUIPEMENT:\n` +
     `  ARMURES: LEGERE=toutes classes, INTERMEDIAIRE=Guerrier/Clerc/Paladin/Rodeur/Druide, LOURDE=Guerrier/Clerc/Paladin uniquement.\n` +
     `  ARMES: SIMPLE=toutes, MARTIALE=Guerrier/Paladin/Rodeur, FINESSE=Voleur/Barde/Rodeur, ARCANIQUE=Mage/Barde/Druide, SACREE=Clerc/Paladin.\n` +
@@ -288,7 +312,8 @@ const RULES: string[] = [
     `REACTIVITE DES ORIGINES (IMPORTANT):\n` +
     `  L'origine de CHAQUE personnage DOIT avoir une incidence visible sur le jeu.\n` +
     `  - INTERACTIONS PNJ: Les PNJ reagissent Differemment selon l'origine du joueur (ex: mepris pour un Paria, respect pour un Noble, fraternite pour un ancien soldat).\n` +
-    `  - AVANTAGES/PENALITES: Applique STRICTEMENT les avantages/penalites sociaux (ex: un Noble a des contacts, un Criminel est surveille).\n` +
+    `  - AVANTAGES/PENALITES: Applique STRICTEMENT les avantages/penalites sociaux (ex: un Noble a des contacts, un Criminel est surveille). Verifie le champ backstory.social_class.social_perks/penalties.\n` +
+    `  - SECRETS: Les joueurs peuvent connaitre des secrets lies a leur faction (backstory.faction_ties.secrets_known). Utilise ces secrets pour donner des options de dialogue uniques.\n` +
     `  - LIEUX: Si un joueur visite sa region d'origine, il connait les lieux, les raccourcis et les gens. Les PNJ peuvent le reconnaitre.\n` +
     `  - ECONOMIE: Ajuste les prix des marchands selon la reputation et la classe sociale du joueur.\n` +
     `  - NARRATION: Utilise les 'Hooks de Roleplay' pour personnaliser les quetes et les rencontres.`,
@@ -692,10 +717,10 @@ Deno.serve(async (req: Request) => {
         // ── Save to DB (skip private contexts) ──
         if (context !== 'GAME_ASSISTANT' && context !== 'PRIVATE_NPC_CONVERSATION') {
             // Extract narrative from result for clean display
-            const displayContent = typeof result === 'object' && result.narrative 
-                ? result.narrative 
-                : typeof result === 'string' 
-                    ? result 
+            const displayContent = typeof result === 'object' && result.narrative
+                ? result.narrative
+                : typeof result === 'string'
+                    ? result
                     : JSON.stringify(result);
 
             await supabase.from('messages').insert([{
