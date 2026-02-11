@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { CLASSES, BESTIARY } from '../lore';
+import { CombatLogger } from '../utils/logger';
 import { supabase } from '../supabaseClient';
 import { DieVisual } from './DieVisual';
 
@@ -37,25 +38,52 @@ const TurnTracker = ({ combatants, currentTurnIndex }) => {
 
     return (
         <div style={{
-            display: 'flex', gap: '8px', padding: '10px',
-            background: 'rgba(0,0,0,0.6)', borderRadius: '12px',
-            border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(5px)',
-            marginBottom: '10px', width: 'fit-content'
+            display: 'flex', gap: '12px', padding: '12px 20px',
+            background: 'linear-gradient(135deg, rgba(0,0,0,0.8) 0%, rgba(20,20,30,0.6) 100%)',
+            borderRadius: '0 0 20px 20px',
+            border: '1px solid rgba(212, 175, 55, 0.3)',
+            borderTop: 'none',
+            backdropFilter: 'blur(12px)',
+            marginBottom: '20px',
+            width: 'fit-content',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+            position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
+            zIndex: 1000
         }}>
             {sequence.map((u, i) => (
                 <div key={`${u.id}-${i}`} style={{
-                    width: i === 0 ? '60px' : '45px',
-                    height: i === 0 ? '60px' : '45px',
+                    width: i === 0 ? '70px' : '50px',
+                    height: i === 0 ? '70px' : '50px',
                     borderRadius: '50%',
-                    border: i === 0 ? '3px solid var(--gold-primary)' : '1px solid rgba(255,255,255,0.3)',
+                    border: i === 0 ? '3px solid var(--gold-primary)' : '2px solid rgba(255,255,255,0.2)',
                     position: 'relative',
-                    transition: 'all 0.3s',
-                    opacity: 1 - (i * 0.1),
-                    transform: i === 0 ? 'scale(1.1)' : 'scale(1)',
-                    boxShadow: i === 0 ? '0 0 15px var(--gold-primary)' : 'none'
+                    transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                    opacity: 1 - (i * 0.12),
+                    transform: i === 0 ? 'scale(1.15) translateY(5px)' : 'scale(1)',
+                    boxShadow: i === 0 ? '0 0 25px rgba(212, 175, 55, 0.6)' : 'none',
+                    background: 'rgba(0,0,0,0.4)',
+                    overflow: 'visible'
                 }}>
                     <img src={u.portrait_url} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} alt="" />
-                    {i === 0 && <div style={{ position: 'absolute', bottom: '-5px', left: '50%', transform: 'translateX(-50%)', background: 'var(--gold-primary)', color: 'black', fontSize: '0.6rem', fontWeight: 'bold', padding: '1px 4px', borderRadius: '4px' }}>TOUR</div>}
+                    {i === 0 && (
+                        <div style={{
+                            position: 'absolute', bottom: '-10px', left: '50%', transform: 'translateX(-50%)',
+                            background: 'var(--gold-primary)', color: 'black', fontSize: '0.65rem',
+                            fontWeight: '900', padding: '2px 8px', borderRadius: '10px',
+                            boxShadow: '0 2px 5px rgba(0,0,0,0.5)', letterSpacing: '1px',
+                            textTransform: 'uppercase'
+                        }}>
+                            TOUR
+                        </div>
+                    )}
+                    {u.isEnemy && (
+                        <div style={{
+                            position: 'absolute', top: '-5px', right: '-5px',
+                            width: '15px', height: '15px', background: '#ff4444',
+                            borderRadius: '50%', border: '2px solid white',
+                            boxShadow: '0 0 5px rgba(255,0,0,0.5)'
+                        }} />
+                    )}
                 </div>
             ))}
         </div>
@@ -66,7 +94,7 @@ const TurnTracker = ({ combatants, currentTurnIndex }) => {
 
 const RemoteActionOverlay = ({ action, onComplete }) => {
     useEffect(() => {
-        const timer = setTimeout(onComplete, 3000);
+        const timer = setTimeout(onComplete, 4000); // Slightly longer for ceremony
         return () => clearTimeout(timer);
     }, [onComplete]);
 
@@ -74,40 +102,56 @@ const RemoteActionOverlay = ({ action, onComplete }) => {
 
     return (
         <div style={{
-            position: 'absolute', inset: 0, zIndex: 1900,
+            position: 'absolute', inset: 0, zIndex: 2500,
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)',
-            animation: 'fadeIn 0.3s ease-out'
+            background: 'radial-gradient(circle, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.9) 100%)',
+            backdropFilter: 'blur(8px)',
+            animation: 'fadeIn 0.5s ease-out'
         }}>
             <div style={{
-                marginBottom: '20px', fontSize: '1.5rem', fontFamily: 'var(--font-display)',
-                color: 'var(--gold-light)', textShadow: '0 2px 4px rgba(0,0,0,0.8)'
+                marginBottom: '40px', fontSize: '2.5rem', fontFamily: 'var(--font-display)',
+                color: 'var(--gold-light)', textShadow: '0 0 20px rgba(212, 175, 55, 0.8)',
+                textAlign: 'center', animation: 'scaleUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
             }}>
-                {action.attackerName} utilise <span style={{ color: 'white' }}>{action.abilityName}</span>
+                <div style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.6)', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '10px' }}>Action de l'adversaire</div>
+                {action.attackerName} utilise <br />
+                <span style={{ color: 'white', filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.5))' }}>{action.abilityName.toUpperCase()}</span>
             </div>
 
-            <DieVisual
-                type="d20"
-                value={action.roll}
-                onComplete={() => { }} // Static display or purely visual
-                isResult={true}
-            />
+            <div style={{ transform: 'scale(1.5)', marginBottom: '40px' }}>
+                <DieVisual
+                    type="d20"
+                    value={action.roll}
+                    onComplete={() => { }}
+                    isResult={true}
+                />
+            </div>
 
             <div style={{
                 marginTop: '20px', textAlign: 'center',
-                background: 'rgba(0,0,0,0.8)', padding: '10px 20px', borderRadius: '8px',
-                border: '1px solid var(--gold-dim)'
+                background: 'rgba(0,0,0,0.85)', padding: '20px 40px', borderRadius: '15px',
+                border: '2px solid var(--gold-dim)',
+                boxShadow: '0 0 50px rgba(0,0,0,1)',
+                animation: 'slideUpFade 0.5s 0.3s both'
             }}>
-                <div style={{ fontSize: '1.2rem', color: 'white' }}>
-                    {action.roll} + {action.modifier} = <span style={{ color: action.success ? '#00ff00' : '#ff4444', fontWeight: 'bold' }}>{action.roll + action.modifier}</span>
+                <div style={{ fontSize: '2rem', color: 'white', fontWeight: '900' }}>
+                    {action.roll} <span style={{ color: 'var(--gold-primary)', fontSize: '1.2rem' }}>+ {action.modifier}</span> =
+                    <span style={{
+                        marginLeft: '15px',
+                        color: action.success ? '#00ff00' : '#ff4444',
+                        textShadow: action.success ? '0 0 15px rgba(0,255,0,0.6)' : '0 0 15px rgba(255,0,0,0.6)'
+                    }}>
+                        {action.roll + action.modifier}
+                    </span>
                 </div>
-                <div style={{ fontSize: '0.9rem', color: '#aaa', marginTop: '4px' }}>
-                    vs {action.targetName} ({action.threshold} AC)
+                <div style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.5)', marginTop: '8px', letterSpacing: '1px' }}>
+                    Seuil de réussite : <span style={{ color: 'white' }}>{action.threshold} AC</span>
                 </div>
                 {action.success && (
                     <div style={{
-                        marginTop: '8px', fontSize: '1.1rem', color: '#ff4444', fontWeight: 'bold',
-                        animation: 'pulse 1s infinite'
+                        marginTop: '15px', fontSize: '1.8rem', color: '#ff4444', fontWeight: '900',
+                        textShadow: '0 0 10px rgba(255,0,0,0.8)',
+                        animation: 'shockwave 0.5s ease-out'
                     }}>
                         💥 {action.damage} DÉGÂTS !
                     </div>
@@ -117,7 +161,33 @@ const RemoteActionOverlay = ({ action, onComplete }) => {
     );
 };
 
-export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeType: 'STANDARD' }, players, currentUserId, initialEnemies, syncedCombatState, onUpdateCombatState, onCombatEnd, onLogAction, onHPChange, onResourceChange, onGameOver, onRewards, onVFX, onSFX, sessionId }) => {
+export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeType: 'STANDARD' }, players, currentUserId, initialEnemies, syncedCombatState, onUpdateCombatState, onCombatEnd, onLogAction, onHPChange, onResourceChange, onConsumeItem, onGameOver, onRewards, onVFX, onSFX, sessionId }) => {
+    // ROBUST USER ID MATCHING - Try multiple methods (MEMOIZED)
+    const myPlayer = useMemo(() => {
+        if (!players || !currentUserId) return null;
+        // Method 1: Direct user_id match
+        let found = players.find(p => p.user_id === currentUserId);
+        if (found) return found;
+        // Method 2: Check if currentUserId matches any player's id
+        found = players.find(p => p.id === currentUserId);
+        return found;
+    }, [players, currentUserId]);
+
+    // Log only on mount or when key props change
+    useEffect(() => {
+        console.log(`[CombatManager] ====== COMBAT INIT ======`);
+        console.log(`[CombatManager] currentUserId: ${currentUserId}`);
+        console.log(`[CombatManager] players (${players?.length}):`, players?.map(p => ({ name: p.name, user_id: p.user_id, id: p.id })));
+        console.log(`[CombatManager] myPlayer found: ${myPlayer?.name} (user_id: ${myPlayer?.user_id}, id: ${myPlayer?.id})`);
+
+        CombatLogger.log('INIT', 'Combat Manager Initialized', {
+            currentUserId,
+            playersCount: players?.length,
+            players: players?.map(p => ({ name: p.name, user_id: p.user_id, id: p.id })),
+            myPlayer: myPlayer ? { name: myPlayer.name, user_id: myPlayer.user_id, id: myPlayer.id } : null
+        });
+    }, [currentUserId, myPlayer]); // Only log when these actually change
+
     const [combatants, setCombatants] = useState([]);
     const [currentTurnIndex, setCurrentTurnIndex] = useState(0);
     const [round, setRound] = useState(1);
@@ -195,6 +265,11 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
     // SYNC: Update local state from Shared State
     useEffect(() => {
         if (syncedCombatState && syncedCombatState.active) {
+            console.log(`[Combat Sync] ====== RECEIVING SYNCED STATE ======`);
+            console.log(`[Combat Sync] Combatants count: ${syncedCombatState.combatants?.length}`);
+            syncedCombatState.combatants?.forEach((c, i) => {
+                console.log(`[Combat Sync] [${i}] name: ${c.name}, isEnemy: ${c.isEnemy}, user_id: ${c.user_id}`);
+            });
             setCombatants(syncedCombatState.combatants || []);
             setRound(syncedCombatState.round || 1);
             setCurrentTurnIndex(syncedCombatState.turnIndex || 0);
@@ -273,6 +348,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
             };
 
             const playerCombatants = players.map(p => {
+                console.log(`[Combat Init] Loading player for combat: ${p.name}, user_id: ${p.user_id}, id: ${p.id}`);
                 const stats = p.stats || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 };
                 const dexMod = Math.floor((stats.dex - 10) / 2);
                 const charClass = p.class?.split(' ')[0] || "Guerrier";
@@ -334,6 +410,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                     isEnemy: false,
                     portrait_url: p.portrait_url,
                     spells: combinedAbilities,
+                    inventory: p.inventory || [],
                     arrivalTurns,
                     travelStatus: status,
                     posX: pos.x,
@@ -362,6 +439,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                     resourceName: "Mana",
                     initiative: e.initiative || (Math.floor(Math.random() * 10) + 5),
                     isEnemy: true,
+                    user_id: null, // CRITICAL: Enemies have no user_id
                     posX: pos.x,
                     posY: pos.y,
                     maxPM: baseEnemy.stats?.maxPM || 5,
@@ -380,8 +458,31 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
             const all = [...playerCombatants, ...enemiesToUse];
             const sorted = all.sort((a, b) => b.initiative - a.initiative);
 
+            console.log(`[Combat Init] ====== LOCAL INITIALIZATION (HOST) ======`);
+            console.log(`[Combat Init] Total combatants: ${sorted.length}`);
+            sorted.forEach((c, i) => {
+                console.log(`[Combat Init] [${i}] name: ${c.name}, isEnemy: ${c.isEnemy}, user_id: ${c.user_id}, initiative: ${c.initiative}`);
+            });
+
             setCombatants(sorted);
             setCombatState('active');
+
+            // CRITICAL: Sync initial state to other players
+            if (onUpdateCombatState) {
+                console.log(`[Combat Init] SENDING initial sync to other players`);
+                sorted.forEach((c, i) => {
+                    console.log(`[Combat Init SEND] [${i}] name: ${c.name}, isEnemy: ${c.isEnemy}, user_id: ${c.user_id}`);
+                });
+                onUpdateCombatState({
+                    combatants: sorted,
+                    turnIndex: 0,
+                    round: 1,
+                    active: true,
+                    logs: [],
+                    decor: [],
+                    updatedAt: Date.now()
+                });
+            }
 
             // Generate some lore-based decor
             const decorTypes = [
@@ -430,16 +531,49 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
     }, [combatants, combatState, onRewards, onCombatEnd, onGameOver, onLogAction]);
 
     const currentActor = combatants[currentTurnIndex];
-    const isLocalPlayerTurn = currentActor && currentActor.user_id === currentUserId;
 
+    // ROBUST TURN DETECTION - Check multiple ways if it's my turn (MEMOIZED to prevent re-renders)
+    const isLocalPlayerTurn = useMemo(() => {
+        if (!currentActor || currentActor.isEnemy) return false;
+        // Method 1: Direct user_id match
+        if (currentActor.user_id && currentActor.user_id === currentUserId) return true;
+        // Method 2: Match by player id
+        if (currentActor.id && myPlayer && currentActor.id === myPlayer.id) return true;
+        // Method 3: Match by name as last resort
+        if (myPlayer && currentActor.name === myPlayer.name) return true;
+        return false;
+    }, [currentActor, currentUserId, myPlayer]);
+
+    // Log only when turn actually changes (not on every render)
     useEffect(() => {
-        if (currentActor && currentActor.user_id) {
-            console.log(`[Combat] Current actor: ${currentActor.name} (user_id: ${currentActor.user_id}), Current local user: ${currentUserId}, Match: ${isLocalPlayerTurn}`);
-        }
-    }, [currentActor, currentUserId, isLocalPlayerTurn]);
+        if (currentActor) {
+            console.log(`[Combat Turn] ====== TURN CHECK ======`);
+            console.log(`[Combat Turn] currentActor: ${currentActor.name}, user_id: ${currentActor.user_id}, id: ${currentActor.id}, isEnemy: ${currentActor.isEnemy}`);
+            console.log(`[Combat Turn] currentUserId: ${currentUserId}`);
+            console.log(`[Combat Turn] myPlayer: ${myPlayer?.name}, user_id: ${myPlayer?.user_id}, id: ${myPlayer?.id}`);
+            console.log(`[Combat Turn] isLocalPlayerTurn: ${isLocalPlayerTurn}`);
 
-    const canMove = isLocalPlayerTurn && currentActor && currentActor.currentPM > 0 && combatState === 'active';
-    const canAct = isLocalPlayerTurn && currentActor && !currentActor.hasActed && combatState === 'active';
+            CombatLogger.log('TURN', 'Turn Check', {
+                currentActor: { name: currentActor.name, user_id: currentActor.user_id, id: currentActor.id, isEnemy: currentActor.isEnemy },
+                currentUserId,
+                myPlayer: myPlayer ? { name: myPlayer.name, user_id: myPlayer.user_id, id: myPlayer.id } : null,
+                isLocalPlayerTurn
+            });
+        }
+    }, [currentTurnIndex, isLocalPlayerTurn]); // Only log when turn index or decision changes
+
+    // MEMOIZED to prevent unnecessary re-calculations
+    const canMove = useMemo(() =>
+        isLocalPlayerTurn && currentActor && currentActor.currentPM > 0 && combatState === 'active',
+        [isLocalPlayerTurn, currentActor?.currentPM, combatState]
+    );
+
+    const canAct = useMemo(() =>
+        isLocalPlayerTurn && currentActor && !currentActor.hasActed && combatState === 'active',
+        [isLocalPlayerTurn, currentActor?.hasActed, combatState]
+    );
+
+    console.log(`[Combat UI] canMove: ${canMove}, canAct: ${canAct}, currentPM: ${currentActor?.currentPM}, combatState: ${combatState}`);
 
     const isTileValid = (x, y) => {
         const boundsX = Math.floor(arenaConfig.blocksX / 2);
@@ -456,12 +590,20 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
     };
 
     const executeMove = (direction) => {
+        console.log(`[executeMove] Called with direction: ${direction}, canMove: ${canMove}`);
         const currentCombatants = combatantsRef.current;
         const freshActor = currentCombatants.find(u => u.id === currentActor.id);
-        if (!freshActor) return;
+        if (!freshActor) {
+            console.log(`[executeMove] ABORT: freshActor not found`);
+            return;
+        }
 
         const authorized = freshActor.isEnemy || canMove;
-        if (!authorized || freshActor.currentPM <= 0) return;
+        console.log(`[executeMove] freshActor: ${freshActor.name}, isEnemy: ${freshActor.isEnemy}, authorized: ${authorized}, currentPM: ${freshActor.currentPM}`);
+        if (!authorized || freshActor.currentPM <= 0) {
+            console.log(`[executeMove] ABORT: not authorized (${authorized}) or no PM (${freshActor.currentPM})`);
+            return;
+        }
         const moveAmount = 1; // One tile at a time
         let dx = 0, dy = 0;
         switch (direction) {
@@ -579,6 +721,60 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
 
         setRollOverlay({ roll, modifier: totalModifier, tacticalReason, threshold: target.ac, success, type: 'hit', targetId: target.id, action });
         if (onSFX) onSFX('dice');
+    };
+
+    const executeUseItem = (item) => {
+        const freshActor = combatantsRef.current.find(u => u.id === currentActor.id);
+        if (!canAct || !freshActor || freshActor.hasActed) return;
+
+        // Apply effects
+        let newHP = freshActor.hp;
+        let newResource = freshActor.resource;
+        let effectMsg = "";
+
+        if (item.stats?.heal) {
+            newHP = Math.min(freshActor.maxHp || 100, freshActor.hp + item.stats.heal);
+            effectMsg += `💖 +${item.stats.heal} PV`;
+        }
+        if (item.stats?.resource) {
+            newResource = Math.min(freshActor.maxResource || 100, freshActor.resource + item.stats.resource);
+            effectMsg += ` ✨ +${item.stats.resource} RES`;
+        }
+        if (item.stats?.hp) {
+            newHP = Math.min(freshActor.maxHp || 100, freshActor.hp + item.stats.hp);
+            effectMsg += ` 💖 +${item.stats.hp} PV`;
+        }
+
+        if (!effectMsg) effectMsg = "Aucun effet immédiat.";
+
+        // Add log
+        addLog({ role: 'system', content: `🧪 **${freshActor.name}** utilise **${item.name}**. ${effectMsg}` });
+
+        // Update combatants
+        const newCombatants = combatants.map(u => u.id === freshActor.id ? { ...u, hp: newHP, resource: newResource, hasActed: true } : u);
+        setCombatants(newCombatants);
+
+        // Sync to App (Stats)
+        if (onHPChange) onHPChange(freshActor.id, newHP);
+        if (onResourceChange) onResourceChange(freshActor.id, newResource);
+
+        // Sync to App (Inventory removal)
+        if (onConsumeItem) {
+            onConsumeItem(item);
+        }
+
+        // Sync combat state
+        lastSyncRef.current = Date.now();
+        if (onUpdateCombatState) onUpdateCombatState({
+            combatants: newCombatants,
+            turnIndex: currentTurnIndex,
+            round,
+            active: true,
+            logs: [...logs, { role: 'system', content: `🧪 **${freshActor.name}** utilise **${item.name}**. ${effectMsg}` }],
+            updatedAt: lastSyncRef.current
+        });
+
+        if (onSFX) onSFX('magic');
     };
 
     const handleRollComplete = (rollData) => {
@@ -874,6 +1070,8 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
 
                     if (chosenAction) {
                         executeAttack(bestTarget.unit, chosenAction);
+                        // CRITICAL: Wait for attack animation, then end IA turn
+                        setTimeout(() => finishTurn(), 1500);
                     } else {
                         // Could not attack, finish turn
                         finishTurn();
@@ -896,69 +1094,169 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
             <div id={`unit-${unit.id}`}
                 onClick={() => isTargetable && isLocalPlayerTurn && executeAttack(unit, selectedAction)}
                 style={{
-                    width: '100px', height: '100px', borderRadius: '50%', background: '#111',
-                    border: isCurrent ? '4px solid var(--gold-primary)' : (isTargetable ? '4px solid #ff4444' : '2px solid rgba(255,255,255,0.2)'),
-                    boxShadow: isCurrent ? '0 0 20px var(--gold-primary)' : '0 10px 20px rgba(0,0,0,0.5)',
+                    width: '100px', height: '100px', borderRadius: '50%', background: '#0a0a0a',
+                    border: isCurrent ? '4px solid var(--gold-primary)' : (isTargetable ? '4px solid #ff4444' : '2px solid rgba(255,255,255,0.15)'),
+                    boxShadow: isCurrent ? '0 0 30px rgba(212, 175, 55, 0.4), inset 0 0 20px rgba(212, 175, 55, 0.2)' : '0 10px 30px rgba(0,0,0,0.8)',
                     position: 'absolute', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     cursor: isTargetable ? 'crosshair' : (isCurrent ? 'pointer' : 'default'),
-                    transition: 'left 0.7s cubic-bezier(0.4, 0, 0.2, 1), top 0.7s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s',
-                    zIndex: isCurrent ? 20 : (isJumping ? 100 : 10), opacity: unit.hp <= 0 ? 0 : 1,
+                    transition: 'left 0.8s cubic-bezier(0.4, 0, 0.2, 1), top 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                    zIndex: isCurrent ? 100 : (isJumping ? 200 : 10), opacity: unit.hp <= 0 ? 0 : 1,
                     pointerEvents: unit.hp <= 0 ? 'none' : 'auto',
-                    transform: 'translate(-50%, -50%)',
+                    transform: `translate(-50%, -50%) ${isCurrent ? 'scale(1.1)' : 'scale(1)'}`,
                     ...style
                 }}>
-                {/* Facing Indicator (Orbital) */}
+                {/* Tactical Selection Ring (pulsing) */}
+                {isCurrent && (
+                    <div style={{
+                        position: 'absolute', inset: '-12px',
+                        border: '2px dashed var(--gold-primary)', borderRadius: '50%',
+                        animation: 'rotate 10s linear infinite, pulse 2s ease-in-out infinite',
+                        opacity: 0.6, pointerEvents: 'none'
+                    }} />
+                )}
+
+                {/* Facing Indicator (Orbital V-Shape) */}
                 <div style={{
                     position: 'absolute',
                     top: '50%', left: '50%',
-                    width: '20px', height: '20px',
-                    transform: `translate(-50%, -50%) rotate(${unit.facing === 'NORTH' ? 0 : (unit.facing === 'EAST' ? 90 : (unit.facing === 'SOUTH' ? 180 : 270))}deg) translateY(-60px)`,
+                    width: '30px', height: '30px',
+                    transform: `translate(-50%, -50%) rotate(${unit.facing === 'NORTH' ? 0 : (unit.facing === 'EAST' ? 90 : (unit.facing === 'SOUTH' ? 180 : 270))}deg) translateY(-65px)`,
                     zIndex: 30,
                     pointerEvents: 'none',
-                    transition: 'transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)'
+                    transition: 'transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                    display: 'flex', justifyContent: 'center'
                 }}>
                     <div style={{
                         width: '0', height: '0',
-                        borderLeft: '10px solid transparent',
-                        borderRight: '10px solid transparent',
-                        borderBottom: '20px solid var(--gold-primary)',
-                        filter: 'drop-shadow(0 0 10px var(--gold-primary))'
+                        borderLeft: '12px solid transparent',
+                        borderRight: '12px solid transparent',
+                        borderBottom: '22px solid var(--gold-primary)',
+                        filter: 'drop-shadow(0 0 15px var(--gold-primary))'
                     }} />
                 </div>
 
-                <div style={{ width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden', position: 'relative' }}>
-                    <img src={unit.portrait_url || 'https://placehold.co/150'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={unit.name} />
-                    {/* Ring bars */}
+                <div style={{
+                    width: '90%', height: '90%', borderRadius: '50%',
+                    overflow: 'hidden', position: 'relative',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    background: 'rgba(0,0,0,0.5)'
+                }}>
+                    <img src={unit.portrait_url || 'https://placehold.co/150'}
+                        style={{
+                            width: '100%', height: '100%', objectFit: 'cover',
+                            filter: unit.hp <= (unit.maxHp * 0.3) ? 'grayscale(0.5) contrast(1.2)' : 'none',
+                            transition: 'filter 0.5s'
+                        }}
+                        alt={unit.name}
+                    />
+
+                    {/* Ring bars (Modernized) */}
                     <svg style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }} viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="48" fill="transparent" stroke="rgba(0,0,0,0.5)" strokeWidth="4" />
-                        <circle cx="50" cy="50" r="48" fill="transparent" stroke={unit.isEnemy ? "#ff4444" : "#00ff00"} strokeWidth="4" strokeDasharray="301" strokeDashoffset={301 - (301 * (unit.hp / unit.maxHp))} style={{ transition: 'stroke-dashoffset 0.5s ease-out' }} />
-                        <circle cx="50" cy="50" r="44" fill="transparent" stroke="var(--aether-blue)" strokeWidth="2" strokeDasharray="276" strokeDashoffset={276 - (276 * (unit.resource / unit.maxResource))} style={{ transition: 'stroke-dashoffset 0.5s ease-out' }} />
+                        {/* HP Bar */}
+                        <circle cx="50" cy="50" r="47" fill="transparent" stroke="rgba(0,0,0,0.4)" strokeWidth="6" />
+                        <circle cx="50" cy="50" r="47" fill="transparent"
+                            stroke={unit.isEnemy ? "#f44" : "#4f4"}
+                            strokeWidth="6"
+                            strokeDasharray="295"
+                            strokeDashoffset={295 - (295 * (unit.hp / unit.maxHp))}
+                            strokeLinecap="round"
+                            style={{ transition: 'stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1)', filter: `drop-shadow(0 0 3px ${unit.isEnemy ? "#f44" : "#4f4"})` }}
+                        />
+
+                        {/* Resource Bar */}
+                        <circle cx="50" cy="50" r="41" fill="transparent" stroke="rgba(0,0,0,0.3)" strokeWidth="3" />
+                        <circle cx="50" cy="50" r="41" fill="transparent"
+                            stroke="var(--aether-blue)"
+                            strokeWidth="3"
+                            strokeDasharray="257"
+                            strokeDashoffset={257 - (257 * (unit.resource / unit.maxResource))}
+                            strokeLinecap="round"
+                            style={{ transition: 'stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1)', filter: 'drop-shadow(0 0 3px var(--aether-blue))' }}
+                        />
                     </svg>
                 </div>
 
-                {/* Info Panel below */}
+                {/* Nameplate & Quick HUD */}
                 <div style={{
-                    position: 'absolute', bottom: '-45px',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px'
+                    position: 'absolute', bottom: '-55px',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                    animation: isCurrent ? 'flyUp 0.3s ease-out' : 'none'
                 }}>
-                    <div style={{ background: 'rgba(0,0,0,0.85)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.75rem', color: 'white', whiteSpace: 'nowrap', border: '1px solid rgba(255,255,255,0.2)', fontWeight: 'bold' }}>{unit.name}</div>
-                    <div style={{ display: 'flex', gap: '4px' }}>
-                        <div style={{ fontSize: '0.6rem', color: '#ff4444', fontWeight: 'bold' }}>{unit.hp}/{unit.maxHp} HP</div>
-                        <div style={{ fontSize: '0.6rem', color: 'var(--aether-light)', fontWeight: 'bold' }}>{unit.resource} AP</div>
+                    <div style={{
+                        background: 'linear-gradient(to bottom, rgba(30,30,40,0.95), rgba(10,10,15,0.95))',
+                        padding: '4px 12px', borderRadius: '20px', fontSize: '0.85rem',
+                        color: 'white', whiteSpace: 'nowrap',
+                        border: isCurrent ? '1px solid var(--gold-primary)' : '1px solid rgba(255,255,255,0.2)',
+                        fontWeight: '900',
+                        boxShadow: '0 4px 10px rgba(0,0,0,0.5)',
+                        textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                        letterSpacing: '0.5px'
+                    }}>
+                        {unit.name.toUpperCase()}
                     </div>
                 </div>
 
-                {/* Initiative Label */}
-                <div style={{ position: 'absolute', top: '-10px', right: '-10px', width: '28px', height: '28px', background: '#222', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.75rem', border: '2px solid var(--gold-dim)', zIndex: 30 }}>{unit.initiative}</div>
+                {/* Stats Orbs */}
+                {/* Initiative (Right Top) */}
+                <div style={{
+                    position: 'absolute', top: '-12px', right: '-12px',
+                    width: '32px', height: '32px',
+                    background: 'linear-gradient(135deg, #333, #111)',
+                    color: 'var(--gold-light)', borderRadius: '50%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontWeight: '900', fontSize: '0.8rem',
+                    border: '2px solid var(--gold-dim)',
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.4)',
+                    zIndex: 30
+                }}>
+                    {unit.initiative}
+                </div>
 
-                {/* Movement Points */}
-                <div style={{ position: 'absolute', top: '-10px', left: '-10px', width: '28px', height: '28px', background: 'var(--aether-blue)', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.75rem', border: '2px solid white', boxShadow: '0 0 10px rgba(0,180,255,0.5)', zIndex: 30 }}>{unit.currentPM}</div>
+                {/* Move Points (Left Top) */}
+                <div style={{
+                    position: 'absolute', top: '-12px', left: '-12px',
+                    width: '32px', height: '32px',
+                    background: 'linear-gradient(135deg, var(--aether-blue), #005577)',
+                    color: 'white', borderRadius: '50%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontWeight: '900', fontSize: '0.8rem',
+                    border: '2px solid white',
+                    boxShadow: '0 4px 12px rgba(0,180,255,0.4)',
+                    zIndex: 30
+                }}>
+                    {unit.currentPM}
+                </div>
 
-                {/* Status Badges */}
-                <div style={{ position: 'absolute', right: '-35px', top: '20px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    {unit.hasMoved && <div style={{ width: '20px', height: '20px', background: '#444', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', border: '1px solid #777' }} title="A déjà bougé">👟</div>}
-                    {unit.hasActed && <div style={{ width: '20px', height: '20px', background: '#444', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', border: '1px solid #777' }} title="A déjà agi">⚔️</div>}
-                    {unit.behavior_type === 'RANGED' && unit.isEnemy && <div style={{ width: '20px', height: '20px', background: '#111', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', border: '1px solid var(--gold-dim)' }} title="Archer">🏹</div>}
+                {/* Side Badges (Vertical Stack) */}
+                <div style={{
+                    position: 'absolute', right: '-45px', top: '25px',
+                    display: 'flex', flexDirection: 'column', gap: '6px',
+                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))'
+                }}>
+                    {unit.hasMoved && (
+                        <div style={{
+                            width: '24px', height: '24px',
+                            background: 'rgba(60,60,70,0.9)', borderRadius: '6px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '0.8rem', border: '1px solid rgba(255,255,255,0.2)'
+                        }} title="A déjà bougé">👟</div>
+                    )}
+                    {unit.hasActed && (
+                        <div style={{
+                            width: '24px', height: '24px',
+                            background: 'rgba(60,60,70,0.9)', borderRadius: '6px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '0.8rem', border: '1px solid rgba(255,255,255,0.2)'
+                        }} title="A déjà agi">⚔️</div>
+                    )}
+                    {unit.behavior_type === 'RANGED' && unit.isEnemy && (
+                        <div style={{
+                            width: '24px', height: '24px',
+                            background: 'rgba(30,20,10,0.9)', borderRadius: '6px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '0.8rem', border: '1px solid var(--gold-dark)'
+                        }} title="Archer">🏹</div>
+                    )}
                 </div>
 
                 {damagePopups.filter(p => p.targetId === unit.id).map(p => (
@@ -966,6 +1264,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                 ))}
             </div>
         );
+
     };
 
     const AbilityCard = ({ ability }) => {
@@ -974,21 +1273,91 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
         const onCooldown = currentCooldown > 0;
         const canAfford = currentActor.resource >= cost && !onCooldown;
         const isSelected = selectedAction?.name === ability.name;
+
         return (
             <div onClick={() => canAfford && isLocalPlayerTurn && setSelectedAction(ability)}
                 style={{
-                    width: '120px', height: '160px', background: isSelected ? 'var(--gold-dim)' : (canAfford ? 'rgba(20,20,30,0.9)' : 'rgba(40,20,20,0.5)'),
-                    border: isSelected ? '2px solid var(--gold-primary)' : '1px solid var(--gold-dim)', borderRadius: '8px', padding: '10px',
-                    cursor: canAfford ? 'pointer' : 'not-allowed', transform: isSelected ? 'translateY(-20px)' : 'none', transition: 'all 0.3s',
-                    opacity: canAfford ? 1 : 0.5, display: 'flex', flexDirection: 'column', position: 'relative'
+                    width: '130px', height: '180px',
+                    background: isSelected
+                        ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.45) 0%, rgba(10,10,15,0.95) 100%)'
+                        : (canAfford ? 'rgba(30,30,45,0.85)' : 'rgba(50,20,20,0.4)'),
+                    border: isSelected ? '2px solid var(--gold-primary)' : '1px solid rgba(212, 175, 55, 0.25)',
+                    borderRadius: '12px', padding: '14px',
+                    cursor: canAfford ? 'pointer' : 'not-allowed',
+                    transform: isSelected ? 'translateY(-25px) scale(1.05)' : 'none',
+                    transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                    opacity: canAfford ? 1 : 0.6,
+                    display: 'flex', flexDirection: 'column',
+                    position: 'relative',
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: isSelected ? '0 15px 35px rgba(212, 175, 55, 0.3)' : '0 8px 20px rgba(0,0,0,0.5)',
+                    overflow: 'hidden'
                 }}>
-                {onCooldown && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', color: 'white', zIndex: 10 }}>{currentCooldown}</div>}
-                <div style={{ fontSize: '0.65rem', fontWeight: 'bold', color: isSelected ? 'black' : 'var(--gold-light)', textTransform: 'uppercase', marginBottom: '4px' }}>{ability.name}</div>
-                <div style={{ flex: 1, fontSize: '0.6rem', color: isSelected ? '#111' : '#ccc' }}>{ability.desc}</div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '4px' }}>
-                    <span style={{ fontSize: '0.65rem' }}>{ability.range}m</span>
-                    <div style={{ width: '20px', height: '20px', background: 'var(--aether-blue)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', color: 'black' }}>{cost}</div>
+
+                {/* Visual Accent */}
+                <div style={{
+                    position: 'absolute', top: '-10px', left: '-10px',
+                    width: '50px', height: '50px',
+                    background: isSelected ? 'var(--gold-primary)' : 'rgba(255,255,255,0.05)',
+                    borderRadius: '50%', filter: 'blur(20px)', opacity: 0.3
+                }} />
+
+                {onCooldown && (
+                    <div style={{
+                        position: 'absolute', inset: 0,
+                        background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(2px)',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '2rem', color: 'white', fontWeight: '900', zIndex: 10
+                    }}>
+                        {currentCooldown}
+                        <span style={{ fontSize: '0.6rem', color: '#888', textTransform: 'uppercase', letterSpacing: '1px' }}>Tours</span>
+                    </div>
+                )}
+
+                <div style={{
+                    fontSize: '0.75rem', fontWeight: '900',
+                    color: isSelected ? 'white' : 'var(--gold-light)',
+                    textTransform: 'uppercase', marginBottom: '8px',
+                    letterSpacing: '0.5px',
+                    borderBottom: '1px solid rgba(212, 175, 55, 0.2)',
+                    paddingBottom: '4px'
+                }}>
+                    {ability.name}
                 </div>
+
+                <div style={{
+                    flex: 1, fontSize: '0.7rem',
+                    color: isSelected ? '#eee' : '#bbb',
+                    lineHeight: '1.3',
+                    fontStyle: 'italic'
+                }}>
+                    {ability.desc}
+                </div>
+
+                <div style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    marginTop: '8px', background: 'rgba(0,0,0,0.3)', padding: '6px 8px', borderRadius: '8px'
+                }}>
+                    <span style={{ fontSize: '0.75rem', color: '#aaa', fontWeight: 'bold' }}>{ability.range}m</span>
+                    <div style={{
+                        width: '26px', height: '26px',
+                        background: 'linear-gradient(135deg, var(--aether-blue), #004466)',
+                        borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '0.75rem', color: 'white', fontWeight: 'bold',
+                        boxShadow: '0 0 10px rgba(0,180,255,0.3)',
+                        border: '1px solid rgba(255,255,255,0.2)'
+                    }}>
+                        {cost}
+                    </div>
+                </div>
+
+                {isSelected && (
+                    <div style={{
+                        position: 'absolute', bottom: '0', left: 0, right: 0,
+                        height: '3px', background: 'var(--gold-primary)',
+                        boxShadow: '0 0 10px var(--gold-primary)'
+                    }} />
+                )}
             </div>
         );
     };
@@ -1043,16 +1412,39 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                         <div style={{
                             position: 'absolute', inset: 0,
                             pointerEvents: 'none',
-                            zIndex: 1
+                            zIndex: 1,
+                            perspective: '1000px'
                         }}>
+                            {/* Cinematic Atmosphere (Embers/Dust) */}
+                            <div className="embers-overlay" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 100, opacity: 0.4 }} />
+
+                            {/* Grid Scanline Effect */}
+                            <div style={{ position: 'absolute', inset: 0, background: 'repeating-linear-gradient(rgba(212, 175, 55, 0.03) 0px, transparent 1px, transparent 100px)', zIndex: 2 }} />
+
                             {/* Vertical Lines */}
                             {Array.from({ length: arenaConfig.blocksX + 1 }).map((_, i) => {
                                 const tiles = i - Math.floor(arenaConfig.blocksX / 2);
                                 const isMajor = tiles % 5 === 0;
+                                const isCenter = tiles === 0;
                                 const edgePercent = (i / arenaConfig.blocksX) * 100;
                                 return (
-                                    <div key={`v-${i}`} style={{ position: 'absolute', left: `${edgePercent}%`, top: 0, bottom: 0, width: isMajor ? '2px' : '1px', background: isMajor ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.08)' }}>
-                                        {isMajor && <div style={{ position: 'absolute', bottom: '15px', padding: '2px 8px', background: 'rgba(0,0,0,0.85)', borderRadius: '12px', fontSize: '0.7rem', color: 'var(--gold-primary)', border: '1px solid var(--gold-dim)', transform: 'translateX(-50%)', zIndex: 10 }}>{tiles}</div>}
+                                    <div key={`v-${i}`} style={{
+                                        position: 'absolute', left: `${edgePercent}%`, top: 0, bottom: 0,
+                                        width: isCenter ? '2px' : (isMajor ? '1px' : '1px'),
+                                        background: isCenter ? 'rgba(212, 175, 55, 0.4)' : (isMajor ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)'),
+                                        boxShadow: isCenter ? '0 0 10px rgba(212, 175, 55, 0.5)' : 'none'
+                                    }}>
+                                        {isMajor && (
+                                            <div style={{
+                                                position: 'absolute', bottom: '-25px', padding: '2px 8px',
+                                                background: 'rgba(0,0,0,0.85)', borderRadius: '12px',
+                                                fontSize: '0.65rem', color: isCenter ? 'var(--gold-primary)' : 'rgba(255,255,255,0.6)',
+                                                border: '1px solid rgba(255,255,255,0.1)', transform: 'translateX(-50%)',
+                                                zIndex: 10, fontWeight: 'bold'
+                                            }}>
+                                                {tiles}
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}
@@ -1060,10 +1452,25 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                             {Array.from({ length: arenaConfig.blocksY + 1 }).map((_, i) => {
                                 const tiles = i - Math.floor(arenaConfig.blocksY / 2);
                                 const isMajor = tiles % 5 === 0;
+                                const isCenter = tiles === 0;
                                 const edgePercent = (i / arenaConfig.blocksY) * 100;
                                 return (
-                                    <div key={`h-${i}`} style={{ position: 'absolute', top: `${edgePercent}%`, left: 0, right: 0, height: isMajor ? '2px' : '1px', background: isMajor ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.05)' }}>
-                                        {isMajor && tiles !== 0 && <div style={{ position: 'absolute', left: '15px', padding: '2px 6px', background: 'rgba(0,0,0,0.85)', borderRadius: '8px', fontSize: '0.65rem', color: 'rgba(255,255,255,0.6)', transform: 'translateY(-50%)', zIndex: 10 }}>{tiles}</div>}
+                                    <div key={`h-${i}`} style={{
+                                        position: 'absolute', top: `${edgePercent}%`, left: 0, right: 0,
+                                        height: isCenter ? '2px' : (isMajor ? '1px' : '1px'),
+                                        background: isCenter ? 'rgba(212, 175, 55, 0.3)' : (isMajor ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.03)'),
+                                        boxShadow: isCenter ? '0 0 10px rgba(212, 175, 55, 0.3)' : 'none'
+                                    }}>
+                                        {isMajor && tiles !== 0 && (
+                                            <div style={{
+                                                position: 'absolute', left: '-25px', padding: '2px 6px',
+                                                background: 'rgba(0,0,0,0.85)', borderRadius: '8px',
+                                                fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)',
+                                                transform: 'translateY(-50%)', zIndex: 10, border: '1px solid rgba(255,255,255,0.1)'
+                                            }}>
+                                                {tiles}
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}
@@ -1150,19 +1557,35 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                         </div>
                     </div>
                 </div>
-                <div style={{ width: '320px', background: 'rgba(0,0,0,0.9)', padding: '1.5rem', overflowY: 'auto', borderLeft: '2px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)' }}>
+                <div style={{
+                    width: '350px',
+                    background: 'linear-gradient(to right, rgba(0,0,0,0.95), rgba(15,15,25,0.95))',
+                    padding: '2rem 1.5rem',
+                    overflowY: 'auto',
+                    borderLeft: '1px solid rgba(212, 175, 55, 0.2)',
+                    backdropFilter: 'blur(20px)',
+                    boxShadow: '-10px 0 30px rgba(0,0,0,0.5)',
+                    display: 'flex', flexDirection: 'column', gap: '15px',
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: 'var(--gold-dark) transparent'
+                }}>
+                    <div style={{ color: 'var(--gold-light)', fontSize: '0.8rem', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '10px', fontWeight: 'bold', borderBottom: '1px solid rgba(212, 175, 55, 0.2)', paddingBottom: '5px' }}>Journal de Combat</div>
                     {logs.map((l, i) => {
                         const isImpact = l.content.includes('💥') || l.content.includes('💀');
                         const isVictory = l.content.includes('🏆');
+                        const isSystem = l.role === 'system';
                         return (
                             <div key={i} style={{
                                 marginBottom: '0.8rem',
-                                fontSize: isVictory ? '1.1rem' : (isImpact ? '0.95rem' : '0.9rem'),
-                                color: isVictory ? 'var(--gold-primary)' : (isImpact ? '#fff' : 'rgba(255,255,255,0.8)'),
-                                borderLeft: isVictory ? '4px solid var(--gold-primary)' : '2px solid var(--gold-dim)',
-                                paddingLeft: '10px',
-                                background: isImpact ? 'rgba(255,0,0,0.1)' : 'transparent',
-                                borderRadius: '0 4px 4px 0'
+                                fontSize: isVictory ? '1.2rem' : (isImpact ? '0.98rem' : '0.92rem'),
+                                color: isVictory ? 'var(--gold-primary)' : (isImpact ? '#fff' : 'rgba(255,255,255,0.7)'),
+                                borderLeft: isVictory ? '4px solid var(--gold-primary)' : (isImpact ? '3px solid #ff4444' : '2px solid rgba(255,255,255,0.2)'),
+                                padding: '8px 12px',
+                                background: isImpact ? 'linear-gradient(to right, rgba(255,0,0,0.15), transparent)' : (isVictory ? 'linear-gradient(to right, rgba(212, 175, 55, 0.1), transparent)' : 'transparent'),
+                                borderRadius: '0 8px 8px 0',
+                                animation: 'slideRight 0.3s ease-out',
+                                fontFamily: isSystem ? 'monospace' : 'inherit',
+                                lineHeight: '1.4'
                             }}>
                                 {l.content}
                             </div>
@@ -1182,9 +1605,37 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                             <button onClick={() => executeMove('down')} disabled={!canMove} className="btn-action" style={{ width: '40px', height: '40px' }}>⬇️</button>
                             <button onClick={() => executeMove('right')} disabled={!canMove} className="btn-action" style={{ width: '40px', height: '40px' }}>➡️</button>
                         </div>
-                        <div style={{ display: 'flex', gap: '1.5rem' }}>
+                        <div style={{ display: 'flex', gap: '1.5rem', width: '100%', overflowX: 'auto', padding: '10px 0' }}>
                             {[{ name: 'Attaque', desc: 'Attaque de base', range: 2 }, ...(currentActor.spells || currentActor.abilities || [])].map((s, i) => <AbilityCard key={i} ability={typeof s === 'string' ? { name: s, range: 2 } : s} />)}
-                            <button onClick={nextTurn} style={{ padding: '1rem 2rem', background: 'rgba(255,0,0,0.1)', border: '1px solid #ff4444', color: '#ff4444', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>FINIR LE TOUR</button>
+
+                            {/* ITEM BUTTON */}
+                            {currentActor.inventory?.some(item => (item.stats && (item.stats.heal || item.stats.resource || item.stats.hp)) || ['consumable', 'potion', 'scroll'].includes(item.type?.toLowerCase())) && (
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--gold-primary)', fontWeight: 'bold', alignSelf: 'center' }}>OBJETS :</div>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        {currentActor.inventory
+                                            .filter(item => (item.stats && (item.stats.heal || item.stats.resource || item.stats.hp)) || ['consumable', 'potion', 'scroll'].includes(item.type?.toLowerCase()))
+                                            .map((item, idx) => (
+                                                <div
+                                                    key={`item-${idx}`}
+                                                    onClick={() => !currentActor.hasActed && executeUseItem(item)}
+                                                    style={{
+                                                        width: '100px', height: '140px', background: 'rgba(50,50,70,0.8)',
+                                                        border: '1px solid #54a0ff', borderRadius: '8px', padding: '8px',
+                                                        cursor: currentActor.hasActed ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
+                                                        opacity: currentActor.hasActed ? 0.5 : 1, display: 'flex', flexDirection: 'column', fontSize: '0.65rem'
+                                                    }}
+                                                >
+                                                    <div style={{ fontWeight: 'bold', color: '#54a0ff', marginBottom: '4px' }}>{item.name}</div>
+                                                    <div style={{ flex: 1, color: '#ccc', fontSize: '0.6rem' }}>{item.desc}</div>
+                                                    <div style={{ background: '#54a0ff', color: 'black', textAlign: 'center', borderRadius: '4px', padding: '2px', fontWeight: 'bold', marginTop: '4px' }}>UTILISER</div>
+                                                </div>
+                                            ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            <button onClick={nextTurn} style={{ padding: '1rem 2rem', background: 'rgba(255,0,0,0.1)', border: '1px solid #ff4444', color: '#ff4444', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', minWidth: '150px' }}>FINIR LE TOUR</button>
                         </div>
                     </>
                 ) : <div style={{ color: 'var(--gold-dim)', fontSize: '1.2rem', letterSpacing: '1px' }}>{currentActor?.isEnemy ? "L'ennemi réfléchit..." : `Attente de ${currentActor?.name}...`}</div>}

@@ -56,6 +56,7 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
     };
 
     const [activeTab, setActiveTab] = React.useState('stats');
+    const [enlargedImage, setEnlargedImage] = React.useState(null);
 
     // Robust Ability Lookup
     const getClassAbilities = () => {
@@ -63,15 +64,11 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
         const classData = CLASSES[character.class.split(' ')[0]] || CLASSES[character.class];
         if (!classData) return [];
 
-        // Get player's chosen abilities from character creation (stored in spells or abilities)
         const playerAbilities = [...(character.abilities || []), ...(character.spells || [])];
-
-        // If player has chosen abilities, use those as base
         let baseAbilities = [];
         if (playerAbilities.length > 0) {
             baseAbilities = playerAbilities.map(s => {
                 if (typeof s === 'string') {
-                    // Find full data from class definition
                     const fromInitial = (classData.initial_ability_options || []).find(a => a.name === s);
                     const fromUnlockables = (classData.unlockables || []).find(u => u.name === s);
                     return fromInitial || fromUnlockables || { name: s, desc: "Aptitude apprise", level: 1, cost: 0 };
@@ -79,19 +76,25 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                 return s;
             });
         } else {
-            // Fallback to class base abilities if none chosen
             baseAbilities = classData.initial_ability_options || classData.abilities || [];
         }
 
-        // Add unlocked abilities based on level
         const unlocked = (classData.unlockables || []).filter(u => u.level <= (character.level || 1));
-
         const all = [...baseAbilities, ...unlocked];
-        // Unique by name
         return Array.from(new Map(all.map(item => [item.name, item])).values());
     };
 
     const knownAbilities = getClassAbilities();
+
+    // Utility to check if item is equippable
+    const isEquippable = (item) => {
+        const equippableTypes = ['weapon', 'armor', 'shield', 'ring', 'amulet', 'boots', 'cloak', 'helmet', 'gloves', 'head', 'chest', 'mainhand', 'offhand'];
+        const consumableTypes = ['consumable', 'potion', 'scroll', 'food', 'drink'];
+
+        if (consumableTypes.includes(item.type?.toLowerCase())) return false;
+
+        return equippableTypes.includes(item.type?.toLowerCase()) || (item.slot && item.slot !== 'none' && item.slot !== 'consumable');
+    };
 
     return (
         <aside className="character-sheet" style={{
@@ -159,27 +162,25 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                         </div>
 
                         {/* Resource Bar */}
-                        {
-                            (() => {
-                                const manaClasses = ["Mage", "Clerc", "Paladin", "Druide", "Barde"];
-                                const isMana = manaClasses.includes(character.class.split(' ')[0]);
-                                const resourceLabel = isMana ? "ÉNERGIE ARCANIQUE" : "ENDURANCE";
-                                const resourceColor = isMana ? "#48dbfb" : "var(--gold-primary)";
-                                const percent = Math.min(100, Math.max(0, (character.resource / (character.max_resource || 100)) * 100));
+                        {(() => {
+                            const manaClasses = ["Mage", "Clerc", "Paladin", "Druide", "Barde"];
+                            const isMana = manaClasses.includes(character.class.split(' ')[0]);
+                            const resourceLabel = isMana ? "ÉNERGIE ARCANIQUE" : "ENDURANCE";
+                            const resourceColor = isMana ? "#48dbfb" : "var(--gold-primary)";
+                            const percent = Math.min(100, Math.max(0, (character.resource / (character.max_resource || 100)) * 100));
 
-                                return (
-                                    <div style={{ marginBottom: '1.5rem' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', marginBottom: '5px', fontWeight: 'bold' }}>
-                                            <span style={{ color: 'var(--text-muted)' }}>{resourceLabel}</span>
-                                            <span style={{ color: resourceColor }}>{character.resource} / {character.max_resource || 100}</span>
-                                        </div>
-                                        <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
-                                            <div style={{ height: '100%', width: `${percent}%`, background: resourceColor, transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)', boxShadow: `0 0 10px ${resourceColor}44` }} />
-                                        </div>
+                            return (
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', marginBottom: '5px', fontWeight: 'bold' }}>
+                                        <span style={{ color: 'var(--text-muted)' }}>{resourceLabel}</span>
+                                        <span style={{ color: resourceColor }}>{character.resource} / {character.max_resource || 100}</span>
                                     </div>
-                                );
-                            })()
-                        }
+                                    <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                        <div style={{ height: '100%', width: `${percent}%`, background: resourceColor, transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)', boxShadow: `0 0 10px ${resourceColor}44` }} />
+                                    </div>
+                                </div>
+                            );
+                        })()}
 
                         <h4 style={{ fontSize: '0.7rem', color: 'var(--gold-dim)', marginBottom: '0.8rem', textTransform: 'uppercase', letterSpacing: '1.5px', borderBottom: '1px solid rgba(212,175,55,0.1)', paddingBottom: '4px' }}>Caractéristiques</h4>
                         <div className="attributes-list" style={{ display: 'grid', gap: '4px' }}>
@@ -188,7 +189,6 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                                 .map(([key, val]) => {
                                     const bonus = getStatBonus(key);
                                     const total = val + bonus;
-
                                     return (
                                         <div key={key} title={statNames[key]?.desc} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0.8rem', background: 'rgba(255,255,255,0.02)', borderRadius: '4px', border: '1px solid transparent', transition: 'border-color 0.2s' }} onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(212,175,55,0.2)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}>
                                             <div>
@@ -216,7 +216,6 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                     </div>
                 )}
 
-                {/* INVENTORY TAB */}
                 {activeTab === 'equip' && (
                     <div className="animate-fade-in gallery-view">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -224,15 +223,7 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                             {onTradeClick && (
                                 <button
                                     onClick={onTradeClick}
-                                    style={{
-                                        padding: '0.4rem 0.8rem',
-                                        fontSize: '0.7rem',
-                                        background: 'rgba(212,175,55,0.1)',
-                                        border: '1px solid var(--gold-dim)',
-                                        borderRadius: '4px',
-                                        color: 'var(--gold-primary)',
-                                        cursor: 'pointer'
-                                    }}
+                                    style={{ padding: '0.4rem 0.8rem', fontSize: '0.7rem', background: 'rgba(212,175,55,0.1)', border: '1px solid var(--gold-dim)', borderRadius: '4px', color: 'var(--gold-primary)', cursor: 'pointer' }}
                                 >
                                     ECHANGER
                                 </button>
@@ -241,7 +232,9 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                         <div style={{ display: 'grid', gap: '0.8rem' }}>
                             {(character.inventory || []).map((item, i) => {
                                 const equipped = item.equipped;
-                                const isConsumable = item.stats && (item.stats.heal || item.stats.resource);
+                                const isConsumable = (item.stats && (item.stats.heal || item.stats.resource || item.stats.hp)) ||
+                                    ['consumable', 'potion', 'scroll'].includes(item.type?.toLowerCase());
+                                const equippable = isEquippable(item);
 
                                 return (
                                     <div key={i} style={{
@@ -265,27 +258,26 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                                                         USER
                                                     </button>
                                                 )}
-                                                <button
-                                                    style={{
-                                                        fontSize: '0.65rem',
-                                                        padding: '5px 10px',
-                                                        background: equipped ? 'rgba(255,107,107,0.1)' : 'rgba(212,175,55,0.1)',
-                                                        border: '1px solid currentColor',
-                                                        color: equipped ? '#ff6b6b' : 'var(--gold-primary)',
-                                                        cursor: 'pointer',
-                                                        borderRadius: '4px',
-                                                        fontWeight: 'bold'
-                                                    }}
-                                                    onClick={() => {
-                                                        if (onEquipItem) onEquipItem(i);
-                                                        else {
-                                                            const newInv = character.inventory.map((invItem, idx) => idx === i ? { ...invItem, equipped: !equipped } : invItem);
-                                                            onUpdateInventory(newInv);
-                                                        }
-                                                    }}
-                                                >
-                                                    {equipped ? 'RETIRER' : 'ÉQUIPER'}
-                                                </button>
+                                                {equippable && (
+                                                    <button
+                                                        style={{
+                                                            fontSize: '0.65rem', padding: '5px 10px',
+                                                            background: equipped ? 'rgba(255,107,107,0.1)' : 'rgba(212,175,55,0.1)',
+                                                            border: '1px solid currentColor',
+                                                            color: equipped ? '#ff6b6b' : 'var(--gold-primary)',
+                                                            cursor: 'pointer', borderRadius: '4px', fontWeight: 'bold'
+                                                        }}
+                                                        onClick={() => {
+                                                            if (onEquipItem) onEquipItem(i);
+                                                            else {
+                                                                const newInv = character.inventory.map((invItem, idx) => idx === i ? { ...invItem, equipped: !equipped } : invItem);
+                                                                onUpdateInventory(newInv);
+                                                            }
+                                                        }}
+                                                    >
+                                                        {equipped ? 'RETIRER' : 'ÉQUIPER'}
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                         {item.stats && (
@@ -307,7 +299,6 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                     </div>
                 )}
 
-                {/* ABILITIES TAB */}
                 {activeTab === 'abilities' && (
                     <div className="animate-fade-in list-view">
                         <h4 style={{ fontSize: '0.7rem', color: 'var(--gold-dim)', marginBottom: '1.2rem', textTransform: 'uppercase', letterSpacing: '1.5px' }}>Aptitudes Connues</h4>
@@ -333,14 +324,11 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                                         )}
                                     </div>
                                     <p style={{ fontSize: '0.85rem', color: '#ccd1d9', margin: 0, lineHeight: '1.5', fontStyle: 'italic' }}>"{ability.desc}"</p>
-
-                                    {/* Detailed Effects */}
                                     {(ability.heal || ability.resource || ability.range || ability.dice || ability.scaling) && (
                                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
                                             {ability.dice && (
                                                 <span style={{ fontSize: '0.65rem', color: '#fff', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.2)' }}>
-                                                    🎲 DÉS: {ability.dice}
-                                                    {ability.scaling && ` + ${statNames[ability.scaling]?.full || ability.scaling}`}
+                                                    🎲 DÉS: {ability.dice} {ability.scaling && ` + ${statNames[ability.scaling]?.full || ability.scaling}`}
                                                 </span>
                                             )}
                                             {ability.heal && <span style={{ fontSize: '0.65rem', color: '#ff6b6b', background: 'rgba(255,107,107,0.1)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(255,107,107,0.2)' }}>❤️ SOIN</span>}
@@ -348,7 +336,6 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                                             {ability.range && <span style={{ fontSize: '0.65rem', color: '#f39c12', background: 'rgba(243,156,18,0.1)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(243,156,18,0.2)' }}>🎯 PORTÉE: {ability.range}m</span>}
                                         </div>
                                     )}
-
                                     {ability.cooldown > 0 && (
                                         <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '8px', textAlign: 'right' }}>
                                             ⏳ RECHARGE: {ability.cooldown} TOURS
@@ -359,11 +346,11 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                         </div>
                     </div>
                 )}
+
                 {activeTab === 'codex' && (
                     <div className="animate-fade-in list-view">
                         <h4 style={{ fontSize: '0.7rem', color: 'var(--gold-dim)', marginBottom: '1.2rem', textTransform: 'uppercase', letterSpacing: '1.5px' }}>Journal d'Aventure</h4>
                         <div style={{ display: 'grid', gap: '1rem' }}>
-                            {/* Quêtes Actives */}
                             {(character.active_quests && character.active_quests.length > 0) && (
                                 <div style={{ padding: '1rem', background: 'rgba(255,200,50,0.05)', borderRadius: '6px', borderLeft: '3px solid #ffc832' }}>
                                     <div style={{ fontWeight: 'bold', color: '#ffc832', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -380,7 +367,6 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                                 </div>
                             )}
 
-                            {/* Personnages Rencontrés */}
                             <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', borderLeft: '3px solid var(--gold-primary)' }}>
                                 <div style={{ fontWeight: 'bold', color: 'var(--gold-primary)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <span>👤</span> PERSONNAGES RENCONTRÉS
@@ -388,8 +374,7 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                                 <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
                                     {(character.visited_npcs && character.visited_npcs.length > 0) ? character.visited_npcs.map((npc, i) => (
                                         <div key={i} style={{ padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                            • {typeof npc === 'object' ? npc.name : npc}
-                                            {npc.role && <span style={{ color: '#666', marginLeft: '0.5rem' }}>({npc.role})</span>}
+                                            • {typeof npc === 'object' ? npc.name : npc} {npc.role && <span style={{ color: '#666', marginLeft: '0.5rem' }}>({npc.role})</span>}
                                         </div>
                                     )) : (
                                         <div style={{ color: '#555', fontStyle: 'italic' }}>Aucun personnage rencontré pour l'instant.</div>
@@ -397,7 +382,6 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                                 </div>
                             </div>
 
-                            {/* Lieux Découverts */}
                             <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', borderLeft: '3px solid var(--aether-blue)' }}>
                                 <div style={{ fontWeight: 'bold', color: 'var(--aether-blue)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <span>🗺</span> LIEUX DÉCOUVERTS
@@ -405,8 +389,7 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                                 <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
                                     {(character.discovered_locations && character.discovered_locations.length > 0) ? character.discovered_locations.map((loc, i) => (
                                         <div key={i} style={{ padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                            ◈ {typeof loc === 'object' ? loc.name : loc}
-                                            {loc.region && <span style={{ color: '#666', marginLeft: '0.5rem' }}>- {loc.region}</span>}
+                                            ◈ {typeof loc === 'object' ? loc.name : loc} {loc.region && <span style={{ color: '#666', marginLeft: '0.5rem' }}>- {loc.region}</span>}
                                         </div>
                                     )) : (
                                         <div style={{ color: '#555', fontStyle: 'italic' }}>Aucun lieu découvert pour l'instant.</div>
@@ -414,7 +397,22 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                                 </div>
                             </div>
 
-                            {/* Secrets & Indices */}
+                            {(character.discovered_visuals && character.discovered_visuals.length > 0) && (
+                                <div style={{ padding: '1rem', background: 'rgba(0,255,200,0.05)', borderRadius: '6px', borderLeft: '3px solid #00ffc8' }}>
+                                    <div style={{ fontWeight: 'bold', color: '#00ffc8', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <span>🗺</span> CARTES & DOCUMENTS
+                                    </div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '0.8rem', marginTop: '0.8rem' }}>
+                                        {character.discovered_visuals.map((visual, i) => (
+                                            <div key={i} style={{ background: 'rgba(0,0,0,0.3)', borderRadius: '4px', overflow: 'hidden', cursor: 'pointer', border: '1px solid rgba(0,255,200,0.1)', transition: 'transform 0.2s' }} onClick={() => setEnlargedImage(visual.url)}>
+                                                <img src={visual.url} alt={visual.name} style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} />
+                                                <div style={{ padding: '4px', fontSize: '0.65rem', color: '#fff', textAlign: 'center', background: 'rgba(0,0,0,0.6)' }}>{visual.name}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             {(character.discovered_secrets && character.discovered_secrets.length > 0) && (
                                 <div style={{ padding: '1rem', background: 'rgba(150,100,255,0.05)', borderRadius: '6px', borderLeft: '3px solid #9664ff' }}>
                                     <div style={{ fontWeight: 'bold', color: '#9664ff', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -422,15 +420,12 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                                     </div>
                                     <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
                                         {character.discovered_secrets.map((secret, i) => (
-                                            <div key={i} style={{ padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                                ✦ {secret}
-                                            </div>
+                                            <div key={i} style={{ padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>✦ {secret}</div>
                                         ))}
                                     </div>
                                 </div>
                             )}
 
-                            {/* Événements Importants */}
                             {(character.important_events && character.important_events.length > 0) && (
                                 <div style={{ padding: '1rem', background: 'rgba(255,100,100,0.05)', borderRadius: '6px', borderLeft: '3px solid #ff6464' }}>
                                     <div style={{ fontWeight: 'bold', color: '#ff6464', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -438,21 +433,17 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                                     </div>
                                     <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
                                         {character.important_events.map((event, i) => (
-                                            <div key={i} style={{ padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                                ◆ {event}
-                                            </div>
+                                            <div key={i} style={{ padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>◆ {event}</div>
                                         ))}
                                     </div>
                                 </div>
                             )}
 
-                            {/* Message si codex vide */}
                             {(!character.visited_npcs || character.visited_npcs.length === 0) &&
                                 (!character.discovered_locations || character.discovered_locations.length === 0) &&
                                 (!character.active_quests || character.active_quests.length === 0) && (
                                     <div style={{ padding: '2rem', textAlign: 'center', color: '#555', fontStyle: 'italic' }}>
-                                        Votre aventure commence à peine...<br />
-                                        Le codex se remplira au fil de vos découvertes.
+                                        Votre aventure commence à peine...<br /> Le codex se remplira au fil de vos découvertes.
                                     </div>
                                 )}
                         </div>
@@ -471,6 +462,13 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                     SANCTUAIRE (PARAMÈTRES)
                 </button>
             </div>
+
+            {enlargedImage && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '2rem' }} onClick={() => setEnlargedImage(null)}>
+                    <img src={enlargedImage} style={{ maxWidth: '90%', maxHeight: '90%', borderRadius: '8px', border: '2px solid var(--gold-primary)' }} />
+                    <div style={{ position: 'absolute', top: '1rem', right: '1rem', color: '#fff', fontSize: '2rem', cursor: 'pointer' }}>×</div>
+                </div>
+            )}
         </aside>
     );
 };

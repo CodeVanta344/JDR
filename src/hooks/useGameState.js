@@ -137,6 +137,30 @@ export const useGameState = (profile) => {
         }
     };
 
+    const handleResourceChange = async (playerId, newResource) => {
+        setPlayers(prev => prev.map(p => p.id === playerId ? { ...p, resource: newResource } : p));
+        if (character && playerId === character.id) {
+            setCharacter(prev => ({ ...prev, resource: newResource }));
+            await supabase.from('players').update({ resource: newResource }).eq('id', playerId);
+        }
+    };
+
+    const handleConsumeItem = async (item) => {
+        if (!character) return;
+        // Identify item by name and description if ID is missing
+        const itemIndex = character.inventory.findIndex(i =>
+            (item.id && i.id === item.id) || (i.name === item.name && i.desc === item.desc)
+        );
+
+        if (itemIndex > -1) {
+            const updatedInventory = [...character.inventory];
+            updatedInventory.splice(itemIndex, 1);
+            setCharacter(prev => ({ ...prev, inventory: updatedInventory }));
+            setPlayers(prev => prev.map(p => p.id === character.id ? { ...p, inventory: updatedInventory } : p));
+            await supabase.from('players').update({ inventory: updatedInventory }).eq('id', character.id);
+        }
+    };
+
     return {
         session, setSession,
         character, setCharacter,
@@ -154,6 +178,8 @@ export const useGameState = (profile) => {
         fetchWorldState,
         fetchPlayerExtras,
         handleHPChange,
+        handleResourceChange,
+        handleConsumeItem,
         chronicle,
         addToChronicle: async (event) => {
             const newChronicle = [...chronicle, { ...event, date: gameTime, id: crypto.randomUUID() }];

@@ -13,7 +13,15 @@ PROMPTS = {
     "orc": "Fantasy RPG monster portrait of an Orc Brute, massive muscular build, greyish-green skin, tusks, holding a battleaxe, savage look, detailed digital painting style",
     "squelette": "Fantasy RPG monster portrait of a Skeleton Warrior, animated bones, wearing tattered ancient armor, holding a rusty sword, glowing eye sockets, dark background, detailed digital painting style",
     "ogre": "Fantasy RPG monster portrait of an Ogre, huge and hulking, ugly face, wearing makeshift armor, holding a giant club, intimidating, detailed digital painting style",
-    "spectre": "Fantasy RPG monster portrait of a Screaming Specter, ghostly apparition, translucent, terrifying expression, floating, dark ethereal aura, detailed digital painting style"
+    "spectre": "Fantasy RPG monster portrait of a Screaming Specter, ghostly apparition, translucent, terrifying expression, floating, dark ethereal aura, detailed digital painting style",
+
+    # Class Portraits
+    "voleur": "Fantasy RPG character portrait of a male Thief/Rogue, dark hooded cloak, holding a dagger, cunning expression, shadowy alley background, detailed digital painting style",
+    "clerc": "Fantasy RPG character portrait of a female Cleric, holy vestments, holding a mace, divine light glowing, cathedral background, detailed digital painting style",
+    "paladin": "Fantasy RPG character portrait of a male Paladin, heavy plate armor, holding a shield with holy symbol, heroic stance, sunlight background, detailed digital painting style",
+    "rodeur": "Fantasy RPG character portrait of a male Ranger, green and brown leather armor, holding a bow, forest background, keen eyes, detailed digital painting style",
+    "barde": "Fantasy RPG character portrait of a female Bard, colorful clothes, holding a lute, cheerful expression, tavern background, detailed digital painting style",
+    "druide": "Fantasy RPG character portrait of a female Druid, natural clothes, holding a wooden staff, surrounded by wildlife or plants, forest background, detailed digital painting style"
 }
 
 HEADERS = {
@@ -27,7 +35,7 @@ def generate_sprite(name, prompt, no_bg=True, retries=5):
     print(f"Generating {name}...")
     payload = {
         "description": prompt,
-        "image_size": {"width": 128, "height": 128},
+        "image_size": {"width": 256, "height": 256}, # Larger for portraits
         "no_background": no_bg
     }
     
@@ -40,6 +48,9 @@ def generate_sprite(name, prompt, no_bg=True, retries=5):
                 image_data = data['image']['base64']
                 if image_data.startswith('data:image/png;base64,'):
                     image_data = image_data.replace('data:image/png;base64,', '')
+                
+                # Ensure directory exists before writing
+                os.makedirs(os.path.dirname(name), exist_ok=True)
                 
                 with open(name, "wb") as f:
                     f.write(base64.b64decode(image_data))
@@ -79,14 +90,18 @@ if __name__ == "__main__":
         os.makedirs("public")
         
     work_items = []
+    
+    CLASSES_PORTRAITS = ["voleur", "clerc", "paladin", "rodeur", "barde", "druide"]
         
     for key, prompt in PROMPTS.items():
-        # Check if it's a character (no variants for characters for now to save API calls, unless requested)
-        is_character = key in ["greffier", "tisseur", "negociant", "eclat", "sentinelle", "traqueur"]
-        
-        # Check if it's a tile
-        is_tile = any(x in key for x in ["_grass", "_stone", "_dirt", "_water"])
-        
+        # Determine target directory
+        if key in CLASSES_PORTRAITS:
+            final_path = f"public/portraits/{key}.png"
+            no_bg = False # Portraits look better with background
+        else:
+            final_path = f"public/monsters/{key}.png"
+            no_bg = True # Monsters need transparency for map/combat
+            
         # Determine number of variants
         variants = 1
         
@@ -94,18 +109,13 @@ if __name__ == "__main__":
             name = key
             current_prompt = prompt
             force_regen = False
-                
-            final_path = f"public/monsters/{name}.png"
             
             # Check existence and size immediately to avoid queuing done work
             if os.path.exists(final_path) and not force_regen:
-                if not is_tile or os.path.getsize(final_path) > 1024:
-                    print(f"Skipping {name}, already exists.")
-                    continue
-                else:
-                    print(f"Re-generating {name} (previous file too small).")
+                print(f"Skipping {final_path}, already exists.")
+                continue
             
-            work_items.append((final_path, current_prompt, not is_tile))
+            work_items.append((final_path, current_prompt, no_bg))
 
     print(f"Queueing {len(work_items)} generation tasks...")
 

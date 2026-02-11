@@ -1,0 +1,22 @@
+=== COMBAT LOGS CLIENT (zer) - 2026-02-11 23:24-23:25 ===
+
+PROBLÈME IDENTIFIÉ : Re-renders constants (~40 fois en 30 secondes)
+
+Chronologie :
+[23:24:48.442Z] INIT - Combat Manager Initialized (currentUserId: d9778899-ef87-4117-9e12-48650fbd869c, myPlayer: zer)
+[23:24:48.452Z] TURN - currentActor: dsq, isLocalPlayerTurn: false ✅
+[23:25:11.965Z] INIT - Re-render
+[23:25:12.019Z] INIT - Re-render (3x en 1 sec)
+[23:25:12.027Z] TURN - currentActor: zer, isLocalPlayerTurn: TRUE ✅✅✅
+[23:25:12.032Z] INIT - Re-render
+[23:25:14.800Z] TURN - currentActor: zer, isLocalPlayerTurn: TRUE ✅
+[23:25:15.149Z] TURN - currentActor: zer, isLocalPlayerTurn: TRUE ✅
+... 30+ re-renders en 10 secondes ...
+
+CONCLUSION :
+- ✅ La détection de tour fonctionne (isLocalPlayerTurn: true quand c'est le tour de "zer")
+- ✅ Les user_id correspondent correctement
+- ❌ Les re-renders constants empêchent les boutons de déplacement de fonctionner
+- ❌ Les event listeners sont détruits/recréés en boucle
+
+SOLUTION : Stabiliser le composant avec useMemo/useCallback pour éviter les re-renders

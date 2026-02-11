@@ -122,9 +122,12 @@ export function CharacterCreation({ onCreate, onBack, generateImage, sessionId }
             backstory: selectedBackstoryData,
             backstory_gm_context: gmBackstoryContext,
             starting_reputation: selectedBackstoryData?.starting_reputation || {},
-            known_npcs: selectedBackstoryData?.known_npcs || [],
+            visited_npcs: selectedBackstoryData?.known_npcs || [],
             faction_ties: selectedBackstoryData?.faction_ties || [],
-            personal_secrets: selectedBackstoryData?.personal_secrets || []
+            discovered_secrets: selectedBackstoryData?.personal_secrets || [],
+            discovered_locations: [],
+            active_quests: [],
+            important_events: []
         };
         onCreate(charData);
     };

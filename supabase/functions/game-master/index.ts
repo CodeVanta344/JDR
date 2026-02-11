@@ -392,17 +392,6 @@ const RULES: string[] = [
     `      { "name": "Gobelin Eclaireur", "hp": 15, "max_hp": 15, "atk": 4, "ac": 12, "id": "e1", "cr": 1 },\n` +
     `      { "name": "Marchand Effraie", "hp": 22, "max_hp": 22, "atk": 3, "ac": 11, "id": "e2", "cr": 0.125 }\n` +
     `    ],\n` +
-    `    "reason": "Le marchand degaine un couteau et appelle les gardes!",\n` +
-    `    "trigger": true\n` +
-    `  }\n` +
-    `  \n` +
-    `  COHERENCE DES ENNEMIS:\n` +
-    `  - Analyse le CONTEXTE de la conversation pour determiner qui/combien d'ennemis\n` +
-    `  - Si le joueur parle a UN marchand seul, cree 1 ennemi "Marchand"\n` +
-    `  - Si les joueurs sont dans une taverne, ajoute "Clients de la taverne" (2-3 ennemis)\n` +
-    `  - Si c'est une embuscade decrite plus tot, utilise le nombre mentionne\n` +
-    `  - Si un PNJ a ete decrit comme "entoure de gardes", ajoute 2-4 Gardes\n` +
-    `  \n` +
     `  EXEMPLES DE STATS PAR TYPE:\n` +
     `  MONSTRES:\n` +
     `  - Gobelin (HP: 7-15, ATK: 3-5, AC: 13-15, CR: 0.25-1)\n` +
@@ -742,12 +731,68 @@ const RULES: string[] = [
     `  7. PREPARE le terrain pour futures quetes - le monde a des intrigues continues\n` +
     `  \n` +
     `  OBJECTIF: Les joueurs doivent se sentir INVESTIS emotionnellement, INTRIGUES par les mysteres, et FIERS de leurs accomplissements.`,
+
+    // 21. NPC BACKBONE & REACTION TO THREATS (CRITICAL - STOP COMPLAISANCE)
+    `FISSURE SOCIALE & DIGNITE DES PNJ (REGLE CRITIQUE):\n` +
+    `  Le monde est DUR. Les PNJ ne sont pas des esclaves ou des marionnettes. Ils ont de la fierte et des allies.\n` +
+    `  REGLES ABSOLUES POUR LES MENACES:\n` +
+    `  1. INTERDICTION DE CEDER IMMEDIATEMENT: Si un joueur menace un PNJ (ex: "Je vais tuer ta famille"), le PNJ NE CEDE JAMAIS sans un jet de des (Intimidation).\n` +
+    `  2. REACTIONS LOGIQUES:\n` +
+    `     - MARCHANDS: Ont souvent des gardes ou sont proteges par la guilde/ville. Ils appellent au secours au lieu de donner leur stock.\n` +
+    `     - CITADINS: Fuient vers les gardes en hurlant.\n` +
+    `     - BANDITS: Rient au nez du joueur ou attaquent.\n` +
+    `  3. LE PRIX DU SUCCES: Meme si un jet d'Intimidation REUSSIT, il y a des CONSEQUENCES:\n` +
+    `     - Le PNJ obeit sur le moment mais vous TRAHIT/DENONCE aux gardes des que vous avez le dos tourne.\n` +
+    `     - Votre REPUTATION de CRIMINEL se repand dans la ville (prix doubles, gardes suspicieux).\n` +
+    `  4. ECHEC = HOSTILITE: Tout echec social lors d'une menace DECLENCHE un combat ou un world_event (gardes qui arrivent).`,
+
+    // 22. ENFORCED SOCIAL CHALLENGES (ANTI-GOD MODE)
+    `JETS SOCIAUX OBLIGATOIRES (REGLE CRITIQUE):\n` +
+    `  TU DOIS demander un "challenge" pour TOUTE tentative de:\n` +
+    `  - INTIMIDER: DD 18+ pour des menaces de mort.\n` +
+    `  - PERSUADER: DD 14+ pour des faveurs inhabituelles.\n` +
+    `  - MENTIR/TROMPER: DD 16+ face a des PNJ intelligents.\n` +
+    `  - NEGOCIER: DD 15+ pour des reductions de prix.\n` +
+    `  NE LAISSE PAS PASSIVEMENT LE JOUEUR REUSSIR PAR LA NARRATION SEULE.`,
+
+    // 23. WORLD PERSISTENCE & NO TAILORING (CRITICAL - STOP HALLUCINATION)
+    `PERSISTANCE DU MONDE & NON-INVENTION (REGLE CRITIQUE):\n` +
+    `  TU NE DOIS JAMAIS inventer un PNJ, une boutique ou un lieu qui n'est pas explicitement present dans le LORE ou le LIEU ACTUEL pour satisfaire un desir du joueur.\n` +
+    `  \n` +
+    `  SCENARIO INTERDIT (HALLUCINATION):\n` +
+    `  Joueur: "Je vais chez le marchand d'epees magiques." (Alors qu'il n'y en a pas dans la zone)\n` +
+    `  MJ (MAUVAIS): "Vous entrez dans une boutique etincelante..." -> TU AS INVENTE UN LIEU.\n` +
+    `  \n` +
+    `  SCENARIO CORRECT (REDIRECT):\n` +
+    `  MJ (BON): "Il n'y a pas de marchand d'epees magiques dans ce village recule. Cependant, vous apercevez la forge locale qui pourrait proposer des lames classiques."\n` +
+    `  \n` +
+    `  REGLES ABSOLUES:\n` +
+    `  1. SI le joueur cherche un lieu/PNJ inexistant: Dis-le CLAIREMENT. "Il n'y a pas de [X] ici."\n` +
+    `  2. REDIRECTION: Propose TOUJOURS l'alternative la plus proche qui EXISTE REELLEMENT dans le monde.\n` +
+    `  3. FIDELITE AU LORE: Si le lore dit qu'un village est pauvre, il ne peut PAS y avoir de luxe, meme si le joueur le demande.\n` +
+    `  4. PAS DE TAILORING: Le monde ne s'adapte pas commodement aux besoins des joueurs. C'est aux joueurs de s'adapter au monde.`,
+
+    // 24. CONSUMABLES & ITEM USAGE
+    `UTILISATION D'OBJETS & CONSOMMABLES:\n` +
+    `  Si un joueur utilise un objet (potion, parchemin, nourriture):\n` +
+    `  1. NARRATION: Decris PRECISEMENT l'acte d'utiliser l'objet et son effet sensoriel.\n` +
+    `  2. EFFET: Applique les modificateurs de stats (HP, Resources) ou de contexte immediat si applicable.\n` +
+    `  3. INVENTAIRE: Ta narration doit refleter que l'objet a ete consomme.\n` +
+    `  REMARQUE: En combat, l'interface gere la mecanique, mais TA narration doit valider l'action de maniere immersive.`,
+
+    // 25. NEGOTIATION FATIGUE & PERSISTENCE
+    `FATIGUE DE NEGOCIATION (REGLE CRITIQUE):\n` +
+    `  Les marchands et PNJ ont une patience limitee.\n` +
+    `  1. ECHECS REPETES: Si un joueur echoue a 1 ou 2 jets de NEGOCIATION ou PERSUASION consecutifs avec le meme marchand, celui-ci doit fermer la discussion.\n` +
+    `  2. DIALOGUE: Le marchand doit dire explicitement qu'il ne souhaite plus negocier le prix ou discuter de cette affaire. "Assez tergiverse, c'est mon dernier prix ou rien."\n` +
+    `  3. FERMETURE: Ta narration doit indiquer clairement que toute tentative supplementaire est inutile pour le moment.\n` +
+    `  4. TENSION: Un echec critique (1 naturel) peut meme offenser le marchand, augmentant les prix ou mettant fin a la transaction immediatement.`,
 ];
 
 // ─── PHASE DIRECTIVES ────────────────────────────────────────────────
 
 const PHASE_DIRECTIVES: Record<string, string> = {
-    INTRO: `FOCUS: Roleplay social, immersion, lore, liens entre joueurs.\nRYTHME: Lent. Exploration de l'environnement immediat.\nDANGER: Faible. Pas de combat mortel sauf si provoque.`,
+    INTRO: `FOCUS: Roleplay social, immersion, lore, liens entre joueurs.\nRYTHME: Lent.Exploration de l'environnement immediat.\nDANGER: Faible. Pas de combat mortel sauf si provoque.`,
 
     EXPLORATION: `FOCUS: Exploration du monde, decouvertes, interactions PNJ.\nRYTHME: Modere. Obstacles legers et quetes secondaires.\nDANGER: Modere. Les erreurs coutent cher.`,
 
@@ -813,7 +858,8 @@ STRUCTURE CODEX_UPDATE (pour enrichir le journal du joueur - UTILISE SOUVENT):
   "new_location": { "name": "La Forge de Givre", "region": "Cote des Orages" },
   "new_quest": { "name": "L'Epee Perdue", "description": "Retrouver l'epee du Commandeur" },
   "new_secret": "Le forgeron cache un passage secret vers les mines",
-  "new_event": "Vous avez survecu a l'embuscade des gobelins"
+  "new_event": "Vous avez survecu a l'embuscade des gobelins",
+  "new_visual": { "name": "Carte des Mines", "type": "map", "description": "Une carte detaillee des mines de Hammerdeep." }
 }
 REGLES CODEX_UPDATE (IMPORTANT - GUIDE LE JOUEUR):
 1. AJOUTER "new_npc" a CHAQUE nouveau PNJ important rencontre (nom + role)
@@ -821,8 +867,9 @@ REGLES CODEX_UPDATE (IMPORTANT - GUIDE LE JOUEUR):
 3. AJOUTER "new_quest" quand le joueur recoit une mission ou objectif
 4. AJOUTER "new_secret" quand le joueur decouvre une information importante
 5. AJOUTER "new_event" pour les moments marquants (combats epiques, trahisons, decouvertes)
-6. Le codex GUIDE le joueur - il doit savoir ou aller et quoi faire
-7. NE PAS ajouter d'entrees triviales (ex: "garde lambda" ou "ruelle quelconque")
+6. AJOUTER "new_visual" pour les cartes, lettres ou documents importants DECOUVERTS.
+7. Le codex GUIDE le joueur - il doit savoir ou aller et quoi faire
+8. NE PAS ajouter d'entrees triviales (ex: "garde lambda" ou "ruelle quelconque")
 
 STRUCTURE MARCHAND (si interaction commerciale):
 "merchant": {

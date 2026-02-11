@@ -6,6 +6,7 @@ import { CharacterSheet } from './components/CharacterSheet';
 import { SessionLobby } from './components/SessionLobby';
 import { SessionHub } from './components/SessionHub';
 import { CombatManager } from './components/CombatManager';
+import { DebugPanel } from './components/DebugPanel';
 import { PartyHUD } from './components/PartyHUD';
 import { MerchantModal } from './components/MerchantModal';
 import { LootModal } from './components/LootModal';
@@ -576,6 +577,28 @@ export default function App() {
             }
         }
 
+        if (codexUpdate.new_visual) {
+            const currentVisuals = character.discovered_visuals || [];
+            const exists = currentVisuals.some(v => v.name === codexUpdate.new_visual.name);
+            if (!exists) {
+                let visualEntry = { ...codexUpdate.new_visual };
+                // Generate image if missing
+                if (!visualEntry.url) {
+                    try {
+                        const prompt = `A highly detailed fantasy ${visualEntry.type || 'document'}: ${visualEntry.name}. ${visualEntry.description || ''}. Aged parchment, hand-drawn ink, mystical atmosphere, lore-accurate.`;
+                        const url = await generateImage(prompt);
+                        if (url) visualEntry.url = url;
+                    } catch (e) {
+                        console.error("Failed to generate visual codex image:", e);
+                    }
+                }
+
+                if (visualEntry.url) {
+                    updates.discovered_visuals = [...currentVisuals, visualEntry];
+                }
+            }
+        }
+
         if (Object.keys(updates).length > 0) {
             await supabase.from('players').update(updates).eq('id', character.id);
             setCharacter(prev => ({ ...prev, ...updates }));
@@ -944,9 +967,12 @@ export default function App() {
                 backstory: charData.backstory,
                 backstory_gm_context: charData.backstory_gm_context || '',
                 starting_reputation: charData.starting_reputation || {},
-                known_npcs: charData.known_npcs || [],
+                visited_npcs: charData.visited_npcs || [],
                 faction_ties: charData.faction_ties || [],
-                personal_secrets: charData.personal_secrets || [],
+                discovered_secrets: charData.discovered_secrets || [],
+                discovered_locations: charData.discovered_locations || [],
+                active_quests: charData.active_quests || [],
+                important_events: charData.important_events || [],
                 session_id: session.id,
                 user_id: profile.id,
                 is_ready: false
@@ -1888,6 +1914,14 @@ export default function App() {
                         inventory: character.inventory,
                         backstory: character.backstory_gm_context
                     },
+                    codex_data: {
+                        visited_npcs: character.visited_npcs || [],
+                        discovered_locations: character.discovered_locations || [],
+                        active_quests: character.active_quests || [],
+                        discovered_secrets: character.discovered_secrets || [],
+                        important_events: character.important_events || [],
+                        discovered_visuals: character.discovered_visuals || []
+                    },
                     lore: { context: `${WORLD_CONTEXT}\n\n${ENVIRONMENTAL_RULES}`, bestiary: { ...BESTIARY, ...BESTIARY_EXTENDED }, classes: CLASSES, chronicle, npcs: NPC_TEMPLATES, quests: QUEST_HOOKS, locations: TAVERNS_AND_LOCATIONS, rumors: RUMORS_AND_GOSSIP, encounters: RANDOM_ENCOUNTERS, myths: WORLD_MYTHS_EXTENDED, legendaryItems: LEGENDARY_ITEMS, factions: FACTION_LORE }
                 }
             });
@@ -2324,11 +2358,14 @@ export default function App() {
                     <CombatManager
                         arenaConfig={syncedCombatState?.arenaConfig || getArenaConfig()}
                         players={players}
-                        currentUserId={profile?.id}
+                        currentUserId={character?.user_id || profile?.id}
                         initialEnemies={combatEnemies}
                         syncedCombatState={syncedCombatState}
                         onUpdateCombatState={updateSyncedCombat}
                         sessionId={session?.id}
+                        onHPChange={handleHPChange}
+                        onResourceChange={handleResourceChange}
+                        onConsumeItem={handleConsumeItem}
                         onCombatEnd={async (result) => {
                             setCombatMode(false);
                             if (session.host_id === profile.id) {
@@ -2366,8 +2403,6 @@ export default function App() {
                                 });
                             } catch (e) { console.error('Post-combat narrative error:', e); }
                         }}
-                        onHPChange={handleHPChange}
-                        onResourceChange={handleResourceChange}
                         onGameOver={handleGameOver}
                         onRewards={handleCombatRewards}
                         onSFX={triggerSFX}
@@ -2604,6 +2639,9 @@ export default function App() {
                 hour={gameTime.hour}
                 sfx={lastSFX}
             />
+
+            {/* Debug Panel for Combat Logs */}
+            <DebugPanel />
         </div>
     );
 }
