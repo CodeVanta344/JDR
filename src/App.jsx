@@ -467,9 +467,73 @@ export default function App() {
         setMessages(prev => [...prev, {
             id: crypto.randomUUID(),
             role: 'system',
-            content: `🏆 TITRE DÉBLOQUÉ : ${title}`,
+            content: `TITRE DÉBLOQUÉ : ${title}`,
             created_at: new Date().toISOString()
         }]);
+    };
+
+    const handleCodexUpdate = async (codexUpdate) => {
+        if (!character?.id || !codexUpdate) return;
+
+        const updates = {};
+        
+        if (codexUpdate.new_npc) {
+            const currentNpcs = character.visited_npcs || [];
+            const npcEntry = typeof codexUpdate.new_npc === 'string' 
+                ? codexUpdate.new_npc 
+                : codexUpdate.new_npc;
+            const exists = currentNpcs.some(n => 
+                (typeof n === 'object' ? n.name : n) === (typeof npcEntry === 'object' ? npcEntry.name : npcEntry)
+            );
+            if (!exists) {
+                updates.visited_npcs = [...currentNpcs, npcEntry];
+            }
+        }
+
+        if (codexUpdate.new_location) {
+            const currentLocs = character.discovered_locations || [];
+            const locEntry = typeof codexUpdate.new_location === 'string'
+                ? codexUpdate.new_location
+                : codexUpdate.new_location;
+            const exists = currentLocs.some(l =>
+                (typeof l === 'object' ? l.name : l) === (typeof locEntry === 'object' ? locEntry.name : locEntry)
+            );
+            if (!exists) {
+                updates.discovered_locations = [...currentLocs, locEntry];
+            }
+        }
+
+        if (codexUpdate.new_quest) {
+            const currentQuests = character.active_quests || [];
+            const questEntry = typeof codexUpdate.new_quest === 'string'
+                ? { name: codexUpdate.new_quest }
+                : codexUpdate.new_quest;
+            const exists = currentQuests.some(q =>
+                (typeof q === 'object' ? q.name : q) === questEntry.name
+            );
+            if (!exists) {
+                updates.active_quests = [...currentQuests, questEntry];
+            }
+        }
+
+        if (codexUpdate.new_secret) {
+            const currentSecrets = character.discovered_secrets || [];
+            if (!currentSecrets.includes(codexUpdate.new_secret)) {
+                updates.discovered_secrets = [...currentSecrets, codexUpdate.new_secret];
+            }
+        }
+
+        if (codexUpdate.new_event) {
+            const currentEvents = character.important_events || [];
+            if (!currentEvents.includes(codexUpdate.new_event)) {
+                updates.important_events = [...currentEvents, codexUpdate.new_event];
+            }
+        }
+
+        if (Object.keys(updates).length > 0) {
+            await supabase.from('players').update(updates).eq('id', character.id);
+            setCharacter(prev => ({ ...prev, ...updates }));
+        }
     };
 
     const getTimeLabel = () => {
@@ -1532,6 +1596,9 @@ export default function App() {
                 if (aiResponse.title_unlock) {
                     handleTitleUnlock(aiResponse.title_unlock);
                 }
+                if (aiResponse.codex_update) {
+                    handleCodexUpdate(aiResponse.codex_update);
+                }
 
                 const responseText = aiResponse.narrative || formatAIContent(aiResponse);
                 setNpcConversations(prev => {
@@ -1652,6 +1719,10 @@ export default function App() {
                     const items = Array.isArray(aiResponse.item) ? aiResponse.item : [aiResponse.item];
                     const updatedInv = [...(character.inventory || []), ...items];
                     handleUpdateInventory(updatedInv);
+                }
+
+                if (aiResponse.codex_update) {
+                    handleCodexUpdate(aiResponse.codex_update);
                 }
 
                 if (aiResponse.combat) {

@@ -348,6 +348,23 @@ REGLES TRANSACTION (CRITIQUES):
 6. TOUJOURS inclure "reason" pour expliquer la transaction.
 7. TOUJOURS inclure "itemName" si c'est un achat.
 
+STRUCTURE CODEX_UPDATE (pour enrichir le journal du joueur - UTILISE SOUVENT):
+"codex_update": {
+  "new_npc": { "name": "Eldric le Forgeron", "role": "Forgeron de Hammerdeep" },
+  "new_location": { "name": "La Forge de Givre", "region": "Cote des Orages" },
+  "new_quest": { "name": "L'Epee Perdue", "description": "Retrouver l'epee du Commandeur" },
+  "new_secret": "Le forgeron cache un passage secret vers les mines",
+  "new_event": "Vous avez survecu a l'embuscade des gobelins"
+}
+REGLES CODEX_UPDATE (IMPORTANT - GUIDE LE JOUEUR):
+1. AJOUTER "new_npc" a CHAQUE nouveau PNJ important rencontre (nom + role)
+2. AJOUTER "new_location" a CHAQUE nouveau lieu decouvert (nom + region)
+3. AJOUTER "new_quest" quand le joueur recoit une mission ou objectif
+4. AJOUTER "new_secret" quand le joueur decouvre une information importante
+5. AJOUTER "new_event" pour les moments marquants (combats epiques, trahisons, decouvertes)
+6. Le codex GUIDE le joueur - il doit savoir ou aller et quoi faire
+7. NE PAS ajouter d'entrees triviales (ex: "garde lambda" ou "ruelle quelconque")
+
 STRUCTURE MARCHAND (si interaction commerciale):
 "merchant": {
   "npcName": "Nom du marchand",
