@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { extractSpokenText, speakText } from '../utils/speechUtils';
+import { extractSpokenText, speakText, initSpeech } from '../utils/speechUtils';
 
 export function NPCDialogueModal({ npc, messages, onSendMessage, onClose, loading, voiceEnabled, setVoiceEnabled }) {
     const [inputValue, setInputValue] = useState('');
@@ -99,6 +99,29 @@ export function NPCDialogueModal({ npc, messages, onSendMessage, onClose, loadin
                             title={voiceEnabled ? "Couper la voix" : "Activer la voix"}
                         >
                             {voiceEnabled ? '🔊' : '🔈'}
+                        </button>
+                        <button
+                            onClick={() => {
+                                initSpeech();
+                                speakText("Salutations. Je vous écoute.", npc.name);
+                            }}
+                            style={{
+                                background: 'rgba(255,255,255,0.05)',
+                                border: '1px solid rgba(255,255,255,0.1)',
+                                color: 'var(--gold-primary)',
+                                width: '36px',
+                                height: '36px',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '1rem',
+                                transition: 'all 0.3s',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                            title="Tester la voix"
+                        >
+                            ▶️
                         </button>
                         <button
                             onClick={() => {

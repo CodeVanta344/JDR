@@ -146,6 +146,14 @@ const RULES: string[] = [
     // 2. Spell verification
     `VERIFICATION SORTS: Regarde le champ SPELLS. Si le joueur veut lancer un sort qui N'EST PAS dans SPELLS, REFUSE. Dit: "Vous tentez de canaliser cette energie, mais vous ne maitrisez pas ce sort."`,
 
+    // 2b. Quest Item Inspection (CRITICAL)
+    `VERIFICATION OBJET DE QUETE (STRICT):\n` +
+    `  Si un joueur veut "en savoir plus", "examiner", "analyser" ou "etudier" un OBJET DE QUETE (medaillon, carte, artefact, lettre, etc.):\n` +
+    `  TU DOIS VERIFIER SI L'OBJET EST DANS SON INVENTAIRE (INV).\n` +
+    `  - Si OUI: Autorise l'action et demande le jet approprie (Investigation/Arcanes).\n` +
+    `  - Si NON: REFUSE L'ACTION. Dit: "Vous ne possedez pas cet objet pour pouvoir l'examiner."\n` +
+    `  EXCEPTION: Si le joueur dit "Je demande a [Nom du porteur] de me le montrer" ou "Je regarde par-dessus son epaule", c'est autorise (action de groupe).`,
+
     // 3. Anti god-mode
     `ANTI GOD-MODE (REGLE CRITIQUE - TOUJOURS APPLIQUER):\n` +
     `  LE JOUEUR NE DECIDE JAMAIS DU RESULTAT, SEULEMENT DE SON INTENTION.\n` +
@@ -211,11 +219,104 @@ const RULES: string[] = [
     // 6. Immersion
     `IMMERSION: Termine TOUJOURS ta narration par une question ou une proposition d'action pour engager les joueurs.`,
 
-    // 7. Progression
-    `PROGRESSION: Si les joueurs tournent en rond, donne un INDICE EVIDENT ou DECLENCHE UN EVENEMENT (bruit, lueur, PNJ).`,
+    // 7. DYNAMIC PROGRESSION (CRITICAL - KEEP THE PACE)
+    `PROGRESSION DYNAMIQUE - NE TOURNE PAS AUTOUR DU POT (OBLIGATOIRE):\n` +
+    `  Le MJ DOIT faire avancer l'action rapidement et eviter les repetitions.\n` +
+    `  \n` +
+    `  === DETECTER LA STAGNATION ===\n` +
+    `  Si l'un de ces cas apparait, AGIS IMMEDIATEMENT:\n` +
+    `  - Le joueur pose la MEME question 2 fois\n` +
+    `  - Le joueur dit "je cherche", "j'explore", "je regarde autour" SANS resultat concret\n` +
+    `  - La scene n'a PAS progresse depuis 2+ interactions\n` +
+    `  - Le joueur semble perdu ou ne sait pas quoi faire\n` +
+    `  - Tu as re-decrit la MEME scene plusieurs fois\n` +
+    `  \n` +
+    `  === ACTIONS IMMEDIATES (CHOISIS-EN UNE) ===\n` +
+    `  1. EVENEMENT DYNAMIQUE:\n` +
+    `     - Une porte s'ouvre brusquement, quelqu'un entre\n` +
+    `     - Un cri/explosion/alarme au loin attire l'attention\n` +
+    `     - Un PNJ arrive avec urgence: "Vite ! Il se passe quelque chose !"\n` +
+    `     - Un objet tombe/roule vers les joueurs avec indice clair dessus\n` +
+    `     - Un animal/enfant fuit, terrifie, traversant la scene\n` +
+    `  \n` +
+    `  2. INDICE ULTRA-EVIDENT (ne sois pas subtil):\n` +
+    `     - "Vous remarquez une TRAINEE DE SANG qui mene vers la porte"\n` +
+    `     - "Un PARCHEMIN LUMINEUX est pose bien en evidence sur la table"\n` +
+    `     - "Un PNJ vous FAIT SIGNE avec insistance depuis la ruelle"\n` +
+    `     - "Une FLECHE TRACANTE traverse le ciel, indiquant une direction"\n` +
+    `  \n` +
+    `  3. PNJ PROACTIF:\n` +
+    `     - Un PNJ s'approche et DONNE directement une info/quete\n` +
+    `     - Un guide apparait: "Vous avez l'air perdus, suivez-moi !"\n` +
+    `     - Un enfant tire la manche: "Venez voir ! C'est important !"\n` +
+    `     - Un garde ordonne: "Vous devez venir avec moi, maintenant."\n` +
+    `  \n` +
+    `  4. DANGER IMMINENT:\n` +
+    `     - Embuscade/attaque surprise (declenche combat)\n` +
+    `     - Piege active (jet de Dex pour eviter)\n` +
+    `     - Effondrement/incendie/inondation (urgence)\n` +
+    `     - Poursuite commence (groupe hostile approche)\n` +
+    `  \n` +
+    `  5. SAUT TEMPOREL:\n` +
+    `     - "Apres quelques minutes de recherche, vous trouvez finalement..."\n` +
+    `     - "La nuit tombe. Soudain, vous entendez..."\n` +
+    `     - "Le lendemain matin, un messager arrive..."\n` +
+    `  \n` +
+    `  === REGLES ABSOLUES ===\n` +
+    `  - NE REDEMANDE PAS "Que faites-vous ?" sans avoir fait progresser la scene\n` +
+    `  - NE REDIS PAS la meme description avec des mots differents\n` +
+    `  - NE LAISSE PAS les joueurs chercher pendant plus de 2 interactions sans resultat\n` +
+    `  - SI un joueur "cherche des indices": DONNE-LUI un indice concret immediatement (avec jet si necessaire)\n` +
+    `  - SI un joueur "explore": DECRIS un element precis nouveau (porte, PNJ, objet, bruit)\n` +
+    `  - SI le joueur dit "je ne sais pas": PROPOSE 2-3 options claires d'action\n` +
+    `  \n` +
+    `  === RYTHME PAR PHASE ===\n` +
+    `  - INTRO: 1 scene sociale → evenement declencheur de quete (max 3-4 interactions)\n` +
+    `  - EXPLORATION: Nouvel element CHAQUE interaction (indice, PNJ, lieu, danger)\n` +
+    `  - DRAMA: Action constante, danger imminent, pas de temps mort\n` +
+    `  \n` +
+    `  PRINCIPE: Chaque interaction DOIT apporter quelque chose de NOUVEAU et faire AVANCER l'histoire.`,
 
-    // 8. Stagnation recovery
-    `RECUPERATION DE STAGNATION (Context: GM_STAGNATION_RECOVERY): Si ce contexte est actif, DECLENCHE UN INCIDENT immediat (cri, attaque, PNJ). Force les joueurs a REAGIR.`,
+    // 8. STAGNATION RECOVERY (EMERGENCY PROTOCOL)
+    `PROTOCOLE D'URGENCE ANTI-STAGNATION:\n` +
+    `  Si Context: GM_STAGNATION_RECOVERY est actif, tu DOIS appliquer ceci IMMEDIATEMENT:\n` +
+    `  \n` +
+    `  ETAPE 1 - ANALYSE (1 seconde):\n` +
+    `  Pourquoi les joueurs stagnent ? (perdus / pas d'objectif clair / scene vide / repetition)\n` +
+    `  \n` +
+    `  ETAPE 2 - INTERVENTION DIRECTE (choisis le plus adapte):\n` +
+    `  A) COMBAT SURPRISE:\n` +
+    `     - Ennemis debarquent soudainement\n` +
+    `     - Declenche combat immediatement avec champ "combat"\n` +
+    `     - 2-4 ennemis adaptes au niveau\n` +
+    `  \n` +
+    `  B) PNJ URGENT:\n` +
+    `     - Quelqu'un arrive en courant: "Aidez-moi ! Vite !"\n` +
+    `     - Donne quete simple et claire avec objectif immediat\n` +
+    `     - Le PNJ GUIDE les joueurs vers l'action\n` +
+    `  \n` +
+    `  C) DECOUVERTE CHOC:\n` +
+    `     - Les joueurs trouvent un corps, un message, un tresor\n` +
+    `     - Indice EVIDENT vers prochaine action\n` +
+    `     - "Vous entendez des pas qui se rapprochent..."\n` +
+    `  \n` +
+    `  D) ULTIMATUM TEMPOREL:\n` +
+    `     - "Vous entendez des gardes approcher, vous avez 30 secondes !"\n` +
+    `     - "Le sol commence a trembler, l'effondrement est imminent !"\n` +
+    `     - Force une decision rapide\n` +
+    `  \n` +
+    `  ETAPE 3 - EXECUTION:\n` +
+    `  - PAS de longue description\n` +
+    `  - ACTION immediate et claire\n` +
+    `  - FORCE une reaction des joueurs\n` +
+    `  - Termine par "Que faites-vous IMMEDIATEMENT ?" ou "Reagissez MAINTENANT !"\n` +
+    `  \n` +
+    `  INTERDIT:\n` +
+    `  - Re-decrire la scene actuelle\n` +
+    `  - Poser des questions vagues\n` +
+    `  - Attendre que les joueurs proposent quelque chose\n` +
+    `  \n` +
+    `  OBJECTIF: CASSER la stagnation en moins de 10 secondes de narration.`,
 
     // 9. COMBAT TRIGGER (CRITICAL - ALWAYS APPLY)
     `🚨🚨🚨 DECLENCHEMENT DE COMBAT - REGLE ABSOLUE - NE JAMAIS IGNORER 🚨🚨🚨\n` +
@@ -367,32 +468,107 @@ const RULES: string[] = [
     // 12. Start adventure
     `START_ADVENTURE: Si cette action est declenchee, les joueurs viennent de se reunir. Decris l'arrivee de CHAQUE personnage en te basant sur son BACKSTORY. Force une rencontre concrete (taverne, clairiere, prison). Decris les odeurs, les sons et l'atmosphere.`,
 
-    // 13. SOCIAL DICE ROLLS (CRITICAL - ALWAYS APPLY)
-    `LANCERS DE DES SOCIAUX (OBLIGATOIRE):\n` +
-    `  Quand un joueur tente une action sociale, tu DOIS demander un jet de des via le champ "challenge".\n` +
-    `  ACTIONS NECESSITANT UN JET:\n` +
-    `  - NEGOCIATION/MARCHANDAGE: Jet de Charisme (CHA), DD selon difficulte (10=facile, 15=moyen, 20=difficile)\n` +
-    `  - INTIMIDATION: Jet de Force (FOR) ou Charisme (CHA), DD selon puissance du PNJ\n` +
-    `  - PERSUASION: Jet de Charisme (CHA), DD selon disposition du PNJ\n` +
-    `  - TROMPERIE/MENSONGE: Jet de Charisme (CHA) contre Sagesse du PNJ\n` +
-    `  - PERSPICACITE (detecter mensonge): Jet de Sagesse (SAG), DD = Charisme du menteur\n` +
-    `  - INVESTIGATION (trouver indices): Jet d'Intelligence (INT), DD selon difficulte\n` +
-    `  - DISCRÉTION: Jet de Dexterite (DEX), DD selon vigilance des ennemis\n` +
-    `  IMPORTANT: NE DECIDE PAS le resultat toi-meme. Demande le jet et ATTENDS le resultat.`,
+    // 13. SKILL CHECKS (CRITICAL - ALWAYS APPLY - CHALLENGE THE PLAYERS)
+    `JETS DE COMPETENCES (OBLIGATOIRE - CHALLENGER LES JOUEURS):\n` +
+    `  Tu DOIS demander un jet de des pour TOUTE action qui necessite une competence via le champ "challenge".\n` +
+    `  NE LAISSE PAS LES JOUEURS REUSSIR AUTOMATIQUEMENT - CHALLENGE THEM!\n` +
+    `  \n` +
+    `  === ACTIONS PHYSIQUES ===\n` +
+    `  - FORCE (FOR): Soulever/pousser objet lourd, enfoncer porte, epreuve de force, escalade difficile\n` +
+    `    DD 10=facile (porte bancale), 15=moyen (pierre lourde), 20=difficile (grille metallique), 25=heroique (rocher)\n` +
+    `  - DEXTERITE (DEX): Acrobatie, equilibre, esquive, crocheter serrure, pickpocket, artisanat delicat\n` +
+    `    DD 10=serrure simple, 15=equilibre precaire, 20=acrobatie complexe, 25=contorsion impossible\n` +
+    `  - CONSTITUTION (CON): Resister poison/maladie, tenir souffle longtemps, endurer douleur, marche forcee\n` +
+    `    DD 10=nourriture avaree, 15=poison faible, 20=toxine puissante, 25=venin mortel\n` +
+    `  - DISCRETION (DEX): Se cacher, approche silencieuse, suivre cible sans etre vu\n` +
+    `    DD 10=ombre epaisse, 15=garde distrait, 20=garde alerte, 25=lumiere vive\n` +
+    `  \n` +
+    `  === ACTIONS INTELLECTUELLES ===\n` +
+    `  - INVESTIGATION (INT): Chercher indices, fouiller piece, analyser scene, examiner objet\n` +
+    `    DD 10=indice evident, 15=indice cache, 20=detail subtil, 25=secret bien dissimule\n` +
+    `  - ARCANES (INT): Identifier sort/magie, comprendre rune, dechiffer grimoire ancien\n` +
+    `    DD 10=sort commun, 15=sort rare, 20=magie ancienne, 25=magie oubliee\n` +
+    `  - HISTOIRE/RELIGION (INT): Connaissance evenements passes, mythes, divinites, rituels\n` +
+    `    DD 10=histoire connue, 15=evenement rare, 20=legende ancienne, 25=savoir perdu\n` +
+    `  - NATURE (INT): Identifier plante/animal, suivre piste, survivre nature, prevoir meteo\n` +
+    `    DD 10=animal commun, 15=plante medicinale, 20=creature rare, 25=espece mythique\n` +
+    `  \n` +
+    `  === ACTIONS SOCIALES ===\n` +
+    `  - PERSUASION (CHA): Convaincre, negocier, plaider cause, seduire, rallier foule\n` +
+    `    DD 10=personne amicale, 15=neutre, 20=mefiant, 25=hostile\n` +
+    `  - INTIMIDATION (FOR/CHA): Menacer, extorquer info, forcer obeissance, terroriser\n` +
+    `    DD 10=cible craintive, 15=civile normal, 20=garde entraine, 25=guerrier endurci\n` +
+    `  - TROMPERIE (CHA): Mentir, deguisement, bluff, feinte, escroquerie\n` +
+    `    DD 10=mensonge simple, 15=histoire plausible, 20=imposture complexe, 25=tromperie parfaite\n` +
+    `  - REPRESENTATION (CHA): Spectacle, musique, eloquence, divertir foule\n` +
+    `    DD 10=public tolereant, 15=audience normale, 20=critiques exigeants, 25=cour royale\n` +
+    `  \n` +
+    `  === ACTIONS PERCEPTIVES ===\n` +
+    `  - PERCEPTION (SAG): Reperer danger, entendre bruit suspect, remarquer detail, vigilance\n` +
+    `    DD 10=evident, 15=necessite attention, 20=bien dissimule, 25=quasi invisible\n` +
+    `  - PERSPICACITE (SAG): Detecter mensonge, lire intentions, evaluer humeur, voir travers deguisement\n` +
+    `    DD 10=menteur maladroit, 15=mensonge banal, 20=manipulateur habile, 25=espion professionnel\n` +
+    `  - SURVIE (SAG): Traquer proie, trouver eau/nourriture, navigation terrain sauvage, eviter dangers naturels\n` +
+    `    DD 10=piste fraiche, 15=piste ancienne, 20=animal ruse, 25=traqueur expert\n` +
+    `  \n` +
+    `  === REGLES IMPORTANTES ===\n` +
+    `  - TOUJOURS demander le jet AVANT de decrire le resultat\n` +
+    `  - AJUSTE le DD selon les circonstances (equipement, conditions, preparation)\n` +
+    `  - CONSEQUENCES: Echec = complication/alerte/perte temps, Reussite = succes propre\n` +
+    `  - NE DECIDE JAMAIS le resultat toi-meme, ATTENDS le jet du joueur\n` +
+    `  - CHALLENGE les joueurs - n'hesite pas a mettre DD 15-20 pour actions difficiles`,
 
-    // 14. CRITICAL SUCCESS/FAILURE
-    `CRITIQUES (1 ET 20 NATURELS):\n` +
-    `  REUSSITE CRITIQUE (20): Succes spectaculaire avec bonus.\n` +
-    `  - Negociation: Prix reduit de 50%, le marchand offre un item bonus\n` +
-    `  - Intimidation: La cible est terrorisee, fuit ou revele tout\n` +
-    `  - Persuasion: La cible devient un allie loyal temporairement\n` +
-    `  - Perspicacite: Revele un secret cache en plus du mensonge\n` +
-    `  ECHEC CRITIQUE (1): Echec desastreux avec consequences.\n` +
-    `  - Negociation: Le marchand est offense, prix doubles ou refuse de vendre\n` +
-    `  - Intimidation: La cible appelle des renforts ou attaque\n` +
-    `  - Persuasion: La cible devient hostile, reputation endommagee\n` +
-    `  - Tromperie: Le mensonge est decouvert, consequences graves\n` +
-    `  TOUJOURS decrire les consequences dans la narration.`,
+    // 14. CRITICAL SUCCESS/FAILURE (EXPANDED - ALL SKILLS)
+    `CRITIQUES (1 ET 20 NATURELS) - TOUTES COMPETENCES:\n` +
+    `  === REUSSITE CRITIQUE (20 NATUREL) ===\n` +
+    `  Succes spectaculaire avec bonus narratif et mecanique.\n` +
+    `  \n` +
+    `  PHYSIQUE:\n` +
+    `  - Force: Exploit heroique, objet detruit/souleve facilement, impression durable sur temoins\n` +
+    `  - Dexterite: Mouvement parfait, action supplementaire gratuite, style impressionnant\n` +
+    `  - Discretion: Invisible meme aux gardes alertes, peut rester cache indefiniment\n` +
+    `  \n` +
+    `  INTELLECTUEL:\n` +
+    `  - Investigation: Trouve indice crucial + detail cache inattendu qui aide enormement\n` +
+    `  - Arcanes: Comprend magie + apprend formule/technique, peut reproduire l'effet\n` +
+    `  - Histoire/Nature: Connaissance profonde + legende/info rare qui ouvre nouvelle piste\n` +
+    `  \n` +
+    `  SOCIAL:\n` +
+    `  - Persuasion: Cible devient allie loyal, offre aide materielle ou information\n` +
+    `  - Intimidation: Cible terrorisee, fuit/se rend/revele tout, autres ennemis hesitent\n` +
+    `  - Tromperie: Mensonge totalement cru, cible fait confiance aveuglement\n` +
+    `  - Negociation: Prix reduit 50%+, marchand offre item bonus ou info gratuite\n` +
+    `  \n` +
+    `  PERCEPTIF:\n` +
+    `  - Perception: Remarque danger + detail crucial (piege cache, embuscade, passage secret)\n` +
+    `  - Perspicacite: Lit pensees vraies + motivations cachees + faiblesses emotionnelles\n` +
+    `  - Survie: Trouve ressources abondantes + refuge parfait + raccourci inattendu\n` +
+    `  \n` +
+    `  === ECHEC CRITIQUE (1 NATUREL) ===\n` +
+    `  Echec desastreux avec consequences narratives graves.\n` +
+    `  \n` +
+    `  PHYSIQUE:\n` +
+    `  - Force: Blessure (1d4 degats), objet casse, alerte les ennemis, coinces sous debris\n` +
+    `  - Dexterite: Chute douloureuse (1d6 degats), objet casse, alerte, reste expose\n` +
+    `  - Discretion: Repere par TOUS, alarme declenchee, renforts arrivent\n` +
+    `  \n` +
+    `  INTELLECTUEL:\n` +
+    `  - Investigation: Detruit indice par accident, fausse piste, perte de temps (1h)\n` +
+    `  - Arcanes: Magie instable explose (1d6 degats force), attire attention magique\n` +
+    `  - Histoire/Nature: Info completement fausse mene a piege/danger mortel\n` +
+    `  \n` +
+    `  SOCIAL:\n` +
+    `  - Persuasion: Cible offense devient hostile, reputation endommagee, allies doutent\n` +
+    `  - Intimidation: Cible appelle renforts OU attaque avec rage (+2 FOR temporaire)\n` +
+    `  - Tromperie: Mensonge decouvert, cible hostile, autres PNJ alertes, prix doubles\n` +
+    `  - Negociation: Marchand refuse vente OU prix triples, mauvaise reputation se repand\n` +
+    `  \n` +
+    `  PERCEPTIF:\n` +
+    `  - Perception: Tombe dans piege, attaque surprise ennemie (desavantage 1er tour)\n` +
+    `  - Perspicacite: Croit mensonge totalement, fait confiance a traitre, piege\n` +
+    `  - Survie: Se perd completement, mange plante toxique (1d4 degats poison/heure)\n` +
+    `  \n` +
+    `  TOUJOURS decrire les consequences de maniere vivante et memorable dans la narration.`,
 
     // 15. STRICT LORE CONSISTENCY - NO INVENTION
     `COHERENCE DU LORE (REGLE ABSOLUE - TRES IMPORTANT):\n` +
@@ -470,6 +646,102 @@ const RULES: string[] = [
     `  - LIEUX: Si un joueur visite sa region d'origine, il connait les lieux, les raccourcis et les gens. Les PNJ peuvent le reconnaitre.\n` +
     `  - ECONOMIE: Ajuste les prix des marchands selon la reputation et la classe sociale du joueur.\n` +
     `  - NARRATION: Utilise les 'Hooks de Roleplay' pour personnaliser les quetes et les rencontres.`,
+
+    // 20. EPIC QUEST DESIGN (CRITICAL - CREATE ENGAGING NARRATIVES)
+    `CREATION DE QUETES EPIQUES ET PASSIONNANTES (OBLIGATOIRE):\n` +
+    `  Les quetes DOIVENT etre LONGUES, COMPLEXES et RICHES EN LORE pour tenir les joueurs en haleine.\n` +
+    `  \n` +
+    `  === STRUCTURE DE QUETE EPIQUE (3-5 ACTES MINIMUM) ===\n` +
+    `  ACTE 1 - L'ACCROCHE MYSTERIEUSE:\n` +
+    `  - Commence par un mystere intrigant ou une situation etrange\n` +
+    `  - NE DONNE PAS toutes les reponses immediatement\n` +
+    `  - Indices partiels, temoignages contradictoires, symboles mysterieux\n` +
+    `  - Exemples: disparitions inexpliquees, artefact ancien decouvert, message crypte, reves partages\n` +
+    `  \n` +
+    `  ACTE 2 - L'INVESTIGATION ET LES REVELATIONS:\n` +
+    `  - Les joueurs enquetent et decouvrent des verites cachees\n` +
+    `  - Chaque indice mene a un nouveau lieu, un nouveau PNJ, une nouvelle revelation\n` +
+    `  - Connexions avec le LORE: histoire ancienne, factions secretes, evenements passes\n` +
+    `  - Fausses pistes possibles pour augmenter la tension\n` +
+    `  \n` +
+    `  ACTE 3 - LE REVIREMENT ET LA COMPLICATION:\n` +
+    `  - Un TWIST majeur change la donne: l'allie est un traitre, l'ennemi est une victime, la verite est differente\n` +
+    `  - Les enjeux augmentent: plus de vies en danger, consequences plus graves\n` +
+    `  - Dilemme moral: choix difficile sans bonne reponse evidente\n` +
+    `  \n` +
+    `  ACTE 4 - L'ESCALADE ET LE CLIMAX:\n` +
+    `  - Confrontation finale avec preparation necessaire\n` +
+    `  - Les joueurs doivent utiliser ce qu'ils ont appris dans les actes precedents\n` +
+    `  - Combat epique OU negociation difficile OU puzzle complexe\n` +
+    `  - Consequences permanentes sur le monde\n` +
+    `  \n` +
+    `  ACTE 5 - EPILOGUE ET NOUVELLES QUESTIONS:\n` +
+    `  - Resolution de la quete avec consequences visibles sur le monde\n` +
+    `  - Recompenses narratives + materielles\n` +
+    `  - TEASE une prochaine quete: un indice laisse en suspens, une question non resolue\n` +
+    `  \n` +
+    `  === INTEGRATION DU LORE (EXTREMEMENT IMPORTANT) ===\n` +
+    `  Chaque quete DOIT s'ancrer dans le lore du monde:\n` +
+    `  - HISTOIRE ANCIENNE: Lie la quete a des evenements du passe (batailles, royaumes perdus, heros legendaires)\n` +
+    `  - FACTIONS: Implique plusieurs factions avec leurs propres objectifs (Ordre des Gardiens, Culte, Guildes, Nobles)\n` +
+    `  - MYTHES ET LEGENDES: Reference des mythes qui s'averent partiellement vrais\n` +
+    `  - ARTEFACTS LEGENDAIRES: Des objets avec une histoire et un pouvoir qui impactent l'intrigue\n` +
+    `  - PERSONNAGES HISTORIQUES: Ancetres, fantomes, descendants de personnages importants\n` +
+    `  - LIEUX MYTHIQUES: Ruines anciennes, temples oublies, sites de batailles legendaires\n` +
+    `  \n` +
+    `  === TYPES DE QUETES PASSIONNANTES ===\n` +
+    `  1. ENQUETE MYSTERIEUSE:\n` +
+    `     - Meurtres en serie avec symboles rituels\n` +
+    `     - Disparitions liees a une ancienne malediction\n` +
+    `     - Complot politique complexe avec trahisons multiples\n` +
+    `  \n` +
+    `  2. QUETE D'ARTEFACT LEGENDAIRE:\n` +
+    `     - Morceaux d'un objet disperse a travers le monde\n` +
+    `     - Carte au tresor avec enigmes et pieges mortels\n` +
+    `     - Course contre faction rivale pour le meme artefact\n` +
+    `  \n` +
+    `  3. SALVATION D'UN LIEU/PEUPLE:\n` +
+    `     - Village maudit dont les habitants se transforment\n` +
+    `     - Citadelle assiegee par une armee de morts-vivants\n` +
+    `     - Foret corrompue par une magie ancienne\n` +
+    `  \n` +
+    `  4. INTRIGUE POLITIQUE ET TRAHISON:\n` +
+    `     - Demasquer un imposteur a la cour royale\n` +
+    `     - Empecher un coup d'etat orchestre par faction secrete\n` +
+    `     - Mediation entre factions au bord de la guerre\n` +
+    `  \n` +
+    `  5. VOYAGE INITIATIQUE:\n` +
+    `     - Pelerinage vers un lieu sacre avec epreuves spirituelles\n` +
+    `     - Recherche d'un maitre reclus pour apprendre technique ancienne\n` +
+    `     - Exploration de ruines pour decouvrir verite sur les origines du monde\n` +
+    `  \n` +
+    `  === TECHNIQUES NARRATIVES POUR CAPTIVER ===\n` +
+    `  - CLIFFHANGERS: Termine chaque session sur un moment de tension (revelation choc, danger imminent, choix impossible)\n` +
+    `  - FORESHADOWING: Place des indices subtils sur des evenements futurs des actes 1-2\n` +
+    `  - PERSONNAGES MEMORABLES: PNJ avec personnalite forte, motivations complexes, secrets interessants\n` +
+    `  - DILEMMES MORAUX: Choix sans bonne reponse (sauver le village VS capturer le criminel qui s'enfuit)\n` +
+    `  - TRAHISONS ET ALLIANCES: Relations changeantes, ennemis qui deviennent allies et vice-versa\n` +
+    `  - SACRIFICES: Les joueurs doivent parfois abandonner quelque chose d'important pour reussir\n` +
+    `  - CONNEXIONS PERSONNELLES: Lie la quete au backstory d'au moins un joueur\n` +
+    `  \n` +
+    `  === RECOMPENSES NARRATIVES (PAS QUE MATERIELLES) ===\n` +
+    `  - REPUTATION: Le groupe devient celebre/infame dans la region\n` +
+    `  - TITRES: "Liberateurs de [Ville]", "Tueurs de Dragon", "Champions du Peuple"\n` +
+    `  - ALLES: PNJ puissants deviennent contacts fiables\n` +
+    `  - SECRETS: Connaissance de complots, emplacements de tresors, faiblesses d'ennemis\n` +
+    `  - CHANGEMENT DU MONDE: Village prospere, faction detruite, route commerciale rouverte\n` +
+    `  - ACCES: Entree a des lieux fermes (bibliotheque secrete, quartier noble, temple interdit)\n` +
+    `  \n` +
+    `  === REGLES CRITIQUES ===\n` +
+    `  1. JAMAIS de quete "tue 10 loups" ou "ramene 5 objets" sans contexte narratif fort\n` +
+    `  2. TOUJOURS au moins 3 PNJ importants par quete avec personnalites distinctes\n` +
+    `  3. TOUJOURS au moins 1 twist ou revelation inattendue\n` +
+    `  4. TOUJOURS des consequences visibles sur le monde (PNJ qui se souviennent, lieux qui changent)\n` +
+    `  5. TOUJOURS connecter a au moins 2 elements du LORE (histoire, faction, mythe, lieu)\n` +
+    `  6. PROGRESSE lentement - ne resous PAS la quete en 2-3 interactions\n` +
+    `  7. PREPARE le terrain pour futures quetes - le monde a des intrigues continues\n` +
+    `  \n` +
+    `  OBJECTIF: Les joueurs doivent se sentir INVESTIS emotionnellement, INTRIGUES par les mysteres, et FIERS de leurs accomplissements.`,
 ];
 
 // ─── PHASE DIRECTIVES ────────────────────────────────────────────────
@@ -581,175 +853,287 @@ function generateMerchantItems(avgLevel: number): any[] {
     // Weapons (VASTLY EXPANDED - 70+ items)
     const weapons = [
         // TIER 1 - Common weapons (10-50 gold)
-        { tier: 1, name: "Dague en fer", desc: "Une dague simple mais efficace.", price: 15, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 1 } },
-        { tier: 1, name: "Epee courte", desc: "Une lame equilibree pour les debutants.", price: 35, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2 } },
-        { tier: 1, name: "Baton de marche", desc: "Un baton robuste, utile en combat.", price: 10, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 1, wis: 1 } },
-        { tier: 1, name: "Gourdin clouté", desc: "Un gourdin massif avec des clous rouillés.", price: 12, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 1 } },
-        { tier: 1, name: "Hachette de bucheron", desc: "Une hache simple pour couper du bois... ou autre chose.", price: 18, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 2 } },
-        { tier: 1, name: "Lance de milice", desc: "Une lance basique utilisée par les gardes.", price: 20, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2 } },
-        { tier: 1, name: "Arc court", desc: "Un petit arc pour la chasse.", price: 25, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 1, dex: 1 } },
-        { tier: 1, name: "Masse d'armes", desc: "Une masse simple mais brutale.", price: 22, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2 } },
-        { tier: 1, name: "Faucille de fermier", desc: "Conçue pour la moisson, efficace en combat.", price: 14, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 1 } },
-        { tier: 1, name: "Fronde", desc: "Une fronde simple avec des projectiles.", price: 8, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 1 } },
-        { tier: 1, name: "Épieu de chasse", desc: "Un épieu pointu pour chasser le gibier.", price: 16, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 2 } },
-        { tier: 1, name: "Cimeterre rouillé", desc: "Une lame incurvée, bien qu'ancienne.", price: 30, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2 } },
-        { tier: 1, name: "Marteau de forgeron", desc: "Lourd et solide, parfait pour marteler.", price: 18, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 2 } },
-        { tier: 1, name: "Serpe", desc: "Une petite faux pour couper les broussailles.", price: 12, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 1 } },
-        { tier: 1, name: "Bâton ferré", desc: "Un bâton renforcé de fer aux extrémités.", price: 20, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 2 } },
-        
+        { tier: 1, name: "Dague en fer", desc: "Une dague simple mais efficace.", price: 45, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 1 } },
+        { tier: 1, name: "Epee courte", desc: "Une lame equilibree pour les debutants.", price: 105, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2 } },
+        { tier: 1, name: "Baton de marche", desc: "Un baton robuste, utile en combat.", price: 30, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 1, wis: 1 } },
+        { tier: 1, name: "Gourdin clouté", desc: "Un gourdin massif avec des clous rouillés.", price: 36, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 1 } },
+        { tier: 1, name: "Hachette de bucheron", desc: "Une hache simple pour couper du bois... ou autre chose.", price: 54, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 2 } },
+        { tier: 1, name: "Lance de milice", desc: "Une lance basique utilisée par les gardes.", price: 60, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2 } },
+        { tier: 1, name: "Arc court", desc: "Un petit arc pour la chasse.", price: 75, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 1, dex: 1 } },
+        { tier: 1, name: "Masse d'armes", desc: "Une masse simple mais brutale.", price: 66, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2 } },
+        { tier: 1, name: "Faucille de fermier", desc: "Conçue pour la moisson, efficace en combat.", price: 42, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 1 } },
+        { tier: 1, name: "Fronde", desc: "Une fronde simple avec des projectiles.", price: 24, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 1 } },
+        { tier: 1, name: "Épieu de chasse", desc: "Un épieu pointu pour chasser le gibier.", price: 48, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 2 } },
+        { tier: 1, name: "Cimeterre rouillé", desc: "Une lame incurvée, bien qu'ancienne.", price: 90, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2 } },
+        { tier: 1, name: "Marteau de forgeron", desc: "Lourd et solide, parfait pour marteler.", price: 54, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 2 } },
+        { tier: 1, name: "Serpe", desc: "Une petite faux pour couper les broussailles.", price: 36, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 1 } },
+        { tier: 1, name: "Bâton ferré", desc: "Un bâton renforcé de fer aux extrémités.", price: 60, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 2 } },
+
         // TIER 2 - Uncommon weapons (60-180 gold)
-        { tier: 2, name: "Epee longue", desc: "Une lame de qualité, forgée par un artisan.", price: 120, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
-        { tier: 2, name: "Arc de chasse", desc: "Un arc fiable pour la chasse et le combat.", price: 80, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, dex: 1 } },
-        { tier: 2, name: "Hache de bataille", desc: "Une hache lourde à double tranchant.", price: 110, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
-        { tier: 2, name: "Rapière élégante", desc: "Une lame fine pour l'escrime.", price: 95, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, dex: 2 } },
-        { tier: 2, name: "Arbalète lourde", desc: "Puissante mais lente à recharger.", price: 130, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 4 } },
-        { tier: 2, name: "Fléau d'armes", desc: "Une chaîne avec une boule cloutée.", price: 100, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
-        { tier: 2, name: "Cimeterre forgé", desc: "Lame incurvée bien entretenue.", price: 105, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
-        { tier: 2, name: "Hallebarde", desc: "Une arme d'hast polyvalente.", price: 115, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
-        { tier: 2, name: "Morgenstern", desc: "Une masse avec des pointes acérées.", price: 125, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
-        { tier: 2, name: "Arc long", desc: "Un grand arc pour tir à longue portée.", price: 140, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3, dex: 1 } },
-        { tier: 2, name: "Trident de pêcheur", desc: "Un trident aux dents acérées.", price: 90, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, dex: 1 } },
-        { tier: 2, name: "Masse étoilée", desc: "Boule hérissée de pointes sur un manche.", price: 110, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
-        { tier: 2, name: "Épée bâtarde", desc: "Peut être maniée à une ou deux mains.", price: 150, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 4 } },
-        { tier: 2, name: "Katana", desc: "Lame incurvée de tradition orientale.", price: 145, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3, dex: 1 } },
-        { tier: 2, name: "Dague empoisonnée", desc: "Lame fine avec réservoir de poison.", price: 135, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, dex: 1 } },
-        { tier: 2, name: "Lance de cavalerie", desc: "Longue lance pour charge montée.", price: 100, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
-        { tier: 2, name: "Bâton de combat", desc: "Bâton renforcé pour les moines.", price: 85, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, wis: 2 } },
-        { tier: 2, name: "Coutelas de pirate", desc: "Lame courbe pour combat rapproché.", price: 95, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, dex: 1 } },
-        { tier: 2, name: "Marteau de guerre léger", desc: "Marteau à une main bien équilibré.", price: 120, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
-        { tier: 2, name: "Javeline", desc: "Lance de jet avec bon équilibre.", price: 75, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, dex: 1 } },
-        { tier: 2, name: "Sceptre de mage", desc: "Sceptre canalisant l'énergie magique.", price: 160, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, int: 2 } },
-        { tier: 2, name: "Fouet à pointes", desc: "Fouet garni de lames acérées.", price: 105, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, dex: 2 } },
-        { tier: 2, name: "Pic de guerre", desc: "Pic lourd pour percer les armures.", price: 115, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
-        { tier: 2, name: "Kukri jumeau", desc: "Paire de lames incurvées.", price: 140, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, dex: 2 } },
-        
+        { tier: 2, name: "Epee longue", desc: "Une lame de qualité, forgée par un artisan.", price: 360, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
+        { tier: 2, name: "Arc de chasse", desc: "Un arc fiable pour la chasse et le combat.", price: 240, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, dex: 1 } },
+        { tier: 2, name: "Hache de bataille", desc: "Une hache lourde à double tranchant.", price: 330, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
+        { tier: 2, name: "Rapière élégante", desc: "Une lame fine pour l'escrime.", price: 285, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, dex: 2 } },
+        { tier: 2, name: "Arbalète lourde", desc: "Puissante mais lente à recharger.", price: 390, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 4 } },
+        { tier: 2, name: "Fléau d'armes", desc: "Une chaîne avec une boule cloutée.", price: 300, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
+        { tier: 2, name: "Cimeterre forgé", desc: "Lame incurvée bien entretenue.", price: 315, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
+        { tier: 2, name: "Hallebarde", desc: "Une arme d'hast polyvalente.", price: 345, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
+        { tier: 2, name: "Morgenstern", desc: "Une masse avec des pointes acérées.", price: 375, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
+        { tier: 2, name: "Arc long", desc: "Un grand arc pour tir à longue portée.", price: 420, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3, dex: 1 } },
+        { tier: 2, name: "Trident de pêcheur", desc: "Un trident aux dents acérées.", price: 270, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, dex: 1 } },
+        { tier: 2, name: "Masse étoilée", desc: "Boule hérissée de pointes sur un manche.", price: 330, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
+        { tier: 2, name: "Épée bâtarde", desc: "Peut être maniée à une ou deux mains.", price: 450, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 4 } },
+        { tier: 2, name: "Katana", desc: "Lame incurvée de tradition orientale.", price: 435, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3, dex: 1 } },
+        { tier: 2, name: "Dague empoisonnée", desc: "Lame fine avec réservoir de poison.", price: 405, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, dex: 1 } },
+        { tier: 2, name: "Lance de cavalerie", desc: "Longue lance pour charge montée.", price: 300, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
+        { tier: 2, name: "Bâton de combat", desc: "Bâton renforcé pour les moines.", price: 255, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, wis: 2 } },
+        { tier: 2, name: "Coutelas de pirate", desc: "Lame courbe pour combat rapproché.", price: 285, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, dex: 1 } },
+        { tier: 2, name: "Marteau de guerre léger", desc: "Marteau à une main bien équilibré.", price: 360, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
+        { tier: 2, name: "Javeline", desc: "Lance de jet avec bon équilibre.", price: 225, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, dex: 1 } },
+        { tier: 2, name: "Sceptre de mage", desc: "Sceptre canalisant l'énergie magique.", price: 480, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, int: 2 } },
+        { tier: 2, name: "Fouet à pointes", desc: "Fouet garni de lames acérées.", price: 315, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, dex: 2 } },
+        { tier: 2, name: "Pic de guerre", desc: "Pic lourd pour percer les armures.", price: 345, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3 } },
+        { tier: 2, name: "Kukri jumeau", desc: "Paire de lames incurvées.", price: 420, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 2, dex: 2 } },
+
         // TIER 3 - Rare weapons (250-500 gold)
-        { tier: 3, name: "Lame d'acier elfique", desc: "Une épée fine aux reflets argentés.", price: 350, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 4, dex: 1 } },
-        { tier: 3, name: "Marteau de guerre", desc: "Une arme dévastatrice pour les guerriers.", price: 400, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 5 } },
-        { tier: 3, name: "Arc composite elfique", desc: "Arc renforcé par magie elfique.", price: 420, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 4, dex: 2 } },
-        { tier: 3, name: "Claymore", desc: "Grande épée à deux mains des highlands.", price: 380, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 5 } },
-        { tier: 3, name: "Hache double", desc: "Hache à deux lames pour guerriers expérimentés.", price: 390, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 5 } },
-        { tier: 3, name: "Katana forgé par maître", desc: "Lame parfaitement équilibrée.", price: 450, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 4, dex: 2 } },
-        { tier: 3, name: "Bâton du sage", desc: "Bâton gravé de runes anciennes.", price: 410, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3, int: 3 } },
-        { tier: 3, name: "Rapière enchantée", desc: "Lame légère chargée de magie.", price: 430, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3, dex: 3 } },
-        { tier: 3, name: "Arbalète mécanique", desc: "Arbalète à rechargement automatique.", price: 460, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 5, dex: 1 } },
-        { tier: 3, name: "Morgenstern enchanté", desc: "Masse magique aux pointes brillantes.", price: 400, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 5 } },
-        { tier: 3, name: "Lance de dragon", desc: "Lance forgée dans des écailles de dragon.", price: 480, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 5, str: 1 } },
-        { tier: 3, name: "Trident de Neptune", desc: "Trident argenté canalisant l'eau.", price: 440, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 4, wis: 2 } },
-        { tier: 3, name: "Épée flamboyante", desc: "Lame ondulée aux reflets de feu.", price: 470, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 4, cha: 2 } },
-        { tier: 3, name: "Arc de glace", desc: "Arc magique tirant des flèches de givre.", price: 455, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 4, int: 2 } },
-        { tier: 3, name: "Faux de la mort", desc: "Grande faux à la lame sombre.", price: 435, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 5 } },
-        
+        { tier: 3, name: "Lame d'acier elfique", desc: "Une épée fine aux reflets argentés.", price: 1050, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 4, dex: 1 } },
+        { tier: 3, name: "Marteau de guerre", desc: "Une arme dévastatrice pour les guerriers.", price: 1200, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 5 } },
+        { tier: 3, name: "Arc composite elfique", desc: "Arc renforcé par magie elfique.", price: 1260, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 4, dex: 2 } },
+        { tier: 3, name: "Claymore", desc: "Grande épée à deux mains des highlands.", price: 1140, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 5 } },
+        { tier: 3, name: "Hache double", desc: "Hache à deux lames pour guerriers expérimentés.", price: 1170, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 5 } },
+        { tier: 3, name: "Katana forgé par maître", desc: "Lame parfaitement équilibrée.", price: 1350, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 4, dex: 2 } },
+        { tier: 3, name: "Bâton du sage", desc: "Bâton gravé de runes anciennes.", price: 1230, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3, int: 3 } },
+        { tier: 3, name: "Rapière enchantée", desc: "Lame légère chargée de magie.", price: 1290, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 3, dex: 3 } },
+        { tier: 3, name: "Arbalète mécanique", desc: "Arbalète à rechargement automatique.", price: 1380, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 5, dex: 1 } },
+        { tier: 3, name: "Morgenstern enchanté", desc: "Masse magique aux pointes brillantes.", price: 1200, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 5 } },
+        { tier: 3, name: "Lance de dragon", desc: "Lance forgée dans des écailles de dragon.", price: 1440, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 5, str: 1 } },
+        { tier: 3, name: "Trident de Neptune", desc: "Trident argenté canalisant l'eau.", price: 1320, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 4, wis: 2 } },
+        { tier: 3, name: "Épée flamboyante", desc: "Lame ondulée aux reflets de feu.", price: 1410, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 4, cha: 2 } },
+        { tier: 3, name: "Arc de glace", desc: "Arc magique tirant des flèches de givre.", price: 1365, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 4, int: 2 } },
+        { tier: 3, name: "Faux de la mort", desc: "Grande faux à la lame sombre.", price: 1305, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 5 } },
+
         // TIER 4 - Legendary weapons (600-1500 gold)
-        { tier: 4, name: "Lame runique", desc: "Gravée de runes anciennes qui luisent faiblement.", price: 800, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 6, int: 2 } },
-        { tier: 4, name: "Excalibur", desc: "Épée légendaire des rois.", price: 1200, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 7, cha: 3 } },
-        { tier: 4, name: "Marteau de Thor", desc: "Marteau divin frappant comme la foudre.", price: 1100, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 8 } },
-        { tier: 4, name: "Arc d'Artémis", desc: "Arc béni par la déesse de la chasse.", price: 950, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 6, dex: 3 } },
-        { tier: 4, name: "Lame des ombres", desc: "Épée noire absorbant la lumière.", price: 1050, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 6, dex: 2, int: 1 } },
-        { tier: 4, name: "Sceptre suprême", desc: "Sceptre pulsant de puissance arcanique.", price: 1300, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 5, int: 4 } },
-        { tier: 4, name: "Hache du berserker", desc: "Hache maudite augmentant la rage.", price: 900, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 7, str: 2 } },
-        { tier: 4, name: "Épée sainte", desc: "Lame bénite repoussant le mal.", price: 1150, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 6, wis: 3 } },
-        { tier: 4, name: "Trident de Poséidon", desc: "Arme du dieu des mers.", price: 1250, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 7, wis: 2 } },
-        { tier: 4, name: "Arc du phénix", desc: "Arc tirant des flèches enflammées.", price: 1000, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 6, dex: 2, int: 2 } },
+        { tier: 4, name: "Lame runique", desc: "Gravée de runes anciennes qui luisent faiblement.", price: 2400, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 6, int: 2 } },
+        { tier: 4, name: "Excalibur", desc: "Épée légendaire des rois.", price: 3600, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 7, cha: 3 } },
+        { tier: 4, name: "Marteau de Thor", desc: "Marteau divin frappant comme la foudre.", price: 3300, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 8 } },
+        { tier: 4, name: "Arc d'Artémis", desc: "Arc béni par la déesse de la chasse.", price: 2850, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 6, dex: 3 } },
+        { tier: 4, name: "Lame des ombres", desc: "Épée noire absorbant la lumière.", price: 3150, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 6, dex: 2, int: 1 } },
+        { tier: 4, name: "Sceptre suprême", desc: "Sceptre pulsant de puissance arcanique.", price: 3900, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 5, int: 4 } },
+        { tier: 4, name: "Hache du berserker", desc: "Hache maudite augmentant la rage.", price: 2700, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 7, str: 2 } },
+        { tier: 4, name: "Épée sainte", desc: "Lame bénite repoussant le mal.", price: 3450, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 6, wis: 3 } },
+        { tier: 4, name: "Trident de Poséidon", desc: "Arme du dieu des mers.", price: 3750, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 7, wis: 2 } },
+        { tier: 4, name: "Arc du phénix", desc: "Arc tirant des flèches enflammées.", price: 3000, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 6, dex: 2, int: 2 } },
     ];
 
     // Armors (VASTLY EXPANDED - 45+ items)
     const armors = [
         // TIER 1 - Light armors (15-60 gold)
-        { tier: 1, name: "Tunique renforcee", desc: "Une tunique avec des plaques de cuir.", price: 25, type: "armor", category: "light", slot: "chest", stats: { ac: 1 } },
-        { tier: 1, name: "Armure de cuir", desc: "Protection basique mais fiable.", price: 45, type: "armor", category: "light", slot: "chest", stats: { ac: 2 } },
-        { tier: 1, name: "Veste en toile épaisse", desc: "Tissu résistant offrant protection minimale.", price: 18, type: "armor", category: "light", slot: "chest", stats: { ac: 1 } },
-        { tier: 1, name: "Cuir souple", desc: "Armure légère pour voyageurs.", price: 35, type: "armor", category: "light", slot: "chest", stats: { ac: 1, dex: 1 } },
-        { tier: 1, name: "Brigandine simple", desc: "Lamelles de métal sous tissu.", price: 50, type: "armor", category: "light", slot: "chest", stats: { ac: 2 } },
-        { tier: 1, name: "Gambison", desc: "Vêtement matelassé absorbant les coups.", price: 30, type: "armor", category: "light", slot: "chest", stats: { ac: 1 } },
-        { tier: 1, name: "Cuir tanné", desc: "Cuir traité résistant à l'eau.", price: 40, type: "armor", category: "light", slot: "chest", stats: { ac: 1 } },
-        { tier: 1, name: "Manteau renforcé", desc: "Long manteau avec protections cachées.", price: 42, type: "armor", category: "light", slot: "chest", stats: { ac: 1, dex: 1 } },
-        
+        { tier: 1, name: "Tunique renforcee", desc: "Une tunique avec des plaques de cuir.", price: 75, type: "armor", category: "light", slot: "chest", stats: { ac: 1 } },
+        { tier: 1, name: "Armure de cuir", desc: "Protection basique mais fiable.", price: 135, type: "armor", category: "light", slot: "chest", stats: { ac: 2 } },
+        { tier: 1, name: "Veste en toile épaisse", desc: "Tissu résistant offrant protection minimale.", price: 54, type: "armor", category: "light", slot: "chest", stats: { ac: 1 } },
+        { tier: 1, name: "Cuir souple", desc: "Armure légère pour voyageurs.", price: 105, type: "armor", category: "light", slot: "chest", stats: { ac: 1, dex: 1 } },
+        { tier: 1, name: "Brigandine simple", desc: "Lamelles de métal sous tissu.", price: 150, type: "armor", category: "light", slot: "chest", stats: { ac: 2 } },
+        { tier: 1, name: "Gambison", desc: "Vêtement matelassé absorbant les coups.", price: 90, type: "armor", category: "light", slot: "chest", stats: { ac: 1 } },
+        { tier: 1, name: "Cuir tanné", desc: "Cuir traité résistant à l'eau.", price: 120, type: "armor", category: "light", slot: "chest", stats: { ac: 1 } },
+        { tier: 1, name: "Manteau renforcé", desc: "Long manteau avec protections cachées.", price: 126, type: "armor", category: "light", slot: "chest", stats: { ac: 1, dex: 1 } },
+
         // TIER 2 - Medium armors (100-250 gold)
-        { tier: 2, name: "Cotte de mailles legere", desc: "Mailles fines offrant bonne protection.", price: 150, type: "armor", category: "medium", slot: "chest", stats: { ac: 3 } },
-        { tier: 2, name: "Plastron de cuir cloute", desc: "Cuir renforce de clous metalliques.", price: 180, type: "armor", category: "medium", slot: "chest", stats: { ac: 3, con: 1 } },
-        { tier: 2, name: "Armure d'écailles", desc: "Écailles métalliques sur cuir.", price: 165, type: "armor", category: "medium", slot: "chest", stats: { ac: 3 } },
-        { tier: 2, name: "Brigandine renforcée", desc: "Plaques d'acier rivetées sur tissu.", price: 190, type: "armor", category: "medium", slot: "chest", stats: { ac: 3 } },
-        { tier: 2, name: "Cotte de mailles", desc: "Armure de mailles traditionnelle.", price: 200, type: "armor", category: "medium", slot: "chest", stats: { ac: 4 } },
-        { tier: 2, name: "Plastron de bronze", desc: "Armure de métal poli.", price: 220, type: "armor", category: "medium", slot: "chest", stats: { ac: 4 } },
-        { tier: 2, name: "Cuir de dragon jeune", desc: "Écailles souples mais résistantes.", price: 240, type: "armor", category: "medium", slot: "chest", stats: { ac: 4, dex: 1 } },
-        { tier: 2, name: "Armure lamellaire", desc: "Lamelles de métal laquées.", price: 175, type: "armor", category: "medium", slot: "chest", stats: { ac: 3 } },
-        { tier: 2, name: "Cuirasse de guerre", desc: "Torse renforcé de plaques.", price: 210, type: "armor", category: "medium", slot: "chest", stats: { ac: 4 } },
-        { tier: 2, name: "Harnois partiel", desc: "Plaques sur zones vitales.", price: 230, type: "armor", category: "medium", slot: "chest", stats: { ac: 4 } },
-        
+        { tier: 2, name: "Cotte de mailles legere", desc: "Mailles fines offrant bonne protection.", price: 450, type: "armor", category: "medium", slot: "chest", stats: { ac: 3 } },
+        { tier: 2, name: "Plastron de cuir cloute", desc: "Cuir renforce de clous metalliques.", price: 540, type: "armor", category: "medium", slot: "chest", stats: { ac: 3, con: 1 } },
+        { tier: 2, name: "Armure d'écailles", desc: "Écailles métalliques sur cuir.", price: 495, type: "armor", category: "medium", slot: "chest", stats: { ac: 3 } },
+        { tier: 2, name: "Brigandine renforcée", desc: "Plaques d'acier rivetées sur tissu.", price: 570, type: "armor", category: "medium", slot: "chest", stats: { ac: 3 } },
+        { tier: 2, name: "Cotte de mailles", desc: "Armure de mailles traditionnelle.", price: 600, type: "armor", category: "medium", slot: "chest", stats: { ac: 4 } },
+        { tier: 2, name: "Plastron de bronze", desc: "Armure de métal poli.", price: 660, type: "armor", category: "medium", slot: "chest", stats: { ac: 4 } },
+        { tier: 2, name: "Cuir de dragon jeune", desc: "Écailles souples mais résistantes.", price: 720, type: "armor", category: "medium", slot: "chest", stats: { ac: 4, dex: 1 } },
+        { tier: 2, name: "Armure lamellaire", desc: "Lamelles de métal laquées.", price: 525, type: "armor", category: "medium", slot: "chest", stats: { ac: 3 } },
+        { tier: 2, name: "Cuirasse de guerre", desc: "Torse renforcé de plaques.", price: 630, type: "armor", category: "medium", slot: "chest", stats: { ac: 4 } },
+        { tier: 2, name: "Harnois partiel", desc: "Plaques sur zones vitales.", price: 690, type: "armor", category: "medium", slot: "chest", stats: { ac: 4 } },
+
         // TIER 3 - Heavy & Rare armors (350-650 gold)
-        { tier: 3, name: "Harnois leger", desc: "Armure de plates bien ajustee.", price: 450, type: "armor", category: "heavy", slot: "chest", stats: { ac: 5 } },
-        { tier: 3, name: "Armure de plates complète", desc: "Protection totale articulée.", price: 550, type: "armor", category: "heavy", slot: "chest", stats: { ac: 6 } },
-        { tier: 3, name: "Cotte de mailles elfique", desc: "Mailles fines comme de la soie.", price: 480, type: "armor", category: "medium", slot: "chest", stats: { ac: 5, dex: 2 } },
-        { tier: 3, name: "Armure de mithril", desc: "Métal léger et ultra-résistant.", price: 620, type: "armor", category: "light", slot: "chest", stats: { ac: 5, dex: 2 } },
-        { tier: 3, name: "Cuirasse du chevalier", desc: "Armure ornée d'armoiries.", price: 500, type: "armor", category: "heavy", slot: "chest", stats: { ac: 5, cha: 1 } },
-        { tier: 3, name: "Armure de plates naines", desc: "Forgée par maîtres nains.", price: 580, type: "armor", category: "heavy", slot: "chest", stats: { ac: 6, con: 1 } },
-        { tier: 3, name: "Cuir de dragon adulte", desc: "Écailles quasi-impénétrables.", price: 600, type: "armor", category: "medium", slot: "chest", stats: { ac: 5, dex: 1 } },
-        { tier: 3, name: "Harnois gothique", desc: "Armure à cannelures protectrices.", price: 530, type: "armor", category: "heavy", slot: "chest", stats: { ac: 6 } },
-        { tier: 3, name: "Armure adamantine", desc: "Métal noir extrêmement dur.", price: 640, type: "armor", category: "heavy", slot: "chest", stats: { ac: 6, str: 1 } },
-        { tier: 3, name: "Robe de l'archimage", desc: "Tissus magiques protecteurs.", price: 520, type: "armor", category: "light", slot: "chest", stats: { ac: 4, int: 3 } },
-        
+        { tier: 3, name: "Harnois leger", desc: "Armure de plates bien ajustee.", price: 1350, type: "armor", category: "heavy", slot: "chest", stats: { ac: 5 } },
+        { tier: 3, name: "Armure de plates complète", desc: "Protection totale articulée.", price: 1650, type: "armor", category: "heavy", slot: "chest", stats: { ac: 6 } },
+        { tier: 3, name: "Cotte de mailles elfique", desc: "Mailles fines comme de la soie.", price: 1440, type: "armor", category: "medium", slot: "chest", stats: { ac: 5, dex: 2 } },
+        { tier: 3, name: "Armure de mithril", desc: "Métal léger et ultra-résistant.", price: 1860, type: "armor", category: "light", slot: "chest", stats: { ac: 5, dex: 2 } },
+        { tier: 3, name: "Cuirasse du chevalier", desc: "Armure ornée d'armoiries.", price: 1500, type: "armor", category: "heavy", slot: "chest", stats: { ac: 5, cha: 1 } },
+        { tier: 3, name: "Armure de plates naines", desc: "Forgée par maîtres nains.", price: 1740, type: "armor", category: "heavy", slot: "chest", stats: { ac: 6, con: 1 } },
+        { tier: 3, name: "Cuir de dragon adulte", desc: "Écailles quasi-impénétrables.", price: 1800, type: "armor", category: "medium", slot: "chest", stats: { ac: 5, dex: 1 } },
+        { tier: 3, name: "Harnois gothique", desc: "Armure à cannelures protectrices.", price: 1590, type: "armor", category: "heavy", slot: "chest", stats: { ac: 6 } },
+        { tier: 3, name: "Armure adamantine", desc: "Métal noir extrêmement dur.", price: 1920, type: "armor", category: "heavy", slot: "chest", stats: { ac: 6, str: 1 } },
+        { tier: 3, name: "Robe de l'archimage", desc: "Tissus magiques protecteurs.", price: 1560, type: "armor", category: "light", slot: "chest", stats: { ac: 4, int: 3 } },
+
         // TIER 4 - Legendary armors (900-1800 gold)
-        { tier: 4, name: "Armure de plates ouvragee", desc: "Chef-d'oeuvre de forgerons nains.", price: 1200, type: "armor", category: "heavy", slot: "chest", stats: { ac: 6, con: 2 } },
-        { tier: 4, name: "Armure céleste", desc: "Armure bénie par les dieux.", price: 1500, type: "armor", category: "heavy", slot: "chest", stats: { ac: 7, wis: 2, cha: 2 } },
-        { tier: 4, name: "Écailles de dragon ancien", desc: "Armure quasi-indestructible.", price: 1350, type: "armor", category: "medium", slot: "chest", stats: { ac: 7, con: 2, dex: 1 } },
-        { tier: 4, name: "Mithril enchanté", desc: "Métal magique ultra-léger.", price: 1450, type: "armor", category: "light", slot: "chest", stats: { ac: 6, dex: 3, int: 2 } },
-        { tier: 4, name: "Armure du héros", desc: "Forgée pour les champions.", price: 1600, type: "armor", category: "heavy", slot: "chest", stats: { ac: 8, str: 2 } },
-        { tier: 4, name: "Robe de l'oracle", desc: "Vêtements divins protégeant l'esprit.", price: 1300, type: "armor", category: "light", slot: "chest", stats: { ac: 5, wis: 4 } },
-        { tier: 4, name: "Armure dimensionnelle", desc: "Phasage entre dimensions.", price: 1550, type: "armor", category: "medium", slot: "chest", stats: { ac: 7, dex: 2, int: 2 } },
-        { tier: 4, name: "Harnois runique", desc: "Runes de protection gravées.", price: 1400, type: "armor", category: "heavy", slot: "chest", stats: { ac: 7, con: 2, int: 1 } },
-        { tier: 4, name: "Armure vivante", desc: "Armure organique s'adaptant au porteur.", price: 1650, type: "armor", category: "medium", slot: "chest", stats: { ac: 7, con: 3 } },
-        { tier: 4, name: "Peau de titan", desc: "Cuir d'un être légendaire.", price: 1700, type: "armor", category: "light", slot: "chest", stats: { ac: 6, str: 2, dex: 2 } },
+        { tier: 4, name: "Armure de plates ouvragee", desc: "Chef-d'oeuvre de forgerons nains.", price: 3600, type: "armor", category: "heavy", slot: "chest", stats: { ac: 6, con: 2 } },
+        { tier: 4, name: "Armure céleste", desc: "Armure bénie par les dieux.", price: 4500, type: "armor", category: "heavy", slot: "chest", stats: { ac: 7, wis: 2, cha: 2 } },
+        { tier: 4, name: "Écailles de dragon ancien", desc: "Armure quasi-indestructible.", price: 4050, type: "armor", category: "medium", slot: "chest", stats: { ac: 7, con: 2, dex: 1 } },
+        { tier: 4, name: "Mithril enchanté", desc: "Métal magique ultra-léger.", price: 4350, type: "armor", category: "light", slot: "chest", stats: { ac: 6, dex: 3, int: 2 } },
+        { tier: 4, name: "Armure du héros", desc: "Forgée pour les champions.", price: 4800, type: "armor", category: "heavy", slot: "chest", stats: { ac: 8, str: 2 } },
+        { tier: 4, name: "Robe de l'oracle", desc: "Vêtements divins protégeant l'esprit.", price: 3900, type: "armor", category: "light", slot: "chest", stats: { ac: 5, wis: 4 } },
+        { tier: 4, name: "Armure dimensionnelle", desc: "Phasage entre dimensions.", price: 4650, type: "armor", category: "medium", slot: "chest", stats: { ac: 7, dex: 2, int: 2 } },
+        { tier: 4, name: "Harnois runique", desc: "Runes de protection gravées.", price: 4200, type: "armor", category: "heavy", slot: "chest", stats: { ac: 7, con: 2, int: 1 } },
+        { tier: 4, name: "Armure vivante", desc: "Armure organique s'adaptant au porteur.", price: 4950, type: "armor", category: "medium", slot: "chest", stats: { ac: 7, con: 3 } },
+        { tier: 4, name: "Peau de titan", desc: "Cuir d'un être légendaire.", price: 5100, type: "armor", category: "light", slot: "chest", stats: { ac: 6, str: 2, dex: 2 } },
     ];
 
     // Shields (EXPANDED - 18+ items)
     const shields = [
         // TIER 1 - Common shields (15-50 gold)
-        { tier: 1, name: "Bouclier en bois", desc: "Un bouclier simple mais solide.", price: 20, type: "shield", category: "shield", slot: "offhand", stats: { ac: 1 } },
-        { tier: 1, name: "Targe", desc: "Petit bouclier rond pour parer.", price: 25, type: "shield", category: "shield", slot: "offhand", stats: { ac: 1, dex: 1 } },
-        { tier: 1, name: "Rondache", desc: "Bouclier circulaire en fer.", price: 30, type: "shield", category: "shield", slot: "offhand", stats: { ac: 1 } },
-        { tier: 1, name: "Écu de milice", desc: "Bouclier standard des gardes.", price: 35, type: "shield", category: "shield", slot: "offhand", stats: { ac: 1 } },
-        { tier: 1, name: "Buckler", desc: "Très petit bouclier pour duellistes.", price: 22, type: "shield", category: "shield", slot: "offhand", stats: { dex: 1 } },
-        
+        { tier: 1, name: "Bouclier en bois", desc: "Un bouclier simple mais solide.", price: 60, type: "shield", category: "shield", slot: "offhand", stats: { ac: 1 } },
+        { tier: 1, name: "Targe", desc: "Petit bouclier rond pour parer.", price: 75, type: "shield", category: "shield", slot: "offhand", stats: { ac: 1, dex: 1 } },
+        { tier: 1, name: "Rondache", desc: "Bouclier circulaire en fer.", price: 90, type: "shield", category: "shield", slot: "offhand", stats: { ac: 1 } },
+        { tier: 1, name: "Écu de milice", desc: "Bouclier standard des gardes.", price: 105, type: "shield", category: "shield", slot: "offhand", stats: { ac: 1 } },
+        { tier: 1, name: "Buckler", desc: "Très petit bouclier pour duellistes.", price: 66, type: "shield", category: "shield", slot: "offhand", stats: { dex: 1 } },
+
         // TIER 2 - Uncommon shields (80-180 gold)
-        { tier: 2, name: "Bouclier cercle de fer", desc: "Bouclier renforce de metal.", price: 80, type: "shield", category: "shield", slot: "offhand", stats: { ac: 2 } },
-        { tier: 2, name: "Pavois", desc: "Grand bouclier protégeant tout le corps.", price: 140, type: "shield", category: "shield", slot: "offhand", stats: { ac: 3 } },
-        { tier: 2, name: "Écu armorié", desc: "Bouclier portant des armoiries nobles.", price: 150, type: "shield", category: "shield", slot: "offhand", stats: { ac: 2, cha: 1 } },
-        { tier: 2, name: "Bouclier à pointes", desc: "Bordé de pointes acérées.", price: 135, type: "shield", category: "shield", slot: "offhand", stats: { ac: 2, atk: 1 } },
-        { tier: 2, name: "Heaume de fer", desc: "Bouclier lourd en fer forgé.", price: 125, type: "shield", category: "shield", slot: "offhand", stats: { ac: 2 } },
-        
+        { tier: 2, name: "Bouclier cercle de fer", desc: "Bouclier renforce de metal.", price: 240, type: "shield", category: "shield", slot: "offhand", stats: { ac: 2 } },
+        { tier: 2, name: "Pavois", desc: "Grand bouclier protégeant tout le corps.", price: 420, type: "shield", category: "shield", slot: "offhand", stats: { ac: 3 } },
+        { tier: 2, name: "Écu armorié", desc: "Bouclier portant des armoiries nobles.", price: 450, type: "shield", category: "shield", slot: "offhand", stats: { ac: 2, cha: 1 } },
+        { tier: 2, name: "Bouclier à pointes", desc: "Bordé de pointes acérées.", price: 405, type: "shield", category: "shield", slot: "offhand", stats: { ac: 2, atk: 1 } },
+        { tier: 2, name: "Heaume de fer", desc: "Bouclier lourd en fer forgé.", price: 375, type: "shield", category: "shield", slot: "offhand", stats: { ac: 2 } },
+
         // TIER 3 - Rare shields (250-600 gold)
-        { tier: 3, name: "Ecu de chevalier", desc: "Un bouclier orne d'armoiries.", price: 250, type: "shield", category: "shield", slot: "offhand", stats: { ac: 3 } },
-        { tier: 3, name: "Bouclier en acier elfique", desc: "Léger mais très résistant.", price: 450, type: "shield", category: "shield", slot: "offhand", stats: { ac: 3, dex: 1 } },
-        { tier: 3, name: "Écu de mithril", desc: "Bouclier en métal magique.", price: 520, type: "shield", category: "shield", slot: "offhand", stats: { ac: 3, dex: 2 } },
-        { tier: 3, name: "Pavois enchanté", desc: "Grand bouclier magiquement renforcé.", price: 480, type: "shield", category: "shield", slot: "offhand", stats: { ac: 4 } },
-        { tier: 3, name: "Bouclier de dragon", desc: "Forgé dans une écaille de dragon.", price: 550, type: "shield", category: "shield", slot: "offhand", stats: { ac: 3, con: 2 } },
-        
+        { tier: 3, name: "Ecu de chevalier", desc: "Un bouclier orne d'armoiries.", price: 750, type: "shield", category: "shield", slot: "offhand", stats: { ac: 3 } },
+        { tier: 3, name: "Bouclier en acier elfique", desc: "Léger mais très résistant.", price: 1350, type: "shield", category: "shield", slot: "offhand", stats: { ac: 3, dex: 1 } },
+        { tier: 3, name: "Écu de mithril", desc: "Bouclier en métal magique.", price: 1560, type: "shield", category: "shield", slot: "offhand", stats: { ac: 3, dex: 2 } },
+        { tier: 3, name: "Pavois enchanté", desc: "Grand bouclier magiquement renforcé.", price: 1440, type: "shield", category: "shield", slot: "offhand", stats: { ac: 4 } },
+        { tier: 3, name: "Bouclier de dragon", desc: "Forgé dans une écaille de dragon.", price: 1650, type: "shield", category: "shield", slot: "offhand", stats: { ac: 3, con: 2 } },
+
         // TIER 4 - Legendary shields (800-1500 gold)
-        { tier: 4, name: "Aegis", desc: "Bouclier légendaire des héros.", price: 1200, type: "shield", category: "shield", slot: "offhand", stats: { ac: 4, con: 2 } },
-        { tier: 4, name: "Bouclier de lumière", desc: "Émettant une aura protectrice.", price: 1100, type: "shield", category: "shield", slot: "offhand", stats: { ac: 4, wis: 2 } },
-        { tier: 4, name: "Bouclier miroir", desc: "Réfléchit les sorts ennemis.", price: 1350, type: "shield", category: "shield", slot: "offhand", stats: { ac: 3, int: 3 } },
-        { tier: 4, name: "Égide divine", desc: "Bouclier béni par les dieux.", price: 1450, type: "shield", category: "shield", slot: "offhand", stats: { ac: 5, wis: 2 } },
+        { tier: 4, name: "Aegis", desc: "Bouclier légendaire des héros.", price: 3600, type: "shield", category: "shield", slot: "offhand", stats: { ac: 4, con: 2 } },
+        { tier: 4, name: "Bouclier de lumière", desc: "Émettant une aura protectrice.", price: 3300, type: "shield", category: "shield", slot: "offhand", stats: { ac: 4, wis: 2 } },
+        { tier: 4, name: "Bouclier miroir", desc: "Réfléchit les sorts ennemis.", price: 4050, type: "shield", category: "shield", slot: "offhand", stats: { ac: 3, int: 3 } },
+        { tier: 4, name: "Égide divine", desc: "Bouclier béni par les dieux.", price: 4350, type: "shield", category: "shield", slot: "offhand", stats: { ac: 5, wis: 2 } },
     ];
 
-    // Consumables
+    // Consumables (MASSIVELY EXPANDED - 60+ items)
     const consumables = [
-        { tier: 1, name: "Potion de soin mineure", desc: "Restaure 2d4+2 PV.", price: 25, type: "consumable", slot: "none", stats: {}, effect: "heal", healDice: "2d4+2" },
-        { tier: 1, name: "Antidote", desc: "Guerit les poisons mineurs.", price: 30, type: "consumable", slot: "none", stats: {}, effect: "cure_poison" },
-        { tier: 1, name: "Ration de voyage", desc: "Nourriture pour une journee.", price: 5, type: "consumable", slot: "none", stats: {} },
-        { tier: 2, name: "Potion de soin", desc: "Restaure 4d4+4 PV.", price: 75, type: "consumable", slot: "none", stats: {}, effect: "heal", healDice: "4d4+4" },
-        { tier: 2, name: "Potion d'energie", desc: "Restaure 20 points de ressource.", price: 60, type: "consumable", slot: "none", stats: {}, effect: "restore_resource" },
-        { tier: 3, name: "Potion de soin superieure", desc: "Restaure 8d4+8 PV.", price: 200, type: "consumable", slot: "none", stats: {}, effect: "heal", healDice: "8d4+8" },
-        { tier: 3, name: "Elixir de force", desc: "+2 FOR pendant 1 heure.", price: 150, type: "consumable", slot: "none", stats: { str: 2 }, effect: "buff_temp" },
-        { tier: 4, name: "Potion de soin supreme", desc: "Restaure 10d4+20 PV.", price: 500, type: "consumable", slot: "none", stats: {}, effect: "heal", healDice: "10d4+20" },
+        // TIER 1 - Basic consumables (5-50 gold)
+        { tier: 1, name: "Potion de soin mineure", desc: "Restaure 2d4+2 PV.", price: 75, type: "consumable", slot: "none", stats: {}, effect: "heal", healDice: "2d4+2" },
+        { tier: 1, name: "Antidote", desc: "Guerit les poisons mineurs.", price: 90, type: "consumable", slot: "none", stats: {}, effect: "cure_poison" },
+        { tier: 1, name: "Ration de voyage", desc: "Nourriture pour une journee.", price: 15, type: "consumable", slot: "none", stats: {} },
+        { tier: 1, name: "Eau bénite", desc: "Nuit aux morts-vivants.", price: 105, type: "consumable", slot: "none", stats: {}, effect: "holy_water" },
+        { tier: 1, name: "Huile de torche", desc: "Brûle pendant des heures.", price: 24, type: "consumable", slot: "none", stats: {} },
+        { tier: 1, name: "Corde (15m)", desc: "Solide et résistante.", price: 30, type: "consumable", slot: "none", stats: {} },
+        { tier: 1, name: "Bandages", desc: "Pour soigner les blessures légères.", price: 36, type: "consumable", slot: "none", stats: {}, effect: "heal", healDice: "1d4+1" },
+        { tier: 1, name: "Kit de premiers soins", desc: "Matériel médical basique.", price: 120, type: "consumable", slot: "none", stats: {}, effect: "heal", healDice: "1d6+2" },
+        { tier: 1, name: "Gourde d'eau", desc: "Eau fraîche et potable.", price: 18, type: "consumable", slot: "none", stats: {} },
+        { tier: 1, name: "Pierre à aiguiser", desc: "Pour entretenir les lames.", price: 45, type: "consumable", slot: "none", stats: {} },
+        { tier: 1, name: "Savon", desc: "Pour l'hygiène quotidienne.", price: 9, type: "consumable", slot: "none", stats: {} },
+        { tier: 1, name: "Sel (sachet)", desc: "Pour conserver la nourriture.", price: 12, type: "consumable", slot: "none", stats: {} },
+        { tier: 1, name: "Herbes médicinales", desc: "Plantes aux propriétés curatives.", price: 54, type: "consumable", slot: "none", stats: {}, effect: "heal", healDice: "1d4" },
+        { tier: 1, name: "Potion de courage", desc: "Réduit la peur temporairement.", price: 84, type: "consumable", slot: "none", stats: {}, effect: "resist_fear" },
+        { tier: 1, name: "Torche x5", desc: "Lot de 5 torches.", price: 30, type: "consumable", slot: "none", stats: {} },
+
+        // TIER 2 - Improved consumables (60-200 gold)
+        { tier: 2, name: "Potion de soin", desc: "Restaure 4d4+4 PV.", price: 225, type: "consumable", slot: "none", stats: {}, effect: "heal", healDice: "4d4+4" },
+        { tier: 2, name: "Potion d'energie", desc: "Restaure 20 points de ressource.", price: 180, type: "consumable", slot: "none", stats: {}, effect: "restore_resource" },
+        { tier: 2, name: "Antidote majeur", desc: "Guérit les poisons graves.", price: 270, type: "consumable", slot: "none", stats: {}, effect: "cure_strong_poison" },
+        { tier: 2, name: "Potion d'agilité", desc: "+2 DEX pendant 1 heure.", price: 330, type: "consumable", slot: "none", stats: { dex: 2 }, effect: "buff_temp" },
+        { tier: 2, name: "Potion de résistance", desc: "Résistance aux éléments (1h).", price: 375, type: "consumable", slot: "none", stats: {}, effect: "resist_elements" },
+        { tier: 2, name: "Onguent de guérison", desc: "Soigne sur la durée (3d6 PV/heure x 3h).", price: 285, type: "consumable", slot: "none", stats: {}, effect: "heal_over_time" },
+        { tier: 2, name: "Parchemin de Projectile magique", desc: "Lance 3 projectiles (1d4+1 chacun).", price: 255, type: "consumable", slot: "none", stats: {}, effect: "magic_missile" },
+        { tier: 2, name: "Parchemin de Bouclier", desc: "+4 CA pendant 10 minutes.", price: 300, type: "consumable", slot: "none", stats: {}, effect: "temp_ac" },
+        { tier: 2, name: "Potion d'invisibilité mineure", desc: "Invisibilité pendant 1 minute.", price: 540, type: "consumable", slot: "none", stats: {}, effect: "invisibility" },
+        { tier: 2, name: "Élixir de vision", desc: "Vision dans le noir (2h).", price: 315, type: "consumable", slot: "none", stats: {}, effect: "darkvision" },
+        { tier: 2, name: "Potion de respiration aquatique", desc: "Respirez sous l'eau (1h).", price: 345, type: "consumable", slot: "none", stats: {}, effect: "water_breathing" },
+        { tier: 2, name: "Baume régénérant", desc: "Régénération de 1 PV/tour pendant 10 tours.", price: 360, type: "consumable", slot: "none", stats: {}, effect: "regen" },
+        { tier: 2, name: "Potion de lévitation", desc: "Flottez dans les airs (10 min).", price: 405, type: "consumable", slot: "none", stats: {}, effect: "levitation" },
+        { tier: 2, name: "Huile magique", desc: "Arme +1 pendant 1 heure.", price: 420, type: "consumable", slot: "none", stats: {}, effect: "weapon_oil" },
+        { tier: 2, name: "Poudre de disparition", desc: "Crée un nuage de fumée opaque.", price: 225, type: "consumable", slot: "none", stats: {}, effect: "smoke_cloud" },
+        { tier: 2, name: "Pierre lumineuse", desc: "Émet de la lumière pendant 12h.", price: 195, type: "consumable", slot: "none", stats: {} },
+        { tier: 2, name: "Potion de rapidité", desc: "+10 vitesse pendant 1 minute.", price: 450, type: "consumable", slot: "none", stats: {}, effect: "speed_boost" },
+        { tier: 2, name: "Élixir d'endurance", desc: "+2 CON pendant 8 heures.", price: 330, type: "consumable", slot: "none", stats: { con: 2 }, effect: "buff_temp" },
+
+        // TIER 3 - Rare consumables (250-600 gold)
+        { tier: 3, name: "Potion de soin superieure", desc: "Restaure 8d4+8 PV.", price: 600, type: "consumable", slot: "none", stats: {}, effect: "heal", healDice: "8d4+8" },
+        { tier: 3, name: "Elixir de force", desc: "+2 FOR pendant 1 heure.", price: 450, type: "consumable", slot: "none", stats: { str: 2 }, effect: "buff_temp" },
+        { tier: 3, name: "Potion d'héroïsme", desc: "+4 FOR, +4 DEX, +4 CON (10 min).", price: 1200, type: "consumable", slot: "none", stats: { str: 4, dex: 4, con: 4 }, effect: "buff_temp" },
+        { tier: 3, name: "Parchemin de Boule de feu", desc: "8d6 dégâts de feu dans une zone.", price: 1050, type: "consumable", slot: "none", stats: {}, effect: "fireball" },
+        { tier: 3, name: "Parchemin de Téléportation", desc: "Téléportation jusqu'à 100m.", price: 1350, type: "consumable", slot: "none", stats: {}, effect: "teleport" },
+        { tier: 3, name: "Potion de vol", desc: "Vitesse de vol 60 pieds (1h).", price: 1140, type: "consumable", slot: "none", stats: {}, effect: "fly" },
+        { tier: 3, name: "Élixir de géant", desc: "Taille et force de géant (10 min).", price: 1260, type: "consumable", slot: "none", stats: { str: 6 }, effect: "giant_strength" },
+        { tier: 3, name: "Potion de résurrection partielle", desc: "Stabilise un mourant à 1 PV.", price: 1500, type: "consumable", slot: "none", stats: {}, effect: "revive" },
+        { tier: 3, name: "Antidote universel", desc: "Guérit tous poisons et maladies.", price: 960, type: "consumable", slot: "none", stats: {}, effect: "cure_all" },
+        { tier: 3, name: "Potion de clairvoyance", desc: "Vision d'un lieu éloigné (10 min).", price: 1080, type: "consumable", slot: "none", stats: {}, effect: "clairvoyance" },
+        { tier: 3, name: "Élixir d'invulnérabilité mineure", desc: "Résistance à tous dégâts (1 min).", price: 1650, type: "consumable", slot: "none", stats: {}, effect: "damage_resist" },
+        { tier: 3, name: "Potion de forme gazeuse", desc: "Transforme en brume (1h).", price: 1020, type: "consumable", slot: "none", stats: {}, effect: "gaseous_form" },
+        { tier: 3, name: "Parchemin de Foudre", desc: "10d8 dégâts électriques en ligne.", price: 1170, type: "consumable", slot: "none", stats: {}, effect: "lightning" },
+        { tier: 3, name: "Pierre de rappel", desc: "Retour instantané à un point marqué.", price: 1320, type: "consumable", slot: "none", stats: {}, effect: "recall" },
+
+        // TIER 4 - Legendary consumables (700-2000 gold)
+        { tier: 4, name: "Potion de soin supreme", desc: "Restaure 10d4+20 PV.", price: 1500, type: "consumable", slot: "none", stats: {}, effect: "heal", healDice: "10d4+20" },
+        { tier: 4, name: "Élixir d'immortalité temporaire", desc: "Impossible de mourir pendant 1 minute.", price: 5400, type: "consumable", slot: "none", stats: {}, effect: "death_ward" },
+        { tier: 4, name: "Potion de guérison complète", desc: "PV maximum restaurés.", price: 2850, type: "consumable", slot: "none", stats: {}, effect: "full_heal" },
+        { tier: 4, name: "Parchemin de Résurrection", desc: "Ramène un mort à la vie.", price: 4500, type: "consumable", slot: "none", stats: {}, effect: "resurrect" },
+        { tier: 4, name: "Philtre d'invincibilité", desc: "+5 à toutes caractéristiques (10 min).", price: 3600, type: "consumable", slot: "none", stats: { str: 5, dex: 5, con: 5, int: 5, wis: 5, cha: 5 }, effect: "buff_temp" },
+        { tier: 4, name: "Parchemin de Souhait mineur", desc: "Exauce un souhait limité.", price: 6000, type: "consumable", slot: "none", stats: {}, effect: "wish_minor" },
+        { tier: 4, name: "Potion de transcendance", desc: "Forme éthérée (10 min).", price: 4050, type: "consumable", slot: "none", stats: {}, effect: "ethereal" },
+        { tier: 4, name: "Élixir du titan", desc: "Force 25 pendant 1 minute.", price: 4350, type: "consumable", slot: "none", stats: { str: 10 }, effect: "titan_strength" },
+        { tier: 4, name: "Parchemin d'Arrêt du temps", desc: "Fige le temps pendant 1d4+1 tours.", price: 5250, type: "consumable", slot: "none", stats: {}, effect: "time_stop" },
+        { tier: 4, name: "Potion de régénération suprême", desc: "Régénère 10 PV/tour pendant 10 tours.", price: 3300, type: "consumable", slot: "none", stats: {}, effect: "supreme_regen" },
     ];
 
-    // Accessories
+    // Accessories (MASSIVELY EXPANDED - 50+ items)
     const accessories = [
-        { tier: 2, name: "Anneau de protection", desc: "Un anneau qui renforce les defenses.", price: 100, type: "ring", slot: "ring", stats: { ac: 1 } },
-        { tier: 2, name: "Amulette de vitalite", desc: "Augmente la resistance.", price: 120, type: "amulet", slot: "neck", stats: { con: 1 } },
-        { tier: 3, name: "Cape de l'ombre", desc: "Aide a se fondre dans l'obscurite.", price: 300, type: "cloak", slot: "back", stats: { dex: 2 } },
-        { tier: 4, name: "Anneau de puissance", desc: "Renforce les attaques magiques.", price: 600, type: "ring", slot: "ring", stats: { int: 3 } },
+        // TIER 1 - Common accessories (15-60 gold)
+        { tier: 1, name: "Anneau simple", desc: "Un anneau de bronze basique.", price: 60, type: "ring", slot: "ring", stats: {} },
+        { tier: 1, name: "Collier de cuir", desc: "Simple collier avec pendentif.", price: 54, type: "amulet", slot: "neck", stats: {} },
+        { tier: 1, name: "Gants de travail", desc: "Gants robustes pour les tâches.", price: 45, type: "gloves", slot: "hands", stats: {} },
+        { tier: 1, name: "Ceinture en cuir", desc: "Ceinture fonctionnelle.", price: 36, type: "belt", slot: "waist", stats: {} },
+        { tier: 1, name: "Bottes de marche", desc: "Bottes confortables pour voyager.", price: 75, type: "boots", slot: "feet", stats: {} },
+        { tier: 1, name: "Cape de voyageur", desc: "Cape protégeant de la pluie.", price: 66, type: "cloak", slot: "back", stats: {} },
+        { tier: 1, name: "Bracelet de fer", desc: "Simple bracelet métallique.", price: 48, type: "bracers", slot: "wrists", stats: {} },
+
+        // TIER 2 - Uncommon accessories (80-250 gold)
+        { tier: 2, name: "Anneau de protection", desc: "Un anneau qui renforce les defenses.", price: 300, type: "ring", slot: "ring", stats: { ac: 1 } },
+        { tier: 2, name: "Amulette de vitalite", desc: "Augmente la resistance.", price: 360, type: "amulet", slot: "neck", stats: { con: 1 } },
+        { tier: 2, name: "Gants du guerrier", desc: "Améliore la prise d'arme.", price: 330, type: "gloves", slot: "hands", stats: { str: 1 } },
+        { tier: 2, name: "Ceinture de force", desc: "Renforce le porteur.", price: 390, type: "belt", slot: "waist", stats: { str: 1, con: 1 } },
+        { tier: 2, name: "Bottes de l'éclaireur", desc: "Augmente la vitesse de déplacement.", price: 420, type: "boots", slot: "feet", stats: { dex: 1 } },
+        { tier: 2, name: "Cape de résistance", desc: "Protège des éléments.", price: 450, type: "cloak", slot: "back", stats: { con: 1 } },
+        { tier: 2, name: "Bracelet de dextérité", desc: "Assouplit les mouvements.", price: 345, type: "bracers", slot: "wrists", stats: { dex: 1 } },
+        { tier: 2, name: "Anneau de sagesse", desc: "Clarifie l'esprit.", price: 375, type: "ring", slot: "ring", stats: { wis: 1 } },
+        { tier: 2, name: "Pendentif du voyant", desc: "Améliore la perception.", price: 405, type: "amulet", slot: "neck", stats: { wis: 1 } },
+        { tier: 2, name: "Gants de pickpocket", desc: "Doigts plus agiles.", price: 435, type: "gloves", slot: "hands", stats: { dex: 2 } },
+        { tier: 2, name: "Ceinture d'aventurier", desc: "Nombreuses poches utiles.", price: 315, type: "belt", slot: "waist", stats: {} },
+        { tier: 2, name: "Bottes elfiques", desc: "Pas silencieux.", price: 465, type: "boots", slot: "feet", stats: { dex: 2 } },
+        { tier: 2, name: "Cape du diplomate", desc: "Facilite les négociations.", price: 420, type: "cloak", slot: "back", stats: { cha: 1 } },
+        { tier: 2, name: "Bracelet de mage", desc: "Canalise la magie.", price: 480, type: "bracers", slot: "wrists", stats: { int: 1 } },
+        { tier: 2, name: "Anneau de charme", desc: "Rend plus charismatique.", price: 384, type: "ring", slot: "ring", stats: { cha: 1 } },
+        { tier: 2, name: "Médaillon de foi", desc: "Renforce la conviction.", price: 414, type: "amulet", slot: "neck", stats: { wis: 1, cha: 1 } },
+
+        // TIER 3 - Rare accessories (300-700 gold)
+        { tier: 3, name: "Cape de l'ombre", desc: "Aide a se fondre dans l'obscurite.", price: 900, type: "cloak", slot: "back", stats: { dex: 2 } },
+        { tier: 3, name: "Anneau de puissance elfique", desc: "Renforce les capacités martiales.", price: 1350, type: "ring", slot: "ring", stats: { str: 2, dex: 2 } },
+        { tier: 3, name: "Amulette du dragon", desc: "Écaille de dragon protectrice.", price: 1560, type: "amulet", slot: "neck", stats: { ac: 2, con: 2 } },
+        { tier: 3, name: "Gants des arcanes", desc: "Amplifie les sorts.", price: 1440, type: "gloves", slot: "hands", stats: { int: 2 } },
+        { tier: 3, name: "Ceinture du titan", desc: "Force surhumaine.", price: 1650, type: "belt", slot: "waist", stats: { str: 3 } },
+        { tier: 3, name: "Bottes de rapidité", desc: "Vitesse accrue.", price: 1260, type: "boots", slot: "feet", stats: { dex: 3 } },
+        { tier: 3, name: "Cape du mage", desc: "Résistance magique.", price: 1470, type: "cloak", slot: "back", stats: { int: 2, wis: 1 } },
+        { tier: 3, name: "Bracelet de protection", desc: "Barrière magique.", price: 1230, type: "bracers", slot: "wrists", stats: { ac: 2 } },
+        { tier: 3, name: "Anneau de télékinésie", desc: "Déplace les objets par la pensée.", price: 1740, type: "ring", slot: "ring", stats: { int: 2 } },
+        { tier: 3, name: "Médaillon d'invisibilité", desc: "Invisibilité 1x/jour (1 min).", price: 1950, type: "amulet", slot: "neck", stats: {} },
+        { tier: 3, name: "Gants de force de géant", desc: "Force prodigieuse.", price: 1680, type: "gloves", slot: "hands", stats: { str: 3 } },
+        { tier: 3, name: "Ceinture de régénération", desc: "Guérison accélérée.", price: 1860, type: "belt", slot: "waist", stats: { con: 3 } },
+        { tier: 3, name: "Bottes de lévitation", desc: "Marche sur l'air.", price: 1620, type: "boots", slot: "feet", stats: {} },
+        { tier: 3, name: "Cape de déplacement", desc: "Images illusoires.", price: 1410, type: "cloak", slot: "back", stats: { ac: 2, dex: 1 } },
+        { tier: 3, name: "Bracelet de stockage", desc: "Espace dimensionnel pour objets.", price: 1500, type: "bracers", slot: "wrists", stats: {} },
+
+        // TIER 4 - Legendary accessories (800-1800 gold)
+        { tier: 4, name: "Anneau de puissance", desc: "Renforce les attaques magiques.", price: 1800, type: "ring", slot: "ring", stats: { int: 3 } },
+        { tier: 4, name: "Anneau du pouvoir suprême", desc: "Maîtrise absolue de la magie.", price: 4500, type: "ring", slot: "ring", stats: { int: 4, wis: 3 } },
+        { tier: 4, name: "Amulette du phénix", desc: "Résurrection automatique 1x.", price: 4800, type: "amulet", slot: "neck", stats: { con: 3 } },
+        { tier: 4, name: "Gants de l'archimage", desc: "Sorts plus puissants (+2 niveaux).", price: 4200, type: "gloves", slot: "hands", stats: { int: 4 } },
+        { tier: 4, name: "Ceinture du colosse", desc: "Force de titan.", price: 3900, type: "belt", slot: "waist", stats: { str: 5 } },
+        { tier: 4, name: "Bottes ailées", desc: "Vol illimité.", price: 4350, type: "boots", slot: "feet", stats: { dex: 3 } },
+        { tier: 4, name: "Cape d'invincibilité", desc: "Immunité aux dégâts 1x/jour (1 tour).", price: 5100, type: "cloak", slot: "back", stats: { ac: 3 } },
+        { tier: 4, name: "Bracelet des éléments", desc: "Contrôle sur tous les éléments.", price: 4050, type: "bracers", slot: "wrists", stats: { int: 3, wis: 2 } },
+        { tier: 4, name: "Anneau de souhait", desc: "1 souhait accordé.", price: 5400, type: "ring", slot: "ring", stats: {} },
+        { tier: 4, name: "Médaillon de l'immortel", desc: "Immunité vieillissement et maladies.", price: 3750, type: "amulet", slot: "neck", stats: { con: 4 } },
+        { tier: 4, name: "Gants du voleur légendaire", desc: "Dextérité surhumaine.", price: 3600, type: "gloves", slot: "hands", stats: { dex: 5 } },
+        { tier: 4, name: "Ceinture de dimension", desc: "Stockage dimensionnel illimité.", price: 3300, type: "belt", slot: "waist", stats: {} },
+        { tier: 4, name: "Bottes de téléportation", desc: "Téléportation à volonté.", price: 4650, type: "boots", slot: "feet", stats: { dex: 2 } },
+        { tier: 4, name: "Cape du temps", desc: "Ralentit le temps autour de vous.", price: 4950, type: "cloak", slot: "back", stats: { dex: 3, int: 3 } },
+        { tier: 4, name: "Bracelet divin", desc: "Lien avec les dieux.", price: 4440, type: "bracers", slot: "wrists", stats: { wis: 4, cha: 3 } },
     ];
 
     // Select items based on tier
@@ -765,11 +1149,11 @@ function generateMerchantItems(avgLevel: number): any[] {
         return selected;
     };
 
-    items.push(...selectItems(weapons, 2 + Math.floor(Math.random() * 2)));
-    items.push(...selectItems(armors, 1 + Math.floor(Math.random() * 2)));
-    items.push(...selectItems(shields, 1));
-    items.push(...selectItems(consumables, 3 + Math.floor(Math.random() * 2)));
-    if (tier >= 2) items.push(...selectItems(accessories, 1 + Math.floor(Math.random() * 2)));
+    items.push(...selectItems(weapons, 5 + Math.floor(Math.random() * 4)));
+    items.push(...selectItems(armors, 5 + Math.floor(Math.random() * 3)));
+    items.push(...selectItems(shields, 3 + Math.floor(Math.random() * 2)));
+    items.push(...selectItems(consumables, 6 + Math.floor(Math.random() * 3)));
+    if (tier >= 2) items.push(...selectItems(accessories, 5 + Math.floor(Math.random() * 4)));
 
     return items;
 }
