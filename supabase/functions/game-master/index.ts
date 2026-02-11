@@ -277,12 +277,21 @@ const RULES: string[] = [
     `ACTIVITE DU MONDE SELON L'HEURE (timeOfDay):\n` +
     `  AUBE (05h-08h): Marchands qui ouvrent, odeur de pain frais, peu de monde\n` +
     `  MATIN (08h-12h): Activite croissante, marche anime, gardes vigilants\n` +
-    `  MIDI (12h-14h): Pause repas, tavernes pleines, moins de gardes\n` +
+    `  REPAS (12h-14h): Pause repas, tavernes pleines, moins de gardes\n` +
     `  APRES-MIDI (14h-18h): Commerce intense, artisans au travail, enfants dans les rues\n` +
     `  SOIR (18h-21h): Retour des travailleurs, tavernes qui se remplissent, eclairage des lanternes\n` +
     `  NUIT (21h-05h): Rues desertes, gardes patrouillent, activites illicites, danger accru\n` +
     `  \n` +
     `  INTEGRE ces elements dans CHAQUE description de scene.`,
+
+    // 19. ORIGIN & BACKSTORY REACTIVITY (NON-NEGOTIABLE)
+    `REACTIVITE DES ORIGINES (IMPORTANT):\n` +
+    `  L'origine de CHAQUE personnage DOIT avoir une incidence visible sur le jeu.\n` +
+    `  - INTERACTIONS PNJ: Les PNJ reagissent Differemment selon l'origine du joueur (ex: mepris pour un Paria, respect pour un Noble, fraternite pour un ancien soldat).\n` +
+    `  - AVANTAGES/PENALITES: Applique STRICTEMENT les avantages/penalites sociaux (ex: un Noble a des contacts, un Criminel est surveille).\n` +
+    `  - LIEUX: Si un joueur visite sa region d'origine, il connait les lieux, les raccourcis et les gens. Les PNJ peuvent le reconnaitre.\n` +
+    `  - ECONOMIE: Ajuste les prix des marchands selon la reputation et la classe sociale du joueur.\n` +
+    `  - NARRATION: Utilise les 'Hooks de Roleplay' pour personnaliser les quetes et les rencontres.`,
 ];
 
 // ─── PHASE DIRECTIVES ────────────────────────────────────────────────
@@ -386,11 +395,11 @@ EQUILIBRAGE MARCHAND (OBLIGATOIRE):
 
 function generateMerchantItems(avgLevel: number): any[] {
     const items: any[] = [];
-    
+
     // Base items scaled to level
     const tier = avgLevel <= 3 ? 1 : avgLevel <= 6 ? 2 : avgLevel <= 10 ? 3 : 4;
     const priceMultiplier = tier;
-    
+
     // Weapons
     const weapons = [
         { tier: 1, name: "Dague en fer", desc: "Une dague simple mais efficace.", price: 15, type: "weapon", category: "simple", slot: "mainhand", stats: { atk: 1 } },
@@ -402,7 +411,7 @@ function generateMerchantItems(avgLevel: number): any[] {
         { tier: 3, name: "Marteau de guerre", desc: "Une arme devastatrice pour les guerriers.", price: 400, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 5 } },
         { tier: 4, name: "Lame runique", desc: "Gravee de runes anciennes qui luisent faiblement.", price: 800, type: "weapon", category: "martial", slot: "mainhand", stats: { atk: 6, int: 2 } },
     ];
-    
+
     // Armors
     const armors = [
         { tier: 1, name: "Tunique renforcee", desc: "Une tunique avec des plaques de cuir.", price: 25, type: "armor", category: "light", slot: "chest", stats: { ac: 1 } },
@@ -412,14 +421,14 @@ function generateMerchantItems(avgLevel: number): any[] {
         { tier: 3, name: "Harnois leger", desc: "Armure de plates bien ajustee.", price: 450, type: "armor", category: "heavy", slot: "chest", stats: { ac: 5 } },
         { tier: 4, name: "Armure de plates ouvragee", desc: "Chef-d'oeuvre de forgerons nains.", price: 1200, type: "armor", category: "heavy", slot: "chest", stats: { ac: 6, con: 2 } },
     ];
-    
+
     // Shields
     const shields = [
         { tier: 1, name: "Bouclier en bois", desc: "Un bouclier simple mais solide.", price: 20, type: "shield", category: "shield", slot: "offhand", stats: { ac: 1 } },
         { tier: 2, name: "Bouclier cercle de fer", desc: "Bouclier renforce de metal.", price: 80, type: "shield", category: "shield", slot: "offhand", stats: { ac: 2 } },
         { tier: 3, name: "Ecu de chevalier", desc: "Un bouclier orne d'armoiries.", price: 250, type: "shield", category: "shield", slot: "offhand", stats: { ac: 3 } },
     ];
-    
+
     // Consumables
     const consumables = [
         { tier: 1, name: "Potion de soin mineure", desc: "Restaure 2d4+2 PV.", price: 25, type: "consumable", slot: "none", stats: {}, effect: "heal", healDice: "2d4+2" },
@@ -431,7 +440,7 @@ function generateMerchantItems(avgLevel: number): any[] {
         { tier: 3, name: "Elixir de force", desc: "+2 FOR pendant 1 heure.", price: 150, type: "consumable", slot: "none", stats: { str: 2 }, effect: "buff_temp" },
         { tier: 4, name: "Potion de soin supreme", desc: "Restaure 10d4+20 PV.", price: 500, type: "consumable", slot: "none", stats: {}, effect: "heal", healDice: "10d4+20" },
     ];
-    
+
     // Accessories
     const accessories = [
         { tier: 2, name: "Anneau de protection", desc: "Un anneau qui renforce les defenses.", price: 100, type: "ring", slot: "ring", stats: { ac: 1 } },
@@ -439,7 +448,7 @@ function generateMerchantItems(avgLevel: number): any[] {
         { tier: 3, name: "Cape de l'ombre", desc: "Aide a se fondre dans l'obscurite.", price: 300, type: "cloak", slot: "back", stats: { dex: 2 } },
         { tier: 4, name: "Anneau de puissance", desc: "Renforce les attaques magiques.", price: 600, type: "ring", slot: "ring", stats: { int: 3 } },
     ];
-    
+
     // Select items based on tier
     const selectItems = (arr: any[], count: number) => {
         const available = arr.filter(i => i.tier <= tier);
@@ -452,13 +461,13 @@ function generateMerchantItems(avgLevel: number): any[] {
         }
         return selected;
     };
-    
+
     items.push(...selectItems(weapons, 2 + Math.floor(Math.random() * 2)));
     items.push(...selectItems(armors, 1 + Math.floor(Math.random() * 2)));
     items.push(...selectItems(shields, 1));
     items.push(...selectItems(consumables, 3 + Math.floor(Math.random() * 2)));
     if (tier >= 2) items.push(...selectItems(accessories, 1 + Math.floor(Math.random() * 2)));
-    
+
     return items;
 }
 
@@ -491,7 +500,7 @@ function buildSystemPrompt(opts: {
     sections.push(`IMPORTANT: Les personnages suivants sont des JOUEURS HUMAINS REELS qui jouent ensemble en EQUIPE.`);
     sections.push(`Ils ne sont PAS des PNJ. Tu dois les traiter comme une equipe cooperative.`);
     sections.push(`Quand tu t'adresses au groupe, utilise VOUS (pluriel) et inclus TOUS les joueurs.`);
-    
+
     if (partyDetails && partyDetails.length > 0) {
         partyDetails.forEach((p: any, idx: number) => {
             const spellList = (p.spells || []).map((s: any) => typeof s === 'string' ? s : s.name).join(', ');
@@ -500,7 +509,7 @@ function buildSystemPrompt(opts: {
     } else {
         sections.push(`GROUPE: ${partyList}`);
     }
-    
+
     sections.push(`\nREGLE EQUIPE: Ces joueurs COOPERENT. En combat, ils combattent ENSEMBLE contre les ennemis.`);
     sections.push(`Si un joueur attaque, les autres peuvent aussi participer. Ne les mets JAMAIS en opposition.`);
 
@@ -595,7 +604,7 @@ Deno.serve(async (req: Request) => {
                     `SPELLS: ${JSON.stringify(p.spells || [])}`,
                     `ORIGIN: ${p.backstory?.label || "Inconnu"}`,
                 ].join(' | ');
-                
+
                 if (p.backstory_gm_context) {
                     playerBackstoryContext = p.backstory_gm_context;
                 }
@@ -674,7 +683,7 @@ Deno.serve(async (req: Request) => {
 
         // ── Inject balanced merchant inventory if merchant is present ──
         if (result.merchant && (!result.merchant.inventory || result.merchant.inventory.length === 0)) {
-            const avgLevel = partyDetails.length > 0 
+            const avgLevel = partyDetails.length > 0
                 ? Math.round(partyDetails.reduce((sum: number, p: any) => sum + (p.level || 1), 0) / partyDetails.length)
                 : 1;
             result.merchant.inventory = generateMerchantItems(avgLevel);

@@ -187,7 +187,7 @@ export default function App() {
                 const newMsg = payload.new;
                 // Skip memory markers and duplicates
                 if (newMsg.content?.startsWith('(MEMOIRE:') || newMsg.content?.startsWith('(MÉMOIRE:')) return;
-                
+
                 setMessages(prev => {
                     // Check if message already exists
                     if (prev.some(m => m.id === newMsg.id)) return prev;
@@ -476,13 +476,13 @@ export default function App() {
         if (!character?.id || !codexUpdate) return;
 
         const updates = {};
-        
+
         if (codexUpdate.new_npc) {
             const currentNpcs = character.visited_npcs || [];
-            const npcEntry = typeof codexUpdate.new_npc === 'string' 
-                ? codexUpdate.new_npc 
+            const npcEntry = typeof codexUpdate.new_npc === 'string'
+                ? codexUpdate.new_npc
                 : codexUpdate.new_npc;
-            const exists = currentNpcs.some(n => 
+            const exists = currentNpcs.some(n =>
                 (typeof n === 'object' ? n.name : n) === (typeof npcEntry === 'object' ? npcEntry.name : npcEntry)
             );
             if (!exists) {
@@ -891,6 +891,11 @@ export default function App() {
                 .select()
                 .single();
 
+            if (error) {
+                console.error("DEBUG - Character Create Error:", error);
+                alert(`Erreur Supabase (400?): ${error.message}\nDetails: ${error.details}`);
+            }
+
             if (!error && data) {
                 setCharacter(data);
 
@@ -998,7 +1003,7 @@ export default function App() {
         const playersWithClass = players.filter(p => p.class);
         const allPlayersReady = playersWithClass.length === players.length && players.every(p => p.class && p.is_ready);
         const hasMarker = messages.some(m => m.content && m.content.includes("START_ADVENTURE_TRIGGERED"));
-        
+
         // If adventure already started (marker exists), sync ALL players
         if (hasMarker && !adventureStarted) {
             setAdventureStarted(true);
@@ -1019,13 +1024,13 @@ export default function App() {
                         .eq('session_id', session.id)
                         .ilike('content', '%START_ADVENTURE_TRIGGERED%')
                         .limit(1);
-                    
+
                     if (data && data.length > 0) {
                         setAdventureStarted(true);
                         clearInterval(pollInterval);
                     }
                 }, 1000);
-                
+
                 return () => clearInterval(pollInterval);
             }
             return;
@@ -1541,7 +1546,8 @@ export default function App() {
                         stats: character.stats,
                         gold: character.gold,
                         equippedItems: character.inventory?.filter(i => i.equipped).map(i => i.name) || [],
-                        titles: titles
+                        titles: titles,
+                        backstory: character.backstory_gm_context
                     },
                     currentAffinity: affinities[npcName] || 0,
                     gameContext: {
@@ -1680,7 +1686,8 @@ export default function App() {
                         class: character.class,
                         level: character.level,
                         stats: character.stats,
-                        inventory: character.inventory
+                        inventory: character.inventory,
+                        backstory: character.backstory_gm_context
                     },
                     lore: { context: `${WORLD_CONTEXT}\n\n${ENVIRONMENTAL_RULES}`, bestiary: { ...BESTIARY, ...BESTIARY_EXTENDED }, classes: CLASSES, chronicle, npcs: NPC_TEMPLATES, quests: QUEST_HOOKS, locations: TAVERNS_AND_LOCATIONS, rumors: RUMORS_AND_GOSSIP, encounters: RANDOM_ENCOUNTERS, myths: WORLD_MYTHS_EXTENDED, legendaryItems: LEGENDARY_ITEMS, factions: FACTION_LORE }
                 }
@@ -2108,6 +2115,7 @@ export default function App() {
                                             level: character.level,
                                             stats: character.stats,
                                             equippedItems: character.inventory?.filter(i => i.equipped).map(i => i.name) || [],
+                                            backstory: character.backstory_gm_context,
                                         },
                                         lore: { context: WORLD_CONTEXT, bestiary: { ...BESTIARY, ...BESTIARY_EXTENDED }, classes: CLASSES, npcs: NPC_TEMPLATES, quests: QUEST_HOOKS, locations: TAVERNS_AND_LOCATIONS, rumors: RUMORS_AND_GOSSIP, encounters: RANDOM_ENCOUNTERS, factions: FACTION_LORE },
                                         playerGroup: players.map(p => ({ name: p.name, class: p.class }))

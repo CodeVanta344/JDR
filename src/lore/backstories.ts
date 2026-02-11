@@ -852,16 +852,28 @@ export function getBackstoryById(id: string): EnrichedBackstory | undefined {
 
 export function formatBackstoryForGM(backstory: EnrichedBackstory, playerName: string): string {
   const events = backstory.historical_events.map(e => `${e.name} (${e.year})`).join(', ');
-  const factions = backstory.faction_ties.map(f => `${f.name} (${f.standing}, rep: ${f.reputation})`).join(', ');
+  const factions = backstory.faction_ties.map(f => {
+    let factStr = `${f.name} (${f.standing}, rep: ${f.reputation})`;
+    if (f.secrets_known && f.secrets_known.length > 0) {
+      factStr += ` [Secrets connus: ${f.secrets_known.join(', ')}]`;
+    }
+    return factStr;
+  }).join('\n');
   const npcs = backstory.known_npcs.join(', ');
   const secrets = backstory.personal_secrets.join(' | ');
   const hooks = backstory.roleplay_hooks.join(' | ');
+  const perks = backstory.social_class.social_perks.join(', ');
+  const penalties = backstory.social_class.social_penalties.join(', ');
 
   return `
 ## BACKSTORY DE ${playerName.toUpperCase()}
 **Origine**: ${backstory.label} (${backstory.category})
 **Région**: ${backstory.origin.region} - ${backstory.origin.settlement}
 **Classe Sociale**: ${backstory.social_class.label} (${backstory.social_class.wealth})
+
+### Avantages & Pénalités Sociaux (REACTION PNJ)
+- **Avantages**: ${perks || 'Aucun'}
+- **Pénalités**: ${penalties || 'Aucune'}
 
 ### Événements Historiques Vécus
 ${events || 'Aucun événement majeur'}

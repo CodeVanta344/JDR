@@ -110,6 +110,7 @@ export function CharacterCreation({ onCreate, onBack, generateImage, sessionId }
             mechanic: clsData.mechanic,
             desc: clsData.desc,
             stats: finalStats,
+            gold: Math.floor(100 * (selectedBackstoryData?.social_class?.starting_gold_modifier || 1.0)),
             abilities: chosenAbilities,
             equipment: selectedEquipment,
             hp: (clsData.hitDie || 8) + 10 + (Math.floor((finalStats.con - 10) / 2) * 2),
