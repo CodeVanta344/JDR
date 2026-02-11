@@ -64,6 +64,7 @@ export default function App() {
     const pollInterval = useRef(null);
     const typingTimeoutRef = useRef(null);
     const creatingPlayerRef = useRef(false);
+    const isStartingAdventureRef = useRef(false);
     const chatRef = useRef(null);
     const lastActivityRef = useRef(Date.now());
 
@@ -957,6 +958,13 @@ export default function App() {
     const handleStartAdventure = async () => {
         if (!session || players.length < 2) return;
 
+        // Additional safety: check if GM intro already exists
+        const existingIntro = messages.find(m => m.role === 'gm' && m.content && m.content.length > 50);
+        if (existingIntro) {
+            console.log("GM intro already exists, skipping START_ADVENTURE call");
+            return;
+        }
+
         setLoading(true);
         try {
             // Mark session as started in DB
@@ -1003,6 +1011,7 @@ export default function App() {
         const playersWithClass = players.filter(p => p.class);
         const allPlayersReady = playersWithClass.length === players.length && players.every(p => p.class && p.is_ready);
         const hasMarker = messages.some(m => m.content && m.content.includes("START_ADVENTURE_TRIGGERED"));
+        const hasGMIntro = messages.some(m => m.role === 'gm' && m.content && m.content.length > 50);
 
         // If adventure already started (marker exists), sync ALL players
         if (hasMarker && !adventureStarted) {
@@ -1037,8 +1046,9 @@ export default function App() {
         }
 
         // HOST: Trigger the actual start when all are ready (ONLY ONCE)
-        if (allPlayersReady && character?.is_ready && players.length >= 2 && !hasMarker) {
-            // Immediately set adventureStarted to prevent multiple calls
+        if (allPlayersReady && character?.is_ready && players.length >= 2 && !hasMarker && !hasGMIntro && !isStartingAdventureRef.current) {
+            // Immediately set adventureStarted and the ref to prevent multiple calls
+            isStartingAdventureRef.current = true;
             setAdventureStarted(true);
 
             supabase.from('messages').insert({
@@ -1048,6 +1058,10 @@ export default function App() {
             }).then(({ error }) => {
                 if (!error) {
                     handleStartAdventure();
+                } else {
+                    // Reset on error
+                    isStartingAdventureRef.current = false;
+                    setAdventureStarted(false);
                 }
             });
         }

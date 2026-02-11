@@ -65,7 +65,7 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
 
         // Get player's chosen abilities from character creation (stored in spells or abilities)
         const playerAbilities = [...(character.abilities || []), ...(character.spells || [])];
-        
+
         // If player has chosen abilities, use those as base
         let baseAbilities = [];
         if (playerAbilities.length > 0) {
@@ -95,7 +95,7 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
 
     return (
         <aside className="character-sheet" style={{
-            position: 'fixed', right: '1rem', top: '1rem', bottom: '1rem', width: '310px',
+            position: 'fixed', left: '1rem', top: '1rem', bottom: '1rem', width: '310px',
             background: 'rgba(10,10,15,0.95)', border: '1px solid var(--glass-border)', borderRadius: '8px',
             display: 'flex', flexDirection: 'column', color: '#fff', backdropFilter: 'blur(10px)', zIndex: 100,
             pointerEvents: 'auto'
@@ -447,14 +447,14 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                             )}
 
                             {/* Message si codex vide */}
-                            {(!character.visited_npcs || character.visited_npcs.length === 0) && 
-                             (!character.discovered_locations || character.discovered_locations.length === 0) &&
-                             (!character.active_quests || character.active_quests.length === 0) && (
-                                <div style={{ padding: '2rem', textAlign: 'center', color: '#555', fontStyle: 'italic' }}>
-                                    Votre aventure commence à peine...<br/>
-                                    Le codex se remplira au fil de vos découvertes.
-                                </div>
-                            )}
+                            {(!character.visited_npcs || character.visited_npcs.length === 0) &&
+                                (!character.discovered_locations || character.discovered_locations.length === 0) &&
+                                (!character.active_quests || character.active_quests.length === 0) && (
+                                    <div style={{ padding: '2rem', textAlign: 'center', color: '#555', fontStyle: 'italic' }}>
+                                        Votre aventure commence à peine...<br />
+                                        Le codex se remplira au fil de vos découvertes.
+                                    </div>
+                                )}
                         </div>
                     </div>
                 )}
