@@ -1,0 +1,64 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║  CRÉATION DE LA TABLE WORLD_STATE - GUIDE RAPIDE (3 MINUTES)        ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+📋 ÉTAPE 1: Ouvrir l'éditeur SQL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Cliquez sur ce lien pour ouvrir l'éditeur SQL :
+   👉 https://supabase.com/dashboard/project/okanuafsmkuzyuyqibpu/sql/new
+
+2. Vous devriez voir un éditeur SQL vide
+
+
+📝 ÉTAPE 2: Copier le SQL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Ouvrez le fichier : MANUAL_MIGRATION_WORLD_STATE.sql
+2. Sélectionnez TOUT le contenu (Ctrl+A)
+3. Copiez (Ctrl+C)
+
+
+⚡ ÉTAPE 3: Exécuter le SQL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Retournez dans l'éditeur SQL (étape 1)
+2. Collez le SQL (Ctrl+V)
+3. Cliquez sur le bouton "RUN" (en haut à droite) ou appuyez sur Ctrl+Enter
+
+⏳ Attendez 2-3 secondes...
+
+✅ Vous devriez voir : "Success. No rows returned"
+
+
+🔔 ÉTAPE 4: Activer Realtime (IMPORTANT!)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Cliquez sur ce lien :
+   👉 https://supabase.com/dashboard/project/okanuafsmkuzyuyqibpu/database/replication
+
+2. Cherchez "world_state" dans la liste des tables
+
+3. COCHEZ la case à gauche de "world_state"
+   (Si elle est déjà cochée, c'est parfait!)
+
+
+✨ ÉTAPE 5: Vérification (Optionnel)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Retournez dans l'éditeur SQL et exécutez :
+
+SELECT * FROM public.world_state;
+
+✅ Si vous ne voyez PAS d'erreur, la table est créée avec succès!
+
+
+╔══════════════════════════════════════════════════════════════════════╗
+║  🎉 TERMINÉ! L'interface marchand sera maintenant synchronisée      ║
+║     pour tous les joueurs en temps réel!                             ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+💡 RAPPEL:
+   Une fois créée, quand un joueur parle à un marchand, TOUS les joueurs
+   verront l'interface marchand s'ouvrir simultanément.
+
+
+❓ PROBLÈMES?
+   - Erreur "permission denied" → Vérifiez que vous êtes connecté
+   - Erreur "syntax error" → Vérifiez que vous avez copié TOUT le fichier SQL
+   - Le marchand ne se synchronise pas → Vérifiez l'étape 4 (Realtime)

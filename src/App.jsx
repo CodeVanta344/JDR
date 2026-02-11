@@ -975,15 +975,17 @@ export default function App() {
     }, [session, players, profile]);
 
     const handleStartAdventure = async () => {
-        if (!session || players.length < 2) return;
+        if (!session || players.length < 2 || STARTING_LOCKS.has(session.id)) return;
 
-        // Additional safety: check if GM intro already exists
-        const existingIntro = messages.find(m => m.role === 'gm' && m.content && m.content.length > 50);
+        // Additional safety: check if GM intro already exists (role is 'system' or 'assistant')
+        const existingIntro = messages.find(m => (m.role === 'system' || m.role === 'assistant') && m.content && m.content.length > 200);
         if (existingIntro) {
             console.log("GM intro already exists, skipping START_ADVENTURE call");
+            setAdventureStarted(true);
             return;
         }
 
+        STARTING_LOCKS.add(session.id);
         setLoading(true);
         try {
             // Mark session as started in DB
@@ -1034,7 +1036,7 @@ export default function App() {
         const playersWithClass = players.filter(p => p.class);
         const allPlayersReady = playersWithClass.length === players.length && players.every(p => p.class && p.is_ready);
         const hasMarker = messages.some(m => m.content && m.content.includes("START_ADVENTURE_TRIGGERED"));
-        const hasGMIntro = messages.some(m => m.role === 'gm' && m.content && m.content.length > 50);
+        const hasGMIntro = messages.some(m => (m.role === 'system' || m.role === 'assistant') && m.content && m.content.length > 200);
 
         // If adventure already started (marker exists), sync ALL players
         if (hasMarker && !adventureStarted) {
@@ -1082,11 +1084,14 @@ export default function App() {
                 role: 'system',
                 content: "(MEMOIRE:SYSTEM) START_ADVENTURE_TRIGGERED"
             }).then(({ error }) => {
-                // If error is 23505 (Unique Violation), it means another call already won.
-                if (!error || error.code === '23505') {
-                    if (!hasGMIntro) {
-                        handleStartAdventure();
-                    }
+                // ONLY the one who successfully inserted the marker (no error) should trigger the AI.
+                // If error.code === '23505', someone else already won and is handling it.
+                if (!error) {
+                    handleStartAdventure();
+                } else if (error.code === '23505') {
+                    console.log("Start marker already exists (race won by another instance). Waiting for sync.");
+                    // Ensure local state reflects adventure started
+                    setAdventureStarted(true);
                 } else {
                     console.error("Failed to insert start marker:", error);
                     STARTING_LOCKS.delete(session.id);
@@ -1624,9 +1629,9 @@ export default function App() {
                     initializeHostCombat(aiResponse.combat.enemies || []);
                 }
                 if (aiResponse.merchant) {
-                    await supabase.from('world_state').upsert({ 
-                        key: `merchant_${session.id}`, 
-                        value: { ...aiResponse.merchant, active: true } 
+                    await supabase.from('world_state').upsert({
+                        key: `merchant_${session.id}`,
+                        value: { ...aiResponse.merchant, active: true }
                     });
                 }
                 if (aiResponse.loot) setActiveLoot(aiResponse.loot);
@@ -1760,9 +1765,9 @@ export default function App() {
                     initializeHostCombat(aiResponse.combat.enemies || []);
                 }
                 if (aiResponse.merchant) {
-                    await supabase.from('world_state').upsert({ 
-                        key: `merchant_${session.id}`, 
-                        value: { ...aiResponse.merchant, active: true } 
+                    await supabase.from('world_state').upsert({
+                        key: `merchant_${session.id}`,
+                        value: { ...aiResponse.merchant, active: true }
                     });
                 }
                 if (aiResponse.loot) setActiveLoot(aiResponse.loot);
@@ -2228,9 +2233,9 @@ export default function App() {
                         }}
                         onClose={() => {
                             const merchantName = activeMerchant?.npcName || 'le marchand';
-                            supabase.from('world_state').upsert({ 
-                                key: `merchant_${session.id}`, 
-                                value: { active: false } 
+                            supabase.from('world_state').upsert({
+                                key: `merchant_${session.id}`,
+                                value: { active: false }
                             });
                             handleSubmit(null, `[FIN DE COMMERCE] ${character?.name || 'Le joueur'} quitte ${merchantName}. Que souhaitez-vous faire ensuite ?`);
                         }}
