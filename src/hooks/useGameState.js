@@ -31,11 +31,13 @@ export const useGameState = (profile) => {
     }, []);
 
     const fetchSession = useCallback(async (id) => {
-        const { data, error } = await supabase.from('sessions').select('*').eq('id', id).maybeSingle();
+        const sid = id || session?.id;
+        if (!sid) return null;
+        const { data, error } = await supabase.from('sessions').select('*').eq('id', sid).maybeSingle();
         if (error) return null;
         setSession(data);
         return data;
-    }, []);
+    }, [session?.id]);
 
     const fetchPlayerExtras = useCallback(async (pid) => {
         if (!pid) return;

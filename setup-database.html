@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Database - world_state Table</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 800px;
+            width: 100%;
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .header h1 { font-size: 32px; margin-bottom: 10px; }
+        .header p { font-size: 18px; opacity: 0.9; }
+        .content { padding: 40px; }
+        .step {
+            background: #f8f9fa;
+            border-left: 5px solid #667eea;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-radius: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .step:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .step-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            text-align: center;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 20px;
+            margin-right: 15px;
+        }
+        .step-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #2d3748;
+        }
+        .step-description {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #4a5568;
+            margin-bottom: 15px;
+        }
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        .btn-secondary {
+            background: #48bb78;
+        }
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin-top: 15px;
+            position: relative;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .copy-btn:hover { background: #5568d3; }
+        .success-message {
+            background: #c6f6d5;
+            color: #22543d;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+            text-align: center;
+            font-weight: 600;
+        }
+        .warning {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 5px solid #f59e0b;
+        }
+        ul { margin-left: 20px; margin-top: 10px; }
+        li { margin-bottom: 8px; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Configuration de la Base de Données</h1>
+            <p>Création de la table world_state (2 minutes)</p>
+        </div>
+        
+        <div class="content">
+            <div class="step">
+                <div>
+                    <span class="step-number">1</span>
+                    <div style="display: inline-block; vertical-align: top; width: calc(100% - 60px);">
+                        <div class="step-title">Ouvrir l'Éditeur SQL</div>
+                        <div class="step-description">
+                            Cliquez sur le bouton ci-dessous pour ouvrir l'éditeur SQL de Supabase.
+                        </div>
+                        <a href="https://supabase.com/dashboard/project/okanuafsmkuzyuyqibpu/sql/new" target="_blank" class="btn">
+                            📝 Ouvrir l'Éditeur SQL
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div>
+                    <span class="step-number">2</span>
+                    <div style="display: inline-block; vertical-align: top; width: calc(100% - 60px);">
+                        <div class="step-title">Copier le Code SQL</div>
+                        <div class="step-description">
+                            Cliquez sur "Copier" pour copier le code SQL automatiquement.
+                        </div>
+                        <div class="code-block" id="sqlCode">
+                            <button class="copy-btn" onclick="copySQL()">📋 Copier</button>
+                            <pre>-- Voir fichier MANUAL_MIGRATION_WORLD_STATE.sql</pre>
+                        </div>
+                        <div class="warning">
+                            ⚠️ <strong>Alternative :</strong> Ouvrez le fichier <code>MANUAL_MIGRATION_WORLD_STATE.sql</code> dans votre éditeur et copiez tout son contenu.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div>
+                    <span class="step-number">3</span>
+                    <div style="display: inline-block; vertical-align: top; width: calc(100% - 60px);">
+                        <div class="step-title">Exécuter le SQL</div>
+                        <div class="step-description">
+                            Dans l'éditeur SQL ouvert à l'étape 1 :
+                            <ul>
+                                <li>Collez le code SQL (<kbd>Ctrl+V</kbd>)</li>
+                                <li>Cliquez sur le bouton <strong>"RUN"</strong> en haut à droite</li>
+                                <li>Ou appuyez sur <kbd>Ctrl+Enter</kbd></li>
+                            </ul>
+                        </div>
+                        <div class="warning">
+                            ✅ Vous devriez voir : <strong>"Success. No rows returned"</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div>
+                    <span class="step-number">4</span>
+                    <div style="display: inline-block; vertical-align: top; width: calc(100% - 60px);">
+                        <div class="step-title">Activer Realtime (IMPORTANT!)</div>
+                        <div class="step-description">
+                            Sans cette étape, la synchronisation ne fonctionnera pas !
+                            <ul>
+                                <li>Cliquez sur le bouton ci-dessous</li>
+                                <li>Cherchez <strong>"world_state"</strong> dans la liste</li>
+                                <li>Cochez la case à gauche de "world_state"</li>
+                            </ul>
+                        </div>
+                        <a href="https://supabase.com/dashboard/project/okanuafsmkuzyuyqibpu/database/replication" target="_blank" class="btn btn-secondary">
+                            🔔 Activer Realtime
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="success-message">
+                🎉 <strong>Terminé !</strong><br>
+                L'interface marchand sera maintenant synchronisée pour tous les joueurs en temps réel !
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function copySQL() {
+            const sqlContent = `-- Copie depuis MANUAL_MIGRATION_WORLD_STATE.sql
+            
+Ouvrez le fichier MANUAL_MIGRATION_WORLD_STATE.sql dans votre dossier JDR
+et copiez TOUT son contenu.`;
+            
+            navigator.clipboard.writeText(sqlContent).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                btn.textContent = '✅ Copié !';
+                btn.style.background = '#48bb78';
+                setTimeout(() => {
+                    btn.textContent = '📋 Copier';
+                    btn.style.background = '#667eea';
+                }, 2000);
+            }).catch(() => {
+                alert('Impossible de copier automatiquement. Veuillez copier manuellement depuis le fichier MANUAL_MIGRATION_WORLD_STATE.sql');
+            });
+        }
+        
+        // Auto-open first link after 2 seconds
+        setTimeout(() => {
+            const confirmation = confirm('Voulez-vous ouvrir automatiquement l\'éditeur SQL de Supabase ?');
+            if (confirmation) {
+                window.open('https://supabase.com/dashboard/project/okanuafsmkuzyuyqibpu/sql/new', '_blank');
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

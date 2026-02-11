@@ -135,6 +135,17 @@ export default function App() {
     }, [messages, voiceEnabled, activeNPC]);
 
     // --- DATA FETCHING ---
+    const addMessage = async (msg) => {
+        if (!session?.id) return;
+        const { error } = await supabase.from('messages').insert({
+            session_id: session.id,
+            role: msg.role,
+            content: msg.content,
+            player_id: character?.id
+        });
+        if (error) console.error("addMessage error:", error);
+    };
+
     const fetchData = React.useCallback(async () => {
         if (!session?.id) return;
         try {
@@ -576,6 +587,7 @@ export default function App() {
         if (!session || !profile || session.host_id !== profile.id) return;
 
         const deactivateSession = () => {
+            if (!session?.id) return;
             const url = `https://okanuafsmkuzyuyqibpu.supabase.co/rest/v1/sessions?id=eq.${session.id}`;
             const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rYW51YWZzbWt1enl1eXFpYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0ODQyMjgsImV4cCI6MjA4NjA2MDIyOH0.w93viTCCxc48GNw2n_HFKGq2yQRUvwZSt6lq-FqJb9E';
             fetch(url, {
