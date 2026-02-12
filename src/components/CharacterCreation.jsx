@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CLASSES, CLASS_CATEGORIES, ENRICHED_BACKSTORIES, getBackstoriesForClass, formatBackstoryForGM, LOCATION_BACKGROUNDS, BIRTH_ORIGINS, CHILDHOOD_EVENTS, ADOLESCENCE_PATHS } from '../lore';
 import { MagicBackground } from './MagicBackground';
-import { LifePathBuilder } from './LifePathBuilder';
+import { LifePathBuilder } from './LifePathBuilder.tsx';
 import './CharacterCreation.css';
 
 // Utility: Roll 4d6 drop lowest

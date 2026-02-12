@@ -1055,7 +1055,7 @@ export const ADULT_PAST: AdultPast[] = [
         ],
         social_impacts: {
             pnj_reactions: 'Aubergistes offrent lit gratuit. Voyageurs partagent rumeurs. Autorités méfiantes (pas de "papiers"). Bardes vous interrogent.',
-            reputation_bonus: { 'Tous +5 (un peu partout)', 'Aucun -' }
+            reputation_bonus: {}
         },
         gm_hooks: 'Vous cherchez un lieu mythique. Vous collectionnez fragments de carte ancienne. Quelqu\'un de votre passé vous rattrape. Vous possédez indice crucial sans le savoir.',
         personal_secrets: 'Vous fuyez quelque chose (pas quelqu\'un). Vous avez vu "la vérité" une fois (vision mystique). Vous savez que rester quelque part = danger.',
