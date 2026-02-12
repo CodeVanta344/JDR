@@ -155,7 +155,7 @@ export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImag
         return mod >= 0 ? `+${mod}` : `${mod}`;
     };
 
-    const categoryClasses = Object.entries(CLASS_CATEGORIES).find(([k, v]) => k === selectedCategory)?.[1] || [];
+    const categoryClasses = CLASS_CATEGORIES[selectedCategory]?.classes || [];
     const classData = CLASSES[selectedClass];
 
     return (
@@ -195,7 +195,7 @@ export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImag
                                         className={`selection-card ${selectedCategory === key ? 'selected' : ''}`}
                                         onClick={() => {
                                             setSelectedCategory(key);
-                                            setSelectedClass(CLASS_CATEGORIES[key][0]);
+                                            setSelectedClass(CLASS_CATEGORIES[key].classes[0]);
                                         }}
                                     >
                                         <div className="card-icon">{meta.icon}</div>
