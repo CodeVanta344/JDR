@@ -1754,3 +1754,6 @@ export const LEGENDARY_ITEMS = [
         quest_hook: "Caché dans la Bibliothèque Engloutie sous le lac de Sol-Aureus. Kaelith la Tisseuse le cherche."
     }
 ];
+
+// Export new lore system functions
+export { initializeLoreSystem, GlobalLoreRegistry, GlobalLoreSearch, getLoreStats } from './lore/index';
