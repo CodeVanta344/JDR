@@ -23,7 +23,7 @@ const STAT_ICONS = {
 const CATEGORY_META = {
     MIGHT: { icon: '⚔️', name: 'Sang et Acier', desc: 'Héros de la force brute et de la résilience. Ils dominent le champ de bataille par la puissance physique.' },
     MAGIC: { icon: '🔥', name: 'Arcanes et Mystères', desc: 'Maîtres des énergies cosmiques et divines. Ils plient la réalité à leur volonté.' },
-    CUNNING: { icon: '🗡️', name: 'Ombre et Ruse', desc: 'Spécialistes de l\'agilité et de la précision. Ils frappent là où ça fait mal, souvent sans être vus.' }
+    SKILL: { icon: '🗡️', name: 'Ombre et Ruse', desc: 'Spécialistes de l\'agilité et de la précision. Ils frappent là où ça fait mal, souvent sans être vus.' }
 };
 
 export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImage, sessionId }) {
@@ -195,7 +195,8 @@ export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImag
                                         className={`selection-card ${selectedCategory === key ? 'selected' : ''}`}
                                         onClick={() => {
                                             setSelectedCategory(key);
-                                            setSelectedClass(CLASS_CATEGORIES[key].classes[0]);
+                                            const firstClass = CLASS_CATEGORIES[key]?.classes?.[0];
+                                            if (firstClass) setSelectedClass(firstClass);
                                         }}
                                     >
                                         <div className="card-icon">{meta.icon}</div>
