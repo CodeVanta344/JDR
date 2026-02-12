@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Inter:wght@300;400;500;600&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;800&family=IM+Fell+English:ital@0;1&family=Inter:wght@300;400;500;600&display=swap');
 
 :root {
     /* --- ETHEREAL GLASS SYSTEM --- */
@@ -37,6 +37,8 @@
 
     /* Typography */
     --font-display: 'Cinzel', serif;
+    --font-decorative: 'Cinzel Decorative', serif;
+    --font-narrative: 'IM Fell English', serif;
     --font-body: 'Inter', sans-serif;
 
     /* Spacing */

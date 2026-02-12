@@ -1,0 +1,713 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;800&family=IM+Fell+English:ital@0;1&display=swap');
+
+/* ===== SESSION HUB - STYLE MÉDIÉVAL ÉPIQUE ===== */
+
+.session-hub-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    position: relative;
+    background: radial-gradient(ellipse at center, rgba(20, 20, 30, 0.4) 0%, rgba(10, 10, 15, 0.9) 100%);
+}
+
+/* ===== TITRE ÉPIQUE ===== */
+
+.epic-title-container {
+    text-align: center;
+    margin-bottom: 3rem;
+    animation: titleFadeIn 1.2s ease-out;
+}
+
+.subtitle {
+    font-family: 'IM Fell English', serif;
+    font-style: italic;
+    font-size: 0.9rem;
+    color: #d4af37;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    opacity: 0.8;
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+}
+
+.epic-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 900;
+    color: #fbeea8;
+    letter-spacing: 8px;
+    margin: 0;
+    text-shadow: 
+        0 0 20px rgba(251, 238, 168, 0.6),
+        0 0 40px rgba(212, 175, 55, 0.4),
+        2px 2px 4px rgba(0, 0, 0, 0.8);
+    position: relative;
+    display: inline-block;
+}
+
+.title-ornament {
+    font-size: 0.6em;
+    color: #d4af37;
+    margin: 0 1rem;
+    display: inline-block;
+    animation: ornamentPulse 3s ease-in-out infinite;
+}
+
+.title-underline {
+    width: 200px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #d4af37, transparent);
+    margin: 1rem auto 0;
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+
+@keyframes titleFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes ornamentPulse {
+    0%, 100% { 
+        opacity: 0.6;
+        transform: scale(1);
+    }
+    50% { 
+        opacity: 1;
+        transform: scale(1.1);
+    }
+}
+
+/* ===== PANNEAU PARCHEMIN ===== */
+
+.hub-scroll-panel {
+    position: relative;
+    max-width: 900px;
+    width: 100%;
+    background: 
+        linear-gradient(135deg, rgba(244, 236, 216, 0.98) 0%, rgba(232, 219, 193, 0.98) 100%);
+    padding: 3.5rem 3rem 3rem;
+    border-radius: 12px;
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.7),
+        0 0 0 1px rgba(212, 175, 55, 0.3),
+        inset 0 0 100px rgba(139, 69, 19, 0.03);
+    animation: scrollUnfold 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border: 3px solid #8a6d3b;
+    /* Texture parchemin */
+    background-image: 
+        repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 2px,
+            rgba(139, 69, 19, 0.02) 2px,
+            rgba(139, 69, 19, 0.02) 4px
+        );
+}
+
+@keyframes scrollUnfold {
+    from {
+        opacity: 0;
+        transform: scale(0.9) rotateX(15deg);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) rotateX(0deg);
+    }
+}
+
+/* ===== ORNEMENTS DE COINS ===== */
+
+.corner-ornament {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border-style: solid;
+    border-color: #8a6d3b;
+}
+
+.corner-ornament.top-left {
+    top: -3px;
+    left: -3px;
+    border-width: 3px 0 0 3px;
+    border-top-left-radius: 12px;
+}
+
+.corner-ornament.top-right {
+    top: -3px;
+    right: -3px;
+    border-width: 3px 3px 0 0;
+    border-top-right-radius: 12px;
+}
+
+.corner-ornament.bottom-left {
+    bottom: -3px;
+    left: -3px;
+    border-width: 0 0 3px 3px;
+    border-bottom-left-radius: 12px;
+}
+
+.corner-ornament.bottom-right {
+    bottom: -3px;
+    right: -3px;
+    border-width: 0 3px 3px 0;
+    border-bottom-right-radius: 12px;
+}
+
+.corner-ornament::before {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #d4af37;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.6);
+}
+
+.corner-ornament.top-left::before { top: 12px; left: 12px; }
+.corner-ornament.top-right::before { top: 12px; right: 12px; }
+.corner-ornament.bottom-left::before { bottom: 12px; left: 12px; }
+.corner-ornament.bottom-right::before { bottom: 12px; right: 12px; }
+
+/* ===== EN-TÊTE AVEC SCEAU ===== */
+
+.hub-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    padding-bottom: 2rem;
+    border-bottom: 2px solid rgba(138, 109, 59, 0.3);
+    position: relative;
+}
+
+.session-seal {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.5rem;
+    color: #8a6d3b;
+    animation: sealRotate 20s linear infinite;
+}
+
+.seal-svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+@keyframes sealRotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.session-info-grid {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.info-block {
+    text-align: center;
+}
+
+.info-label {
+    font-family: 'IM Fell English', serif;
+    font-size: 0.75rem;
+    color: #5d4e37;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 0.5rem;
+}
+
+.info-value {
+    font-family: 'Cinzel', serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2d2a26;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.code-value {
+    font-family: 'Courier New', monospace;
+    font-size: 1.3rem;
+    color: #8a6d3b;
+    letter-spacing: 3px;
+    background: rgba(139, 69, 19, 0.08);
+    padding: 0.3rem 0.8rem;
+    border-radius: 4px;
+    border: 1px dashed #8a6d3b;
+}
+
+.info-divider {
+    width: 2px;
+    height: 40px;
+    background: linear-gradient(to bottom, transparent, #8a6d3b, transparent);
+}
+
+/* ===== REGISTRE DES HÉROS ===== */
+
+.players-registry {
+    margin-bottom: 2rem;
+}
+
+.registry-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #5d4e37;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.registry-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, transparent, #8a6d3b, transparent);
+}
+
+.players-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* ===== CARTES JOUEURS ===== */
+
+.player-card {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.2rem 1.5rem;
+    background: rgba(255, 255, 255, 0.6);
+    border: 2px solid rgba(138, 109, 59, 0.3);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    animation: cardSlideIn 0.5s ease-out backwards;
+    position: relative;
+    overflow: hidden;
+}
+
+.player-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.player-card:hover::before {
+    left: 100%;
+}
+
+.player-card:hover {
+    border-color: #d4af37;
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
+    transform: translateX(5px);
+}
+
+.player-card.player-self {
+    background: rgba(212, 175, 55, 0.12);
+    border-color: #d4af37;
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.15);
+}
+
+@keyframes cardSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Avatar */
+
+.player-avatar {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.avatar-ring {
+    position: absolute;
+    inset: -4px;
+    border: 2px solid #d4af37;
+    border-radius: 50%;
+    animation: ringPulse 2s ease-in-out infinite;
+}
+
+@keyframes ringPulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.6;
+    }
+    50% {
+        transform: scale(1.08);
+        opacity: 1;
+    }
+}
+
+.avatar-inner {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #8a6d3b, #d4af37);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cinzel', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fbeea8;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    box-shadow: 
+        0 4px 8px rgba(0, 0, 0, 0.2),
+        inset 0 2px 4px rgba(255, 255, 255, 0.2);
+}
+
+.host-crown {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    font-size: 1.3rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    animation: crownFloat 2s ease-in-out infinite;
+}
+
+@keyframes crownFloat {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-4px); }
+}
+
+/* Info joueur */
+
+.player-info {
+    flex: 1;
+}
+
+.player-name {
+    font-family: 'Cinzel', serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #2d2a26;
+    margin-bottom: 0.3rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.host-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #d4af37;
+    background: rgba(212, 175, 55, 0.15);
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.player-status-label {
+    font-family: 'IM Fell English', serif;
+    font-size: 0.85rem;
+    color: #6d5d47;
+    font-style: italic;
+}
+
+/* Indicateur prêt */
+
+.player-ready-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.ready-text {
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #5dff98;
+    text-shadow: 0 0 8px rgba(93, 255, 152, 0.4);
+}
+
+.ready-text.waiting {
+    color: #9d8d7d;
+    text-shadow: none;
+}
+
+.ready-orb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid rgba(93, 255, 152, 0.3);
+    background: transparent;
+    transition: all 0.3s ease;
+}
+
+.ready-orb-active {
+    background: #5dff98;
+    border-color: #5dff98;
+    box-shadow: 
+        0 0 12px rgba(93, 255, 152, 0.6),
+        0 0 20px rgba(93, 255, 152, 0.3);
+    animation: orbPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes orbPulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 12px rgba(93, 255, 152, 0.6);
+    }
+    50% {
+        transform: scale(1.15);
+        box-shadow: 0 0 20px rgba(93, 255, 152, 0.8);
+    }
+}
+
+/* ===== ACTIONS ===== */
+
+.hub-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.actions-divider {
+    height: 2px;
+    background: linear-gradient(to right, transparent, #8a6d3b, transparent);
+    margin: 0.5rem 0;
+}
+
+.button-group {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Boutons médiévaux améliorés */
+
+.btn-medieval {
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    min-width: 200px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-medieval::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.btn-medieval:hover::before {
+    left: 100%;
+}
+
+.btn-icon {
+    font-size: 1.2em;
+    display: inline-block;
+    margin-right: 0.5rem;
+}
+
+.btn-subtitle {
+    font-size: 0.65rem;
+    opacity: 0.8;
+    letter-spacing: 1px;
+}
+
+/* Variantes boutons */
+
+.btn-secondary {
+    background: linear-gradient(135deg, #6d5d47, #5d4e37);
+    color: #f4ecd8;
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(135deg, #5d4e37, #4d3e27);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #8a6d3b, #d4af37);
+    color: #2d2a26;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #d4af37, #fbeea8);
+    transform: translateY(-2px);
+    box-shadow: 
+        0 6px 16px rgba(212, 175, 55, 0.4),
+        0 0 20px rgba(212, 175, 55, 0.2);
+}
+
+.btn-epic {
+    background: linear-gradient(135deg, #d4af37, #fbeea8, #d4af37);
+    background-size: 200% 200%;
+    color: #2d2a26;
+    animation: epicShimmer 3s ease infinite;
+    font-size: 1.1rem;
+    padding: 1.2rem 2.5rem;
+}
+
+@keyframes epicShimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+.btn-epic:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 
+        0 8px 24px rgba(212, 175, 55, 0.5),
+        0 0 30px rgba(212, 175, 55, 0.3);
+}
+
+.btn-medieval:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.btn-medieval:disabled::before {
+    display: none;
+}
+
+/* Notice */
+
+.hub-notice {
+    text-align: center;
+    padding: 1rem;
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 6px;
+    font-family: 'IM Fell English', serif;
+    font-style: italic;
+    color: #5d4e37;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+}
+
+.notice-icon {
+    font-size: 1.2rem;
+    animation: noticeIconPulse 2s ease-in-out infinite;
+}
+
+@keyframes noticeIconPulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+/* ===== FOOTER ===== */
+
+.hub-footer {
+    text-align: center;
+    margin-top: 2rem;
+    animation: footerFadeIn 1.5s ease-out;
+}
+
+.footer-ornament {
+    color: #d4af37;
+    font-size: 0.9rem;
+    letter-spacing: 8px;
+    margin-bottom: 0.5rem;
+    opacity: 0.6;
+}
+
+.footer-text {
+    font-family: 'IM Fell English', serif;
+    font-style: italic;
+    color: #a0a0b0;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+}
+
+@keyframes footerFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 768px) {
+    .epic-title {
+        font-size: 2.5rem;
+        letter-spacing: 4px;
+    }
+
+    .hub-scroll-panel {
+        padding: 2rem 1.5rem 2rem;
+    }
+
+    .session-info-grid {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .info-divider {
+        width: 60px;
+        height: 2px;
+        rotate: 90deg;
+    }
+
+    .player-card {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .button-group {
+        flex-direction: column;
+    }
+
+    .btn-medieval {
+        width: 100%;
+    }
+}
