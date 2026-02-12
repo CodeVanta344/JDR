@@ -22,8 +22,9 @@ export const EDUCATIONS: LifeChoice[] = [
       mechanical_traits: [
         {
           name: 'Esprit Érudit',
-          desc: '+2 tous jets Connaissance, apprentissage sorts 25% plus rapide',
-          game_effect: 'Bonus académique universel'
+          desc: '+2 tous jets Connaissance, apprentissage sorts +15% (Max +20% total)',
+          effect: '+2 Connaissance, +15% Sorts (cap 20%)',
+          game_effect: 'Bonus académique limité'
         }
       ],
       reputation: [
@@ -126,9 +127,9 @@ export const EDUCATIONS: LifeChoice[] = [
         { itemId: 'street_knife', quantity: 1, reason: 'Arme improvisée fidèle' }
       ],
       skills: [
-        { skillId: 'stealth', bonus: 3, reason: 'Éviter patrouilles depuis enfance' },
+        { skillId: 'stealth', bonus: 2, reason: 'Éviter patrouilles depuis enfance' },
         { skillId: 'sleight_of_hand', bonus: 2, reason: 'Pickpocket nécessaire' },
-        { skillId: 'insight', bonus: 2, reason: 'Lire intentions pour survivre' }
+        { skillId: 'insight', bonus: 1, reason: 'Lire intentions pour survivre' }
       ],
       languages: ['Argot des Rues'],
       tags: ['street', 'survivor', 'pragmatic', 'illiterate']
@@ -162,8 +163,9 @@ export const EDUCATIONS: LifeChoice[] = [
       mechanical_traits: [
         {
           name: 'Discipline Monastique',
-          desc: '+1 CA sans armure, +2 Concentration, méditation récupère 2× PV',
-          game_effect: 'Capacités de moine'
+          desc: '+1 CA sans armure, +2 Concentration, méditation récupère +50% PV (1×/jour)',
+          effect: '+1 AC, +2 Concentration',
+          game_effect: 'Capacités de moine équilibrées'
         }
       ],
       reputation: [

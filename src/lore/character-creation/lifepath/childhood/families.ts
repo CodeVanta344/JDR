@@ -65,8 +65,9 @@ export const FAMILIES: LifeChoice[] = [
       mechanical_traits: [
         {
           name: 'Résilience Forgée',
-          desc: '+1 tous jets quand PV < 50%, +2 Volonté contre désespoir',
-          game_effect: 'Endurance mentale extrême'
+          desc: '+1 tous jets quand PV < 50% (Max 3×/repos long), +2 Volonté',
+          effect: '+1 Jets (PV<50%, 3×/jour), +2 WIL',
+          game_effect: 'Endurance mentale limitée'
         }
       ],
       reputation: [],

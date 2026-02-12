@@ -22,13 +22,15 @@ export const SOCIAL_STATUSES: LifeChoice[] = [
       mechanical_traits: [
         {
           name: 'Privilège Aristocratique',
-          desc: '+3 Persuasion avec nobles/autorités, accès privilégié cour royale',
+          desc: '+2 Persuasion avec nobles/autorités, accès privilégié cour royale',
+          effect: '+2 Persuasion (Nobles)',
           game_effect: 'Avantage social politique'
         },
         {
           name: 'Héritage Prestigieux',
-          desc: 'Commence avec 500 PO supplémentaires',
-          game_effect: 'Richesse de départ'
+          desc: 'Commence avec 200 PO supplémentaires + obligations familiales',
+          effect: '+200 PO',
+          game_effect: 'Richesse de départ équilibrée'
         }
       ],
       reputation: [
@@ -37,10 +39,11 @@ export const SOCIAL_STATUSES: LifeChoice[] = [
       ],
       items: [
         { itemId: 'signet_ring', quantity: 1, reason: 'Sceau familial' },
-        { itemId: 'fine_clothes', quantity: 1, reason: 'Garde-robe noble' }
+        { itemId: 'fine_clothes', quantity: 1, reason: 'Garde-robe noble' },
+        { itemId: 'gold_coins', quantity: 200, reason: 'Avance sur héritage' }
       ],
       skills: [
-        { skillId: 'persuasion', bonus: 3, reason: 'Éducation courtisane' },
+        { skillId: 'persuasion', bonus: 2, reason: 'Éducation courtisane' },
         { skillId: 'knowledge_nobility', bonus: 2, reason: 'Généalogie et héraldique' }
       ],
       languages: ['Commun', 'Langue Noble'],
@@ -169,7 +172,8 @@ export const SOCIAL_STATUSES: LifeChoice[] = [
       mechanical_traits: [
         {
           name: 'Robustesse Paysanne',
-          desc: '+1 PV par niveau, résistance faim/soif',
+          desc: '+5 PV maximum, résistance faim/soif',
+          effect: '+5 HP',
           game_effect: 'Endurance accrue'
         }
       ],
@@ -456,13 +460,15 @@ export const SOCIAL_STATUSES: LifeChoice[] = [
       mechanical_traits: [
         {
           name: 'Esprit Endurci',
-          desc: 'Immunité effets psychologiques basés sur opinion sociale, +3 Volonté',
+          desc: 'Immunité effets psychologiques sociaux, +3 Volonté, +2 Survie',
+          effect: '+3 WIL, +2 Survie',
           game_effect: 'Résistance mentale extrême'
         },
         {
           name: 'Aura de Malédiction',
-          desc: '-3 tous jets sociaux sauf Intimidation',
-          game_effect: 'Pénalité sociale massive'
+          desc: '-2 jets sociaux (sauf Intimidation), mais +3 Intimidation/Survie',
+          effect: '-2 Social, +3 Intimidation',
+          game_effect: 'Pénalité sociale compensée'
         }
       ],
       reputation: [

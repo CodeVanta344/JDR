@@ -86,7 +86,7 @@ export const TRAININGS: LifeChoice[] = [
     effects: {
       stats: { dexterity: 3 },
       mechanical_traits: [
-        { name: 'Ombre Formée', desc: '+3 Discrétion, Attaque sournoise +2d6, Expertise crochetage', game_effect: 'Assassin expert' }
+        { name: 'Ombre Formée', desc: '+3 Discrétion, Attaque sournoise +1d6, Expertise crochetage', effect: '+3 Stealth, +1d6 Sneak Attack', game_effect: 'Assassin expert' }
       ],
       reputation: [{ factionId: 'guilde_voleurs', delta: 7, reason: 'Membre initié' }],
       items: [{ itemId: 'shadow_blade', quantity: 1, reason: 'Dague consacrée' }],
