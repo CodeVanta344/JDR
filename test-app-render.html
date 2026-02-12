@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Test JDR App</title>
+    <script>
+        window.addEventListener('error', function(e) {
+            console.error('[GLOBAL ERROR]', e.message, e.filename, e.lineno, e.colno);
+            document.body.innerHTML += `<div style="color:red;padding:20px;background:#000;">[ERROR] ${e.message} at ${e.filename}:${e.lineno}</div>`;
+        });
+        
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('[UNHANDLED PROMISE]', e.reason);
+            document.body.innerHTML += `<div style="color:orange;padding:20px;background:#000;">[PROMISE REJECT] ${e.reason}</div>`;
+        });
+    </script>
+</head>
+<body>
+    <h1 style="color:white;background:#000;padding:20px;">JDR App Test - Ouvrir la console</h1>
+    <div id="root"></div>
+    <script type="module">
+        console.log('[TEST] Starting app load test...');
+        try {
+            import('http://localhost:5174/src/main.jsx').then(() => {
+                console.log('[TEST] Main module loaded successfully');
+            }).catch(err => {
+                console.error('[TEST] Failed to load main module:', err);
+                document.body.innerHTML += `<div style="color:red;padding:20px;">[IMPORT ERROR] ${err.message}</div>`;
+            });
+        } catch (err) {
+            console.error('[TEST] Immediate error:', err);
+            document.body.innerHTML += `<div style="color:red;padding:20px;">[IMMEDIATE ERROR] ${err.message}</div>`;
+        }
+    </script>
+</body>
+</html>

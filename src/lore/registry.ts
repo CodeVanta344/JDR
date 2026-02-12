@@ -235,6 +235,13 @@ export class LoreRegistry {
   }
 
   /**
+   * Récupère toutes les entités enregistrées
+   */
+  getAll<T extends AnyEntity>(): T[] {
+    return Array.from(this.entities.values()) as T[];
+  }
+
+  /**
    * Recherche full-text simple
    */
   search(query: string): AnyEntity[] {

@@ -35,11 +35,20 @@ export const GlobalLoreSearch = new LoreSearchEngine(GlobalLoreRegistry);
 // INITIALISATION
 // ============================================================================
 
+let isInitialized = false;
+
 /**
  * Initialise le système de lore complet
  * À appeler au démarrage de l'application
+ * (Idempotent : ne s'exécute qu'une seule fois)
  */
 export function initializeLoreSystem(): void {
+  // Éviter double initialisation (React Strict Mode, HMR...)
+  if (isInitialized) {
+    console.log('[Lore] Système déjà initialisé, skip.');
+    return;
+  }
+  
   console.log('[Lore] Initialisation du système de lore...');
   
   const startTime = performance.now();
@@ -284,6 +293,9 @@ export function initializeLoreSystem(): void {
       console.log('[Lore] ✅ Validation d\'intégrité réussie');
     }
   }
+  
+  // Marquer comme initialisé
+  isInitialized = true;
 }
 
 // ============================================================================
