@@ -163,7 +163,7 @@ const RemoteActionOverlay = ({ action, onComplete }) => {
 };
 
 export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeType: 'STANDARD' }, players, currentUserId, initialEnemies, syncedCombatState, onUpdateCombatState, onCombatEnd, onLogAction, onHPChange, onResourceChange, onConsumeItem, onGameOver, onRewards, onVFX, onSFX, sessionId }) => {
-    // ROBUST USER ID MATCHING - Try multiple methods (MEMOIZED)
+    // ROBUST USER ID MATCHING - Try multiple methods (MEMOIZED with stable comparison)
     const myPlayer = useMemo(() => {
         if (!players || !currentUserId) return null;
         // Method 1: Direct user_id match
@@ -172,10 +172,16 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
         // Method 2: Check if currentUserId matches any player's id
         found = players.find(p => p.id === currentUserId);
         return found;
-    }, [players, currentUserId]);
+    }, [players?.length, currentUserId]); // Only recompute when player count or userId changes
 
-    // Log only on mount or when key props change
+    // Track if already logged to prevent duplicate logs
+    const hasLoggedInitRef = useRef(false);
+
+    // Log only once on first mount
     useEffect(() => {
+        if (hasLoggedInitRef.current) return;
+        hasLoggedInitRef.current = true;
+
         console.log(`[CombatManager] ====== COMBAT INIT ======`);
         console.log(`[CombatManager] currentUserId: ${currentUserId}`);
         console.log(`[CombatManager] players (${players?.length}):`, players?.map(p => ({ name: p.name, user_id: p.user_id, id: p.id })));
@@ -187,7 +193,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
             players: players?.map(p => ({ name: p.name, user_id: p.user_id, id: p.id })),
             myPlayer: myPlayer ? { name: myPlayer.name, user_id: myPlayer.user_id, id: myPlayer.id } : null
         });
-    }, [currentUserId, myPlayer]); // Only log when these actually change
+    }, []); // Empty deps = run once on mount
 
     const [combatants, setCombatants] = useState([]);
     const [currentTurnIndex, setCurrentTurnIndex] = useState(0);
@@ -524,7 +530,8 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
             onLogAction({ role: 'system', content: `⚔️ **LE COMBAT COMMENCE !** L'échiquier du destin est en place.` });
             addLog({ role: 'system', content: `⚔️ **LE COMBAT COMMENCE !** L'échiquier du destin est en place.` });
         }
-    }, [combatState, players, initialEnemies, onLogAction, syncedCombatState]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [combatState, players?.length, initialEnemies?.length, syncedCombatState]); // Use lengths instead of arrays to avoid unnecessary re-inits
 
     // CHECK VICTORY / DEFEAT
     useEffect(() => {
