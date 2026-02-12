@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export function SessionLobby({ onJoin, onCreate, onQuickStart, onJoinQuickStart, availableSessions = [], loading }) {
+export function SessionLobby({ onJoin, onCreate, onQuickStart, onSoloAdventure, onJoinQuickStart, availableSessions = [], loading }) {
     const [sessionId, setSessionId] = useState('');
 
     return (
@@ -48,22 +48,48 @@ export function SessionLobby({ onJoin, onCreate, onQuickStart, onJoinQuickStart,
                             >
                                 {loading ? 'INITIALISATION...' : 'CRÉER UNE SESSION'}
                             </button>
+
                             <button
                                 className="btn-medieval"
                                 style={{
                                     width: '100%',
-                                    padding: '0.8rem',
+                                    padding: '1rem',
+                                    marginTop: '1.5rem',
+                                    background: 'rgba(100, 150, 255, 0.1)',
+                                    border: '1px solid rgba(100, 150, 255, 0.3)',
+                                    color: '#88aaff',
+                                    fontSize: '0.9rem',
+                                    fontWeight: 'bold',
+                                    letterSpacing: '2px',
+                                    boxShadow: '0 0 15px rgba(100, 150, 255, 0.1)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '0.5rem'
+                                }}
+                                onClick={onSoloAdventure}
+                                disabled={loading}
+                            >
+                                🔮 {loading ? '...' : 'AVENTURE SOLO (TEST)'}
+                            </button>
+
+                            <button
+                                className="btn-medieval"
+                                style={{
+                                    width: '100%',
+                                    padding: '0.6rem',
                                     marginTop: '1rem',
-                                    background: 'rgba(212, 175, 55, 0.1)',
-                                    border: '1px solid rgba(212, 175, 55, 0.3)',
-                                    color: 'var(--gold-primary)',
-                                    fontSize: '0.8rem',
-                                    letterSpacing: '2px'
+                                    background: 'rgba(255, 255, 255, 0.05)',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    color: 'var(--text-muted)',
+                                    fontSize: '0.75rem',
+                                    letterSpacing: '2px',
+                                    opacity: 0.7
                                 }}
                                 onClick={onQuickStart}
                                 disabled={loading}
                             >
-                                {loading ? '...' : 'DEBUG: QUICK START'}
+                                ⚡ {loading ? '...' : 'DEBUG: QUICK START'}
                             </button>
                         </div>
 

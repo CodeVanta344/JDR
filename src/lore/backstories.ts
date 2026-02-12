@@ -33,6 +33,12 @@ export interface BackstoryOrigin {
   regional_knowledge: string[];
 }
 
+export interface MechanicalTrait {
+  name: string;
+  type: 'bonus' | 'penalty' | 'neutral';
+  desc: string;
+}
+
 export interface EnrichedBackstory {
   id: string;
   label: string;
@@ -44,6 +50,7 @@ export interface EnrichedBackstory {
   social_class: BackstorySocialClass;
   faction_ties: BackstoryFaction[];
   historical_events: BackstoryEvent[];
+  mechanical_traits: MechanicalTrait[];
   personal_secrets: string[];
   known_npcs: string[];
   starting_reputation: Record<string, number>;
@@ -152,6 +159,10 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
       }
     ],
     historical_events: [HISTORICAL_EVENTS["siege_sol_aureus"]],
+    mechanical_traits: [
+      { name: "Discipline de Fer", type: "bonus", desc: "Avantage sur les jets de sauvegarde contre la peur." },
+      { name: "Blessure de Guerre", type: "penalty", desc: "-1 sur les tests de Dextérité (Acrobaties)." }
+    ],
     personal_secrets: ["Vous avez vu un Sénéchal accepter un pot-de-vin de la Main Noire", "Votre mentor est mort en vous protégeant"],
     known_npcs: ["Commandeur Aldric", "Sénéchal Vorn (ennemi)", "Forgeron Durnan"],
     starting_reputation: { "Bouclier d'Argent": 25, "Main Noire": -10, "Gardes de Sol-Aureus": 15 },
@@ -199,6 +210,10 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
       }
     ],
     historical_events: [HISTORICAL_EVENTS["chute_ashka_echo"], HISTORICAL_EVENTS["purge_cercle_cendres"]],
+    mechanical_traits: [
+      { name: "Résonance Arcanique", type: "bonus", desc: "Vous détectez naturellement les sources de magie à 10 pas." },
+      { name: "Instabilité Mentale", type: "penalty", desc: "Les sorts psychiques infligent 2 dégâts supplémentaires." }
+    ],
     personal_secrets: ["Vous avez des visions de la chute d'Ashka", "Un fragment de l'Œil d'Ashka est caché dans votre sang"],
     known_npcs: ["Archiviste Maelis", "Chasseur d'héritage Karn"],
     starting_reputation: { "Cercle des Cendres": -50, "Guilde des Arcanes": 20, "Inquisition du Soleil": -30 },
@@ -246,6 +261,10 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
       }
     ],
     historical_events: [HISTORICAL_EVENTS["revelation_reine"]],
+    mechanical_traits: [
+      { name: "Éducation de Cour", type: "bonus", desc: "Avantage sur les tests de Persuasion contre la noblesse." },
+      { name: "Fierté Blessée", type: "penalty", desc: "-2 sur les tests d'Intimidation (vous paraissez trop raffiné)." }
+    ],
     personal_secrets: ["Votre père détenait des preuves contre le Cercle des Cendres", "Un serviteur loyal cache encore vos armoiries"],
     known_npcs: ["Chancelier Malaric (ennemi juré)", "Dame Isadora (ancienne amie)", "Valet Gregor (allié secret)"],
     starting_reputation: { "Cour Royale": -40, "Peuple de Sol-Aureus": 10, "Marchands": 5 },
@@ -293,6 +312,10 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
       }
     ],
     historical_events: [HISTORICAL_EVENTS["massacre_sylve"]],
+    mechanical_traits: [
+      { name: "Ami des Bois", type: "bonus", desc: "Vous trouvez toujours de quoi manger et boire en forêt." },
+      { name: "Mal social", type: "penalty", desc: "Désavantage sur les jets de Persuasion en milieu urbain dense." }
+    ],
     personal_secrets: ["Vous avez vu quelque chose dans la Source d'Émeraude", "Un esprit de la forêt vous a marqué"],
     known_npcs: ["Archidruide Sylvanus", "Éclaireur Thandril", "Dryade Elenwë"],
     starting_reputation: { "Conseil des Chênes": 30, "Elfes Sylvains": 20, "Humains du Val": -10 },
@@ -340,6 +363,10 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
       }
     ],
     historical_events: [HISTORICAL_EVENTS["guerre_guildes"]],
+    mechanical_traits: [
+      { name: "Connaissance des egouts", type: "bonus", desc: "Vous connaissez les passages secrets de toutes les grandes cités." },
+      { name: "Marqué par la Main", type: "penalty", desc: "Les agents de la Main Noire vous reconnaissent à 30 pas." }
+    ],
     personal_secrets: ["Vous avez volé quelque chose d'important à la Matriarche", "Vous connaissez l'identité d'un traître au Bouclier d'Argent"],
     known_npcs: ["Matriarche des Ombres (ennemie)", "Receleur Pics", "Garde corrompu Harlan"],
     starting_reputation: { "Main Noire": -75, "Bouclier d'Argent": -20, "Marchands": 10 },
@@ -387,6 +414,10 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
       }
     ],
     historical_events: [HISTORICAL_EVENTS["purge_cercle_cendres"]],
+    mechanical_traits: [
+      { name: "Aura de Compassion", type: "bonus", desc: "+2 sur les jets de Soins." },
+      { name: "Doute Hérétique", type: "penalty", desc: "Désavantage sur les jets de Volonté contre les serviteurs de Solarius." }
+    ],
     personal_secrets: ["Vous avez refusé d'exécuter un innocent", "Un miracle s'est produit devant vous, mais pas de Solarius"],
     known_npcs: ["Grand Prêtre Aldous", "Inquisiteur Malthus (ennemi)", "Sœur Elara (alliée secrète)"],
     starting_reputation: { "Clergé de Solarius": -10, "Peuple": 25, "Inquisition du Soleil": -40 },
@@ -434,6 +465,10 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
       }
     ],
     historical_events: [HISTORICAL_EVENTS["effondrement_niveau_12"]],
+    mechanical_traits: [
+      { name: "Maître de l'Acier", type: "bonus", desc: "Vos armes et armures de départ sont de qualité supérieure (+1 CA ou +1 Atk)." },
+      { name: "Claustrophobie", type: "penalty", desc: "Désavantage sur les jets de Perception dans les espaces très confinés." }
+    ],
     personal_secrets: ["Vous avez vu une créature dans les décombres", "Votre marteau familial est fait d'un métal inconnu"],
     known_npcs: ["Maître Forgeron Thorin", "Mineur Bram", "Veuve Helga"],
     starting_reputation: { "Guilde des Forgerons": 35, "Nains de Hammerdeep": 25, "Marchands de surface": 10 },
@@ -481,13 +516,17 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
       }
     ],
     historical_events: [HISTORICAL_EVENTS["eclipse_kuldahar"]],
+    mechanical_traits: [
+      { name: "Sang du Nord", type: "bonus", desc: "Résistance innée au froid (dégâts de glace réduits de 10%)." },
+      { name: "Rage Impulsive", type: "penalty", desc: "-2 sur les tests d'Initiative quand vous êtes surpris." }
+    ],
     personal_secrets: ["Vous avez vu le dragon dans vos rêves", "Une prophétie vous concerne"],
     known_npcs: ["Jarl Ragnar", "Chamane Ylva", "Éclaireur Bjorn"],
     starting_reputation: { "Jarls du Nord": 20, "Peuple de Sol-Aureus": -10, "Marchands": -5 },
     roleplay_hooks: [
       "Le clan vous rappelle pour une menace",
       "La prophétie de l'Éclipse se réalise",
-      "Un ennemi ancestral réapparaît"
+      "Un enemy ancestral réapparaît"
     ],
     gm_notes: [
       "Connexion avec les mystères du Nord",
@@ -519,6 +558,10 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     },
     faction_ties: [],
     historical_events: [HISTORICAL_EVENTS["siege_sol_aureus"]],
+    mechanical_traits: [
+      { name: "Instinct de Survie", type: "bonus", desc: "+2 sur les jets de sauvegarde contre la mort." },
+      { name: "Malnutri", type: "penalty", desc: "-5 PV max permanents." }
+    ],
     personal_secrets: ["Vous possédez un médaillon avec un blason inconnu", "Un étranger vous a sauvé la vie et a disparu"],
     known_npcs: ["Mère Greta (orphelinat)", "Chef des gamins Pip", "Mendiant aveugle Orel"],
     starting_reputation: { "Peuple commun": 15, "Nobles": -30, "Gardes": -10 },
@@ -566,6 +609,10 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
       }
     ],
     historical_events: [HISTORICAL_EVENTS["guerre_guildes"]],
+    mechanical_traits: [
+      { name: "Négociateur Agréé", type: "bonus", desc: "+2 sur les tests de Diplomatie commerciale." },
+      { name: "Dette de Sang", type: "penalty", desc: "-5 Or au début de chaque session." }
+    ],
     personal_secrets: ["Vous savez qui a orchestré votre ruine", "Vous avez caché un objet de valeur avant la faillite"],
     known_npcs: ["Rival Cornelius", "Ancien partenaire Mira", "Créancier Baldric"],
     starting_reputation: { "Guilde des Marchands": -15, "Main Noire": -20, "Clients fidèles": 20 },
@@ -613,6 +660,10 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
       }
     ],
     historical_events: [HISTORICAL_EVENTS["purge_cercle_cendres"]],
+    mechanical_traits: [
+      { name: "Savoir Théorique", type: "bonus", desc: "+2 sur les tests d'Histoire (Magie)." },
+      { name: "Banni de l'Académie", type: "penalty", desc: "-3 sur les jets de Persuasion contre les mages officiels." }
+    ],
     personal_secrets: ["Vous avez volé un tome interdit avant de partir", "Votre recherche portait sur le Miroir des Ombres"],
     known_npcs: ["Kaelith la Tisseuse", "Maître Malchor"],
     starting_reputation: { "Guilde des Arcanes": -20, "Bibliothécaires": 10 },
@@ -656,6 +707,10 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
       }
     ],
     historical_events: [HISTORICAL_EVENTS["eclipse_kuldahar"]],
+    mechanical_traits: [
+      { name: "Lueur Astrale", type: "bonus", desc: "Vous émettez une faible lumière (5 pas) à volonté." },
+      { name: "Sang d'Étoile", type: "penalty", desc: "Les dégâts de feu sont augmentés de 1." }
+    ],
     personal_secrets: ["Vous avez des visions de l'Archipel Astrale", "Votre sang brille d'une lueur bleutée sous la lune"],
     known_npcs: ["Lysandre Murmure-d'Étoile", "Reine Elara"],
     starting_reputation: { "Inquisition": -30, "Gardiens de la Lumière": 15 },
@@ -699,6 +754,10 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
       }
     ],
     historical_events: [HISTORICAL_EVENTS["chute_ashka_echo"]],
+    mechanical_traits: [
+      { name: "Sens de la Proie", type: "bonus", desc: "Avantage sur les jets de Perception (Pistage)." },
+      { name: "Cicatrices de l'Ombre", type: "penalty", desc: "-1 sur les tests de Charisme (sauf Intimidation)." }
+    ],
     personal_secrets: ["Vous avez été marqué par une abomination de l'Abysse", "Vous parlez une langue animale oubliée"],
     known_npcs: ["Zara la Rouge", "Bram Tonnelier"],
     starting_reputation: { "Garde des Cendres": 20, "Pilleurs de Tombes": -15 },
@@ -742,6 +801,10 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
       }
     ],
     historical_events: [HISTORICAL_EVENTS["purge_cercle_cendres"]],
+    mechanical_traits: [
+      { name: "Méthodes d'Interrogatoire", type: "bonus", desc: "Avantage sur les jets d'Intimidation pour obtenir des informations." },
+      { name: "Marque de Caïn", type: "penalty", desc: "-10 Or au départ (dîme de rédemption)." }
+    ],
     personal_secrets: ["Vous avez sauvé l'un des 'hérétiques' que vous deviez tuer", "Vous avez gardé un reliquaire sacré maudit"],
     known_npcs: ["Capitaine Aldric", "Silène la Voilée"],
     starting_reputation: { "Inquisition": -40, "Victimes de la Purge": 15 },
@@ -785,6 +848,10 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
       }
     ],
     historical_events: [HISTORICAL_EVENTS["effondrement_level_12"]],
+    mechanical_traits: [
+      { name: "Insoumis", type: "bonus", desc: "Avantage sur les jets pour se libérer de liens physiques." },
+      { name: "Analphabète", type: "penalty", desc: "Ne peut pas lire les textes complexes sans test d'Intelligence." }
+    ],
     personal_secrets: ["Vous avez tué votre ancien contremaître", "Vous avez gardé la clé de vos chaînes"],
     known_npcs: ["Goruk Dent-de-Fer", "Helga Poing-de-Pierre"],
     starting_reputation: { "Guilde Minière": -25, "Ouvriers Rebelles": 30 },
@@ -828,6 +895,10 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
       }
     ],
     historical_events: [HISTORICAL_EVENTS["chute_ashka_echo"]],
+    mechanical_traits: [
+      { name: "Savoir Ashkan", type: "bonus", desc: "Avantage sur les jets de connaissance concernant l'histoire ancienne." },
+      { name: "Cible de la Main", type: "penalty", desc: "Les prix au marché noir sont augmentés de 20% pour vous." }
+    ],
     personal_secrets: ["Vous avez découvert la véritable cause de la Chute", "Vous avez un fragment du Trône d'Ashka"],
     known_npcs: ["Prophète Sans Nom", "Kaelith la Tisseuse"],
     starting_reputation: { "Main Noire": -15, "Académies": 5 },
@@ -871,6 +942,10 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
       }
     ],
     historical_events: [HISTORICAL_EVENTS["eclipse_kuldahar"]],
+    mechanical_traits: [
+      { name: "Vision Reflétée", type: "bonus", desc: "Vous pouvez voir dans les zones de ténèbres magiques (portée 10 pas)." },
+      { name: "Reflet Instable", type: "penalty", desc: "Désavantage sur les jets de Discrétion face aux créatures de l'Ombre." }
+    ],
     personal_secrets: ["Votre reflet a sa propre volonté", "Vous pouvez voir à travers les yeux d'un autre reflet"],
     known_npcs: ["Silène la Voilée", "Le Prophète Sans Nom"],
     starting_reputation: { "Entités du Miroir": 10, "Inquisition": -50 },
@@ -914,6 +989,10 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
       }
     ],
     historical_events: [HISTORICAL_EVENTS["siege_sol_aureus"]],
+    mechanical_traits: [
+      { name: "Médecin de Bataille", type: "bonus", desc: "Avantage sur les jets de Médecine sous pression (combat)." },
+      { name: "Cauchemars de Campagne", type: "penalty", desc: "-1 sur les tests de Volonté après de longues sessions sans repos." }
+    ],
     personal_secrets: ["Vous avez pratiqué une euthanasie interdite sur un noble", "Vous connaissez la faiblesse anatomique d'un général"],
     known_npcs: ["Capitaine Aldric", "Goruk Dent-de-Fer"],
     starting_reputation: { "Bouclier d'Argent": 20, "Peuple": 30 },
@@ -957,6 +1036,10 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
       }
     ],
     historical_events: [HISTORICAL_EVENTS["revelation_reine"]],
+    mechanical_traits: [
+      { name: "Immunité Diplomatique", type: "bonus", desc: "Vous ne pouvez pas être arrêté pour des délits mineurs sans preuve flagrante." },
+      { name: "Cible Politique", type: "penalty", desc: "+10% de chances d'être pris comme cible prioritaire par des assassins." }
+    ],
     personal_secrets: ["Vous avez signé un traité sous la contrainte", "Vous parlez couramment la langue des démons"],
     known_npcs: ["Reine Elara", "Chancelier Malaric"],
     starting_reputation: { "Cour Royale": 40, "Guilde des Marchands": 25, "Main Noire": -20 },
@@ -972,7 +1055,7 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     label: "Pilleur d'Épaves de la Côte",
     category: "wilderness",
     compatible_classes: ["Voleur", "Rôdeur", "Guerrier"],
-    desc: "Les tempêtes de la Côte des Orages rejettent souvent des trésors et des secrets. Vous avez survécu en récupérant ce que l'Océan des Murmures ne voulait plus. Vous avez appris à lire les vagues et à craindre ce qui rampe sous l'écume.",
+    desc: "Les tempêtes de la Côte des Orages rejettent souvent des treasures et des secrets. Vous avez survécu en récupérant ce que l'Océan des Murmures ne voulait plus. Vous avez appris à lire les vagues et à craindre ce qui rampe sous l'écume.",
     stats: { dex: 1, wis: 1, int: 1 },
     origin: {
       id: "cote_orages_plages",
@@ -1000,6 +1083,10 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
       }
     ],
     historical_events: [HISTORICAL_EVENTS["eclipse_kuldahar"]],
+    mechanical_traits: [
+      { name: "Pied Marin", type: "bonus", desc: "Immunité au mal de mer et avantage sur les tests d'équilibre sur terrain instable." },
+      { name: "Odeur de Marée", type: "penalty", desc: "-1 sur les tests de Discrétion face aux créatures à l'odorat fin." }
+    ],
     personal_secrets: ["Vous avez trouvé un objet qui ne devrait pas exister", "Vous avez laissé un survivant se noyer"],
     known_npcs: ["Lysandre Murmure-d'Étoile", "Bram Tonnelier"],
     starting_reputation: { "Libres-Marins": 15, "Garde Côtière": -10 },
@@ -1043,6 +1130,10 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
       }
     ],
     historical_events: [HISTORICAL_EVENTS["effondrement_niveau_12"]],
+    mechanical_traits: [
+      { name: "Scribre de Pierre", type: "bonus", desc: "+2 sur les tests de recherche d'informations en bibliothèque." },
+      { name: "Yeux Sensibles", type: "penalty", desc: "Désavantage sur les jets de Perception en plein soleil ou lumière éclatante." }
+    ],
     personal_secrets: ["Vous avez effacé une branche généalogique entière", "Vous avez trouvé un texte Ashkan prédisant l'effondrement"],
     known_npcs: ["Goruk Dent-de-Fer", "Archiviste Kaelith"],
     starting_reputation: { "Consilium du Granit": 45, "Guilde des Forgerons": 20 },
@@ -1094,6 +1185,10 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
       }
     ],
     historical_events: [HISTORICAL_EVENTS["revelation_reine"], HISTORICAL_EVENTS["guerre_guildes"]],
+    mechanical_traits: [
+      { name: "Lecture des Lèvres", type: "bonus", desc: "Vous pouvez comprendre une conversation silencieuse à 20 pas." },
+      { name: "Paria Politique", type: "penalty", desc: "-4 sur les jets de Persuasion contre les membres de la Cour Royale." }
+    ],
     personal_secrets: ["Vous avez gardé une lettre compromettante de la Reine", "Votre propre frère est un Inquisiteur"],
     known_npcs: ["Chancelier Malaric", "Matriarche des Ombres", "Garde corrompu Harlan"],
     starting_reputation: { "Cour Royale": -30, "Main Noire": -25, "Bourse de l'Ombre": 15 },
@@ -1145,6 +1240,10 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
       }
     ],
     historical_events: [HISTORICAL_EVENTS["chute_ashka_echo"], HISTORICAL_EVENTS["guerre_guildes"]],
+    mechanical_traits: [
+      { name: "Rempart Humain", type: "bonus", desc: "Vous pouvez prendre un coup à la place d'un allié adjacent (1/combat)." },
+      { name: "Dette de Vie", type: "penalty", desc: "Le marchand Cornelius peut vous appeler pour une mission obligatoire à tout moment." }
+    ],
     personal_secrets: ["Vous avez laissé brûler une caravane pour sauver un enfant", "Le marchand Cornelius vous en veut personnellement"],
     known_npcs: ["Cornelius (négociant)", "Zara la Rouge", "Bram Tonnelier"],
     starting_reputation: { "Guilde des Marchands": 30, "Pilleurs": -20, "Garde des Cendres": 15 },
@@ -1196,6 +1295,10 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
       }
     ],
     historical_events: [HISTORICAL_EVENTS["eclipse_kuldahar"], HISTORICAL_EVENTS["chute_ashka_echo"]],
+    mechanical_traits: [
+      { name: "Communion du Silence", type: "bonus", desc: "Vous n'avez pas besoin de dormir (méditation profonde de 2h suffit)." },
+      { name: "Déséquilibre Éthéré", type: "penalty", desc: "Les sorts soignant des PV ont 10% de chances d'échouer sur vous." }
+    ],
     personal_secrets: ["Vous n'avez pas vieilli depuis 20 ans", "Une voix dans la Faille vous appelle par votre vrai nom"],
     known_npcs: ["Archidruide Sylvanus", "Le Prophète Sans Nom", "Silène la Voilée"],
     starting_reputation: { "Conseil des Chênes": 10, "Entités du Miroir": 20, "Inquisition": -30 },
@@ -1247,6 +1350,10 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
       }
     ],
     historical_events: [HISTORICAL_EVENTS["purge_cercle_cendres"], HISTORICAL_EVENTS["siege_sol_aureus"]],
+    mechanical_traits: [
+      { name: "Phare dans la Nuit", type: "bonus", desc: "Vous pouvez soigner un allié de 1D6 PV une fois par jour par simple contact." },
+      { name: "Éclat Révélateur", type: "penalty", desc: "Impossible de se cacher dans l'obscurité totale (vous brillez)." }
+    ],
     personal_secrets: ["La relique se nourrit de votre force vitale", "Les enfants de l'orphelinat sont en danger à cause de vous"],
     known_npcs: ["Mère Greta", "Grand Prêtre Aldous", "Inquisiteur Malthus"],
     starting_reputation: { "Clergé de Solarius": 35, "Peuple": 25, "Inquisition": -20 },
@@ -1298,6 +1405,10 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
       }
     ],
     historical_events: [HISTORICAL_EVENTS["purge_cercle_cendres"], HISTORICAL_EVENTS["eclipse_kuldahar"]],
+    mechanical_traits: [
+      { name: "Initié du Cercle", type: "bonus", desc: "Avantage sur les jets de Volonté contre les possessions démoniaques." },
+      { name: "Cicatrices de l'Ombre", type: "penalty", desc: "Les prêtres de Solarius vous détestent à vue (-10 en réputation initiale)." }
+    ],
     personal_secrets: ["Vous avez le nom d'un Grand Maître du Cercle", "La marque sur votre bras vous brûle quand ils sont proches"],
     known_npcs: ["Le Prophète Sans Nom", "Inquisiteur Malthus", "Matriarche des Ombres"],
     starting_reputation: { "Cercle des Cendres": -60, "Inquisition": -40, "Victimes du Cercle": 10 },
@@ -1347,6 +1458,9 @@ export function formatBackstoryForGM(backstory: EnrichedBackstory, playerName: s
 
 ### Événements Historiques Vécus
 ${events || 'Aucun événement majeur'}
+
+### Traits Mécaniques (IMPACT JEU)
+${backstory.mechanical_traits.map(t => `- **${t.name}** (${t.type}): ${t.desc}`).join('\n')}
 
 ### Affiliations & Factions
 ${factions || 'Aucune affiliation'}

@@ -103,9 +103,9 @@ export default function App() {
     useEffect(() => {
         const startTime = performance.now();
         console.log('[App] Initializing Lore System...');
-        
+
         initializeLoreSystem();
-        
+
         // Preload common data in background
         preloadCommonData().then(() => {
             const duration = performance.now() - startTime;
@@ -913,6 +913,52 @@ export default function App() {
             }
         } catch (e) {
             console.error("Join Quick Start Error:", e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSoloAdventure = async () => {
+        if (!profile) return;
+        setLoading(true);
+        try {
+            // 1. Create Session already marked as started
+            const { data: sessionData, error: sessionError } = await supabase
+                .from('sessions')
+                .insert({
+                    host_id: profile.id,
+                    is_started: true,
+                    active: true
+                })
+                .select()
+                .single();
+
+            if (sessionError || !sessionData) throw sessionError;
+
+            setSession(sessionData);
+            setAdventureStarted(true); // Ensure local state reflects started session
+            window.history.pushState({}, '', `?s=${sessionData.id}`);
+
+            // 2. Create Host Player Record (not ready yet, so they go to Character Creation)
+            const { data: playerData, error: playerError } = await supabase
+                .from('players')
+                .insert({
+                    session_id: sessionData.id,
+                    user_id: profile.id,
+                    name: profile.name || 'Hero',
+                    is_host: true,
+                    is_ready: false
+                })
+                .select()
+                .single();
+
+            if (playerError || !playerData) throw playerError;
+            setCharacter(playerData);
+            setPlayers([playerData]);
+
+        } catch (e) {
+            console.error("Solo Adventure Error:", e);
+            alert("Erreur lors du Solo Adventure : " + e.message);
         } finally {
             setLoading(false);
         }
@@ -2333,6 +2379,7 @@ export default function App() {
                     onJoin={handleJoinSession}
                     onCreate={handleCreateSession}
                     onQuickStart={handleQuickStart}
+                    onSoloAdventure={handleSoloAdventure}
                     onJoinQuickStart={handleJoinQuickStart}
                     availableSessions={availableSessions}
                     loading={loading}

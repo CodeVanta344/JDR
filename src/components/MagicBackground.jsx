@@ -85,15 +85,15 @@ export function MagicBackground() {
 
             // Draw subtle gradient background
             const gradient = ctx.createRadialGradient(
-                canvas.width / 2, 
-                canvas.height / 2, 
-                0, 
-                canvas.width / 2, 
-                canvas.height / 2, 
+                canvas.width / 2,
+                canvas.height / 2,
+                0,
+                canvas.width / 2,
+                canvas.height / 2,
                 Math.max(canvas.width, canvas.height)
             );
-            gradient.addColorStop(0, 'rgba(20, 20, 30, 0.05)');
-            gradient.addColorStop(1, 'rgba(10, 10, 15, 0.1)');
+            gradient.addColorStop(0, 'rgba(10, 10, 15, 0.2)');
+            gradient.addColorStop(1, 'rgba(5, 5, 8, 0.4)');
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
