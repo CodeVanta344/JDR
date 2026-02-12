@@ -178,60 +178,189 @@
 
 .selection-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-    max-height: 60vh;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    max-height: 65vh;
     overflow-y: auto;
-    padding: 0.5rem;
+    padding-right: 1rem;
+}
+
+/* Scrollbar personnalisée */
+.selection-grid::-webkit-scrollbar {
+    width: 10px;
+}
+
+.selection-grid::-webkit-scrollbar-track {
+    background: rgba(212, 175, 55, 0.05);
+    border-radius: 5px;
+}
+
+.selection-grid::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(212, 175, 55, 0.4) 0%, rgba(212, 175, 55, 0.6) 100%);
+    border-radius: 5px;
+    border: 2px solid rgba(10, 10, 12, 0.5);
+}
+
+.selection-grid::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(212, 175, 55, 0.6) 0%, rgba(255, 215, 0, 0.7) 100%);
 }
 
 .selection-card {
-    background: rgba(0, 0, 0, 0.95);
-    border: 1px solid rgba(255, 215, 0, 0.15);
-    border-radius: 8px;
+    background: linear-gradient(135deg, #16161a 0%, #0f0f12 100%);
+    border: 2px solid rgba(212, 175, 55, 0.25);
+    border-radius: 12px;
     overflow: hidden;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
     position: relative;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-    min-height: 180px;
+    box-shadow: 
+        0 8px 24px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(212, 175, 55, 0.1);
+    min-height: 280px;
+}
+
+.selection-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent 0%, rgba(212, 175, 55, 0.4) 50%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 .selection-card:hover {
-    transform: translateY(-5px);
-    border-color: rgba(255, 215, 0, 0.4);
-    box-shadow: 0 8px 25px rgba(255, 215, 0, 0.1);
+    transform: translateY(-8px);
+    border-color: rgba(212, 175, 55, 0.6);
+    box-shadow: 
+        0 16px 40px rgba(212, 175, 55, 0.25),
+        0 0 0 1px rgba(212, 175, 55, 0.3),
+        inset 0 1px 0 rgba(212, 175, 55, 0.2);
+}
+
+.selection-card:hover::before {
+    opacity: 1;
 }
 
 .selection-card.selected {
     border-color: #ffd700;
-    background: rgba(10, 10, 5, 1);
-    box-shadow: 0 0 30px rgba(255, 215, 0, 0.15), inset 0 0 15px rgba(255, 215, 0, 0.05);
+    border-width: 3px;
+    background: linear-gradient(135deg, rgba(22, 22, 26, 1) 0%, rgba(26, 20, 10, 1) 100%);
+    box-shadow: 
+        0 0 0 3px rgba(255, 215, 0, 0.2),
+        0 16px 48px rgba(255, 215, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    animation: selectedCardPulse 2s ease-in-out infinite;
+}
+
+@keyframes selectedCardPulse {
+    0%, 100% {
+        box-shadow: 
+            0 0 0 3px rgba(255, 215, 0, 0.2),
+            0 16px 48px rgba(255, 215, 0, 0.35),
+            inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+    50% {
+        box-shadow: 
+            0 0 0 4px rgba(255, 215, 0, 0.3),
+            0 16px 48px rgba(255, 215, 0, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+}
+
+.selection-card.selected::after {
+    content: '✓ SÉLECTIONNÉ';
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+    color: white;
+    padding: 0.4rem 0.9rem;
+    border-radius: 16px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    box-shadow: 0 2px 8px rgba(74, 222, 128, 0.4);
+    animation: badgePop 0.4s ease;
+    z-index: 10;
+}
+
+@keyframes badgePop {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
 }
 
 .selection-card .card-title {
-    font-family: 'Cinzel', serif;
+    font-family: 'Cinzel Decorative', serif;
     color: #ffd700;
-    font-size: 1.1rem;
-    padding: 1.2rem 1.2rem 0.5rem;
-    letter-spacing: 1px;
+    font-size: 1.6rem;
+    padding: 1.8rem 2rem 0.8rem;
+    letter-spacing: 3px;
     text-transform: uppercase;
-    font-weight: 800;
+    font-weight: 900;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+    background: linear-gradient(180deg, rgba(212, 175, 55, 0.08) 0%, transparent 100%);
+    border-bottom: 2px solid rgba(212, 175, 55, 0.2);
+    margin: 0;
 }
 
 .card-body {
-    padding: 0 1.2rem 1.2rem;
+    padding: 1.8rem 2rem 2rem;
     flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
 }
 
 .card-description {
-    font-family: 'Outfit', sans-serif;
-    font-size: 0.85rem;
-    line-height: 1.5;
-    color: #b5b5b5;
+    font-family: 'IM Fell English', serif;
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: rgba(232, 220, 196, 0.95);
     margin: 0;
+    text-align: justify;
+}
+
+.trait-tag {
+    display: inline-block;
+    padding: 0.4rem 0.9rem;
+    margin-right: 0.6rem;
+    margin-top: 0.6rem;
+    border-radius: 16px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+}
+
+.trait-tag.bonus {
+    background: linear-gradient(135deg, rgba(74, 222, 128, 0.15) 0%, rgba(74, 222, 128, 0.25) 100%);
+    border: 1px solid rgba(74, 222, 128, 0.4);
+    color: #4ade80;
+}
+
+.trait-tag.malus {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.25) 100%);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #ef4444;
+}
+
+.trait-tag.neutral {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.25) 100%);
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    color: #d4af37;
+}
+
+.trait-tag:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* ===== INPUTS ===== */
