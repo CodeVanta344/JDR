@@ -13,6 +13,7 @@ import { ALL_RESOURCES } from './resources';
 import { ALL_RECIPES } from './recipes';
 import { ALL_CREATURES } from './bestiary';
 import { ALL_NPCS } from './npcs';
+import { ALL_QUESTS } from './quests';
 
 // ============================================================================
 // REGISTRY GLOBAL
@@ -116,6 +117,22 @@ export function initializeLoreSystem(): void {
     });
   });
   
+  // Enregistrement des quêtes
+  console.log(`[Lore] Enregistrement de ${ALL_QUESTS.length} quêtes...`);
+  ALL_QUESTS.forEach(quest => {
+    const tags = [quest.type, quest.category, quest.region, quest.questGiver, `level-${quest.suggestedLevel}`];
+    if (quest.prerequisites?.faction) tags.push(quest.prerequisites.faction.id);
+    
+    GlobalLoreRegistry.register({
+      id: quest.id,
+      name: quest.name,
+      type: 'quest',
+      tags,
+      description: quest.summary,
+      data: quest
+    });
+  });
+  
   const endTime = performance.now();
   const totalEntities = GlobalLoreRegistry.getAll().length;
   
@@ -127,6 +144,7 @@ export function initializeLoreSystem(): void {
   console.log(`[Lore] - Recettes: ${ALL_RECIPES.length}`);
   console.log(`[Lore] - Créatures: ${ALL_CREATURES.length}`);
   console.log(`[Lore] - NPCs: ${ALL_NPCS.length}`);
+  console.log(`[Lore] - Quêtes: ${ALL_QUESTS.length}`);
   
   // Validation (optionnel en développement)
   if (process.env.NODE_ENV === 'development') {
@@ -153,6 +171,7 @@ export * from './resources';
 export * from './recipes';
 export * from './bestiary';
 export * from './npcs';
+export * from './quests';
 
 // Export des données brutes
 export {
@@ -161,7 +180,8 @@ export {
   ALL_RESOURCES,
   ALL_RECIPES,
   ALL_CREATURES,
-  ALL_NPCS
+  ALL_NPCS,
+  ALL_QUESTS
 };
 
 // ============================================================================
@@ -228,7 +248,8 @@ export function getLoreStats() {
     resources: ALL_RESOURCES.length,
     recipes: ALL_RECIPES.length,
     creatures: ALL_CREATURES.length,
-    npcs: ALL_NPCS.length
+    npcs: ALL_NPCS.length,
+    quests: ALL_QUESTS.length
   };
 }
 
