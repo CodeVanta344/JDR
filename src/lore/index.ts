@@ -1,55 +1,225 @@
-// Lore Index - Re-exports all lore modules
-export * from './world';
-export * from './classes';
-export * from './bestiary';
-export * from './npcs';
-export * from './quests';
-export * from './locations';
-export * from './encounters';
-export * from './items';
-export * from './rules';
-export * from './culture';
-export * from './backstories';
-export * from './events';
+/**
+ * AETHELGARD LORE - Point d'entrée principal
+ * Initialise et exporte tout le système de lore
+ */
 
-// Helper to get all creatures from both bestiaries
-import { BESTIARY } from './bestiary';
-import { BESTIARY_EXTENDED } from './bestiary';
+import { LoreRegistry } from './registry';
+import { LoreSearchEngine } from './search';
 
-export const getAllCreatures = () => ({
-  ...BESTIARY,
-  ...BESTIARY_EXTENDED
-});
+// Import des données
+import { ALL_FACTIONS } from './factions';
+import { ALL_PROFESSIONS } from './professions';
+import { ALL_RESOURCES } from './resources';
+import { ALL_RECIPES } from './recipes';
+import { ALL_CREATURES } from './bestiary';
 
-// Helper to get random encounter
-import { RANDOM_ENCOUNTERS } from './encounters';
+// ============================================================================
+// REGISTRY GLOBAL
+// ============================================================================
 
-export const getRandomEncounter = (type: keyof typeof RANDOM_ENCOUNTERS): string => {
-  const encounters = RANDOM_ENCOUNTERS[type];
-  return encounters[Math.floor(Math.random() * encounters.length)];
-};
+export const GlobalLoreRegistry = new LoreRegistry();
+export const GlobalLoreSearch = new LoreSearchEngine(GlobalLoreRegistry);
 
-// Helper to find NPC by name
-import { NPC_TEMPLATES } from './npcs';
+// ============================================================================
+// INITIALISATION
+// ============================================================================
 
-export const findNPC = (name: string) => {
-  for (const category of Object.values(NPC_TEMPLATES)) {
-    const found = category.find((npc: any) => npc.name === name);
-    if (found) return found;
+/**
+ * Initialise le système de lore complet
+ * À appeler au démarrage de l'application
+ */
+export function initializeLoreSystem(): void {
+  console.log('[Lore] Initialisation du système de lore...');
+  
+  const startTime = performance.now();
+  
+  // Enregistrement des factions
+  console.log(`[Lore] Enregistrement de ${ALL_FACTIONS.length} factions...`);
+  ALL_FACTIONS.forEach(faction => {
+    GlobalLoreRegistry.register({
+      id: faction.id,
+      name: faction.name,
+      type: 'faction',
+      tags: [faction.alignment, faction.influence],
+      description: faction.description,
+      data: faction
+    });
+  });
+  
+  // Enregistrement des métiers
+  console.log(`[Lore] Enregistrement de ${ALL_PROFESSIONS.length} métiers...`);
+  ALL_PROFESSIONS.forEach(profession => {
+    GlobalLoreRegistry.register({
+      id: `profession:${profession.type}`,
+      name: profession.name,
+      type: 'profession',
+      tags: [profession.category, profession.primaryStat],
+      description: profession.description,
+      data: profession
+    });
+  });
+  
+  // Enregistrement des ressources
+  console.log(`[Lore] Enregistrement de ${ALL_RESOURCES.length} ressources...`);
+  ALL_RESOURCES.forEach(resource => {
+    GlobalLoreRegistry.register({
+      id: resource.id,
+      name: resource.name,
+      type: 'resource',
+      tags: [resource.category, resource.rarity, resource.gatheredBy, ...resource.biomes],
+      description: resource.description,
+      data: resource
+    });
+  });
+  
+  // Enregistrement des recettes
+  console.log(`[Lore] Enregistrement de ${ALL_RECIPES.length} recettes...`);
+  ALL_RECIPES.forEach(recipe => {
+    GlobalLoreRegistry.register({
+      id: recipe.id,
+      name: recipe.name,
+      type: 'recipe',
+      tags: [recipe.profession, recipe.category, recipe.station],
+      description: `Recette de ${recipe.profession} niveau ${recipe.levelRequired}`,
+      data: recipe
+    });
+  });
+  
+  // Enregistrement des créatures
+  console.log(`[Lore] Enregistrement de ${ALL_CREATURES.length} créatures...`);
+  ALL_CREATURES.forEach(creature => {
+    GlobalLoreRegistry.register({
+      id: creature.id,
+      name: creature.name,
+      type: 'creature',
+      tags: [creature.type, creature.size, creature.alignment, `cr-${creature.challengeRating}`, ...creature.habitat],
+      description: creature.description,
+      data: creature
+    });
+  });
+  
+  const endTime = performance.now();
+  const totalEntities = GlobalLoreRegistry.getAll().length;
+  
+  console.log(`[Lore] ✅ Système de lore initialisé en ${(endTime - startTime).toFixed(2)}ms`);
+  console.log(`[Lore] 📊 Total: ${totalEntities} entités enregistrées`);
+  console.log(`[Lore] - Factions: ${ALL_FACTIONS.length}`);
+  console.log(`[Lore] - Métiers: ${ALL_PROFESSIONS.length}`);
+  console.log(`[Lore] - Ressources: ${ALL_RESOURCES.length}`);
+  console.log(`[Lore] - Recettes: ${ALL_RECIPES.length}`);
+  console.log(`[Lore] - Créatures: ${ALL_CREATURES.length}`);
+  
+  // Validation (optionnel en développement)
+  if (process.env.NODE_ENV === 'development') {
+    const issues = GlobalLoreRegistry.validate();
+    if (issues.length > 0) {
+      console.warn(`[Lore] ⚠️ Problèmes d'intégrité détectés:`, issues);
+    } else {
+      console.log('[Lore] ✅ Validation d\'intégrité réussie');
+    }
   }
-  return null;
+}
+
+// ============================================================================
+// EXPORTS
+// ============================================================================
+
+// Re-export des modules principaux
+export * from './schema';
+export * from './registry';
+export * from './search';
+export * from './factions';
+export * from './professions';
+export * from './resources';
+export * from './recipes';
+export * from './bestiary';
+
+// Export des données brutes
+export {
+  ALL_FACTIONS,
+  ALL_PROFESSIONS,
+  ALL_RESOURCES,
+  ALL_RECIPES,
+  ALL_CREATURES
 };
 
-// Helper to get quest hooks by region
-import { QUEST_HOOKS } from './quests';
+// ============================================================================
+// HELPERS RAPIDES POUR LE MJ IA
+// ============================================================================
 
-export const getQuestsByRegion = (region: keyof typeof QUEST_HOOKS) => {
-  return QUEST_HOOKS[region] || [];
-};
+/**
+ * Génère un briefing complet pour le MJ sur un lieu
+ */
+export function getBriefingForLocation(locationName: string, biome: string): string {
+  return GlobalLoreSearch.generateBriefing({
+    biome: biome,
+    includeNPCs: true,
+    includeCreatures: true,
+    includeQuests: true,
+    includeItems: true
+  });
+}
 
-// Helper to get rumors by region
-import { RUMORS_AND_GOSSIP } from './quests';
+/**
+ * Trouve créatures pour une rencontre aléatoire
+ */
+export function getRandomEncounter(biome: string, partyLevel: number) {
+  return GlobalLoreSearch.findCreaturesForEncounter(biome, partyLevel);
+}
 
-export const getRumorsByRegion = (region: keyof typeof RUMORS_AND_GOSSIP) => {
-  return RUMORS_AND_GOSSIP[region] || [];
+/**
+ * Trouve marchands disponibles dans une région
+ */
+export function getMerchantsInRegion(regionId: string) {
+  return GlobalLoreSearch.findNPCsAtLocation(regionId);
+}
+
+/**
+ * Trouve quêtes disponibles pour un joueur
+ */
+export function getAvailableQuests(playerLevel: number, factionId?: string) {
+  return GlobalLoreSearch.findAvailableQuests(playerLevel, factionId);
+}
+
+/**
+ * Recherche textuelle rapide
+ */
+export function searchLore(query: string) {
+  return GlobalLoreSearch.search(query);
+}
+
+/**
+ * Obtient statistiques du système de lore
+ */
+export function getLoreStats() {
+  const all = GlobalLoreRegistry.getAll();
+  const byType: Record<string, number> = {};
+  
+  all.forEach(entity => {
+    byType[entity.type] = (byType[entity.type] || 0) + 1;
+  });
+  
+  return {
+    total: all.length,
+    byType,
+    factions: ALL_FACTIONS.length,
+    professions: ALL_PROFESSIONS.length,
+    resources: ALL_RESOURCES.length,
+    recipes: ALL_RECIPES.length,
+    creatures: ALL_CREATURES.length
+  };
+}
+
+// ============================================================================
+// AUTO-INITIALISATION (optionnel)
+// ============================================================================
+
+// Décommenter pour initialisation automatique au chargement du module
+// initializeLoreSystem();
+
+export default {
+  registry: GlobalLoreRegistry,
+  search: GlobalLoreSearch,
+  initialize: initializeLoreSystem,
+  stats: getLoreStats
 };

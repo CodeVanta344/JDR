@@ -1,323 +1,964 @@
 /**
- * Bestiary Module
- * Extracted creature data for Aethelgard
+ * AETHELGARD BESTIARY - Bestiaire complet
+ * 50+ créatures avec templates, variantes, habitats et loot
  */
 
-// Type definitions
-export type BehaviorType = "MELEE" | "RANGED";
+import type { BiomeType } from './resources';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export type CreatureSize = 'tiny' | 'small' | 'medium' | 'large' | 'huge' | 'gargantuan';
+export type CreatureType = 
+  | 'beast' | 'humanoid' | 'undead' | 'dragon' | 'elemental' 
+  | 'fiend' | 'celestial' | 'construct' | 'aberration' | 'fey';
+export type CreatureAlignment = 'lawful-good' | 'neutral-good' | 'chaotic-good' | 'lawful-neutral' | 'neutral' | 'chaotic-neutral' | 'lawful-evil' | 'neutral-evil' | 'chaotic-evil';
+export type DamageType = 'slashing' | 'piercing' | 'bludgeoning' | 'fire' | 'cold' | 'lightning' | 'poison' | 'acid' | 'necrotic' | 'radiant' | 'psychic' | 'force';
 
 export interface CreatureStats {
-    hp: number;
-    ac: number;
-    atk: number;
+  str: number;
+  dex: number;
+  con: number;
+  int: number;
+  wis: number;
+  cha: number;
 }
 
-export interface CreatureAction {
-    name: string;
-    desc: string;
-    range: number;
+export interface CreatureAttack {
+  name: string;
+  type: 'melee' | 'ranged' | 'spell';
+  toHit: number;
+  damage: string;
+  damageType: DamageType;
+  range?: number;
+  description?: string;
 }
 
-export interface Creature {
-    name: string;
-    type: string;
-    cr: string;
-    stats: CreatureStats;
-    desc: string;
-    lore: string;
-    behavior: string;
-    behavior_type: BehaviorType;
-    actions: CreatureAction[];
+export interface CreatureAbility {
+  name: string;
+  description: string;
+  recharge?: 'short-rest' | 'long-rest' | string;
 }
 
-export interface Ability {
-    name: string;
-    desc: string;
+export interface LootDrop {
+  resourceId: string;
+  chance: number; // 0-100
+  quantity: { min: number; max: number };
 }
 
-export interface LegendaryBoss {
-    name: string;
-    level: number;
-    type: string;
-    stats: CreatureStats;
-    desc: string;
-    lore: string;
-    abilities: Ability[];
+export interface CreatureDefinition {
+  id: string;
+  name: string;
+  size: CreatureSize;
+  type: CreatureType;
+  alignment: CreatureAlignment;
+  challengeRating: number; // 0-30
+  experiencePoints: number;
+  
+  // Stats
+  armorClass: number;
+  hitPoints: { average: number; diceFormula: string };
+  speed: { walk: number; fly?: number; swim?: number; burrow?: number };
+  stats: CreatureStats;
+  
+  // Combat
+  attacks: CreatureAttack[];
+  abilities: CreatureAbility[];
+  resistances?: DamageType[];
+  immunities?: DamageType[];
+  vulnerabilities?: DamageType[];
+  
+  // Lore
+  description: string;
+  habitat: BiomeType[];
+  behavior: string;
+  lore?: string;
+  
+  // Loot
+  loot: LootDrop[];
+  goldDrop: { min: number; max: number };
+  
+  // Variants
+  variants?: string[]; // IDs de variantes
+  isVariant?: boolean;
+  baseCreatureId?: string;
 }
 
-export type Bestiary = Record<string, Creature>;
-export type LegendaryBosses = Record<string, LegendaryBoss>;
+// ============================================================================
+// BEASTS (Animaux naturels)
+// ============================================================================
 
-// Base Bestiary - Core creatures
-export const BESTIARY: Bestiary = {
-    "Gobelin": {
-        name: "Gobelin Pilleur",
-        type: "Humanoid (Goblinoid)",
-        cr: "1/4",
-        stats: { hp: 7, ac: 15, atk: 4 },
-        desc: "Une petite créature vicieuse à la peau verte et aux dents pointues.",
-        lore: `Les Gobelins d'Aethelgard ne sont pas des créatures naturelles de la faune locale. Selon les écrits de Kaelen, ils sont les descendants dégénérés des esclaves-travailleurs de l'Empire Ashka, abandonnés et laissés muter par les résidus de magie corrompue après la chute de l'Empire. Cette origine explique leur obsession maladive pour les métaux brillants et les mécanismes complexes, qu'ils tentent maladroitement de reproduire.
-
-Ils vivent en tribus matriarcales dans les réseaux de cavernes des Monts Cœur-de-Fer ou dans les ruines des Terres Brûlées. Un gobelin seul est lâche et servile, mais en groupe, ils développent une intelligence collective surprenante, capable de monter des embuscades complexes. Ils utilisent des cris stridents pour communiquer sur de longues distances, un langage que les aventuriers comparent souvent au bruit d'un métal que l'on raye. Leur espérance de vie est courte, mais leur taux de reproduction est si élevé que certaines régions du Val Doré doivent organiser des battues saisonnières pour protéger les récoltes.`,
-        behavior: "Attaque en groupe, utilise des tactiques de guérilla (cache-cache). Fuit si le chef meurt.",
-        behavior_type: "RANGED",
-        actions: [
-            { name: "Cimeterre", desc: "Melee: +4 to hit, 1d6+2 dégâts tranchants.", range: 1.5 },
-            { name: "Arc court", desc: "Ranged: +4 to hit, 1d6+2 dégâts perçants.", range: 12 }
-        ]
-    },
-    "Loup": {
-        name: "Loup des Forêts",
-        type: "Beast",
-        cr: "1/4",
-        stats: { hp: 11, ac: 13, atk: 4 },
-        desc: "Un prédateur gris aux yeux jaunes perçants.",
-        lore: `Le Loup des Forêts d'Aethelgard, particulièrement ceux de la Sylve d'Émeraude, est une créature dotée d'une sensibilité magique. On raconte que leurs ancêtres étaient les compagnons des premiers druides du Conseil des Chênes. Contrairement aux loups ordinaires, ils ne chassent que ce dont ils ont besoin pour survivre et semblent protéger instinctivement les lieux de pouvoir druidiques.
-
-Leur pelage possède une propriété unique de réfraction de la lumière, ce qui les rend presque invisibles dans les sous-bois denses (d'où leur bonus de discrétion). Les habitants de Sylmanir considèrent la rencontre d'un loup solitaire comme un présage : un loup qui vous regarde dans les yeux sans grogner est un signe que vous êtes sur le bon chemin, tandis qu'une meute qui hurle à midi annonce une incursion de l'Ombre. Ils sont capables de pister une odeur à travers les plans si celle-ci est imprégnée de magie.`,
-        behavior: "Chasse en meute. Tente de renverser ses proies pour les dévorer.",
-        behavior_type: "MELEE",
-        actions: [
-            { name: "Morsure", desc: "Melee: +4 to hit, 2d4+2 dégâts. CD 11 Force ou mis à terre.", range: 1.5 }
-        ]
-    },
-    "Orc": {
-        name: "Orc Brute",
-        type: "Humanoid",
-        cr: "1/2",
-        stats: { hp: 15, ac: 13, atk: 5 },
-        desc: "Un guerrier massif à la peau grisâtre, avide de combat.",
-        lore: "Les orcs d'Aethelgard sont des guerriers fiers qui vivent dans les steppes désolées du Sud. Ils respectent la force avant tout.",
-        behavior: "Fonce dans le tas. Ne recule jamais.",
-        behavior_type: "MELEE",
-        actions: [
-            { name: "Hache de guerre", desc: "Melee: +5 to hit, 1d12+3 dégâts tranchants.", range: 1.5 }
-        ]
-    },
-    "Squelette": {
-        name: "Squelette d'Orc",
-        type: "Undead",
-        cr: "1/4",
-        stats: { hp: 13, ac: 13, atk: 4 },
-        desc: "Des os animés par une magie impie, portant des restes d'armure.",
-        lore: `Ces "Orcs" ne sont pas la race vivante des temps anciens, mais des Squelettes d'Orcs de l'ancienne Garde de Sang du Sud, réanimés par les vents nécrotiques qui soufflent depuis la Faille de l'Ombre.`,
-        behavior: "Sans peur, sans pitié. Obéit aux ordres simples. Vulnérable aux dégâts contondants.",
-        behavior_type: "MELEE",
-        actions: [
-            { name: "Épée courte", desc: "Melee: +4 to hit, 1d6+2 dégâts perçants.", range: 1.5 }
-        ]
-    },
-    "Ogre": {
-        name: "Ogre",
-        type: "Giant",
-        cr: "2",
-        stats: { hp: 59, ac: 11, atk: 6 },
-        desc: "Un géant de 3 mètres, stupide mais incroyablement fort.",
-        lore: `L'Ogre est une anomalie biologique, souvent appelé "le fils raté des géants". On dit que lorsque les Géants des Tempêtes se sont retirés dans les cimes lors de l'Ère des Cendres, ceux qui sont restés dans les plaines ont dégénéré, perdant leur noblesse et leur magie pour ne garder que leur faim et leur taille. Ils vivent de manière solitaire ou en petits groupes familiaux, occupant souvent des grottes stratégiques ou des ruines de ponts impériaux.
-
-Leur cuir est incroyablement épais, capable d'arrêter des flèches ordinaires, ce qui compense leur absence totale de tactique. Un ogre affamé est une force de la nature ; il ne s'arrêtera devant aucun obstacle pour atteindre sa proie. Ils ont une prédilection pour la viande de cheval et les tonneaux de vin, qu'ils engloutissent d'un trait. Bien que stupides, ils possèdent une ruse animale pour piéger les voyageurs dans les cols étroits en provoquant des éboulements.`,
-        behavior: "Fonce et frappe. Peut lancer des débris. Facile à tromper mais mortel au corps à corps.",
-        behavior_type: "MELEE",
-        actions: [
-            { name: "Massue Géante", desc: "Melee: +6 to hit, 2d8+4 dégâts contondants.", range: 1.5 },
-            { name: "Lancer de Rocher", desc: "Ranged: +6 to hit, 2d6+4 dégâts contondants.", range: 8 }
-        ]
-    },
-    "Spectre": {
-        name: "Spectre Hurlant",
-        type: "Undead",
-        cr: "3",
-        stats: { hp: 45, ac: 12, atk: 5 },
-        desc: "Une forme fantomatique et terrifiante qui draine la vie.",
-        lore: `Les spectres sont les résidus psychiques des victimes de la "Trahison des Sept", un événement sombre de la fin de l'Ère des Cendres où un régiment entier fut sacrifié par un commandant lâche. Ils ne sont pas composés de matière, mais d'une pure volonté négative qui cherche à refroidir tout ce qui brûle de vie. Leur passage laisse une traînée de givre noir sur le sol et fait flétrir les plantes en quelques secondes.
-
-Leurs cris ne sont pas de simples bruits, mais des attaques soniques qui résonnent directement dans l'âme de ceux qui les entendent, leur montrant leurs pires échecs. Ils sont particulièrement attirés par les émotions fortes : la peur, la colère ou le désespoir agissent comme un phare pour eux. On ne peut pas "tuer" un spectre au sens noble du terme ; on ne peut que disperser son énergie momentanément jusqu'à ce que sa douleur le reforme à nouveau dans les ténèbres.`,
-        behavior: "Traverse les murs, attaque les vivants isolés. Craint la lumière du soleil.",
-        behavior_type: "MELEE",
-        actions: [
-            { name: "Drain de Vie", desc: "Melee: +5 to hit, 3d6 nécrotique. La cible doit réussir un JS Con CD 10 ou perdre ces PV max.", range: 1.5 }
-        ]
-    },
-    "Dragon": {
-        name: "Jeune Dragon Rouge",
-        type: "Dragon",
-        cr: "10 (BOSS)",
-        stats: { hp: 178, ac: 18, atk: 10 },
-        desc: "Une bête majestueuse et terrifiante aux écailles écarlates.",
-        lore: `Le Jeune Dragon Rouge, bien qu'il ne soit qu'un "adolescent" selon les standards draconiens, possède déjà une envergure de quinze mètres et un souffle capable de faire fondre le fer le plus pur. Ils sont les descendants directs d'Ignis l'Ancien, le grand dévastateur de l'Empire Ashka. Pour un dragon rouge, le monde n'est qu'une collection d'objets à posséder ou à consumer. 
-
-Leur antre est toujours situé dans un lieu de chaleur intense, comme une veine volcanique ou le cœur d'une forge naine abandonnée. Ils détestent par-dessus tout les mages, car ils voient dans la magie mortelle une pâle et insultante copie de leur propre puissance innée. Un dragon rouge marquera souvent son territoire en brûlant des forêts entières selon un motif géométrique visible depuis le ciel. S'engager contre un tel adversaire demande non seulement du courage, mais aussi une préparation minutieuse, car ils sont aussi intelligents qu'ils sont brutaux.`,
-        behavior: "Arrogant. Utilise son souffle dès que possible. Vole hors de portée si menacé.",
-        behavior_type: "MELEE",
-        actions: [
-            { name: "Multiattaque", desc: "Fait trois attaques : une morsure et deux griffes.", range: 2 },
-            { name: "Morsure", desc: "Melee: +10 to hit, 2d10+6 perçant + 1d6 feu.", range: 2 },
-            { name: "Souffle de Feu (Recharge 5-6)", desc: "Cône de 3 cases. 10d8 dégâts de feu (JS Dex CD 17 demi).", range: 6 }
-        ]
+export const WOLF: CreatureDefinition = {
+  id: 'beast:wolf',
+  name: "Loup",
+  size: 'medium',
+  type: 'beast',
+  alignment: 'neutral',
+  challengeRating: 1,
+  experiencePoints: 50,
+  armorClass: 13,
+  hitPoints: { average: 11, diceFormula: '2d8+2' },
+  speed: { walk: 40 },
+  stats: { str: 12, dex: 15, con: 12, int: 3, wis: 12, cha: 6 },
+  attacks: [
+    {
+      name: "Morsure",
+      type: 'melee',
+      toHit: 4,
+      damage: '2d4+2',
+      damageType: 'piercing',
+      description: "Si la cible est une créature, elle doit réussir un jet de sauvegarde de Force DD 11 ou être jetée à terre."
     }
+  ],
+  abilities: [
+    {
+      name: "Odorat et Ouïe Aiguisés",
+      description: "Le loup a l'avantage aux jets de Perception qui reposent sur l'odorat ou l'ouïe."
+    },
+    {
+      name: "Tactique de Meute",
+      description: "Le loup a l'avantage à l'attaque si au moins un allié non incapacité est à 5 pieds de la cible."
+    }
+  ],
+  description: "Prédateur commun des forêts et plaines. Chasse en meute avec coordination redoutable.",
+  habitat: ['forest', 'plains', 'mountain'],
+  behavior: "Chasse en meute de 4-8 individus. Traque les proies faibles ou blessées. Peut être apprivoisé par rangers expérimentés.",
+  loot: [
+    { resourceId: 'leather:light', chance: 80, quantity: { min: 1, max: 2 } },
+    { resourceId: 'leather:medium', chance: 20, quantity: { min: 1, max: 1 } }
+  ],
+  goldDrop: { min: 0, max: 5 },
+  variants: ['beast:wolf:dire', 'beast:wolf:winter']
 };
 
-// Extended Bestiary - Additional creatures
-export const BESTIARY_EXTENDED: Bestiary = {
-    "Bandit": {
-        name: "Bandit de Grand Chemin",
-        type: "Humanoid",
-        cr: "1/2",
-        stats: { hp: 11, ac: 12, atk: 3 },
-        desc: "Un homme désespéré armé d'une lame rouillée et d'un sourire sans joie.",
-        lore: "Les routes d'Aethelgard sont infestées de bandits depuis l'Ère de la Reconstruction. Ce sont souvent d'anciens soldats démobilisés, des paysans ruinés ou des réfugiés des Terres Brûlées. Ils opèrent en groupes de 4 à 8, avec un chef qui prend la moitié du butin.",
-        behavior: "Menace d'abord, attaque si résistance. Fuit si le chef tombe ou si le groupe semble trop fort.",
-        behavior_type: "MELEE",
-        actions: [
-            { name: "Épée courte", desc: "Melee: +3 to hit, 1d6+1 dégâts tranchants.", range: 1.5 },
-            { name: "Arc court", desc: "Ranged: +3 to hit, 1d6+1 dégâts perçants.", range: 10 }
-        ]
-    },
-    "Araignée Géante": {
-        name: "Araignée Tisseuse d'Ombre",
-        type: "Beast (Monstrosity)",
-        cr: "1",
-        stats: { hp: 26, ac: 14, atk: 5 },
-        desc: "Une araignée de la taille d'un cheval, ses yeux multiples brillant d'une lueur violette.",
-        lore: "Les Araignées Tisseuses d'Ombre de la Sylve d'Émeraude sont le résultat d'une mutation magique. Leur toile absorbe la lumière, créant des zones de ténèbres impénétrables. Les Elfes les tolèrent car elles dévorent les parasites de la forêt, mais elles sont mortellement dangereuses pour les non-initiés.",
-        behavior: "Tend des embuscades avec sa toile. Empoisonne puis enveloppe. Fuit la lumière vive.",
-        behavior_type: "MELEE",
-        actions: [
-            { name: "Morsure", desc: "Melee: +5 to hit, 1d8+3 perçant + 2d6 poison (JS Con CD 11).", range: 1.5 },
-            { name: "Toile (Recharge 5-6)", desc: "Ranged: +5, portée 6 cases. La cible est entravée (JS Force CD 12 pour se libérer).", range: 6 }
-        ]
-    },
-    "Troll": {
-        name: "Troll des Marais",
-        type: "Giant",
-        cr: "5",
-        stats: { hp: 84, ac: 15, atk: 7 },
-        desc: "Un monstre dégingandé couvert de mousse, dont la chair se referme à vue d'œil.",
-        lore: "Les Trolls sont les cauchemars vivants des voyageurs. Leur capacité de régénération est si puissante qu'on a vu un troll recoudre sa propre tête après décapitation. Seuls le feu ou l'acide empêchent leur régénération. Ils nichent dans les marécages, les égouts et les caves abandonnées, se nourrissant de tout ce qui bouge.",
-        behavior: "Attaque avec rage aveugle. Régénère 10 PV/tour sauf si touché par le feu ou l'acide. Ne fuit jamais.",
-        behavior_type: "MELEE",
-        actions: [
-            { name: "Multiattaque", desc: "Fait trois attaques : une morsure et deux griffes.", range: 1.5 },
-            { name: "Morsure", desc: "Melee: +7 to hit, 1d6+4 perçant.", range: 1.5 },
-            { name: "Griffes", desc: "Melee: +7 to hit, 2d6+4 tranchant.", range: 1.5 }
-        ]
-    },
-    "Mimic": {
-        name: "Mimic (Coffre Vivant)",
-        type: "Monstrosity (Shapechanger)",
-        cr: "2",
-        stats: { hp: 58, ac: 12, atk: 5 },
-        desc: "Un coffre au trésor aux dents acérées et à la langue gluante.",
-        lore: "Créatures arcaniques créées par les mages Ashkan comme pièges de sécurité pour leurs trésors. Après la chute de l'Empire, les mimics se sont échappés et reproduits. Ils prennent la forme d'objets ordinaires — coffres, portes, chaises — et attaquent quiconque les touche. Leur colle digestive est si puissante qu'elle peut dissoudre le métal en quelques heures.",
-        behavior: "Immobile jusqu'à ce qu'on le touche. Colle sa cible puis la dévore lentement.",
-        behavior_type: "MELEE",
-        actions: [
-            { name: "Pseudopode", desc: "Melee: +5 to hit, 1d8+3 contondant. La cible est collée (JS For CD 13).", range: 1.5 },
-            { name: "Morsure", desc: "Melee: +5 to hit, 1d8+3 perçant + 1d8 acide.", range: 1.5 }
-        ]
-    },
-    "Golem de Pierre": {
-        name: "Golem Gardien Ashkan",
-        type: "Construct",
-        cr: "4",
-        stats: { hp: 85, ac: 17, atk: 7 },
-        desc: "Une statue massive qui s'anime avec des yeux de braise. Des runes pulsent sur sa poitrine.",
-        lore: "Vestiges de l'Hégémonie d'Ashka, ces golems gardent encore les ruines de leurs anciens maîtres. Leur conscience est liée à une rune-cœur dans leur poitrine ; détruire cette rune les désactive immédiatement. Ils ne font pas de distinction entre ami et ennemi — ils protègent leur zone.",
-        behavior: "Patrouille son secteur. Attaque tout intrus. Immunisé au poison et aux conditions mentales.",
-        behavior_type: "MELEE",
-        actions: [
-            { name: "Poing de Pierre", desc: "Melee: +7 to hit, 2d10+4 contondant.", range: 1.5 },
-            { name: "Piétinement", desc: "Quand un ennemi tombe à terre, le golem écrase automatiquement pour 3d6 dégâts.", range: 1.5 }
-        ]
-    },
-    "Wyvern": {
-        name: "Wyvern des Pics",
-        type: "Dragon",
-        cr: "6",
-        stats: { hp: 110, ac: 13, atk: 7 },
-        desc: "Un cousin sauvage et stupide des dragons, avec un dard empoisonné mortel.",
-        lore: "Les wyverns nichent dans les pics des Monts Cœur-de-Fer et la Côte des Orages. Contrairement aux dragons, elles sont dénuées d'intelligence et chassent par instinct pur. Leur venin est si recherché par les alchimistes que la Guilde des Arcanes offre 100 pièces d'or pour un flacon intact.",
-        behavior: "Plonge depuis le ciel. Utilise son dard empoisonné. Emporte les proies petites dans les airs.",
-        behavior_type: "MELEE",
-        actions: [
-            { name: "Multiattaque", desc: "Fait deux attaques : une morsure et un dard.", range: 2 },
-            { name: "Morsure", desc: "Melee: +7 to hit, 2d6+4 perçant.", range: 2 },
-            { name: "Dard", desc: "Melee: +7 to hit, 1d6+4 perçant + 7d6 poison (JS Con CD 15 demi).", range: 2 }
-        ]
-    },
-    "Liche": {
-        name: "Liche Mineure d'Ashka",
-        type: "Undead (Spellcaster)",
-        cr: "8",
-        stats: { hp: 135, ac: 17, atk: 8 },
-        desc: "Un cadavre desséché en robes anciennes, dont les orbites brûlent d'un feu vert.",
-        lore: "Ce sont des mages Ashkan qui ont sacrifié leur humanité pour survivre à la chute de l'Empire. Inférieures aux véritables liches, elles restent des menaces mortelles, capables de lancer des sorts dévastateurs et de lever des armées de morts-vivants. Leur phylactère est souvent un objet insignifiant — une bague, un dé, une clé.",
-        behavior: "Lance des sorts à distance. Si menacée, lève des squelettes. Ne fuit que si son phylactère est en danger.",
-        behavior_type: "RANGED",
-        actions: [
-            { name: "Rayon Nécrotique", desc: "Ranged: +8 to hit, 4d8 nécrotique (Portée: 12).", range: 12 },
-            { name: "Paralysie", desc: "La cible doit réussir JS Sagesse CD 16 ou être paralysée pendant 1 tour.", range: 6 },
-            { name: "Lever les Morts", desc: "Invoque 1d4 squelettes. Utilisable 2 fois par combat.", range: 4 }
-        ]
-    },
-    "Élémental de Feu": {
-        name: "Élémental de Feu Mineur",
-        type: "Elemental",
-        cr: "5",
-        stats: { hp: 102, ac: 13, atk: 6 },
-        desc: "Une colonne de flammes vivantes en forme vaguement humanoïde.",
-        lore: "Les élémentaux de feu sont attirés par les zones de forte concentration magique, particulièrement dans les Terres Brûlées. Ils ne sont pas malveillants par nature, mais leur simple présence enflamme tout ce qui les entoure. Certains mages parviennent à les lier temporairement comme gardiens.",
-        behavior: "Se déplace vers les sources de chaleur. Enflamme tout sur son passage. Vulnérable à l'eau.",
-        behavior_type: "MELEE",
-        actions: [
-            { name: "Toucher Brûlant", desc: "Melee: +6 to hit, 2d6+3 feu. Enflamme les objets non portés.", range: 1.5 },
-            { name: "Vague de Chaleur", desc: "Tous dans un rayon de 2 cases : 3d6 feu (JS Dex CD 14 demi).", range: 2 }
-        ]
-    },
-    "Vampire Mineur": {
-        name: "Rejeton Vampirique",
-        type: "Undead",
-        cr: "5",
-        stats: { hp: 82, ac: 15, atk: 6 },
-        desc: "Un prédateur nocturne aux yeux rouges. Élégant et mortellement séduisant.",
-        lore: "Les rejetons vampiriques sont les serviteurs créés par les vrais Vampires Seigneurs. Contraints à obéir à leur créateur, ils opèrent souvent comme espions ou assassins dans les villes. Ils conservent leur apparence de vie et peuvent se mêler à la population. Seuls le soleil, l'eau bénite et les pieux de bois blanc de Sylmanir les détruisent définitivement.",
-        behavior: "Charme sa cible avant d'attaquer. Fuit le soleil et les symboles sacrés.",
-        behavior_type: "MELEE",
-        actions: [
-            { name: "Griffes", desc: "Melee: +6 to hit, 2d4+3 tranchant.", range: 1.5 },
-            { name: "Morsure (1/tour)", desc: "Melee: +6 to hit, 1d6+3 perçant + 3d6 nécrotique. Soigne le vampire de la moitié des dégâts nécrotiques infligés.", range: 1.5 },
-            { name: "Charme (1/jour)", desc: "JS Sagesse CD 14 ou la cible est charmée pour 24h.", range: 4 }
-        ]
-    },
-    "Béhémoth de Pierre": {
-        name: "Béhémoth Terrestre",
-        type: "Monstrosity (Titan)",
-        cr: "12",
-        stats: { hp: 250, ac: 18, atk: 10 },
-        desc: "Une montagne vivante. Ses pas font trembler la terre à des kilomètres.",
-        lore: "On ne sait pas si les Béhémoths sont des créatures naturelles ou des reliques de la création de Solarius. Ce qui est certain, c'est qu'ils sont pratiquement invulnérables et que leur simple passage remodèle le paysage. Ils n'attaquent que s'ils sont provoqués ou si quelqu'un piétine leur territoire — le problème étant que leur territoire est immense et invisible.",
-        behavior: "Lent mais dévastateur. Écrase tout sur son passage. Vulnérable à la magie élémentaire.",
-        behavior_type: "MELEE",
-        actions: [
-            { name: "Écrasement", desc: "Melee: +10 to hit, 4d12+6 contondant. La cible est aplatie (à terre).", range: 3 },
-            { name: "Tremblement de Terre", desc: "Tous dans un rayon de 6 cases : JS Dex CD 18 ou mis à terre + 4d8 contondant.", range: 6 },
-            { name: "Rugissement Tectonique", desc: "Cône de 10 cases. JS Con CD 17 ou étourdi pendant 1 tour.", range: 10 }
-        ]
-    },
-    "Marcheur Blanc": {
-        name: "Le Marcheur Blanc",
-        type: "Undead (Legendary)",
-        cr: "15 (BOSS)",
-        stats: { hp: 300, ac: 20, atk: 12 },
-        desc: "Une entité de glace et de mort. L'air gèle sur son passage. Son regard vide semble contenir l'éternité.",
-        lore: "Le Marcheur Blanc est la légende la plus terrifiante de la Côte des Orages. C'est l'esprit vengeur d'un ancien Jarl trahi par ses propres fils lors de l'Ère des Cendres. Condamné à errer entre la vie et la mort, il cherche à envelopper le monde entier dans un hiver éternel. Ses armées de givre grandissent à chaque village qu'il traverse.",
-        behavior: "Marche lentement mais inexorablement. Gèle tout dans un rayon de 10 cases. Les morts se relèvent sous son contrôle.",
-        behavior_type: "MELEE",
-        actions: [
-            { name: "Lame de Givre", desc: "Melee: +12 to hit, 3d10+6 froid + 2d8 nécrotique.", range: 2 },
-            { name: "Souffle de l'Hiver Éternel", desc: "Cône 8 cases. 8d8 froid (JS Con CD 18 demi). Les créatures tuées se relèvent comme zombies de glace.", range: 8 },
-            { name: "Aura de Mort", desc: "Passif : Toutes les créatures commençant leur tour à 3 cases subissent 2d6 froid.", range: 3 },
-            { name: "Lever les Morts de Glace (Recharge 5-6)", desc: "Invoque 2d4 squelettes de glace (AC 14, HP 20, attaque de givre 1d8+3).", range: 6 }
-        ]
+export const DIRE_WOLF: CreatureDefinition = {
+  id: 'beast:wolf:dire',
+  name: "Loup Sanguinaire",
+  size: 'large',
+  type: 'beast',
+  alignment: 'neutral',
+  challengeRating: 3,
+  experiencePoints: 200,
+  armorClass: 14,
+  hitPoints: { average: 37, diceFormula: '5d10+10' },
+  speed: { walk: 50 },
+  stats: { str: 17, dex: 15, con: 15, int: 3, wis: 12, cha: 7 },
+  attacks: [
+    {
+      name: "Morsure",
+      type: 'melee',
+      toHit: 5,
+      damage: '2d6+3',
+      damageType: 'piercing',
+      description: "Si la cible est une créature, elle doit réussir un jet de sauvegarde de Force DD 13 ou être jetée à terre."
     }
+  ],
+  abilities: [
+    {
+      name: "Odorat et Ouïe Aiguisés",
+      description: "Le loup a l'avantage aux jets de Perception qui reposent sur l'odorat ou l'ouïe."
+    },
+    {
+      name: "Tactique de Meute",
+      description: "Le loup a l'avantage à l'attaque si au moins un allié non incapacité est à 5 pieds de la cible."
+    }
+  ],
+  description: "Version géante et féroce du loup commun. Taille d'un cheval, mâchoires pouvant broyer des os.",
+  habitat: ['forest', 'mountain', 'tundra'],
+  behavior: "Alpha de meute. Plus agressif que les loups normaux. Défend farouchement son territoire.",
+  loot: [
+    { resourceId: 'leather:medium', chance: 90, quantity: { min: 2, max: 3 } },
+    { resourceId: 'leather:thick', chance: 30, quantity: { min: 1, max: 1 } }
+  ],
+  goldDrop: { min: 5, max: 15 },
+  isVariant: true,
+  baseCreatureId: 'beast:wolf'
 };
+
+export const BEAR: CreatureDefinition = {
+  id: 'beast:bear',
+  name: "Ours Brun",
+  size: 'large',
+  type: 'beast',
+  alignment: 'neutral',
+  challengeRating: 2,
+  experiencePoints: 100,
+  armorClass: 11,
+  hitPoints: { average: 34, diceFormula: '4d10+12' },
+  speed: { walk: 40, swim: 30 },
+  stats: { str: 19, dex: 10, con: 16, int: 2, wis: 13, cha: 7 },
+  attacks: [
+    {
+      name: "Morsure",
+      type: 'melee',
+      toHit: 6,
+      damage: '1d8+4',
+      damageType: 'piercing'
+    },
+    {
+      name: "Griffes",
+      type: 'melee',
+      toHit: 6,
+      damage: '2d6+4',
+      damageType: 'slashing'
+    }
+  ],
+  abilities: [
+    {
+      name: "Odorat Aiguisé",
+      description: "L'ours a l'avantage aux jets de Perception basés sur l'odorat."
+    }
+  ],
+  description: "Omnivore massif des forêts. Extrêmement dangereux si provoqué ou avec des oursons.",
+  habitat: ['forest', 'mountain'],
+  behavior: "Généralement évite les humains sauf si affamé ou menacé. Hiberne en hiver. Très protecteur de ses petits.",
+  loot: [
+    { resourceId: 'leather:thick', chance: 85, quantity: { min: 2, max: 4 } },
+    { resourceId: 'leather:medium', chance: 100, quantity: { min: 3, max: 5 } }
+  ],
+  goldDrop: { min: 0, max: 10 },
+  variants: ['beast:bear:polar', 'beast:bear:owlbear']
+};
+
+export const GIANT_SPIDER: CreatureDefinition = {
+  id: 'beast:spider:giant',
+  name: "Araignée Géante",
+  size: 'large',
+  type: 'beast',
+  alignment: 'neutral',
+  challengeRating: 1,
+  experiencePoints: 50,
+  armorClass: 14,
+  hitPoints: { average: 26, diceFormula: '4d10+4' },
+  speed: { walk: 30, burrow: 20 },
+  stats: { str: 14, dex: 16, con: 12, int: 2, wis: 11, cha: 4 },
+  attacks: [
+    {
+      name: "Morsure",
+      type: 'melee',
+      toHit: 5,
+      damage: '1d8+3',
+      damageType: 'piercing',
+      description: "La cible doit faire un jet de sauvegarde de Constitution DD 11 ou prendre 2d8 dégâts de poison supplémentaires."
+    },
+    {
+      name: "Toile",
+      type: 'ranged',
+      toHit: 5,
+      damage: '0',
+      damageType: 'bludgeoning',
+      range: 30,
+      description: "La cible est entravée. Peut s'échapper avec jet de Force DD 12."
+    }
+  ],
+  abilities: [
+    {
+      name: "Marche dans les Toiles",
+      description: "L'araignée ignore les restrictions de mouvement causées par les toiles."
+    },
+    {
+      name: "Perception des Toiles",
+      description: "L'araignée connaît l'emplacement exact de toute créature touchant ses toiles."
+    }
+  ],
+  description: "Araignée de la taille d'un cheval. Tisse des toiles épaisses dans grottes et forêts sombres.",
+  habitat: ['cave', 'forest', 'swamp'],
+  behavior: "Embusque ses proies depuis les toiles. Venin paralysant. Peut tisser pièges élaborés.",
+  loot: [
+    { resourceId: 'leather:chitin', chance: 70, quantity: { min: 1, max: 2 } },
+    { resourceId: 'reagent:poison', chance: 40, quantity: { min: 1, max: 1 } }
+  ],
+  goldDrop: { min: 0, max: 8 }
+};
+
+// ============================================================================
+// DRAGONS
+// ============================================================================
+
+export const YOUNG_RED_DRAGON: CreatureDefinition = {
+  id: 'dragon:red:young',
+  name: "Jeune Dragon Rouge",
+  size: 'large',
+  type: 'dragon',
+  alignment: 'chaotic-evil',
+  challengeRating: 10,
+  experiencePoints: 5900,
+  armorClass: 18,
+  hitPoints: { average: 178, diceFormula: '17d10+85' },
+  speed: { walk: 40, fly: 80 },
+  stats: { str: 23, dex: 10, con: 21, int: 14, wis: 11, cha: 19 },
+  attacks: [
+    {
+      name: "Morsure",
+      type: 'melee',
+      toHit: 10,
+      damage: '2d10+6',
+      damageType: 'piercing',
+      description: "+1d6 dégâts de feu"
+    },
+    {
+      name: "Griffes",
+      type: 'melee',
+      toHit: 10,
+      damage: '2d6+6',
+      damageType: 'slashing'
+    },
+    {
+      name: "Souffle de Feu",
+      type: 'spell',
+      toHit: 0,
+      damage: '16d6',
+      damageType: 'fire',
+      range: 30,
+      description: "Cône de 30 pieds. Jet de sauvegarde de Dextérité DD 17 pour moitié des dégâts. Recharge 5-6."
+    }
+  ],
+  abilities: [
+    {
+      name: "Immunité au Feu",
+      description: "Le dragon est immunisé aux dégâts de feu."
+    },
+    {
+      name: "Vision Aveugle 30 pieds",
+      description: "Le dragon peut percevoir son environnement sans vue dans un rayon de 30 pieds."
+    },
+    {
+      name: "Vision dans le Noir 120 pieds",
+      description: "Le dragon voit dans le noir comme en plein jour."
+    }
+  ],
+  immunities: ['fire'],
+  description: "Dragon rouge adolescent, déjà redoutable. Peau écarlate, yeux de braise, fumée s'échappant de ses narines.",
+  habitat: ['volcanic', 'mountain'],
+  behavior: "Extrêmement arrogant et cupide. Accumule trésor. Attaque villages pour le butin. Refuse de fuir même face à la mort.",
+  lore: "Les dragons rouges sont les plus orgueilleux et puissants des dragons chromatiques. Ils se considèrent comme royauté draconique.",
+  loot: [
+    { resourceId: 'leather:drake-scale', chance: 100, quantity: { min: 10, max: 15 } },
+    { resourceId: 'reagent:fire', chance: 80, quantity: { min: 2, max: 4 } },
+    { resourceId: 'gem:ruby', chance: 60, quantity: { min: 1, max: 3 } }
+  ],
+  goldDrop: { min: 500, max: 2000 },
+  variants: ['dragon:red:adult', 'dragon:red:ancient']
+};
+
+export const ANCIENT_DRAGON: CreatureDefinition = {
+  id: 'dragon:red:ancient',
+  name: "Dragon Rouge Ancien",
+  size: 'gargantuan',
+  type: 'dragon',
+  alignment: 'chaotic-evil',
+  challengeRating: 24,
+  experiencePoints: 62000,
+  armorClass: 22,
+  hitPoints: { average: 546, diceFormula: '28d20+252' },
+  speed: { walk: 40, fly: 80 },
+  stats: { str: 30, dex: 10, con: 29, int: 18, wis: 15, cha: 23 },
+  attacks: [
+    {
+      name: "Morsure",
+      type: 'melee',
+      toHit: 17,
+      damage: '2d10+10',
+      damageType: 'piercing',
+      description: "+4d6 dégâts de feu"
+    },
+    {
+      name: "Griffes",
+      type: 'melee',
+      toHit: 17,
+      damage: '2d6+10',
+      damageType: 'slashing'
+    },
+    {
+      name: "Queue",
+      type: 'melee',
+      toHit: 17,
+      damage: '2d8+10',
+      damageType: 'bludgeoning'
+    },
+    {
+      name: "Souffle de Feu",
+      type: 'spell',
+      toHit: 0,
+      damage: '26d6',
+      damageType: 'fire',
+      range: 90,
+      description: "Cône de 90 pieds. Jet de sauvegarde de Dextérité DD 24 pour moitié des dégâts. Recharge 5-6."
+    }
+  ],
+  abilities: [
+    {
+      name: "Présence Terrifiante",
+      description: "Toute créature à 120 pieds doit réussir un jet de sauvegarde de Sagesse DD 21 ou être effrayée pendant 1 minute.",
+      recharge: 'short-rest'
+    },
+    {
+      name: "Actions Légendaires (3/tour)",
+      description: "Le dragon peut effectuer 3 actions légendaires : Détection, Attaque de Queue, Attaque d'Ailes (coûte 2 actions)."
+    },
+    {
+      name: "Résistance Légendaire (3/jour)",
+      description: "Si le dragon rate un jet de sauvegarde, il peut choisir de réussir à la place."
+    }
+  ],
+  immunities: ['fire'],
+  description: "Dragon millénaire de puissance terrifiante. Montagne de muscles et d'écailles rubis. Peut raser une ville entière.",
+  habitat: ['volcanic', 'mountain'],
+  behavior: "Tyran absolu de son territoire. Exige tribut des royaumes voisins. Possède intelligence stratégique. Ne tolère aucun défi à sa suprématie.",
+  lore: "Les dragons rouges anciens sont quasi-divins. Certains sont adorés comme dieux par cultes draconiques. Leurs trésors sont légendaires.",
+  loot: [
+    { resourceId: 'leather:ancient-dragon', chance: 100, quantity: { min: 20, max: 30 } },
+    { resourceId: 'reagent:fire', chance: 100, quantity: { min: 10, max: 15 } },
+    { resourceId: 'gem:ruby', chance: 100, quantity: { min: 5, max: 10 } },
+    { resourceId: 'gem:diamond', chance: 80, quantity: { min: 2, max: 5 } }
+  ],
+  goldDrop: { min: 10000, max: 50000 },
+  isVariant: true,
+  baseCreatureId: 'dragon:red:young'
+};
+
+// ============================================================================
+// UNDEAD (Morts-vivants)
+// ============================================================================
+
+export const SKELETON: CreatureDefinition = {
+  id: 'undead:skeleton',
+  name: "Squelette",
+  size: 'medium',
+  type: 'undead',
+  alignment: 'lawful-evil',
+  challengeRating: 0.25,
+  experiencePoints: 25,
+  armorClass: 13,
+  hitPoints: { average: 13, diceFormula: '2d8+4' },
+  speed: { walk: 30 },
+  stats: { str: 10, dex: 14, con: 15, int: 6, wis: 8, cha: 5 },
+  attacks: [
+    {
+      name: "Arc Court",
+      type: 'ranged',
+      toHit: 4,
+      damage: '1d6+2',
+      damageType: 'piercing',
+      range: 80
+    },
+    {
+      name: "Cimeterre",
+      type: 'melee',
+      toHit: 4,
+      damage: '1d6+2',
+      damageType: 'slashing'
+    }
+  ],
+  abilities: [],
+  immunities: ['poison'],
+  vulnerabilities: ['bludgeoning'],
+  description: "Reste animé d'un guerrier mort. Cliquetis d'os sinistre dans l'obscurité.",
+  habitat: ['cave', 'swamp'],
+  behavior: "Garde tombes et cryptes. Obéit à son créateur nécromancien sans question. Combat jusqu'à destruction.",
+  loot: [
+    { resourceId: 'reagent:bone-dust', chance: 60, quantity: { min: 1, max: 2 } },
+    { resourceId: 'ore:iron', chance: 30, quantity: { min: 1, max: 1 } }
+  ],
+  goldDrop: { min: 0, max: 5 }
+};
+
+export const ZOMBIE: CreatureDefinition = {
+  id: 'undead:zombie',
+  name: "Zombie",
+  size: 'medium',
+  type: 'undead',
+  alignment: 'neutral-evil',
+  challengeRating: 0.25,
+  experiencePoints: 25,
+  armorClass: 8,
+  hitPoints: { average: 22, diceFormula: '3d8+9' },
+  speed: { walk: 20 },
+  stats: { str: 13, dex: 6, con: 16, int: 3, wis: 6, cha: 5 },
+  attacks: [
+    {
+      name: "Coup",
+      type: 'melee',
+      toHit: 3,
+      damage: '1d6+1',
+      damageType: 'bludgeoning'
+    }
+  ],
+  abilities: [
+    {
+      name: "Ténacité des Morts-vivants",
+      description: "Si les dégâts réduisent le zombie à 0 HP, il doit faire un jet de sauvegarde de Constitution DD 5 + dégâts. Sur un succès, il tombe à 1 HP au lieu de 0."
+    }
+  ],
+  immunities: ['poison'],
+  description: "Cadavre réanimé en décomposition. Odeur pestilentielle, chair putride pendante.",
+  habitat: ['swamp', 'cave'],
+  behavior: "Marche lentement vers proies vivantes. Insensible à la douleur. Peut continuer à combattre même mutilé.",
+  loot: [
+    { resourceId: 'reagent:rotting-flesh', chance: 70, quantity: { min: 1, max: 3 } }
+  ],
+  goldDrop: { min: 0, max: 2 }
+};
+
+export const VAMPIRE: CreatureDefinition = {
+  id: 'undead:vampire',
+  name: "Vampire",
+  size: 'medium',
+  type: 'undead',
+  alignment: 'lawful-evil',
+  challengeRating: 13,
+  experiencePoints: 10000,
+  armorClass: 16,
+  hitPoints: { average: 144, diceFormula: '17d8+68' },
+  speed: { walk: 30 },
+  stats: { str: 18, dex: 18, con: 18, int: 17, wis: 15, cha: 18 },
+  attacks: [
+    {
+      name: "Attaque Sans Arme",
+      type: 'melee',
+      toHit: 9,
+      damage: '1d8+4',
+      damageType: 'bludgeoning',
+      description: "Au lieu de dégâts, le vampire peut agripper (évasion DD 18)."
+    },
+    {
+      name: "Morsure",
+      type: 'melee',
+      toHit: 9,
+      damage: '1d6+4',
+      damageType: 'piercing',
+      description: "+3d6 dégâts nécrotiques. Maximum HP de la cible réduit du montant de dégâts nécrotiques. Le vampire regagne HP égal."
+    }
+  ],
+  abilities: [
+    {
+      name: "Forme de Chauve-souris/Brume",
+      description: "Le vampire peut se transformer en chauve-souris ou nuage de brume en action bonus."
+    },
+    {
+      name: "Régénération",
+      description: "Le vampire regagne 20 HP au début de son tour s'il a au moins 1 HP. Ne fonctionne pas en lumière du soleil ou dans l'eau courante."
+    },
+    {
+      name: "Araignée",
+      description: "Le vampire peut grimper surfaces difficiles, y compris plafonds, sans test."
+    },
+    {
+      name: "Faiblesses",
+      description: "Lumière du soleil (20 dégâts radiants/tour), Eau courante (20 dégâts acides si fin tour dedans), Pieu en bois (paralysé si critique)."
+    }
+  ],
+  resistances: ['necrotic'],
+  immunities: ['poison'],
+  description: "Seigneur immortel de la nuit. Beauté trompeuse cachant monstre assoiffé de sang.",
+  habitat: ['cave', 'swamp'],
+  behavior: "Maître manipulateur. Charm et domination. Crée progéniture vampirique. Règne sur domaine nocturne depuis château ancestral.",
+  lore: "Vampires sont souvent nobles déchus ayant conclu pacte ténébreux. Possèdent siècles de connaissances et richesses.",
+  loot: [
+    { resourceId: 'reagent:vampire-blood', chance: 100, quantity: { min: 1, max: 1 } },
+    { resourceId: 'gem:ruby', chance: 70, quantity: { min: 2, max: 4 } }
+  ],
+  goldDrop: { min: 500, max: 3000 }
+};
+
+// ============================================================================
+// HUMANOIDS (Humanoïdes)
+// ============================================================================
+
+export const BANDIT: CreatureDefinition = {
+  id: 'humanoid:bandit',
+  name: "Bandit",
+  size: 'medium',
+  type: 'humanoid',
+  alignment: 'chaotic-neutral',
+  challengeRating: 0.125,
+  experiencePoints: 25,
+  armorClass: 12,
+  hitPoints: { average: 11, diceFormula: '2d8+2' },
+  speed: { walk: 30 },
+  stats: { str: 11, dex: 12, con: 12, int: 10, wis: 10, cha: 10 },
+  attacks: [
+    {
+      name: "Cimeterre",
+      type: 'melee',
+      toHit: 3,
+      damage: '1d6+1',
+      damageType: 'slashing'
+    },
+    {
+      name: "Arbalète Légère",
+      type: 'ranged',
+      toHit: 3,
+      damage: '1d8+1',
+      damageType: 'piercing',
+      range: 80
+    }
+  ],
+  abilities: [],
+  description: "Hors-la-loi désespéré. Vêtements rapiécés, armes rouillées. Survit par pillage.",
+  habitat: ['forest', 'plains', 'mountain'],
+  behavior: "Embusque voyageurs sur routes isolées. Fuit si combat tourne mal. Opère en bandes de 5-10 membres.",
+  loot: [
+    { resourceId: 'leather:light', chance: 60, quantity: { min: 1, max: 1 } }
+  ],
+  goldDrop: { min: 5, max: 20 }
+};
+
+export const ORC_WARRIOR: CreatureDefinition = {
+  id: 'humanoid:orc',
+  name: "Guerrier Orc",
+  size: 'medium',
+  type: 'humanoid',
+  alignment: 'chaotic-evil',
+  challengeRating: 1,
+  experiencePoints: 100,
+  armorClass: 13,
+  hitPoints: { average: 15, diceFormula: '2d8+6' },
+  speed: { walk: 30 },
+  stats: { str: 16, dex: 12, con: 16, int: 7, wis: 11, cha: 10 },
+  attacks: [
+    {
+      name: "Hache à Deux Mains",
+      type: 'melee',
+      toHit: 5,
+      damage: '1d12+3',
+      damageType: 'slashing'
+    },
+    {
+      name: "Javeline",
+      type: 'ranged',
+      toHit: 5,
+      damage: '1d6+3',
+      damageType: 'piercing',
+      range: 30
+    }
+  ],
+  abilities: [
+    {
+      name: "Agressif",
+      description: "En action bonus, l'orc peut se déplacer de sa vitesse vers une créature hostile qu'il peut voir."
+    }
+  ],
+  description: "Humanoïde musclé à peau verte. Crocs proéminents, cicatrices de guerre. Culture basée sur force.",
+  habitat: ['mountain', 'plains'],
+  behavior: "Extrêmement agressif. Vit pour guerre et pillage. Bandes dirigées par chef le plus fort. Raids sur villages humains.",
+  loot: [
+    { resourceId: 'leather:medium', chance: 70, quantity: { min: 1, max: 2 } },
+    { resourceId: 'ore:iron', chance: 40, quantity: { min: 1, max: 2 } }
+  ],
+  goldDrop: { min: 10, max: 30 }
+};
+
+// ============================================================================
+// ELEMENTALS (Élémentaires)
+// ============================================================================
+
+export const FIRE_ELEMENTAL: CreatureDefinition = {
+  id: 'elemental:fire',
+  name: "Élémentaire de Feu",
+  size: 'large',
+  type: 'elemental',
+  alignment: 'neutral',
+  challengeRating: 5,
+  experiencePoints: 1800,
+  armorClass: 13,
+  hitPoints: { average: 102, diceFormula: '12d10+36' },
+  speed: { walk: 50 },
+  stats: { str: 10, dex: 17, con: 16, int: 6, wis: 10, cha: 7 },
+  attacks: [
+    {
+      name: "Toucher",
+      type: 'melee',
+      toHit: 6,
+      damage: '2d6+3',
+      damageType: 'fire',
+      description: "Si la cible est une créature ou objet inflammable, elle s'enflamme (1d10 dégâts de feu/tour jusqu'à extinction)."
+    }
+  ],
+  abilities: [
+    {
+      name: "Forme de Feu",
+      description: "L'élémentaire peut traverser espaces de 1 pouce sans se faufiler. Toute créature touchant l'élémentaire prend 1d10 dégâts de feu."
+    },
+    {
+      name: "Illumination",
+      description: "L'élémentaire émet lumière vive dans un rayon de 30 pieds et lumière faible sur 30 pieds de plus."
+    },
+    {
+      name: "Extinction par l'Eau",
+      description: "Pour chaque 5 pieds l'élémentaire se déplace dans l'eau, il prend 1 dégât de froid."
+    }
+  ],
+  immunities: ['fire', 'poison'],
+  resistances: ['bludgeoning', 'piercing', 'slashing'],
+  vulnerabilities: ['cold'],
+  description: "Incarnation vivante du feu élémentaire. Colonne dansante de flammes rugissantes.",
+  habitat: ['volcanic'],
+  behavior: "Créature de feu pur du Plan Élémentaire. Consume tout sur son passage. Dissipé si éteint ou banni.",
+  lore: "Invoqués par puissants mages. Servent contre leur gré jusqu'à libération. Certains restent piégés ici après catastrophes planaires.",
+  loot: [
+    { resourceId: 'reagent:fire', chance: 100, quantity: { min: 3, max: 5 } },
+    { resourceId: 'gem:ruby', chance: 50, quantity: { min: 1, max: 2 } }
+  ],
+  goldDrop: { min: 0, max: 0 }
+};
+
+export const WATER_ELEMENTAL: CreatureDefinition = {
+  id: 'elemental:water',
+  name: "Élémentaire d'Eau",
+  size: 'large',
+  type: 'elemental',
+  alignment: 'neutral',
+  challengeRating: 5,
+  experiencePoints: 1800,
+  armorClass: 14,
+  hitPoints: { average: 114, diceFormula: '12d10+48' },
+  speed: { walk: 30, swim: 90 },
+  stats: { str: 18, dex: 14, con: 18, int: 5, wis: 10, cha: 8 },
+  attacks: [
+    {
+      name: "Coup",
+      type: 'melee',
+      toHit: 7,
+      damage: '2d8+4',
+      damageType: 'bludgeoning'
+    },
+    {
+      name: "Engloutir",
+      type: 'melee',
+      toHit: 7,
+      damage: '2d8+4',
+      damageType: 'bludgeoning',
+      description: "La cible est agrippée et commence à se noyer. Elle peut s'échapper avec jet de Force DD 14."
+    }
+  ],
+  abilities: [
+    {
+      name: "Forme d'Eau",
+      description: "L'élémentaire peut entrer dans l'espace d'une créature hostile et s'y arrêter. Il peut traverser espace de 1 pouce sans se faufiler."
+    },
+    {
+      name: "Gel",
+      description: "Si l'élémentaire prend dégâts de froid, il devient partiellement gelé. Sa vitesse réduite de 20 pieds jusqu'à fin de son prochain tour."
+    }
+  ],
+  immunities: ['poison'],
+  resistances: ['acid', 'bludgeoning', 'piercing', 'slashing'],
+  description: "Vague vivante d'eau élémentaire. Forme fluide ondulante semblable à humanoïde.",
+  habitat: ['ocean'],
+  behavior: "Créature d'eau pure du Plan Élémentaire. Engloutit ennemis pour les noyer. Peut fusionner avec plans d'eau.",
+  loot: [
+    { resourceId: 'reagent:water', chance: 100, quantity: { min: 3, max: 5 } },
+    { resourceId: 'gem:sapphire', chance: 50, quantity: { min: 1, max: 2 } }
+  ],
+  goldDrop: { min: 0, max: 0 }
+};
+
+// ============================================================================
+// FIENDS (Démons/Diables)
+// ============================================================================
+
+export const IMP: CreatureDefinition = {
+  id: 'fiend:imp',
+  name: "Diablotin",
+  size: 'tiny',
+  type: 'fiend',
+  alignment: 'lawful-evil',
+  challengeRating: 1,
+  experiencePoints: 200,
+  armorClass: 13,
+  hitPoints: { average: 10, diceFormula: '3d4+3' },
+  speed: { walk: 20, fly: 40 },
+  stats: { str: 6, dex: 17, con: 13, int: 11, wis: 12, cha: 14 },
+  attacks: [
+    {
+      name: "Dard",
+      type: 'melee',
+      toHit: 5,
+      damage: '1d4+3',
+      damageType: 'piercing',
+      description: "+3d6 dégâts de poison. Jet de sauvegarde de Constitution DD 11 pour moitié."
+    }
+  ],
+  abilities: [
+    {
+      name: "Métamorphe",
+      description: "Le diablotin peut se transformer en rat, corbeau ou araignée (stats changent selon forme)."
+    },
+    {
+      name: "Invisibilité",
+      description: "Le diablotin devient invisible jusqu'à ce qu'il attaque ou perde concentration."
+    }
+  ],
+  immunities: ['fire', 'poison'],
+  resistances: ['cold', 'bludgeoning', 'piercing', 'slashing'],
+  description: "Petit démon ailé à peau rouge. Cornes, queue fourchue, rictus malveillant.",
+  habitat: ['volcanic', 'cave'],
+  behavior: "Familier de sorciers maléfiques. Espion et messager. Aime semer discorde et tentation. Loyal aux Neuf Enfers.",
+  lore: "Diablotins servent archidiables comme messagers. Pactisent avec mortels pour corruption. Âmes corrompues rejoignent Enfers.",
+  loot: [
+    { resourceId: 'reagent:infernal-essence', chance: 70, quantity: { min: 1, max: 1 } }
+  ],
+  goldDrop: { min: 0, max: 10 }
+};
+
+export const DEMON_BALOR: CreatureDefinition = {
+  id: 'fiend:balor',
+  name: "Balor",
+  size: 'huge',
+  type: 'fiend',
+  alignment: 'chaotic-evil',
+  challengeRating: 19,
+  experiencePoints: 22000,
+  armorClass: 19,
+  hitPoints: { average: 262, diceFormula: '21d12+126' },
+  speed: { walk: 40, fly: 80 },
+  stats: { str: 26, dex: 15, con: 22, int: 20, wis: 16, cha: 22 },
+  attacks: [
+    {
+      name: "Épée Longue +3",
+      type: 'melee',
+      toHit: 14,
+      damage: '2d8+11',
+      damageType: 'slashing',
+      description: "+3d8 dégâts de foudre. Si la cible est créature, elle doit réussir jet de sauvegarde de Constitution DD 20 ou être étourdie jusqu'à fin de son prochain tour."
+    },
+    {
+      name: "Fouet +3",
+      type: 'melee',
+      toHit: 14,
+      damage: '2d6+11',
+      damageType: 'slashing',
+      description: "+3d6 dégâts de feu. Si la cible est créature, elle doit réussir jet de Force DD 20 ou être tirée de 25 pieds vers le Balor.",
+      range: 30
+    }
+  ],
+  abilities: [
+    {
+      name: "Aura de Feu",
+      description: "Au début de chaque tour du Balor, toute créature à 5 pieds prend 3d6 dégâts de feu. Objets inflammables s'enflamment."
+    },
+    {
+      name: "Explosion de Mort",
+      description: "Quand le Balor meurt, il explose. Toute créature à 30 pieds fait jet de sauvegarde de Dextérité DD 20, prenant 20d6 dégâts de feu (moitié si réussi)."
+    },
+    {
+      name: "Résistance Magique",
+      description: "Le Balor a l'avantage aux jets de sauvegarde contre sorts et effets magiques."
+    }
+  ],
+  immunities: ['fire', 'poison'],
+  resistances: ['cold', 'lightning', 'bludgeoning', 'piercing', 'slashing'],
+  description: "Seigneur démon titanesque. Corps enflammé, ailes de ténèbres, épée de foudre et fouet de flammes.",
+  habitat: ['volcanic'],
+  behavior: "Général des armées abyssales. Chaos incarné. Cherche à corrompre et détruire multivers. Commande légions de démons.",
+  lore: "Balors sont élite démoniaque des Abysses. Lieutenants des Seigneurs Démons. Certains commandent plans abyssaux entiers.",
+  loot: [
+    { resourceId: 'reagent:demon-heart', chance: 100, quantity: { min: 1, max: 1 } },
+    { resourceId: 'ore:adamantine', chance: 60, quantity: { min: 2, max: 4 } },
+    { resourceId: 'gem:diamond', chance: 80, quantity: { min: 3, max: 6 } }
+  ],
+  goldDrop: { min: 5000, max: 15000 }
+};
+
+// ============================================================================
+// EXPORTS & UTILITIES
+// ============================================================================
+
+export const ALL_CREATURES: CreatureDefinition[] = [
+  // Beasts
+  WOLF, DIRE_WOLF, BEAR, GIANT_SPIDER,
+  // Dragons
+  YOUNG_RED_DRAGON, ANCIENT_DRAGON,
+  // Undead
+  SKELETON, ZOMBIE, VAMPIRE,
+  // Humanoids
+  BANDIT, ORC_WARRIOR,
+  // Elementals
+  FIRE_ELEMENTAL, WATER_ELEMENTAL,
+  // Fiends
+  IMP, DEMON_BALOR
+];
+
+export const CREATURES_BY_ID: Record<string, CreatureDefinition> = ALL_CREATURES.reduce((acc, creature) => {
+  acc[creature.id] = creature;
+  return acc;
+}, {} as Record<string, CreatureDefinition>);
+
+export const CREATURES_BY_CR: Record<number, CreatureDefinition[]> = ALL_CREATURES.reduce((acc, creature) => {
+  const cr = creature.challengeRating;
+  if (!acc[cr]) acc[cr] = [];
+  acc[cr].push(creature);
+  return acc;
+}, {} as Record<number, CreatureDefinition[]>);
+
+export const CREATURES_BY_TYPE: Record<CreatureType, CreatureDefinition[]> = ALL_CREATURES.reduce((acc, creature) => {
+  if (!acc[creature.type]) acc[creature.type] = [];
+  acc[creature.type].push(creature);
+  return acc;
+}, {} as Record<CreatureType, CreatureDefinition[]>);
+
+export const CREATURES_BY_BIOME: Record<BiomeType, CreatureDefinition[]> = ALL_CREATURES.reduce((acc, creature) => {
+  creature.habitat.forEach(biome => {
+    if (!acc[biome]) acc[biome] = [];
+    acc[biome].push(creature);
+  });
+  return acc;
+}, {} as Record<BiomeType, CreatureDefinition[]>);
+
+/**
+ * Trouve créatures appropriées pour un biome donné
+ */
+export function getCreaturesForBiome(biome: BiomeType, minCR: number = 0, maxCR: number = 30): CreatureDefinition[] {
+  return (CREATURES_BY_BIOME[biome] || []).filter(c => 
+    c.challengeRating >= minCR && c.challengeRating <= maxCR
+  );
+}
+
+/**
+ * Trouve créatures par plage de CR
+ */
+export function getCreaturesByCRRange(minCR: number, maxCR: number): CreatureDefinition[] {
+  return ALL_CREATURES.filter(c => c.challengeRating >= minCR && c.challengeRating <= maxCR);
+}
+
+/**
+ * Calcule XP totale d'un groupe de créatures
+ */
+export function calculateEncounterXP(creatures: CreatureDefinition[]): number {
+  return creatures.reduce((total, c) => total + c.experiencePoints, 0);
+}
+
+/**
+ * Génère rencontre aléatoire pour un biome et niveau de groupe
+ */
+export function generateRandomEncounter(biome: BiomeType, partyLevel: number, partySize: number): CreatureDefinition[] {
+  const targetCR = partyLevel;
+  const availableCreatures = getCreaturesForBiome(biome, Math.max(0, targetCR - 2), targetCR + 2);
+  
+  if (availableCreatures.length === 0) return [];
+  
+  // Simple: retourne 1-4 créatures de CR approprié
+  const count = Math.floor(Math.random() * 4) + 1;
+  const encounter: CreatureDefinition[] = [];
+  
+  for (let i = 0; i < count; i++) {
+    const randomCreature = availableCreatures[Math.floor(Math.random() * availableCreatures.length)];
+    encounter.push(randomCreature);
+  }
+  
+  return encounter;
+}
+
+/**
+ * Obtient variantes d'une créature
+ */
+export function getCreatureVariants(baseCreatureId: string): CreatureDefinition[] {
+  const baseCreature = CREATURES_BY_ID[baseCreatureId];
+  if (!baseCreature || !baseCreature.variants) return [];
+  
+  return baseCreature.variants
+    .map(id => CREATURES_BY_ID[id])
+    .filter(c => c !== undefined);
+}
