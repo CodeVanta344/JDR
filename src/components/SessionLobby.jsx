@@ -162,7 +162,7 @@ export function SessionLobby({ onJoin, onCreate, onQuickStart, onSoloAdventure, 
                                 <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(212, 175, 55, 0.3), transparent)' }}></div>
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '2rem', padding: '1rem' }}>
                                 {availableSessions.map(sess => (
                                     <div key={sess.id} className="stone-panel hover-glow" style={{
                                         padding: '1.5rem',
@@ -170,30 +170,36 @@ export function SessionLobby({ onJoin, onCreate, onQuickStart, onSoloAdventure, 
                                         background: 'rgba(255,255,255,0.02)',
                                         border: '1px solid rgba(212, 175, 55, 0.1)',
                                         position: 'relative',
-                                        overflow: 'hidden'
+                                        borderRadius: '8px',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        minHeight: '200px'
                                     }}>
-                                        <div style={{ position: 'absolute', top: 0, right: 0, padding: '0.5rem 1rem', background: 'rgba(212, 175, 55, 0.1)', fontSize: '0.6rem', color: 'var(--gold-light)', letterSpacing: '1px' }}>
+                                        <div style={{ position: 'absolute', top: 0, right: 0, padding: '0.4rem 0.8rem', background: 'rgba(212, 175, 55, 0.15)', fontSize: '0.6rem', color: 'var(--gold-light)', letterSpacing: '1px', borderBottomLeftRadius: '8px', fontWeight: 'bold' }}>
                                             EN ATTENTE
                                         </div>
-                                        <div style={{ marginBottom: '1rem' }}>
-                                            <span style={{ display: 'block', fontSize: '0.6rem', color: 'var(--text-muted)', letterSpacing: '1px', marginBottom: '0.2rem' }}>MAÎTRE DE JEU</span>
-                                            <span style={{ fontSize: '1.2rem', color: '#fff', fontWeight: '500' }}>{sess.host_name}</span>
+                                        <div style={{ marginBottom: '1.5rem', marginTop: '0.5rem' }}>
+                                            <span style={{ display: 'block', fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '2px', marginBottom: '0.4rem' }}>MAÎTRE DE JEU</span>
+                                            <span style={{ fontSize: '1.4rem', color: '#fff', fontWeight: '600', textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>{sess.host_name}</span>
                                         </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <div>
+
+                                        <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <div style={{ marginBottom: '1rem' }}>
                                                 <span style={{ display: 'block', fontSize: '0.6rem', color: 'var(--text-muted)', letterSpacing: '1px' }}>RÉGION</span>
-                                                <span style={{ fontSize: '0.8rem', color: 'var(--gold-dim)' }}>Arkhélia</span>
+                                                <span style={{ fontSize: '0.9rem', color: 'var(--gold-dim)' }}>Arkhélia - Val Doré</span>
                                             </div>
-                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                            <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap' }}>
                                                 <button
                                                     className="btn-medieval"
                                                     onClick={() => onJoinQuickStart(sess.id)}
                                                     style={{
-                                                        padding: '0.6rem 1rem',
-                                                        fontSize: '0.7rem',
+                                                        flex: 1,
+                                                        padding: '0.7rem',
+                                                        fontSize: '0.75rem',
                                                         background: 'rgba(212, 175, 55, 0.1)',
                                                         border: '1px solid rgba(212, 175, 55, 0.3)',
-                                                        color: 'var(--gold-primary)'
+                                                        color: 'var(--gold-primary)',
+                                                        whiteSpace: 'nowrap'
                                                     }}
                                                 >
                                                     QUICK JOIN
@@ -201,7 +207,14 @@ export function SessionLobby({ onJoin, onCreate, onQuickStart, onSoloAdventure, 
                                                 <button
                                                     className="btn-medieval"
                                                     onClick={() => onJoin(sess.id)}
-                                                    style={{ padding: '0.6rem 1rem', fontSize: '0.7rem' }}
+                                                    style={{
+                                                        flex: 2,
+                                                        padding: '0.7rem',
+                                                        fontSize: '0.8rem',
+                                                        background: 'var(--gradient-gold)',
+                                                        color: '#000',
+                                                        fontWeight: 'bold'
+                                                    }}
                                                 >
                                                     REJOINDRE
                                                 </button>
