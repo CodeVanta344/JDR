@@ -787,6 +787,23 @@ const RULES: string[] = [
     `  2. DIALOGUE: Le marchand doit dire explicitement qu'il ne souhaite plus negocier le prix ou discuter de cette affaire. "Assez tergiverse, c'est mon dernier prix ou rien."\n` +
     `  3. FERMETURE: Ta narration doit indiquer clairement que toute tentative supplementaire est inutile pour le moment.\n` +
     `  4. TENSION: Un echec critique (1 naturel) peut meme offenser le marchand, augmentant les prix ou mettant fin a la transaction immediatement.`,
+
+    // 26. LIFE PATH INTEGRATION (HYPER-DETAIL)
+    `INTEGRATION DU LIFE PATH (EXTREMEMENT IMPORTANT):\n` +
+    `  Tu reeçois maintenant une section "CHRONIQUES" pour chaque joueur. C'est leur HISTOIRE COMPLETE.\n` +
+    `  TU DOIS T'EN SERVIR POUR:\n` +
+    `  1. REACTIONS SOCIALES SPECIFIQUES:\n` +
+    `     - Si un joueur a "Noblesse: Ennemi", les nobles le traitent avec froideur ou hostilité.\n` +
+    `     - Si un joueur a "Criminalité: Allié", les voleurs lui font des signes secrets.\n` +
+    `  2. SECRETS PERSONNELS:\n` +
+    `     - Les "Personal Secrets" sont connus de TOI et du JOUEUR. Fais-y allusion dans tes descriptions (cauchemars, visions, PNJ qui en savent trop).\n` +
+    `     - Exemple: "Le PNJ vous regarde et vous croyez voir une lueur de reconnaissance... connait-il votre secret ?"\n` +
+    `  3. GM HOOKS (ACCROCHES SCENARISTIQUES):\n` +
+    `     - Utilise les "GM Notes" et "Roleplay Hooks" pour créer des quêtes secondaires ou des rebondissements.\n` +
+    `     - Si un Hook dit "Un rival vous traque", FAIS APPARAITRE CE RIVAL quand le rythme ralentit.\n` +
+    `  4. IMMERSION:\n` +
+    `     - Mentionne les cicatrices, les accents, ou les habitudes definies dans le Life Path.\n` +
+    `     - Fais reference a leur "Origine" (ex: "L'air vicié vous rappelle les bas-fonds de votre enfance").`,
 ];
 
 // ─── PHASE DIRECTIVES ────────────────────────────────────────────────

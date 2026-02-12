@@ -22,22 +22,22 @@ export const NarrationPanel = ({
 
     const extractNarrative = (rawContent) => {
         if (!rawContent) return '';
-        
+
         let raw = typeof rawContent === 'string' ? rawContent : JSON.stringify(rawContent);
-        
+
         // Skip memory markers
         if (raw.startsWith('(MEMOIRE:') || raw.startsWith('(MÉMOIRE:')) {
             return null;
         }
-        
+
         // Not JSON? Return as-is
         if (!raw.trim().startsWith('{') && !raw.trim().startsWith('[')) {
             return raw;
         }
-        
+
         // Clean markdown code blocks
         let cleaned = raw.replace(/```json\n?/gi, '').replace(/```\n?/g, '').trim();
-        
+
         // Method 1: Extract narrative with regex (most robust for escaped strings)
         const narrativeMatch = cleaned.match(/"narrative"\s*:\s*"((?:[^"\\]|\\.)*)"/);
         if (narrativeMatch) {
@@ -48,7 +48,7 @@ export const NarrationPanel = ({
                 .replace(/\\\\/g, '\\')
                 .replace(/\\'/g, "'");
         }
-        
+
         // Method 2: Try JSON.parse
         try {
             const parsed = JSON.parse(cleaned);
@@ -80,7 +80,7 @@ export const NarrationPanel = ({
                 }
             }
         }
-        
+
         return raw;
     };
 
@@ -112,7 +112,7 @@ export const NarrationPanel = ({
 
                     const content = extractNarrative(m.content);
                     if (content === null || !content?.trim()) return null;
-                    
+
                     return (
                         <div key={i} className={`chat-message ${m.role} ${m.role === 'system' ? 'system-msg' : ''}`}>
                             <span className="msg-author">
@@ -122,12 +122,57 @@ export const NarrationPanel = ({
                             <div className="msg-content">
                                 {m.role === 'image' ? (
                                     <img src={m.content} alt="Vision" style={{ width: '100%', borderRadius: '4px' }} />
-                                ) : i === messages.length - 1 && m.role !== 'user' ? (
-                                    <TypewriterText text={content} speed={15} />
                                 ) : (
-                                    <div style={{ whiteSpace: 'pre-wrap' }}>{content}</div>
+                                    <>
+                                        {/* Render specialized Codex Updates if present */}
+                                        {(() => {
+                                            try {
+                                                const clean = m.content.replace(/```json\n?/gi, '').replace(/```\n?/g, '').trim();
+                                                const data = clean.startsWith('{') ? JSON.parse(clean) : null;
+
+                                                if (data?.codex_update) {
+                                                    const { new_secret, new_location, new_npc } = data.codex_update;
+                                                    return (
+                                                        <div className="codex-updates" style={{
+                                                            display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '10px'
+                                                        }}>
+                                                            {new_secret && (
+                                                                <div className="secret-reveal" style={{
+                                                                    border: '1px solid var(--gold-dim)',
+                                                                    background: 'rgba(50, 20, 50, 0.4)',
+                                                                    padding: '8px', borderRadius: '4px',
+                                                                    color: '#d4af37', fontSize: '0.9em'
+                                                                }}>
+                                                                    <strong>👁️ SECRET RÉVÉLÉ:</strong> {new_secret}
+                                                                </div>
+                                                            )}
+                                                            {new_location && (
+                                                                <div className="location-reveal" style={{
+                                                                    border: '1px dashed var(--aether-blue)',
+                                                                    background: 'rgba(20, 30, 50, 0.4)',
+                                                                    padding: '8px', borderRadius: '4px',
+                                                                    color: 'var(--aether-blue)', fontSize: '0.9em'
+                                                                }}>
+                                                                    <strong>📍 LIEU DÉCOUVERT:</strong> {new_location.name}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                }
+                                            } catch (e) {
+                                                return null;
+                                            }
+                                        })()}
+
+                                        {i === messages.length - 1 && m.role !== 'user' ? (
+                                            <TypewriterText text={content} speed={15} />
+                                        ) : (
+                                            <div style={{ whiteSpace: 'pre-wrap' }}>{content}</div>
+                                        )}
+                                    </>
                                 )}
                             </div>
+
                         </div>
                     );
                 })}
