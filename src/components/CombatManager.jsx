@@ -265,11 +265,18 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
     // SYNC: Update local state from Shared State
     useEffect(() => {
         if (syncedCombatState && syncedCombatState.active) {
+            // CRITICAL FIX: Only apply if this is a newer update than what we already have
+            if (syncedCombatState.updatedAt && syncedCombatState.updatedAt <= lastSyncRef.current) {
+                return; // Skip - we already have this or a newer update
+            }
+            
             console.log(`[Combat Sync] ====== RECEIVING SYNCED STATE ======`);
             console.log(`[Combat Sync] Combatants count: ${syncedCombatState.combatants?.length}`);
             syncedCombatState.combatants?.forEach((c, i) => {
                 console.log(`[Combat Sync] [${i}] name: ${c.name}, isEnemy: ${c.isEnemy}, user_id: ${c.user_id}`);
             });
+            
+            lastSyncRef.current = syncedCombatState.updatedAt || Date.now();
             setCombatants(syncedCombatState.combatants || []);
             setRound(syncedCombatState.round || 1);
             setCurrentTurnIndex(syncedCombatState.turnIndex || 0);
