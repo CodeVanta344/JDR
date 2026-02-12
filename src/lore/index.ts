@@ -22,6 +22,7 @@ import { EXPANDED_NPCS_BATCH_1 } from './npcs-expansion-1';
 import { EXPANDED_NPCS_BATCH_2 } from './npcs-expansion-2';
 import { EXPANDED_BESTIARY_BATCH_1 } from './bestiary-expansion-1';
 import { EXPANDED_BESTIARY_BATCH_2 } from './bestiary-expansion-2';
+import { ARC_SEALED_ONES_QUESTS } from './quests-arc-sealed-ones';
 
 // ============================================================================
 // REGISTRY GLOBAL
@@ -201,6 +202,22 @@ export function initializeLoreSystem(): void {
     });
   });
   
+  // Enregistrement des quêtes Arc "Les Sceaux Brisés"
+  console.log(`[Lore] Enregistrement de ${ARC_SEALED_ONES_QUESTS.length} quêtes (Arc Épique 1)...`);
+  ARC_SEALED_ONES_QUESTS.forEach(quest => {
+    const tags = [quest.type, quest.category, quest.region, quest.questGiver, `level-${quest.suggestedLevel}`, 'arc-sealed-ones'];
+    if (quest.prerequisites?.faction) tags.push(quest.prerequisites.faction.id);
+    
+    GlobalLoreRegistry.register({
+      id: quest.id,
+      name: quest.name,
+      type: 'quest',
+      tags,
+      description: quest.summary,
+      data: quest
+    });
+  });
+  
   // Enregistrement des items
   console.log(`[Lore] Enregistrement de ${ALL_ITEMS.length} items...`);
   ALL_ITEMS.forEach(item => {
@@ -244,6 +261,7 @@ export function initializeLoreSystem(): void {
   const totalEntities = GlobalLoreRegistry.getAll().length;
   const totalCreatures = ALL_CREATURES.length + EXPANDED_BESTIARY_BATCH_1.length + EXPANDED_BESTIARY_BATCH_2.length;
   const totalNPCs = ALL_NPCS.length + EXPANDED_NPCS_BATCH_1.length + EXPANDED_NPCS_BATCH_2.length;
+  const totalQuests = ALL_QUESTS.length + ARC_SEALED_ONES_QUESTS.length;
   
   console.log(`[Lore] ✅ Système de lore initialisé en ${(endTime - startTime).toFixed(2)}ms`);
   console.log(`[Lore] 📊 Total: ${totalEntities} entités enregistrées`);
@@ -253,7 +271,7 @@ export function initializeLoreSystem(): void {
   console.log(`[Lore] - Recettes: ${ALL_RECIPES.length}`);
   console.log(`[Lore] - Créatures: ${totalCreatures} (Base: ${ALL_CREATURES.length}, Expansion: ${EXPANDED_BESTIARY_BATCH_1.length + EXPANDED_BESTIARY_BATCH_2.length})`);
   console.log(`[Lore] - NPCs: ${totalNPCs} (Base: ${ALL_NPCS.length}, Expansion: ${EXPANDED_NPCS_BATCH_1.length + EXPANDED_NPCS_BATCH_2.length})`);
-  console.log(`[Lore] - Quêtes: ${ALL_QUESTS.length}`);
+  console.log(`[Lore] - Quêtes: ${totalQuests} (Base: ${ALL_QUESTS.length}, Arc Épique 1: ${ARC_SEALED_ONES_QUESTS.length})`);
   console.log(`[Lore] - Items: ${ALL_ITEMS.length}`);
   console.log(`[Lore] - Lieux: ${ALL_LOCATIONS.length}`);
   
@@ -291,6 +309,7 @@ export * from './npcs-expansion-1';
 export * from './npcs-expansion-2';
 export * from './bestiary-expansion-1';
 export * from './bestiary-expansion-2';
+export * from './quests-arc-sealed-ones';
 
 // Export des données brutes
 export {
@@ -306,7 +325,8 @@ export {
   EXPANDED_NPCS_BATCH_1,
   EXPANDED_NPCS_BATCH_2,
   EXPANDED_BESTIARY_BATCH_1,
-  EXPANDED_BESTIARY_BATCH_2
+  EXPANDED_BESTIARY_BATCH_2,
+  ARC_SEALED_ONES_QUESTS
 };
 
 // ============================================================================
