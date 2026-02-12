@@ -278,7 +278,8 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
             updatedAt: syncedCombatState?.updatedAt, 
             lastSync: lastSyncRef.current, 
             shouldSkip: syncedCombatState?.updatedAt && syncedCombatState?.updatedAt <= lastSyncRef.current,
-            active: syncedCombatState?.active
+            active: syncedCombatState?.active,
+            movingUnit: movingUnit // Log if animation is active
         });
         
         if (syncedCombatState && syncedCombatState.active) {
@@ -286,6 +287,12 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
             if (syncedCombatState.updatedAt && syncedCombatState.updatedAt <= lastSyncRef.current) {
                 console.log('[SYNC] Skipping - already have this update');
                 return; // Skip - we already have this or a newer update
+            }
+
+            // CRITICAL FIX: Block DB sync during active animations to prevent position rollback
+            if (movingUnit) {
+                console.log('[SYNC] BLOCKED - Animation in progress, will sync after completion');
+                return; // Skip sync while unit is animating to avoid overwriting intermediate positions
             }
             
             console.log(`[Combat Sync] ====== RECEIVING SYNCED STATE ======`);
@@ -330,7 +337,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
             }
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [syncedCombatState?.updatedAt, currentUserId]); // onSFX/onVFX omis pour éviter boucle re-render
+    }, [syncedCombatState?.updatedAt, currentUserId, movingUnit]); // Re-check sync when animation completes
 
     const getPosPercent = (pos, isY = false) => {
         const blocks = isY ? arenaConfig.blocksY : arenaConfig.blocksX;
