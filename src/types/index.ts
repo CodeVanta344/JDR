@@ -67,6 +67,8 @@ export const CharacterSchema = z.object({
   is_host: z.boolean().default(false),
   status: z.string().optional(),
   attribute_points: z.number().default(0),
+  mechanical_traits: z.array(z.any()).optional(),
+  skill_bonuses: z.array(z.string()).optional(),
 });
 export type Character = z.infer<typeof CharacterSchema>;
 

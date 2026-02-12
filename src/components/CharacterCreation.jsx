@@ -139,9 +139,9 @@ export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImag
 
         if (lifepathData) {
             // NEW SYSTEM: Use comprehensive lifepath data
-            allTraits = lifepathData.mechanical_traits || [];
+            allTraits = lifepathData.all_traits || [];
             fullNarrative = lifepathData.narrative_summary || '';
-            startingReputation = lifepathData.reputation || {};
+            startingReputation = lifepathData.reputation_map || {};
             knownNpcs = lifepathData.allies || [];
             factionTies = Object.keys(startingReputation).filter(f => Math.abs(startingReputation[f]) >= 10);
             discoveredSecrets = lifepathData.personal_secrets || [];
@@ -221,11 +221,12 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
             maxHp: (clsData.hitDie || 8) + 10 + (Math.floor((finalStats.con - 10) / 2) * 2),
             resource: 100,
             max_resource: 100,
-            inventory: [...selectedEquipment, ...(lifepathData?.starting_items || [])],
+            inventory: [...selectedEquipment, ...(lifepathData?.items || [])],
             portrait_url: portraitUrl || classPortraits[selectedClass],
             backstory: lifepathData?.adult?.label || selectedBackstory?.label,
             life_path: lifePathRecord,
             mechanical_traits: allTraits,
+            skill_bonuses: lifepathData?.skills || [],
             backstory_gm_context: fullNarrative,
             starting_reputation: startingReputation,
             visited_npcs: knownNpcs,

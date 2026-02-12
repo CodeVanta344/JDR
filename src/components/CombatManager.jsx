@@ -420,13 +420,37 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
 
                 const pos = getUniquePos(false);
 
+                // Appliquer les bonus de traits LifePath
+                const mechanicalTraits = p.mechanical_traits || [];
+                const skillBonuses = p.skill_bonuses || [];
+                
+                // Calculer les bonus passifs des traits
+                let bonusAC = 0;
+                let bonusAtk = 0;
+                let bonusDamage = 0;
+                let passiveTraits = [];
+                
+                mechanicalTraits.forEach(trait => {
+                    if (trait.name) {
+                        passiveTraits.push(trait);
+                        // Parser les effets mécaniques (ex: "+2 AC", "+1 ATK")
+                        const acMatch = trait.effect?.match(/\+(\d+)\s*AC/i);
+                        const atkMatch = trait.effect?.match(/\+(\d+)\s*(ATK|Attaque)/i);
+                        const dmgMatch = trait.effect?.match(/\+(\d+)\s*(DMG|dégâts)/i);
+                        
+                        if (acMatch) bonusAC += parseInt(acMatch[1]);
+                        if (atkMatch) bonusAtk += parseInt(atkMatch[1]);
+                        if (dmgMatch) bonusDamage += parseInt(dmgMatch[1]);
+                    }
+                });
+
                 return {
                     id: p.id,
                     user_id: p.user_id,
                     name: p.name,
                     class: charClass,
-                    atk: Math.floor(((stats.str || 10) - 10) / 2) + 2,
-                    ac: 10 + dexMod + (p.equipment?.reduce((acc, item) => acc + (item.stats?.ac || 0), 0) || 0),
+                    atk: Math.floor(((stats.str || 10) - 10) / 2) + 2 + bonusAtk,
+                    ac: 10 + dexMod + (p.equipment?.reduce((acc, item) => acc + (item.stats?.ac || 0), 0) || 0) + bonusAC,
                     hp: p.hp,
                     maxHp: p.max_hp,
                     resource: p.resource ?? 100,
@@ -445,7 +469,10 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                     currentPM: Math.floor((stats.dex + stats.con - 20) / 4) + 5,
                     facing: 'EAST',
                     hasMoved: false,
-                    hasActed: false
+                    hasActed: false,
+                    lifepath_traits: passiveTraits,
+                    skill_bonuses: skillBonuses,
+                    bonus_damage: bonusDamage
                 };
             });
 
@@ -851,7 +878,11 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
         setTimeout(() => {
             setRollOverlay(null);
             if (success && target) {
-                const damage = currentActor.atk + (action.name !== 'Attaque' ? 5 : 0);
+                // Appliquer bonus_damage des traits LifePath
+                const baseDamage = currentActor.atk + (action.name !== 'Attaque' ? 5 : 0);
+                const traitBonus = currentActor.bonus_damage || 0;
+                const damage = baseDamage + traitBonus;
+                
                 setAnimatingId(currentActor.id);
                 if (onVFX) onVFX(action.name === 'Attaque' ? 'blood' : 'magic', cx, cy, action.name === 'Attaque' ? '#ff0000' : 'var(--aether-blue)');
 

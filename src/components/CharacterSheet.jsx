@@ -204,6 +204,52 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                                 })}
                         </div>
 
+                        {/* Traits et Aptitudes LifePath */}
+                        {character.mechanical_traits && character.mechanical_traits.length > 0 && (
+                            <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(212,175,55,0.05)', borderRadius: '8px', border: '1px solid rgba(212,175,55,0.2)' }}>
+                                <h4 style={{ fontSize: '0.7rem', color: 'var(--gold-primary)', marginBottom: '0.8rem', textTransform: 'uppercase', letterSpacing: '1.5px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span>✨</span>
+                                    <span>Aptitudes Spéciales</span>
+                                </h4>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                                    {character.mechanical_traits.map((trait, idx) => (
+                                        <div key={idx} style={{ padding: '0.7rem', background: 'rgba(0,0,0,0.3)', borderRadius: '6px', border: '1px solid rgba(212,175,55,0.15)' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
+                                                <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--gold-primary)' }}>{trait.name}</span>
+                                                {trait.effect && (
+                                                    <span style={{ fontSize: '0.7rem', color: '#4cd137', fontWeight: '600', padding: '2px 6px', background: 'rgba(76,209,55,0.1)', borderRadius: '3px' }}>
+                                                        {trait.effect}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {trait.desc && (
+                                                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0, lineHeight: '1.4' }}>
+                                                    {trait.desc}
+                                                </p>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Compétences acquises */}
+                        {character.skill_bonuses && character.skill_bonuses.length > 0 && (
+                            <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(84,160,255,0.05)', borderRadius: '8px', border: '1px solid rgba(84,160,255,0.2)' }}>
+                                <h4 style={{ fontSize: '0.7rem', color: '#54a0ff', marginBottom: '0.6rem', textTransform: 'uppercase', letterSpacing: '1.5px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span>🎯</span>
+                                    <span>Compétences Maîtrisées</span>
+                                </h4>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                    {character.skill_bonuses.map((skill, idx) => (
+                                        <div key={idx} style={{ padding: '0.4rem 0.7rem', background: 'rgba(84,160,255,0.1)', borderRadius: '4px', border: '1px solid rgba(84,160,255,0.3)' }}>
+                                            <span style={{ fontSize: '0.7rem', color: '#54a0ff', fontWeight: '600' }}>{skill}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         {character.attribute_points > 0 && (
                             <button
                                 onClick={onLevelUpClick}
