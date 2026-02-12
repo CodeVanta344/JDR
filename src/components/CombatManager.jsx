@@ -428,19 +428,32 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                 let bonusAC = 0;
                 let bonusAtk = 0;
                 let bonusDamage = 0;
+                let bonusDiceDamage = ''; // Format: "1d6" ou "2d6"
+                let resistances = {}; // Ex: { fire: 5, cold: 10 }
                 let passiveTraits = [];
                 
                 mechanicalTraits.forEach(trait => {
                     if (trait.name) {
                         passiveTraits.push(trait);
-                        // Parser les effets mécaniques (ex: "+2 AC", "+1 ATK")
+                        // Parser les effets mécaniques (ex: "+2 AC", "+1 ATK", "+1d6 Sneak Attack")
                         const acMatch = trait.effect?.match(/\+(\d+)\s*AC/i);
                         const atkMatch = trait.effect?.match(/\+(\d+)\s*(ATK|Attaque)/i);
                         const dmgMatch = trait.effect?.match(/\+(\d+)\s*(DMG|dégâts)/i);
+                        const diceMatch = trait.effect?.match(/\+(\d+)d(\d+)/i); // +1d6, +2d8, etc.
+                        
+                        // Parser résistances (ex: "Fire 5", "Résistance Feu 10")
+                        const fireResist = trait.effect?.match(/(?:Fire|Feu)\s+(\d+)/i);
+                        const coldResist = trait.effect?.match(/(?:Cold|Froid)\s+(\d+)/i);
+                        const poisonResist = trait.effect?.match(/(?:Poison)\s+(\d+)/i);
                         
                         if (acMatch) bonusAC += parseInt(acMatch[1]);
                         if (atkMatch) bonusAtk += parseInt(atkMatch[1]);
                         if (dmgMatch) bonusDamage += parseInt(dmgMatch[1]);
+                        if (diceMatch) bonusDiceDamage = `${diceMatch[1]}d${diceMatch[2]}`;
+                        
+                        if (fireResist) resistances.fire = parseInt(fireResist[1]);
+                        if (coldResist) resistances.cold = parseInt(coldResist[1]);
+                        if (poisonResist) resistances.poison = parseInt(poisonResist[1]);
                     }
                 });
 
@@ -472,7 +485,9 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                     hasActed: false,
                     lifepath_traits: passiveTraits,
                     skill_bonuses: skillBonuses,
-                    bonus_damage: bonusDamage
+                    bonus_damage: bonusDamage,
+                    bonus_dice_damage: bonusDiceDamage,
+                    resistances: resistances
                 };
             });
 
@@ -878,10 +893,20 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
         setTimeout(() => {
             setRollOverlay(null);
             if (success && target) {
-                // Appliquer bonus_damage des traits LifePath
+                // Appliquer bonus_damage des traits LifePath + dés bonus
                 const baseDamage = currentActor.atk + (action.name !== 'Attaque' ? 5 : 0);
                 const traitBonus = currentActor.bonus_damage || 0;
-                const damage = baseDamage + traitBonus;
+                
+                // Calculer dés bonus (ex: +1d6 Sneak Attack)
+                let diceBonusDamage = 0;
+                if (currentActor.bonus_dice_damage) {
+                    const [count, sides] = currentActor.bonus_dice_damage.split('d').map(Number);
+                    for (let i = 0; i < count; i++) {
+                        diceBonusDamage += Math.floor(Math.random() * sides) + 1;
+                    }
+                }
+                
+                const damage = baseDamage + traitBonus + diceBonusDamage;
                 
                 setAnimatingId(currentActor.id);
                 if (onVFX) onVFX(action.name === 'Attaque' ? 'blood' : 'magic', cx, cy, action.name === 'Attaque' ? '#ff0000' : 'var(--aether-blue)');

@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // LIEUX DE NAISSANCE - 40 OPTIONS
 // Chaque région majeure d'Aethelgard représentée
 // ============================================================
@@ -340,3 +340,4 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
 // - Lieux Interdits (3) : Prison-Île, Catacombes, Temple Profané
 // - Merveilles Naturelles (3) : Cascade Éternelle, Canyon aux Échos, Geysers Arcanique
 // - Cités Secondaires (5) : Cité Marchande, Port Fluvial, Bourg Fortifié, Ville Minière, Capitale Régionale
+
