@@ -1263,12 +1263,13 @@ export default function App() {
             // Inject start marker if missing
             const hasMarker = messages.some(m => m.content && m.content.includes("START_ADVENTURE_TRIGGERED"));
             if (!hasMarker) {
-                await supabase.from('messages').insert({
+                const { error } = await supabase.from('messages').insert({
                     id: session.id,
                     session_id: session.id,
                     role: 'system',
                     content: "(MEMOIRE:SYSTEM) START_ADVENTURE_TRIGGERED"
-                }).catch(() => { }); // Ignore if exists
+                });
+                // Ignore error if exists (duplicate key)
             }
         }
 
