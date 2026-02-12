@@ -17,6 +17,12 @@ import { ALL_QUESTS } from './quests';
 import { ALL_ITEMS } from './items-catalog';
 import { ALL_LOCATIONS } from './world-map';
 
+// Import des expansions
+import { EXPANDED_NPCS_BATCH_1 } from './npcs-expansion-1';
+import { EXPANDED_NPCS_BATCH_2 } from './npcs-expansion-2';
+import { EXPANDED_BESTIARY_BATCH_1 } from './bestiary-expansion-1';
+import { EXPANDED_BESTIARY_BATCH_2 } from './bestiary-expansion-2';
+
 // ============================================================================
 // REGISTRY GLOBAL
 // ============================================================================
@@ -102,9 +108,69 @@ export function initializeLoreSystem(): void {
     });
   });
   
+  // Enregistrement des créatures Expansion Batch 1
+  console.log(`[Lore] Enregistrement de ${EXPANDED_BESTIARY_BATCH_1.length} créatures (Expansion Batch 1)...`);
+  EXPANDED_BESTIARY_BATCH_1.forEach(creature => {
+    GlobalLoreRegistry.register({
+      id: creature.id,
+      name: creature.name,
+      type: 'creature',
+      tags: [creature.type, creature.size, creature.alignment, `cr-${creature.challengeRating}`, ...creature.habitat],
+      description: creature.description,
+      data: creature
+    });
+  });
+  
+  // Enregistrement des créatures Expansion Batch 2
+  console.log(`[Lore] Enregistrement de ${EXPANDED_BESTIARY_BATCH_2.length} créatures (Expansion Batch 2)...`);
+  EXPANDED_BESTIARY_BATCH_2.forEach(creature => {
+    GlobalLoreRegistry.register({
+      id: creature.id,
+      name: creature.name,
+      type: 'creature',
+      tags: [creature.type, creature.size, creature.alignment, `cr-${creature.challengeRating}`, ...creature.habitat],
+      description: creature.description,
+      data: creature
+    });
+  });
+  
   // Enregistrement des NPCs
   console.log(`[Lore] Enregistrement de ${ALL_NPCS.length} NPCs...`);
   ALL_NPCS.forEach(npc => {
+    const tags = [npc.role, npc.personality, npc.region];
+    if (npc.faction) tags.push(npc.faction);
+    if (npc.isHostile) tags.push('hostile');
+    
+    GlobalLoreRegistry.register({
+      id: npc.id,
+      name: npc.name,
+      type: 'npc',
+      tags,
+      description: npc.description,
+      data: npc
+    });
+  });
+  
+  // Enregistrement des NPCs Expansion Batch 1
+  console.log(`[Lore] Enregistrement de ${EXPANDED_NPCS_BATCH_1.length} NPCs (Expansion Batch 1)...`);
+  EXPANDED_NPCS_BATCH_1.forEach(npc => {
+    const tags = [npc.role, npc.personality, npc.region];
+    if (npc.faction) tags.push(npc.faction);
+    if (npc.isHostile) tags.push('hostile');
+    
+    GlobalLoreRegistry.register({
+      id: npc.id,
+      name: npc.name,
+      type: 'npc',
+      tags,
+      description: npc.description,
+      data: npc
+    });
+  });
+  
+  // Enregistrement des NPCs Expansion Batch 2
+  console.log(`[Lore] Enregistrement de ${EXPANDED_NPCS_BATCH_2.length} NPCs (Expansion Batch 2)...`);
+  EXPANDED_NPCS_BATCH_2.forEach(npc => {
     const tags = [npc.role, npc.personality, npc.region];
     if (npc.faction) tags.push(npc.faction);
     if (npc.isHostile) tags.push('hostile');
@@ -176,6 +242,8 @@ export function initializeLoreSystem(): void {
   
   const endTime = performance.now();
   const totalEntities = GlobalLoreRegistry.getAll().length;
+  const totalCreatures = ALL_CREATURES.length + EXPANDED_BESTIARY_BATCH_1.length + EXPANDED_BESTIARY_BATCH_2.length;
+  const totalNPCs = ALL_NPCS.length + EXPANDED_NPCS_BATCH_1.length + EXPANDED_NPCS_BATCH_2.length;
   
   console.log(`[Lore] ✅ Système de lore initialisé en ${(endTime - startTime).toFixed(2)}ms`);
   console.log(`[Lore] 📊 Total: ${totalEntities} entités enregistrées`);
@@ -183,8 +251,8 @@ export function initializeLoreSystem(): void {
   console.log(`[Lore] - Métiers: ${ALL_PROFESSIONS.length}`);
   console.log(`[Lore] - Ressources: ${ALL_RESOURCES.length}`);
   console.log(`[Lore] - Recettes: ${ALL_RECIPES.length}`);
-  console.log(`[Lore] - Créatures: ${ALL_CREATURES.length}`);
-  console.log(`[Lore] - NPCs: ${ALL_NPCS.length}`);
+  console.log(`[Lore] - Créatures: ${totalCreatures} (Base: ${ALL_CREATURES.length}, Expansion: ${EXPANDED_BESTIARY_BATCH_1.length + EXPANDED_BESTIARY_BATCH_2.length})`);
+  console.log(`[Lore] - NPCs: ${totalNPCs} (Base: ${ALL_NPCS.length}, Expansion: ${EXPANDED_NPCS_BATCH_1.length + EXPANDED_NPCS_BATCH_2.length})`);
   console.log(`[Lore] - Quêtes: ${ALL_QUESTS.length}`);
   console.log(`[Lore] - Items: ${ALL_ITEMS.length}`);
   console.log(`[Lore] - Lieux: ${ALL_LOCATIONS.length}`);
@@ -218,6 +286,12 @@ export * from './quests';
 export * from './items-catalog';
 export * from './world-map';
 
+// Re-export des expansions
+export * from './npcs-expansion-1';
+export * from './npcs-expansion-2';
+export * from './bestiary-expansion-1';
+export * from './bestiary-expansion-2';
+
 // Export des données brutes
 export {
   ALL_FACTIONS,
@@ -228,7 +302,11 @@ export {
   ALL_NPCS,
   ALL_QUESTS,
   ALL_ITEMS,
-  ALL_LOCATIONS
+  ALL_LOCATIONS,
+  EXPANDED_NPCS_BATCH_1,
+  EXPANDED_NPCS_BATCH_2,
+  EXPANDED_BESTIARY_BATCH_1,
+  EXPANDED_BESTIARY_BATCH_2
 };
 
 // ============================================================================
