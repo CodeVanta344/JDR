@@ -3,9 +3,9 @@
 // ============================================================
 
 import React, { useMemo } from 'react';
-import type { LifepathSelection, StatKey } from '../../../types/lore';
-import { accumulateEffects } from '../../../lore/character-creation/lifepath';
-import { STAT_LABELS } from '../../../types/lore';
+import type { LifepathSelection, StatKey } from '../../types/lore';
+import { accumulateEffects } from '../../lore/character-creation/lifepath';
+import { STAT_LABELS } from '../../types/lore';
 import './EffectsSidebar.css';
 
 interface Props {

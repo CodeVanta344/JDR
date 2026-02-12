@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CLASSES, CLASS_CATEGORIES, ENRICHED_BACKSTORIES, getBackstoriesForClass, formatBackstoryForGM, LOCATION_BACKGROUNDS, BIRTH_ORIGINS, CHILDHOOD_EVENTS, ADOLESCENCE_PATHS } from '../lore';
 import { MagicBackground } from './MagicBackground';
-import { LifePathBuilder } from './LifePathBuilder.tsx';
+import { LifePathWizard } from './character-creation/LifePathWizard';
 import './CharacterCreation.css';
 
 // Utility: Roll 4d6 drop lowest
@@ -406,21 +406,21 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
 
                         {/* STEP 4: LIFEPATH COMPLET (Origine, Enfance, Adolescence, Passé Adulte) */}
                         {step === 4 && (
-                            <LifePathBuilder
-                                onComplete={(data) => {
-                                    setLifepathData(data);
+                            <LifePathWizard
+                                onComplete={(effects) => {
+                                    setLifepathData(effects);
                                     // Appliquer les stats cumulées aux attributs
                                     setAttributes(prev => ({
-                                        str: prev.str + (data.stats.str || 0),
-                                        dex: prev.dex + (data.stats.dex || 0),
-                                        con: prev.con + (data.stats.con || 0),
-                                        int: prev.int + (data.stats.int || 0),
-                                        wis: prev.wis + (data.stats.wis || 0),
-                                        cha: prev.cha + (data.stats.cha || 0)
+                                        str: prev.str + (effects.final_stats.strength || 0),
+                                        dex: prev.dex + (effects.final_stats.dexterity || 0),
+                                        con: prev.con + (effects.final_stats.constitution || 0),
+                                        int: prev.int + (effects.final_stats.intelligence || 0),
+                                        wis: prev.wis + (effects.final_stats.wisdom || 0),
+                                        cha: prev.cha + (effects.final_stats.charisma || 0)
                                     }));
                                     setStep(5); // Passe à l'équipement
                                 }}
-                                onBack={() => setStep(3)}
+                                onCancel={() => setStep(3)}
                             />
                         )}
 

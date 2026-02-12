@@ -4,8 +4,8 @@
 // ============================================================
 
 import React, { useState, useEffect } from 'react';
-import type { LifepathSelection, LifeChoice, AccumulatedEffects } from '../../../types/lore';
-import { accumulateEffects, isLifepathComplete, preloadNextStage } from '../../../lore/character-creation/lifepath';
+import type { LifepathSelection, LifeChoice, AccumulatedEffects } from '../../types/lore';
+import { accumulateEffects, isLifepathComplete, preloadNextStage } from '../../lore/character-creation/lifepath';
 import { EffectsSidebar } from './EffectsSidebar';
 import './LifePathWizard.css';
 
@@ -88,57 +88,57 @@ export const LifePathWizard: React.FC<Props> = ({ onComplete, onCancel }) => {
       switch (category) {
         // Birth
         case 'location':
-          const { BIRTH_LOCATIONS } = await import('../../../lore/character-creation/lifepath/birth/locations');
+          const { BIRTH_LOCATIONS } = await import('../../lore/character-creation/lifepath/birth/locations');
           fetched = BIRTH_LOCATIONS;
           break;
         case 'status':
-          const { SOCIAL_STATUSES } = await import('../../../lore/character-creation/lifepath/birth/social-status');
+          const { SOCIAL_STATUSES } = await import('../../lore/character-creation/lifepath/birth/social-status');
           fetched = SOCIAL_STATUSES;
           break;
         case 'omen':
-          const { OMENS } = await import('../../../lore/character-creation/lifepath/birth/omens');
+          const { OMENS } = await import('../../lore/character-creation/lifepath/birth/omens');
           fetched = OMENS;
           break;
         
         // Childhood
         case 'family':
-          const { FAMILIES } = await import('../../../lore/character-creation/lifepath/childhood/families');
+          const { FAMILIES } = await import('../../lore/character-creation/lifepath/childhood/families');
           fetched = FAMILIES;
           break;
         case 'education':
-          const { EDUCATIONS } = await import('../../../lore/character-creation/lifepath/childhood/education');
+          const { EDUCATIONS } = await import('../../lore/character-creation/lifepath/childhood/education');
           fetched = EDUCATIONS;
           break;
         case 'trauma':
-          const { TRAUMAS } = await import('../../../lore/character-creation/lifepath/childhood/traumas');
+          const { TRAUMAS } = await import('../../lore/character-creation/lifepath/childhood/traumas');
           fetched = TRAUMAS;
           break;
         
         // Adolescence
         case 'training':
-          const { TRAININGS } = await import('../../../lore/character-creation/lifepath/adolescence/training');
+          const { TRAININGS } = await import('../../lore/character-creation/lifepath/adolescence/training');
           fetched = TRAININGS;
           break;
         case 'exploit':
-          const { EXPLOITS } = await import('../../../lore/character-creation/lifepath/adolescence/exploits');
+          const { EXPLOITS } = await import('../../lore/character-creation/lifepath/adolescence/exploits');
           fetched = EXPLOITS;
           break;
         case 'encounter':
-          const { ENCOUNTERS } = await import('../../../lore/character-creation/lifepath/adolescence/encounters');
+          const { ENCOUNTERS } = await import('../../lore/character-creation/lifepath/adolescence/encounters');
           fetched = ENCOUNTERS;
           break;
         
         // Young Adult
         case 'profession':
-          const { PROFESSIONS } = await import('../../../lore/character-creation/lifepath/young-adult/professions');
+          const { PROFESSIONS } = await import('../../lore/character-creation/lifepath/young-adult/professions');
           fetched = PROFESSIONS;
           break;
         case 'motivation':
-          const { MOTIVATIONS } = await import('../../../lore/character-creation/lifepath/young-adult/motivations');
+          const { MOTIVATIONS } = await import('../../lore/character-creation/lifepath/young-adult/motivations');
           fetched = MOTIVATIONS;
           break;
         case 'connection':
-          const { CONNECTIONS } = await import('../../../lore/character-creation/lifepath/young-adult/connections');
+          const { CONNECTIONS } = await import('../../lore/character-creation/lifepath/young-adult/connections');
           fetched = CONNECTIONS;
           break;
         
