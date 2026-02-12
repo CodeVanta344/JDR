@@ -36,6 +36,63 @@ export const PROFESSIONS: LifeChoice[] = [
     incompatible_with: []
   },
 
-  // ... 14 autres professions : mercenaire, artisan, marchand, érudit, prêtre,
-  // voleur, garde, explorateur, éclaireur, chasseur, guérisseur, diplomate, etc.
+  {
+    id: 'youngadult_prof_mercenary',
+    stage: 'youngAdult',
+    category: 'profession',
+    label: 'Mercenaire',
+    desc: 'Vous avez vendu votre lame au plus offrant à travers tout Aethelgard.',
+    detailed_lore: {
+      backstory: 'Pas de patrie, pas de maîtres, seulement des contrats. Vous avez voyagé de champ de bataille en champ de bataille.',
+      defining_moment: 'Un jour, vous avez refusé d\'exécuter un ordre de massacre, perdant votre paye mais sauvant votre honneur.',
+      worldview_shaped: 'L\'argent est utile, mais la vie n\'a pas de prix. Tout contrat finit par se payer, d\'une manière ou d\'une autre.'
+    },
+    effects: {
+      stats: { strength: 1, dexterity: 1 },
+      mechanical_traits: [
+        { name: 'Oeil du Vétéran', desc: 'Peut estimer la force d\'un adversaire au premier regard', game_effect: 'Analyse de combat' }
+      ],
+      reputation: [{ factionId: 'guildes_mercenaires', delta: 5, reason: 'Réputation de fiabilité' }],
+      items: [{ itemId: 'mercenary_contract', quantity: 1, reason: 'Dernier contrat en cours' }],
+      skills: [{ skillId: 'survival', bonus: 1, reason: 'Vie nomade' }],
+      languages: [],
+      tags: ['mercenary', 'traveler', 'pragmatic']
+    },
+    social_impacts: {
+      npc_reactions: { 'soldats': 'Méfiance', 'marchands': 'Utilité', 'hors-la-loi': 'Respect' },
+      first_impression: '« Vous avez l\'air de quelqu\'un qui connaît le prix d\'un coup d\'épée. »'
+    },
+    tags: ['mercenary', 'fighter', 'nomad'],
+    incompatible_with: []
+  },
+
+  {
+    id: 'youngadult_prof_scholar',
+    stage: 'youngAdult',
+    category: 'profession',
+    label: 'Érudit',
+    desc: 'Vous avez passé vos meilleures années entre les murs d\'une académie.',
+    detailed_lore: {
+      backstory: 'Les livres étaient plus réels que le monde extérieur. Vous avez étudié l\'histoire, la magie et la philosophie.',
+      defining_moment: 'Dans une archive scellée, vous avez trouvé une mention d\'un artefact oublié qui a changé votre vision du monde.',
+      worldview_shaped: 'La connaissance est la seule véritable puissance. Les empires tombent, mais les idées perdurent.'
+    },
+    effects: {
+      stats: { intelligence: 1, wisdom: 1 },
+      mechanical_traits: [
+        { name: 'Mémoire Prodigieuse', desc: 'Peut se souvenir de détails lus même il y a longtemps', game_effect: 'Bonus de lore' }
+      ],
+      reputation: [{ factionId: 'academies', delta: 6, reason: 'Élève brillant' }],
+      items: [{ itemId: 'scholar_tome', quantity: 1, reason: 'Livre de recherche' }],
+      skills: [{ skillId: 'investigation', bonus: 2, reason: 'Méthodes de recherche' }],
+      languages: ['Ancien Aethel'],
+      tags: ['academic', 'philosopher', 'curious']
+    },
+    social_impacts: {
+      npc_reactions: { 'nobles': 'Respect', 'paysans': 'Incompréhension', 'mages': 'Fraternité' },
+      first_impression: '« Vos mains ne sont pas faites pour le travail de la terre, mais votre esprit semble... vaste. »'
+    },
+    tags: ['scholar', 'academic', 'thinker'],
+    incompatible_with: []
+  }
 ];

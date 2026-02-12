@@ -84,6 +84,11 @@ export interface Subclass {
     details: SubclassDetails;
 }
 
+export interface RecommendedStats {
+    major: (keyof Stats)[];
+    minor: (keyof Stats)[];
+}
+
 export interface Class {
     label: string;
     category: string;
@@ -92,6 +97,7 @@ export interface Class {
     desc: string;
     mechanic: Mechanic;
     stats: Stats;
+    recommended_stats: RecommendedStats;
     protection: Protection;
     starting_equipment_options: StartingEquipmentOption[];
     initial_ability_options: Ability[];
@@ -137,6 +143,7 @@ export const CLASSES: Record<string, Class> = {
             desc: "La magie vous est inaccessible. Chaque coup porté ou reçu génère de l'Adrénaline (points de ressource). \n\n• **Rage de Sang**: À plus de 50 points, vos dégâts physiques augmentent de 25%.\n• **Second Souffle**: Vous pouvez dépenser toute votre Adrénaline pour vous soigner (1 PV par point dépensé)."
         },
         stats: { str: 18, dex: 12, con: 16, int: 8, wis: 10, cha: 10 },
+        recommended_stats: { major: ["str", "con"], minor: ["dex"] },
         protection: { armor: ["light", "medium", "heavy"], weapons: ["simple", "martial"], shields: true },
         starting_equipment_options: [
             {
@@ -196,6 +203,7 @@ export const CLASSES: Record<string, Class> = {
             desc: "Vos sorts sont dévastateurs mais instables. Chaque lancement génère de la **Chaleur**.\n\n• **Malus Physique**: -2 sur les tests de Force et Constitution.\n• **Surcharge**: Si votre Mana tombe à 0 ou si vous lancez trop de sorts, vous entrez en Surcharge : vos dégâts sont doublés mais vous perdez 5 PV par tour jusqu'à stabilisation."
         },
         stats: { str: 6, dex: 12, con: 8, int: 18, wis: 14, cha: 12 },
+        recommended_stats: { major: ["int"], minor: ["con", "dex"] },
         protection: { armor: ["none"], weapons: ["simple", "arcane"], shields: false },
         starting_equipment_options: [
             {
@@ -253,6 +261,7 @@ export const CLASSES: Record<string, Class> = {
             desc: "L'énergie coule dans vos gestes. \n\n• **Point Faible**: Vos attaques contre les ennemis avec moins de 50% de PV ont +5 au jet de toucher.\n• **Combo**: Chaque attaque réussie réduit le coût en Énergie de votre prochaine capacité de 5 points (cumulable 3 fois)."
         },
         stats: { str: 10, dex: 18, con: 12, int: 12, wis: 10, cha: 14 },
+        recommended_stats: { major: ["dex"], minor: ["int", "cha"] },
         protection: { armor: ["light"], weapons: ["simple", "finesse"], shields: false },
         starting_equipment_options: [
             {
@@ -311,6 +320,7 @@ export const CLASSES: Record<string, Class> = {
             desc: "Votre foi alimente vos miracles. \n\n• **Lumière Intérieure**: Vos soins critiques restaurent 50% de Mana.\n• **Bouclier de Foi**: Porter une armure lourde ne pénalise pas vos sorts divins."
         },
         stats: { str: 14, dex: 10, con: 14, int: 10, wis: 16, cha: 12 },
+        recommended_stats: { major: ["wis"], minor: ["str", "con"] },
         protection: { armor: ["light", "medium", "heavy"], weapons: ["simple"], shields: true },
         starting_equipment_options: [
             {
@@ -369,6 +379,7 @@ export const CLASSES: Record<string, Class> = {
             desc: "Votre charisme dicte votre puissance sacrée.\n\n• **Smite**: Vous pouvez convertir du Mana en dés de dégâts supplémentaires (1d8 par 10 points) lors d'une attaque réussie.\n• **Protection d'Aura**: Les alliés proches gagnent +2 à leur Classe d'Armure tant que vous êtes debout."
         },
         stats: { str: 16, dex: 10, con: 14, int: 8, wis: 12, cha: 14 },
+        recommended_stats: { major: ["str", "cha"], minor: ["con"] },
         protection: { armor: ["light", "medium", "heavy"], weapons: ["simple", "martial"], shields: true },
         starting_equipment_options: [
             {
@@ -426,6 +437,7 @@ export const CLASSES: Record<string, Class> = {
             desc: "La nature est votre alliée.\n\n• **Camouflage Naturel**: Vous avez Avantage aux jets de Discrétion en forêt ou milieux naturels.\n• **Tir de Réaction**: Si un ennemi se déplace à portée de votre arc, vous pouvez dépenser 10 Mana pour effectuer une attaque immédiate."
         },
         stats: { str: 12, dex: 16, con: 14, int: 10, wis: 14, cha: 8 },
+        recommended_stats: { major: ["dex", "wis"], minor: ["con"] },
         protection: { armor: ["light", "medium"], weapons: ["simple", "martial", "finesse"], shields: true },
         starting_equipment_options: [
             {
@@ -483,6 +495,7 @@ export const CLASSES: Record<string, Class> = {
             desc: "Vos mots ont un poids réel.\n\n• **Écho Harmonique**: Lancer un sort restaure 5 Mana à l'allié le plus proche.\n• **Polyvalence**: Vous pouvez utiliser n'importe quel objet magique sans restriction de classe."
         },
         stats: { str: 8, dex: 14, con: 12, int: 12, wis: 10, cha: 18 },
+        recommended_stats: { major: ["cha"], minor: ["dex"] },
         protection: { armor: ["light"], weapons: ["simple", "finesse", "arcane"], shields: false },
         starting_equipment_options: [
             {
@@ -541,6 +554,7 @@ export const CLASSES: Record<string, Class> = {
             desc: "Votre magie provient de la terre elle-même.\n\n• **Forme Sauvage**: Vous pouvez vous transformer en animal (Loup, Ours) une fois par combat.\n• **Cœur de la Planète**: Vos sorts de soin sont 25% plus efficaces en extérieur."
         },
         stats: { str: 10, dex: 12, con: 14, int: 10, wis: 18, cha: 12 },
+        recommended_stats: { major: ["wis"], minor: ["con"] },
         protection: { armor: ["light", "medium"], weapons: ["simple", "arcane"], shields: true },
         starting_equipment_options: [
             {

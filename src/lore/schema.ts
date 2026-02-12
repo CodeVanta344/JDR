@@ -65,7 +65,7 @@ export interface Faction extends EntityBase {
 // SKILL & CHECK SYSTEM
 // ============================================================================
 
-export type SkillType = 
+export type SkillType =
   // Combat
   | 'melee' | 'ranged' | 'magic' | 'defense'
   // Social
@@ -109,12 +109,14 @@ export interface SkillTree {
 // ============================================================================
 
 export interface Stats {
-  str: number; // Strength (Force)
-  dex: number; // Dexterity (Dextérité)
-  con: number; // Constitution (Endurance)
-  int: number; // Intelligence
-  wis: number; // Wisdom (Sagesse)
-  cha: number; // Charisma (Charisme)
+  strength: number;
+  dexterity: number;
+  constitution: number;
+  intelligence: number;
+  wisdom: number;
+  charisma: number;
+  perception: number;
+  willpower: number;
 }
 
 export interface CombatStats {
@@ -130,7 +132,7 @@ export interface CombatStats {
 // ============================================================================
 
 export type ItemRarity = 'common' | 'uncommon' | 'rare' | 'very-rare' | 'legendary' | 'artifact';
-export type ItemCategory = 
+export type ItemCategory =
   | 'weapon' | 'armor' | 'shield' | 'accessory' | 'consumable'
   | 'material' | 'ingredient' | 'tool' | 'key-item' | 'quest-item';
 
@@ -176,7 +178,7 @@ export interface TradeRoute {
 // CRAFTING & PROFESSIONS
 // ============================================================================
 
-export type ProfessionType = 
+export type ProfessionType =
   // Artisanat
   | 'smithing' | 'alchemy' | 'enchanting' | 'cooking'
   | 'tailoring' | 'leatherworking' | 'jewelcrafting' | 'inscription'
@@ -246,7 +248,7 @@ export interface WorldFlag {
 // QUEST SYSTEM
 // ============================================================================
 
-export type QuestType = 
+export type QuestType =
   | 'main' // Quête principale
   | 'side' // Quête secondaire
   | 'faction' // Quête de faction
@@ -305,7 +307,7 @@ export interface Quest extends EntityBase {
 // LOCATION SYSTEM
 // ============================================================================
 
-export type LocationType = 
+export type LocationType =
   | 'city' | 'town' | 'village' | 'hamlet'
   | 'dungeon' | 'ruins' | 'cave' | 'tower'
   | 'tavern' | 'shop' | 'temple' | 'guild-hall'
@@ -343,7 +345,7 @@ export interface Location extends EntityBase {
 // CREATURE & BESTIARY
 // ============================================================================
 
-export type CreatureType = 
+export type CreatureType =
   | 'beast' | 'humanoid' | 'undead' | 'elemental' | 'dragon'
   | 'aberration' | 'construct' | 'celestial' | 'fiend' | 'fey';
 
@@ -382,7 +384,7 @@ export interface Creature extends EntityBase {
 // NPC SYSTEM
 // ============================================================================
 
-export type NPCRole = 
+export type NPCRole =
   | 'merchant' | 'innkeeper' | 'blacksmith' | 'alchemist' | 'trainer'
   | 'quest-giver' | 'guard' | 'noble' | 'commoner' | 'companion'
   | 'antagonist' | 'neutral' | 'faction-leader';
@@ -526,10 +528,10 @@ export interface WorldEvent extends EntityBase {
 // EXPORTS
 // ============================================================================
 
-export type EntityType = 
-  | 'faction' | 'quest' | 'location' | 'creature' | 'npc' 
+export type EntityType =
+  | 'faction' | 'quest' | 'location' | 'creature' | 'npc'
   | 'item' | 'event' | 'recipe' | 'resource' | 'loot-table';
 
-export type AnyEntity = 
-  | Faction | Quest | Location | Creature | NPC 
+export type AnyEntity =
+  | Faction | Quest | Location | Creature | NPC
   | Item | WorldEvent | Recipe | Resource | LootTable;

@@ -17,16 +17,16 @@ import type {
 export function accumulateEffects(selection: LifepathSelection): AccumulatedEffects {
   // SIMPLIFIÉ : Collecter 4 choix (1 par étape)
   const allChoices: LifeChoice[] = [];
-  
+
   // Birth - Origines
   if (selection.birth.location) allChoices.push(selection.birth.location);
-  
+
   // Childhood - Enfance
   if (selection.childhood.family) allChoices.push(selection.childhood.family);
-  
+
   // Adolescence - Formation
   if (selection.adolescence.training) allChoices.push(selection.adolescence.training);
-  
+
   // Young Adult - Profession
   if (selection.youngAdult.profession) allChoices.push(selection.youngAdult.profession);
 
@@ -128,7 +128,7 @@ function generateNarrativeSummary(choices: LifeChoice[]): string {
   if (byStage.birth.length > 0) {
     const labels = byStage.birth.map(c => c.label).join(', ');
     sections.push(`**Naissance :** ${labels}`);
-    
+
     const moments = byStage.birth
       .filter(c => c.detailed_lore.defining_moment)
       .map(c => c.detailed_lore.defining_moment)
@@ -140,7 +140,7 @@ function generateNarrativeSummary(choices: LifeChoice[]): string {
   if (byStage.childhood.length > 0) {
     const labels = byStage.childhood.map(c => c.label).join(', ');
     sections.push(`\n**Enfance :** ${labels}`);
-    
+
     const worldviews = byStage.childhood
       .filter(c => c.detailed_lore.worldview_shaped)
       .map(c => c.detailed_lore.worldview_shaped)
@@ -165,12 +165,23 @@ function generateNarrativeSummary(choices: LifeChoice[]): string {
 
 // ===== HELPER : VÉRIFIER SÉLECTION COMPLÈTE =====
 export function isLifepathComplete(selection: Partial<LifepathSelection>): selection is LifepathSelection {
-  // SIMPLIFIÉ : Seulement 4 choix requis (1 par phase)
   return !!(
+    // Phase 1
     selection.birth?.location &&
+    selection.birth?.socialStatus &&
+    selection.birth?.omen &&
+    // Phase 2
     selection.childhood?.family &&
+    selection.childhood?.education &&
+    selection.childhood?.trauma &&
+    // Phase 3
     selection.adolescence?.training &&
-    selection.youngAdult?.profession
+    selection.adolescence?.exploit &&
+    selection.adolescence?.encounter &&
+    // Phase 4
+    selection.youngAdult?.profession &&
+    selection.youngAdult?.motivation &&
+    selection.youngAdult?.connection
   );
 }
 

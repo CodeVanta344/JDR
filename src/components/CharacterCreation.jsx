@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { CLASSES, CLASS_CATEGORIES, ENRICHED_BACKSTORIES, getBackstoriesForClass, formatBackstoryForGM, LOCATION_BACKGROUNDS, BIRTH_ORIGINS, CHILDHOOD_EVENTS, ADOLESCENCE_PATHS } from '../lore';
 import { MagicBackground } from './MagicBackground';
 import { LifePathWizard } from './character-creation/LifePathWizard';
@@ -59,6 +59,7 @@ export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImag
     const [selectedEquipmentIndex, setSelectedEquipmentIndex] = useState(0);
     const [selectedAbilityNames, setSelectedAbilityNames] = useState([]);
     const [attributes, setAttributes] = useState({ str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 });
+    const [lifepathStats, setLifepathStats] = useState({ str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 }); // New state for real-time bonuses
     const [rollingStat, setRollingStat] = useState(null);
     const [portraitUrl, setPortraitUrl] = useState(null);
     const [classPortraits, setClassPortraits] = useState({});
@@ -301,6 +302,25 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                                                 <div className="class-preview-content">
                                                     <h2 className="class-preview-title">{CLASSES[selectedClass].label}</h2>
                                                     <div className="class-preview-quote">"{CLASSES[selectedClass].quote}"</div>
+
+                                                    {/* Recommended Attributes */}
+                                                    {CLASSES[selectedClass].recommended_stats && (
+                                                        <div className="recommended-stats-container">
+                                                            <div className="rec-stat-group">
+                                                                <span className="rec-stat-label">MAJEUR :</span>
+                                                                {CLASSES[selectedClass].recommended_stats.major.map(stat => (
+                                                                    <span key={stat} className="rec-stat-badge major">{STAT_LABELS[stat]}</span>
+                                                                ))}
+                                                            </div>
+                                                            <div className="rec-stat-group">
+                                                                <span className="rec-stat-label">MINEUR :</span>
+                                                                {CLASSES[selectedClass].recommended_stats.minor.map(stat => (
+                                                                    <span key={stat} className="rec-stat-badge minor">{STAT_LABELS[stat]}</span>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
                                                     <div className="class-mechanic-box">
                                                         <span className="mechanic-title">Mécanique Unique : {CLASSES[selectedClass].mechanic.name}</span>
                                                         <p className="mechanic-desc">
@@ -332,18 +352,22 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                                 <div className="sidebar-section">
                                     <h4 className="sidebar-label">STATISTIQUES</h4>
                                     <div className="sidebar-stats-dashboard">
-                                        {Object.entries(attributes).map(([key, val]) => (
-                                            <div key={key} className={`dashboard-stat ${val > 10 ? 'positive' : ''}`}>
-                                                <div className="stat-meta">
-                                                    <span className="stat-abbr">{key.toUpperCase()}</span>
-                                                    <span className="stat-full-name">{STAT_LABELS[key]}</span>
+                                        {Object.entries(attributes).map(([key, baseVal]) => {
+                                            const bonusVal = lifepathStats[key] || 0;
+                                            const totalVal = baseVal + bonusVal;
+                                            return (
+                                                <div key={key} className={`dashboard-stat ${totalVal > 10 ? 'positive' : ''}`}>
+                                                    <div className="stat-meta">
+                                                        <span className="stat-abbr">{key.toUpperCase()}</span>
+                                                        <span className="stat-full-name">{STAT_LABELS[key]}</span>
+                                                    </div>
+                                                    <div className="stat-display">
+                                                        <span className="stat-number">{totalVal}</span>
+                                                        <span className="stat-bracket-mod">{getModifier(totalVal)}</span>
+                                                    </div>
                                                 </div>
-                                                <div className="stat-display">
-                                                    <span className="stat-number">{val}</span>
-                                                    <span className="stat-bracket-mod">{getModifier(val)}</span>
-                                                </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </div>
 
@@ -413,8 +437,10 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                                         <div className="wizard-options">
                                             {Object.entries(classData?.subclasses || {}).map(([key, sub]) => (
                                                 <div key={key} className={`life-choice-card ${selectedSubclass === key ? 'selected' : ''}`} onClick={() => setSelectedSubclass(key)}>
-                                                    <div className="card-title">{sub.label}</div>
-                                                    <div className="card-desc">{sub.desc}</div>
+                                                    <div className="choice-content-main">
+                                                        <div className="card-title">{sub.label}</div>
+                                                        <div className="card-desc">{sub.desc}</div>
+                                                    </div>
                                                     <div className="card-traits">
                                                         <span className="stat-tag bonus">{sub.details.feature}</span>
                                                     </div>
@@ -432,8 +458,20 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                                 {step === 3 && (
                                     <LifePathWizard
                                         hideSidebar={true}
+                                        onUpdate={useCallback((effects) => {
+                                            const stats = effects.final_stats;
+                                            setLifepathStats({
+                                                str: stats.strength || 0,
+                                                dex: stats.dexterity || 0,
+                                                con: stats.constitution || 0,
+                                                int: stats.intelligence || 0,
+                                                wis: stats.wisdom || 0,
+                                                cha: stats.charisma || 0
+                                            });
+                                        }, [])}
                                         onComplete={(effects) => {
                                             setLifepathData(effects);
+                                            // Permanently apply to attributes and clear lifepathStats
                                             setAttributes(prev => ({
                                                 str: prev.str + (effects.final_stats.strength || 0),
                                                 dex: prev.dex + (effects.final_stats.dexterity || 0),
@@ -442,9 +480,13 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                                                 wis: prev.wis + (effects.final_stats.wisdom || 0),
                                                 cha: prev.cha + (effects.final_stats.charisma || 0)
                                             }));
+                                            setLifepathStats({ str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 });
                                             setStep(4);
                                         }}
-                                        onCancel={() => setStep(2)}
+                                        onCancel={() => {
+                                            setLifepathStats({ str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 });
+                                            setStep(2);
+                                        }}
                                     />
                                 )}
 

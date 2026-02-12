@@ -36,6 +36,33 @@ export const CONNECTIONS: LifeChoice[] = [
     incompatible_with: []
   },
 
-  // ... 19 autres connexions : ennemi juré, amour perdu, frère d\'armes, maître guilde,
-  // créancier, famille éloignée, traître, contact criminel, allié mystérieux, etc.
+  {
+    id: 'youngadult_conn_lost_love',
+    stage: 'youngAdult',
+    category: 'connection',
+    label: 'Amour de Jeunesse',
+    desc: 'Une personne importante de votre passé compte toujours pour vous, même si vos chemins ont divergé.',
+    detailed_lore: {
+      backstory: 'Vous avez grandi ensemble, aviez des projets, mais les circonstances (guerre, famille, destin) vous ont séparés.',
+      defining_moment: 'Leur dernier regard avant de partir, et la promesse de vous revoir un jour sous le Grand If de [Lieu].',
+      worldview_shaped: 'Le cœur a ses raisons. Parfois, on voyage pour fuir les souvenirs, parfois pour les retrouver.'
+    },
+    effects: {
+      stats: { charisma: 1, willpower: 1 },
+      mechanical_traits: [
+        { name: 'Force du Cœur', desc: 'Avantage contre la peur quand vous agissez pour protéger un être cher', game_effect: 'Résistance psychologique' }
+      ],
+      reputation: [],
+      items: [{ itemId: 'love_locket', quantity: 1, reason: 'Souvenir précieux' }],
+      skills: [{ skillId: 'insight', bonus: 1, reason: 'Sensibilité accrue' }],
+      languages: [],
+      tags: ['romantic', 'nostalgic', 'driven']
+    },
+    social_impacts: {
+      npc_reactions: { 'romantiques': 'Sympathie', 'pragmatiques': 'Dédain', 'rivaux': 'Levier de chantage' },
+      first_impression: '« Il y a une certaine mélancolie dans votre sourire... Un regret, peut-être ? »'
+    },
+    tags: ['romantic', 'nostalgic', 'driven'],
+    incompatible_with: []
+  }
 ];

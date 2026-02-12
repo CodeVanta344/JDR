@@ -36,6 +36,33 @@ export const MOTIVATIONS: LifeChoice[] = [
     incompatible_with: []
   },
 
-  // ... 29 autres motivations : gloire, richesse, connaissance, protection proches,
-  // rédemption, devoir, prophétie, curiosité, liberté, découverte, amour, etc.
+  {
+    id: 'youngadult_motiv_curiosity',
+    stage: 'youngAdult',
+    category: 'motivation',
+    label: 'Curiosité Insatiable',
+    desc: 'Le monde est vaste et vous refusez de mourir sans en avoir vu les merveilles.',
+    detailed_lore: {
+      backstory: 'Les récits de voyageurs et les cartes anciennes ont bercé votre jeunesse. Rester au même endroit vous donne l\'impression de dépérir.',
+      defining_moment: 'Le jour où un vieil explorateur vous a légué sa boussole cassée en disant : "Elle montre ce que tu cherches vraiment."',
+      worldview_shaped: 'La sécurité est une cage dorée. L\'aventure est la seule façon de se sentir vivant.'
+    },
+    effects: {
+      stats: { perception: 1, wisdom: 1 },
+      mechanical_traits: [
+        { name: 'Oeil de Voyageur', desc: '+2 Survie pour trouver des chemins, avantage Jet d\'Init en terrain inconnu', game_effect: 'Exploration facilitée' }
+      ],
+      reputation: [],
+      items: [{ itemId: 'broken_compass', quantity: 1, reason: 'Héritage d\'explorateur' }],
+      skills: [{ skillId: 'survival', bonus: 1, reason: 'Étude des cartes' }],
+      languages: ['Ancien Aethel'],
+      tags: ['curious', 'explorer', 'restless']
+    },
+    social_impacts: {
+      npc_reactions: { 'voyageurs': 'Respect', 'sédentaires': 'Incompréhension', 'guides': 'Amitié' },
+      first_impression: '« Vous avez le regard de ceux qui ne font que passer. Où allez-vous ? »'
+    },
+    tags: ['curious', 'explorer', 'restless'],
+    incompatible_with: []
+  }
 ];

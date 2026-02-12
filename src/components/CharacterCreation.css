@@ -671,6 +671,51 @@
     border-radius: 0 12px 12px 0;
 }
 
+/* Recommended Stats */
+.recommended-stats-container {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 1rem;
+    padding-left: 1rem;
+}
+
+.rec-stat-group {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.rec-stat-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    color: #666;
+    letter-spacing: 2px;
+}
+
+.rec-stat-badge {
+    padding: 0.3rem 0.8rem;
+    border-radius: 2px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.rec-stat-badge.major {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(255, 215, 0, 0.3) 100%);
+    color: #ffd700;
+    border: 1px solid rgba(255, 215, 0, 0.5);
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.rec-stat-badge.minor {
+    background: rgba(255, 255, 255, 0.05);
+    color: #aaa;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
 .class-mechanic-box {
     background: rgba(10, 10, 12, 0.85);
     border: 1px solid rgba(212, 175, 55, 0.25);
@@ -1083,6 +1128,201 @@
 
 .tab-number {
     font-size: 0.8rem;
+    margin-bottom: 1.5rem;
+    display: block;
+    text-align: center;
+    text-transform: uppercase;
+    opacity: 0.7;
+}
+
+.sidebar-stats-dashboard {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.2rem;
+}
+
+.dashboard-stat {
+    background: #0a0a0a;
+    border: 1px solid #1a1a1a;
+    padding: 1.2rem;
+    border-radius: 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.stat-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 0.8rem;
+    text-align: center;
+}
+
+.stat-abbr {
+    font-size: 1.2rem;
+    color: var(--gold-primary);
+    font-weight: 700;
+    line-height: 1;
+}
+
+.stat-full-name {
+    font-size: 0.65rem;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 0.2rem;
+}
+
+.stat-display {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    color: #eee;
+    font-family: 'Cinzel Decorative', serif;
+    line-height: 1;
+}
+
+.stat-bracket-mod {
+    font-size: 0.85rem;
+    color: var(--gold-dim);
+    margin-left: 0.2rem;
+    font-weight: 600;
+}
+
+/* --- SIDEBAR TRAITS --- */
+.sidebar-traits-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.trait-card-mini {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1.25rem;
+    border-left: 3px solid #444;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.trait-card-mini.highlighted {
+    background: rgba(212, 175, 55, 0.05);
+    border-left-color: var(--gold-primary);
+}
+
+.trait-header {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.trait-source {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: #888;
+    letter-spacing: 1.5px;
+    font-weight: 600;
+}
+
+.trait-separator {
+    color: var(--gold-dim);
+    font-size: 0.9rem;
+    opacity: 0.5;
+}
+
+.trait-title {
+    font-size: 1.1rem;
+    color: #fff;
+    font-family: 'Cinzel', serif;
+    letter-spacing: 1px;
+}
+
+.trait-snippet {
+    font-size: 0.95rem;
+    color: #ccc;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.sidebar-equipment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.equipment-item-mini {
+    font-size: 0.9rem;
+    color: #eee;
+    padding: 0.4rem 0.8rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-left: 2px solid #444;
+}
+
+/* --- MAIN CONTENT --- */
+.wizard-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 2rem 3rem;
+    overflow-y: auto;
+    height: 100vh;
+    background: radial-gradient(circle at top right, #080808 0%, #000 100%);
+}
+
+.wizard-header {
+    margin-bottom: 4rem;
+    width: 100%;
+}
+
+.wizard-tabs-nav {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: stretch;
+    gap: 0.5rem;
+    margin-bottom: 3rem;
+    border-bottom: 1px solid #1a1a1a;
+    padding-bottom: 0;
+    width: 100%;
+}
+
+.wizard-tab-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 0.5rem;
+    cursor: default;
+    opacity: 0.2;
+    transition: all 0.4s ease;
+    border-bottom: 2px solid transparent;
+}
+
+.wizard-tab-item.active {
+    opacity: 1;
+    background: rgba(212, 175, 55, 0.05);
+    border-bottom: 2px solid var(--gold-primary);
+}
+
+.wizard-tab-item.completed {
+    opacity: 0.6;
+    cursor: pointer;
+}
+
+.wizard-tab-item.completed:hover {
+    background: rgba(255, 255, 255, 0.03);
+    opacity: 0.9;
+}
+
+.tab-number {
+    font-size: 0.8rem;
     color: var(--gold-dim);
     margin-bottom: 0.3rem;
     font-family: 'Cinzel', serif;
@@ -1105,106 +1345,137 @@
     font-size: 2.8rem;
     color: var(--gold-bright);
     text-align: center;
-    margin-top: 1.5rem;
-    text-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
-    letter-spacing: 2px;
+    margin-bottom: 2rem;
 }
 
-/* Options Grid Fix - More compact and centered */
+/* Options Grid - Single column for horizontal layout */
 .wizard-options {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 350px));
-    justify-content: center;
-    align-items: start;
-    gap: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
     padding: 3rem 0;
-    /* Increased padding-top */
     margin: 0 auto 4rem;
-    max-width: 1200px;
+    max-width: 1100px;
     width: 100%;
     flex: 0 1 auto !important;
     border-top: 1px solid rgba(212, 175, 55, 0.15);
-    /* Bar moved here */
+    /* Bar at the top */
 }
 
-/* Specialization Card Overrides */
-.wizard-options .life-choice-card {
-    background: linear-gradient(145deg, rgba(20, 20, 25, 0.8) 0%, rgba(10, 10, 12, 0.9) 100%);
+/* Choice Cards - Unified Horizontal Layout */
+.life-choice-card {
+    background: linear-gradient(90deg, rgba(20, 20, 25, 0.8) 0%, rgba(10, 10, 12, 0.9) 100%) !important;
     backdrop-filter: blur(15px);
-    border: 1px solid rgba(212, 175, 55, 0.1);
-    border-top: 1px solid rgba(212, 175, 55, 0.3);
-    padding: 2rem;
-    height: auto;
-    min-height: 250px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-    box-shadow:
-        0 15px 35px rgba(0, 0, 0, 0.5),
-        inset 0 0 20px rgba(0, 0, 0, 0.3);
-    border-radius: 4px;
+    border: 1px solid rgba(212, 175, 55, 0.1) !important;
+    border-left: 2px solid rgba(212, 175, 55, 0.3) !important;
+    padding: 1.5rem 2.5rem !important;
+    height: auto !important;
+    min-height: 120px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    /* Force horizontal */
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 2.5rem !important;
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1) !important;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5) !important;
+    border-radius: 4px !important;
+    position: relative !important;
+    cursor: pointer !important;
 }
 
-.wizard-options .life-choice-card:hover {
-    border-color: rgba(212, 175, 55, 0.4);
-    transform: translateY(-8px);
-    box-shadow:
-        0 25px 50px rgba(0, 0, 0, 0.7),
-        0 0 15px rgba(212, 175, 55, 0.1);
+.life-choice-card:hover {
+    border-left-color: var(--gold-primary) !important;
+    transform: translateX(10px) !important;
+    background: linear-gradient(90deg, rgba(30, 30, 35, 0.9) 0%, rgba(15, 15, 18, 0.95) 100%) !important;
 }
 
-.wizard-options .life-choice-card.selected {
-    border-color: var(--gold-primary);
-    background: rgba(212, 175, 55, 0.04);
+.life-choice-card.selected {
+    border-left-color: var(--gold-primary) !important;
+    border-left-width: 4px !important;
+    background: rgba(212, 175, 55, 0.08) !important;
     box-shadow:
         0 0 30px rgba(212, 175, 55, 0.15),
-        inset 0 0 20px rgba(212, 175, 55, 0.05);
+        inset 0 0 20px rgba(212, 175, 55, 0.05) !important;
 }
 
-.wizard-options .life-choice-card .card-title {
-    font-family: 'Cinzel Decorative', serif;
-    font-size: 1.3rem;
-    color: var(--gold-primary);
-    margin-bottom: 0.75rem;
-    letter-spacing: 2px;
-    text-align: center;
+.choice-content-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
-.wizard-options .life-choice-card .card-desc {
+.life-choice-card .card-title {
+    font-family: 'Cinzel Decorative', serif !important;
+    font-size: 1.5rem !important;
+    color: var(--gold-primary) !important;
+    margin: 0 !important;
+    letter-spacing: 2px !important;
+    text-align: left !important;
+}
+
+.life-choice-card .card-desc {
+    font-family: 'IM Fell English', serif !important;
+    font-size: 1.1rem !important;
+    color: #aaa !important;
+    line-height: 1.4 !important;
+    margin: 0 !important;
+    text-align: left !important;
+    font-style: italic !important;
+}
+
+.choice-side-content {
+    width: 380px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex-shrink: 0;
+}
+
+.life-choice-card .card-traits,
+.life-choice-card .card-effects {
+    background: rgba(0, 0, 0, 0.6) !important;
+    border: 1px solid rgba(212, 175, 55, 0.15) !important;
+    padding: 1.2rem !important;
+    border-radius: 2px !important;
+    margin: 0 !important;
+}
+
+.life-choice-card .stat-tag.bonus {
+    font-family: 'Outfit', sans-serif !important;
+    font-size: 0.95rem !important;
+    line-height: 1.6 !important;
+    color: #a7f3d0 !important;
+    display: block !important;
+}
+
+.life-choice-card .card-lore {
     font-family: 'IM Fell English', serif;
-    font-size: 1.1rem;
-    color: #888;
-    line-height: 1.4;
-    margin-bottom: 2rem;
-    text-align: center;
     font-style: italic;
+    font-size: 0.95rem;
+    color: #888;
+    margin: 0.5rem 0 0;
+    padding-left: 1rem;
+    border-left: 1px solid rgba(212, 175, 55, 0.2);
 }
 
-.wizard-options .life-choice-card .card-traits {
-    margin-top: 1rem;
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(212, 175, 55, 0.15);
-    padding: 1.2rem;
-    border-radius: 2px;
-    position: relative;
+.life-choice-card .card-tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
 }
 
-.wizard-options .life-choice-card .stat-tag.bonus {
-    font-family: 'Outfit', sans-serif;
-    font-size: 0.85rem;
-    line-height: 1.6;
-    color: #a7f3d0;
-    display: block;
-    background: transparent;
-    border: none;
-    padding: 0;
-    font-weight: 300;
-}
-
-.wizard-options .life-choice-card .stat-tag.bonus::before {
-    content: '✦';
-    transform: scale(0.85);
+.life-choice-card .tag {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.6rem;
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 12px;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .wizard-footer {
@@ -1213,7 +1484,6 @@
     justify-content: space-between;
     padding-top: 2.5rem;
     border-top: none;
-    /* Bar removed from here */
 }
 
 /* Button Refinement */
