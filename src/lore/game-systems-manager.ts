@@ -10,7 +10,7 @@ import type { Faction } from './factions';
 import { BLACKSMITHING } from './professions/craft/blacksmithing';
 import { ALCHEMY } from './professions/craft/alchemy';
 import { MINING } from './professions/gather/mining';
-import { GUILDES } from './factions';
+import { GUILDES } from './factions/index';
 
 export interface PlayerProfession {
   profession_id: string;

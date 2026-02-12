@@ -380,9 +380,3 @@ export const GUILDES: Faction[] = [
     synergy_factions: ['eglise_lumiere', 'conseil_royaumes', 'ordre_roses_argent']
   }
 ];
-
-export * from './guilds/merchants';
-export * from './military/royal-army';
-export * from './religious/sun-church';
-export * from './secret/shadow-network';
-export * from './criminal/thieves-guild';

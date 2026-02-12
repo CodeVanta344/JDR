@@ -23,6 +23,7 @@ import { TransactionPrompt } from './components/TransactionPrompt';
 import { TradeModal } from './components/TradeModal';
 import { HUDHeader } from './components/HUD/HUDHeader';
 import { NarrationPanel } from './components/HUD/NarrationPanel';
+import { CodexPanel } from './components/CodexPanel';
 import { WeatherOverlay } from './components/WeatherOverlay';
 import { SceneBackground } from './components/SceneBackground';
 import { ParticleSystem } from './components/ParticleSystem';
@@ -51,6 +52,7 @@ export default function App() {
     const [audioEnabled, setAudioEnabled] = useState(false);
     const [audioVolume, setAudioVolume] = useState(0.5);
     const [voiceEnabled, setVoiceEnabled] = useState(true);
+    const [showCodex, setShowCodex] = useState(false);
     const [showHelper, setShowHelper] = useState(false);
     const [helperMessages, setHelperMessages] = useState([]);
     const [typingUsers, setTypingUsers] = useState([]);
@@ -2570,6 +2572,7 @@ export default function App() {
                             }}
                             onToggleHelper={() => setShowHelper(!showHelper)}
                             showHelper={showHelper}
+                            onToggleCodex={() => setShowCodex(!showCodex)}
                             onDebugCombat={handleDebugCombat}
                             connStatus={connStatus}
                             isGM={session && profile && session.gm_id === profile.id}
@@ -2874,6 +2877,11 @@ export default function App() {
                     />
                 )
             }
+
+            <CodexPanel
+                isOpen={showCodex}
+                onClose={() => setShowCodex(false)}
+            />
 
             <AudioManager
                 mood={getMood()}

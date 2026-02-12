@@ -15,6 +15,7 @@ export const HUDHeader = ({
     onToggleAudio,
     audioVolume,
     onVolumeChange,
+    onToggleCodex,
     tension = 0
 }) => {
     return (
@@ -73,6 +74,11 @@ export const HUDHeader = ({
                 {onInvite && (
                     <button onClick={onInvite} className="hud-btn invite-btn">
                         🔗 INVITER
+                    </button>
+                )}
+                {onToggleCodex && (
+                    <button onClick={onToggleCodex} className="hud-btn codex-btn">
+                        📖 CODEX
                     </button>
                 )}
                 <button

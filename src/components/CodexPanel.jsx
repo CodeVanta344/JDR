@@ -3,14 +3,14 @@ import { gameSystemsManager } from '../lore/game-systems-manager';
 import { BLACKSMITHING } from '../lore/professions/craft/blacksmithing';
 import { ALCHEMY } from '../lore/professions/craft/alchemy';
 import { MINING } from '../lore/professions/gather/mining';
-import { GUILDES } from '../lore/factions';
+import { GUILDES } from '../lore/factions/index';
 import { LEGENDARY_WEAPONS } from '../lore/legendary-items';
 import './CodexPanel.css';
 
-type CodexTab = 'professions' | 'factions' | 'legendary_items' | 'world_events' | 'economy';
+// type CodexTab = 'professions' | 'factions' | 'legendary_items' | 'world_events' | 'economy';
 
 export function CodexPanel({ isOpen, onClose }) {
-  const [activeTab, setActiveTab] = useState<CodexTab>('professions');
+  const [activeTab, setActiveTab] = useState('professions');
   const [selectedItem, setSelectedItem] = useState(null);
 
   if (!isOpen) return null;
