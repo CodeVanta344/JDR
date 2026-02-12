@@ -1,6 +1,7 @@
 import React from 'react';
 import { formatAIContent } from '../../utils/gameUtils';
 import { TypewriterText } from '../TypewriterText';
+import { DiceRoll3D } from '../DiceRoll3D';
 
 export const NarrationPanel = ({
     messages,
@@ -87,6 +88,28 @@ export const NarrationPanel = ({
         <section className="narration-section">
             <div className="messages-container" ref={chatRef}>
                 {messages.filter(m => !m.content?.startsWith?.('(MÉMOIRE:')).map((m, i) => {
+                    // Détecter message de lancé de dé
+                    if (m.content?.startsWith('[DICE_ROLL]')) {
+                        try {
+                            const jsonStr = m.content.replace('[DICE_ROLL]', '');
+                            const diceData = JSON.parse(jsonStr);
+                            return (
+                                <div key={i} className="chat-message system dice-roll-message">
+                                    <DiceRoll3D
+                                        diceType={diceData.diceType}
+                                        result={diceData.result}
+                                        modifier={diceData.modifier}
+                                        target={diceData.target}
+                                        action={`${diceData.action} (${diceData.stat})`}
+                                    />
+                                </div>
+                            );
+                        } catch (e) {
+                            console.error('Failed to parse dice roll:', e);
+                            return null;
+                        }
+                    }
+
                     const content = extractNarrative(m.content);
                     if (content === null || !content?.trim()) return null;
                     

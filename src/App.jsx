@@ -1714,22 +1714,38 @@ export default function App() {
         const challengeToRef = activeChallenge;
         setActiveChallenge(null);
 
-        let outcomeMsg = `🎲 **RÉSULTAT DU DÉFI : ${result.stat.toUpperCase()}**\n`;
-        outcomeMsg += `Action : ${challengeToRef.label}\n`;
-        outcomeMsg += `Dé : ${result.dice} (${result.natural})\n`;
-        outcomeMsg += `Modificateur : ${result.modifier >= 0 ? '+' : ''}${result.modifier}\n`;
-        outcomeMsg += `Total : **${result.total}** (Cible : ${result.dc})\n\n`;
+        // Créer message avec animation 3D du dé
+        const diceRollData = {
+            type: 'dice_roll',
+            diceType: result.dice,
+            result: result.natural,
+            modifier: result.modifier,
+            total: result.total,
+            target: result.dc,
+            action: challengeToRef.label,
+            stat: result.stat.toUpperCase(),
+            outcome: result.outcome
+        };
 
-        if (result.outcome === 'CRITICAL_SUCCESS') outcomeMsg += "🌟 **RÉUSSITE CRITIQUE !** Un exploit légendaire !";
-        else if (result.outcome === 'CRITICAL_FAILURE') outcomeMsg += "💀 **ÉCHEC CRITIQUE...** Un revers catastrophique !";
-        else if (result.outcome === 'SUCCESS') outcomeMsg += "✅ **SUCCÈS !** L'action réussit.";
-        else outcomeMsg += "❌ **ÉCHEC.** L'action échoue.";
+        // Ajouter le message avec metadata
+        const diceMessage = {
+            id: crypto.randomUUID(),
+            role: 'system',
+            content: `[DICE_ROLL]${JSON.stringify(diceRollData)}`,
+            created_at: new Date().toISOString()
+        };
 
-        // Communicate back to GM
-        if (activeNPC) {
-            handleNPCMessage(`[RÉSULTAT DU DÉFI: ${result.outcome}] ${outcomeMsg}`, activeNPC.name);
-        } else {
-            handleSubmit(null, `[RÉSULTAT DU DÉFI: ${result.outcome}] ${outcomeMsg}`);
+        setMessages(prev => [...prev, diceMessage]);
+
+        // Envoyer aussi en DB pour synchro
+        if (session) {
+            const { error } = await supabase.from('messages').insert({
+                session_id: session.id,
+                sender: 'SYSTEM',
+                content: diceMessage.content,
+                role: 'system'
+            });
+            if (error) console.error('Error saving dice roll message:', error);
         }
     };
 

@@ -1,0 +1,382 @@
+/* ===== DICE ROLL 3D CONTAINER ===== */
+
+.dice-roll-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, rgba(20, 20, 30, 0.95) 0%, rgba(30, 30, 45, 0.95) 100%);
+    border-radius: 12px;
+    border: 2px solid rgba(212, 175, 55, 0.3);
+    margin: 1rem 0;
+    box-shadow: 
+        0 10px 40px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* ===== DÉ 3D ===== */
+
+.dice-3d {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    perspective: 1000px;
+    transform-style: preserve-3d;
+}
+
+.dice-cube {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.3s ease-out;
+}
+
+/* Animation de roulement */
+.dice-3d.rolling .dice-cube {
+    animation: diceRoll 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+@keyframes diceRoll {
+    0% {
+        transform: 
+            rotateX(0deg) 
+            rotateY(0deg) 
+            rotateZ(0deg) 
+            translateY(0px);
+    }
+    20% {
+        transform: 
+            rotateX(var(--rotate-x)) 
+            rotateY(var(--rotate-y)) 
+            rotateZ(var(--rotate-z)) 
+            translateY(-80px);
+    }
+    60% {
+        transform: 
+            rotateX(calc(var(--rotate-x) * 1.5)) 
+            rotateY(calc(var(--rotate-y) * 1.5)) 
+            rotateZ(calc(var(--rotate-z) * 1.5)) 
+            translateY(-40px);
+    }
+    85% {
+        transform: 
+            rotateX(calc(var(--rotate-x) * 1.8)) 
+            rotateY(calc(var(--rotate-y) * 1.8)) 
+            rotateZ(calc(var(--rotate-z) * 1.8)) 
+            translateY(5px);
+    }
+    100% {
+        transform: 
+            rotateX(calc(var(--rotate-x) * 2)) 
+            rotateY(calc(var(--rotate-y) * 2)) 
+            rotateZ(calc(var(--rotate-z) * 2)) 
+            translateY(0px);
+    }
+}
+
+/* Animation après atterrissage */
+.dice-3d.landed .dice-cube {
+    animation: diceBounce 0.5s ease-out, diceGlow 1.5s ease-out 0.5s;
+}
+
+@keyframes diceBounce {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-10px) scale(1.05); }
+}
+
+@keyframes diceGlow {
+    0% { 
+        filter: drop-shadow(0 0 20px var(--result-color)) brightness(1.5);
+    }
+    100% { 
+        filter: drop-shadow(0 0 5px var(--result-color)) brightness(1);
+    }
+}
+
+/* ===== FACES DU DÉ ===== */
+
+.dice-face {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border: 3px solid var(--result-color, #d4af37);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cinzel', serif;
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--result-color, #d4af37);
+    text-shadow: 
+        0 0 10px var(--result-color, #d4af37),
+        0 0 20px var(--result-color, #d4af37);
+    box-shadow: 
+        inset 0 0 20px rgba(0, 0, 0, 0.5),
+        0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.dice-face-front  { transform: rotateY(0deg) translateZ(60px); }
+.dice-face-back   { transform: rotateY(180deg) translateZ(60px); }
+.dice-face-right  { transform: rotateY(90deg) translateZ(60px); }
+.dice-face-left   { transform: rotateY(-90deg) translateZ(60px); }
+.dice-face-top    { transform: rotateX(90deg) translateZ(60px); }
+.dice-face-bottom { transform: rotateX(-90deg) translateZ(60px); }
+
+/* ===== PARTICULES D'IMPACT ===== */
+
+.dice-impact-particles {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.particle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: radial-gradient(circle, var(--result-color) 0%, transparent 70%);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform-origin: center;
+    animation: particleExplosion 0.8s ease-out forwards;
+    opacity: 0;
+}
+
+@keyframes particleExplosion {
+    0% {
+        transform: translate(-50%, -50%) rotate(var(--angle)) translateX(0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) rotate(var(--angle)) translateX(80px) scale(0);
+        opacity: 0;
+    }
+}
+
+/* ===== PANNEAU RÉSULTAT ===== */
+
+.dice-result-panel {
+    width: 100%;
+    max-width: 400px;
+    background: linear-gradient(135deg, rgba(30, 30, 45, 0.98) 0%, rgba(20, 20, 35, 0.98) 100%);
+    border: 2px solid var(--result-color);
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 
+        0 0 20px var(--result-color),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    animation: resultFadeIn 0.5s ease-out;
+}
+
+@keyframes resultFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dice-result-action {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #d4af37;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.action-icon {
+    font-size: 1.5rem;
+    filter: drop-shadow(0 0 5px #d4af37);
+}
+
+/* ===== DÉTAILS RÉSULTAT ===== */
+
+.dice-result-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+}
+
+.result-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'IM Fell English', serif;
+    font-size: 1rem;
+}
+
+.result-label {
+    color: rgba(212, 175, 55, 0.8);
+    font-style: italic;
+}
+
+.result-value {
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.result-value.positive {
+    color: #4ade80;
+}
+
+.result-value.negative {
+    color: #ef4444;
+}
+
+.total-line {
+    margin-top: 0.5rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.result-value-total {
+    font-family: 'Cinzel', serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--result-color);
+    text-shadow: 0 0 10px var(--result-color);
+}
+
+.result-target {
+    font-size: 0.9rem;
+    color: rgba(212, 175, 55, 0.6);
+    font-style: italic;
+    margin-left: 0.5rem;
+}
+
+/* ===== VERDICT ===== */
+
+.dice-result-verdict {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+    font-family: 'Cinzel', serif;
+    font-weight: 800;
+    font-size: 1.3rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    animation: verdictPulse 1s ease-out;
+}
+
+.dice-result-verdict.success {
+    background: linear-gradient(135deg, rgba(74, 222, 128, 0.2) 0%, rgba(34, 197, 94, 0.2) 100%);
+    border: 2px solid #4ade80;
+    color: #4ade80;
+    box-shadow: 0 0 20px rgba(74, 222, 128, 0.3);
+}
+
+.dice-result-verdict.failure {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.2) 100%);
+    border: 2px solid #ef4444;
+    color: #ef4444;
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+}
+
+@keyframes verdictPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.verdict-icon {
+    font-size: 1.8rem;
+    filter: drop-shadow(0 0 10px currentColor);
+}
+
+/* ===== DICE MINI (pour chat compact) ===== */
+
+.dice-mini {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.6rem;
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.1) 100%);
+    border: 1px solid rgba(212, 175, 55, 0.5);
+    border-radius: 6px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #d4af37;
+}
+
+.dice-mini-icon {
+    font-size: 1rem;
+}
+
+.dice-mini-type {
+    color: rgba(212, 175, 55, 0.8);
+    text-transform: uppercase;
+}
+
+.dice-mini-result {
+    color: #ffffff;
+    font-size: 1rem;
+    padding-left: 0.3rem;
+    border-left: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 768px) {
+    .dice-roll-container {
+        padding: 1.5rem;
+    }
+
+    .dice-3d {
+        width: 100px;
+        height: 100px;
+    }
+
+    .dice-face {
+        width: 100px;
+        height: 100px;
+        font-size: 2.5rem;
+    }
+
+    .dice-face-front, .dice-face-back, 
+    .dice-face-right, .dice-face-left, 
+    .dice-face-top, .dice-face-bottom {
+        transform: rotateY(0deg) translateZ(50px);
+    }
+
+    .dice-face-back { transform: rotateY(180deg) translateZ(50px); }
+    .dice-face-right { transform: rotateY(90deg) translateZ(50px); }
+    .dice-face-left { transform: rotateY(-90deg) translateZ(50px); }
+    .dice-face-top { transform: rotateX(90deg) translateZ(50px); }
+    .dice-face-bottom { transform: rotateX(-90deg) translateZ(50px); }
+
+    .dice-result-panel {
+        padding: 1rem;
+    }
+
+    .result-value-total {
+        font-size: 1.5rem;
+    }
+
+    .dice-result-verdict {
+        font-size: 1.1rem;
+    }
+}

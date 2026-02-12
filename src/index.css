@@ -2381,3 +2381,23 @@ button {
         box-shadow: 0 0 0 0 rgba(255, 68, 68, 0);
     }
 }
+
+/* ===== DICE ROLL MESSAGES ===== */
+
+.dice-roll-message {
+    width: 100% !important;
+    max-width: 600px;
+    margin: 1.5rem auto !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.dice-roll-message .msg-author {
+    display: none;
+}
+
+.dice-roll-message .msg-content {
+    padding: 0 !important;
+    background: transparent !important;
+}
