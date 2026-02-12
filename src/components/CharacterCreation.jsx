@@ -118,6 +118,7 @@ export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImag
     const handleCreate = async () => {
         if (!name.trim()) return;
         const clsData = CLASSES[selectedClass];
+        const selectedSubclassData = clsData.subclasses[selectedSubclass];
         const selectedEquipment = clsData.starting_equipment_options[selectedEquipmentIndex].items;
         const chosenAbilities = clsData.initial_ability_options.filter(a => selectedAbilityNames.includes(a.name));
         const finalStats = { ...attributes };
@@ -168,7 +169,7 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
 
         const charData = {
             name,
-            class: `${selectedClass} (${clsData.subclasses[selectedSubclass].label})`,
+            class: `${selectedClass} (${selectedSubclassData?.label || '...'})`,
             mechanic: clsData.mechanic,
             desc: clsData.desc,
             stats: finalStats,
@@ -183,9 +184,9 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
             portrait_url: portraitUrl || classPortraits[selectedClass],
             backstory: selectedBackstory?.label,
             life_path: {
-                birth: selectedBirthOrigin.label,
-                childhood: selectedChildhoodEvent.label,
-                adolescence: selectedAdolescencePath.label
+                birth: selectedBirthOrigin?.label,
+                childhood: selectedChildhoodEvent?.label,
+                adolescence: selectedAdolescencePath?.label
             },
             mechanical_traits: allTraits,
             backstory_gm_context: fullNarrative,
@@ -290,621 +291,282 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                     </div>
 
                     <div className="spellbook-shell">
-                        {/* Navigation Header */}
                         <div className="spellbook-nav">
                             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(s => (
                                 <div key={s} className={`nav-dot ${step === s ? 'active' : ''} ${step > s ? 'completed' : ''}`} />
                             ))}
                         </div>
 
-                        {/* === STEP 1: ARCHETYPES === */}
+                        {/* STEP 1: ARCHETYPES */}
                         {step === 1 && (
                             <div className="spellbook-section">
-                                {/* Quick Start Option relocated inside section */}
                                 {onQuickStart && (
                                     <div className="quick-start-banner" onClick={onQuickStart}>
                                         <span>⚡ BESOIN D'ÉXÉCUTION ? lancez un héros aléatoire</span>
                                     </div>
                                 )}
-
                                 <div className="section-header">
                                     <span className="section-icon">📜</span>
-                                    <h3>Choisissez votre Archétype</h3>
+                                    <h3>Archétype</h3>
                                 </div>
-
                                 <div className="selection-grid">
                                     {Object.entries(CATEGORY_META).map(([key, meta]) => (
-                                        <div
-                                            key={key}
-                                            className={`selection-card ${selectedCategory === key ? 'selected' : ''}`}
-                                            onClick={() => {
-                                                setSelectedCategory(key);
-                                                const firstClass = CLASS_CATEGORIES[key]?.classes?.[0];
-                                                if (firstClass) setSelectedClass(firstClass);
-                                            }}
-                                        >
-                                            <div className="card-image">
-                                                <img src={meta.img} alt={meta.name} />
-                                                <div className="card-overlay">
-                                                    <div className="card-title">
-                                                        <span style={{ marginRight: '0.8rem', opacity: 0.7 }}>{meta.icon}</span>
-                                                        {meta.name}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="card-body">
-                                                <p className="card-description">{meta.desc}</p>
-                                            </div>
+                                        <div key={key} className={`selection-card ${selectedCategory === key ? 'selected' : ''}`} onClick={() => setSelectedCategory(key)}>
+                                            <div className="card-title">{meta.icon} {meta.name}</div>
+                                            <div className="card-body"><p className="card-description">{meta.desc}</p></div>
                                         </div>
                                     ))}
                                 </div>
-
                                 <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={onBack}>
-                                        ← Annuler
-                                    </button>
-                                    <button className="btn-spellbook btn-next" onClick={() => setStep(2)}>
-                                        Suivant →
-                                    </button>
+                                    <button className="btn-spellbook btn-back" onClick={onBack}>← Annuler</button>
+                                    <button className="btn-spellbook btn-next" onClick={() => setStep(2)}>Suivant →</button>
                                 </div>
                             </div>
                         )}
 
-                        {/* === STEP 2: CLASSE === */}
+                        {/* STEP 2: CLASSE */}
                         {step === 2 && (
                             <div className="spellbook-section">
                                 <div className="section-header">
                                     <span className="section-icon">⚔️</span>
-                                    <h3>Choisissez votre Classe</h3>
+                                    <h3>Classe</h3>
                                 </div>
-
                                 <div className="selection-grid">
                                     {categoryClasses.map(cls => (
-                                        <div
-                                            key={cls}
-                                            className={`selection-card ${selectedClass === cls ? 'selected' : ''}`}
-                                            onClick={() => setSelectedClass(cls)}
-                                        >
-                                            <div className="card-image">
-                                                <img
-                                                    src={classPortraits[cls] || 'https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1000&auto=format&fit=crop'}
-                                                    alt={cls}
-                                                />
-                                                <div className="card-overlay">
-                                                    <div className="card-title">{cls}</div>
-                                                </div>
-                                            </div>
-                                            <div className="card-body">
-                                                <p className="card-description">
-                                                    {CLASSES[cls].desc?.substring(0, 100)}...
-                                                </p>
-                                            </div>
+                                        <div key={cls} className={`selection-card ${selectedClass === cls ? 'selected' : ''}`} onClick={() => setSelectedClass(cls)}>
+                                            <div className="card-title">{cls}</div>
+                                            <div className="card-body"><p className="card-description">{CLASSES[cls].desc?.substring(0, 100)}...</p></div>
                                         </div>
                                     ))}
                                 </div>
-
                                 <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(1)}>
-                                        ← Retour
-                                    </button>
-                                    <button className="btn-spellbook btn-next" onClick={() => setStep(3)}>
-                                        Suivant →
-                                    </button>
+                                    <button className="btn-spellbook btn-back" onClick={() => setStep(1)}>← Retour</button>
+                                    <button className="btn-spellbook btn-next" onClick={() => setStep(3)}>Suivant →</button>
                                 </div>
                             </div>
                         )}
 
-                        {/* === STEP 3: SOUS-CLASSE === */}
+                        {/* STEP 3: SOUS-CLASSE */}
                         {step === 3 && (
                             <div className="spellbook-section">
                                 <div className="section-header">
                                     <span className="section-icon">🎯</span>
-                                    <h3>Choisissez votre Spécialisation</h3>
+                                    <h3>Spécialisation</h3>
                                 </div>
-
                                 <div className="selection-grid">
                                     {Object.entries(classData?.subclasses || {}).map(([key, sub]) => (
-                                        <div
-                                            key={key}
-                                            className={`selection-card ${selectedSubclass === key ? 'selected' : ''}`}
-                                            onClick={() => setSelectedSubclass(key)}
-                                        >
-                                            <div className="card-image">
-                                                <img
-                                                    src={sub.image || classPortraits[selectedClass]}
-                                                    alt={sub.label}
-                                                />
-                                                <div className="card-overlay">
-                                                    <div className="card-title">{sub.label}</div>
-                                                </div>
-                                            </div>
+                                        <div key={key} className={`selection-card ${selectedSubclass === key ? 'selected' : ''}`} onClick={() => setSelectedSubclass(key)}>
+                                            <div className="card-title">{sub.label}</div>
                                             <div className="card-body">
                                                 <p className="card-description">{sub.desc}</p>
+                                                <div style={{ marginTop: '0.8rem' }} className="trait-tag neutral">{sub.details.feature}</div>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
-
                                 <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(2)}>
-                                        ← Retour
-                                    </button>
-                                    <button className="btn-spellbook btn-next" onClick={() => setStep(4)}>
-                                        Suivant →
-                                    </button>
+                                    <button className="btn-spellbook btn-back" onClick={() => setStep(2)}>← Retour</button>
+                                    <button className="btn-spellbook btn-next" onClick={() => setStep(4)}>Suivant →</button>
                                 </div>
                             </div>
                         )}
 
-                        {/* === STEP 4: ORIGINE DE NAISSANCE === */}
+                        {/* STEP 4: ORIGINE */}
                         {step === 4 && (
                             <div className="spellbook-section">
                                 <div className="section-header">
                                     <span className="section-icon">👶</span>
-                                    <h3>Origine de Naissance</h3>
+                                    <h3>Origine</h3>
                                 </div>
-
                                 <div className="selection-grid">
                                     {BIRTH_ORIGINS.map((origin) => (
-                                        <div
-                                            key={origin.id}
-                                            className={`selection-card ${selectedBirthOrigin?.id === origin.id ? 'selected' : ''}`}
-                                            onClick={() => setSelectedBirthOrigin(origin)}
-                                        >
-                                            <div className="card-image">
-                                                <img src={origin.img} alt={origin.label} />
-                                                <div className="card-overlay">
-                                                    <div className="card-title">{origin.label}</div>
-                                                </div>
-                                            </div>
+                                        <div key={origin.id} className={`selection-card ${selectedBirthOrigin?.id === origin.id ? 'selected' : ''}`} onClick={() => setSelectedBirthOrigin(origin)}>
+                                            <div className="card-title">{origin.label}</div>
                                             <div className="card-body">
-                                                <p className="card-description" style={{ marginBottom: '0.8rem' }}>{origin.desc}</p>
-                                                <p style={{ fontSize: '0.75rem', opacity: 0.7, fontStyle: 'italic', marginBottom: '1rem' }}>"{origin.lore}"</p>
-
+                                                <p className="card-description">{origin.desc}</p>
+                                                <p style={{ fontSize: '0.75rem', opacity: 0.6, fontStyle: 'italic', marginTop: '0.5rem' }}>"{origin.lore}"</p>
                                                 <div className="mechanical-traits-preview">
-                                                    {origin.mechanical_traits.map((trait, tIdx) => (
-                                                        <span key={tIdx} className={`trait-tag ${trait.type}`}>
-                                                            {trait.type === 'bonus' ? '⊕' : '⊖'} {trait.name}
-                                                        </span>
-                                                    ))}
+                                                    {origin.mechanical_traits?.map((t, i) => <span key={i} className={`trait-tag ${t.type}`}>{t.name}</span>)}
                                                 </div>
-
-                                                <div className="impact-tags-container">
-                                                    {origin.social_impacts && <span className="impact-tag social">👥 Social</span>}
-                                                    {origin.rp_hooks && <span className="impact-tag rp-hook">🎭 Roleplay</span>}
-                                                    {origin.personal_secrets && <span className="impact-tag secret">🤫 Secret</span>}
-                                                </div>
-
                                                 {selectedBirthOrigin?.id === origin.id && (
                                                     <div className="impact-details-box">
-                                                        {origin.social_impacts && (
-                                                            <div>
-                                                                <h5>Impact Social</h5>
-                                                                <p>{origin.social_impacts.pnj_reactions}</p>
-                                                            </div>
-                                                        )}
-                                                        {origin.roleplay_hooks && (
-                                                            <div style={{ marginTop: '0.5rem' }}>
-                                                                <h5>Accroches RP</h5>
-                                                                <ul style={{ paddingLeft: '1.2rem', margin: '0.2rem 0' }}>
-                                                                    {origin.roleplay_hooks?.map((hook, hI) => <li key={hI}>{hook}</li>)}
-                                                                </ul>
-                                                            </div>
-                                                        )}
+                                                        {origin.social_impacts && <div><h5>Social</h5><p>{origin.social_impacts.pnj_reactions}</p></div>}
                                                     </div>
                                                 )}
                                             </div>
                                         </div>
                                     ))}
                                 </div>
-
                                 <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(3)}>
-                                        ← Retour
-                                    </button>
-                                    <button className="btn-spellbook btn-next" onClick={() => setStep(5)}>
-                                        Suivant →
-                                    </button>
+                                    <button className="btn-spellbook btn-back" onClick={() => setStep(3)}>← Retour</button>
+                                    <button className="btn-spellbook btn-next" onClick={() => setStep(5)}>Suivant →</button>
                                 </div>
                             </div>
                         )}
 
-                        {/* === STEP 5: ÉVÉNEMENT D'ENFANCE === */}
+                        {/* STEP 5: ENFANCE */}
                         {step === 5 && (
                             <div className="spellbook-section">
                                 <div className="section-header">
                                     <span className="section-icon">🧸</span>
-                                    <h3>Événement d'Enfance</h3>
+                                    <h3>Enfance</h3>
                                 </div>
-
                                 <div className="selection-grid">
                                     {CHILDHOOD_EVENTS.map((event) => (
-                                        <div
-                                            key={event.id}
-                                            className={`selection-card ${selectedChildhoodEvent?.id === event.id ? 'selected' : ''}`}
-                                            onClick={() => setSelectedChildhoodEvent(event)}
-                                        >
-                                            <div className="card-image">
-                                                <img src={event.img} alt={event.label} />
-                                                <div className="card-overlay">
-                                                    <div className="card-title">{event.label}</div>
-                                                </div>
-                                            </div>
+                                        <div key={event.id} className={`selection-card ${selectedChildhoodEvent?.id === event.id ? 'selected' : ''}`} onClick={() => setSelectedChildhoodEvent(event)}>
+                                            <div className="card-title">{event.label}</div>
                                             <div className="card-body">
-                                                <p className="card-description" style={{ marginBottom: '0.8rem' }}>{event.desc}</p>
-                                                <p style={{ fontSize: '0.75rem', opacity: 0.7, fontStyle: 'italic', marginBottom: '1rem' }}>"{event.lore}"</p>
-
+                                                <p className="card-description">{event.desc}</p>
+                                                <p style={{ fontSize: '0.75rem', opacity: 0.6, fontStyle: 'italic', marginTop: '0.5rem' }}>"{event.lore}"</p>
                                                 <div className="mechanical-traits-preview">
-                                                    {event.mechanical_traits.map((trait, tIdx) => (
-                                                        <span key={tIdx} className={`trait-tag ${trait.type}`}>
-                                                            {trait.type === 'bonus' ? '⊕' : '⊖'} {trait.name}
-                                                        </span>
-                                                    ))}
+                                                    {event.mechanical_traits?.map((t, i) => <span key={i} className={`trait-tag ${t.type}`}>{t.name}</span>)}
                                                 </div>
-
-                                                <div className="impact-tags-container">
-                                                    {event.social_impacts && <span className="impact-tag social">👥 Social</span>}
-                                                    {event.rp_hooks && <span className="impact-tag rp-hook">🎭 Roleplay</span>}
-                                                    {event.personal_secrets && <span className="impact-tag secret">🤫 Secret</span>}
-                                                </div>
-
-                                                {selectedChildhoodEvent?.id === event.id && (
-                                                    <div className="impact-details-box">
-                                                        {event.social_impacts && (
-                                                            <div>
-                                                                <h5>Impact Social</h5>
-                                                                <p>{event.social_impacts.pnj_reactions}</p>
-                                                            </div>
-                                                        )}
-                                                        {event.roleplay_hooks && (
-                                                            <div style={{ marginTop: '0.5rem' }}>
-                                                                <h5>Accroches RP</h5>
-                                                                <ul style={{ paddingLeft: '1.2rem', margin: '0.2rem 0' }}>
-                                                                    {event.roleplay_hooks?.map((hook, hI) => <li key={hI}>{hook}</li>)}
-                                                                </ul>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
                                             </div>
                                         </div>
                                     ))}
                                 </div>
-
                                 <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(4)}>
-                                        ← Retour
-                                    </button>
-                                    <button className="btn-spellbook btn-next" onClick={() => setStep(6)}>
-                                        Suivant →
-                                    </button>
+                                    <button className="btn-spellbook btn-back" onClick={() => setStep(4)}>← Retour</button>
+                                    <button className="btn-spellbook btn-next" onClick={() => setStep(6)}>Suivant →</button>
                                 </div>
                             </div>
                         )}
 
-                        {/* === STEP 6: APPRENTISSAGE ADOLESCENT === */}
+                        {/* STEP 6: ADOLESCENCE */}
                         {step === 6 && (
                             <div className="spellbook-section">
                                 <div className="section-header">
-                                    <span className="section-icon">🏹</span>
-                                    <h3>Apprentissage Adolescent</h3>
+                                    <span className="section-icon">⚔️</span>
+                                    <h3>Adolescence</h3>
                                 </div>
-
                                 <div className="selection-grid">
                                     {ADOLESCENCE_PATHS.map((path) => (
-                                        <div
-                                            key={path.id}
-                                            className={`selection-card ${selectedAdolescencePath?.id === path.id ? 'selected' : ''}`}
-                                            onClick={() => setSelectedAdolescencePath(path)}
-                                        >
-                                            <div className="card-image">
-                                                <img src={path.img} alt={path.label} />
-                                                <div className="card-overlay">
-                                                    <div className="card-title">{path.label}</div>
-                                                </div>
-                                            </div>
+                                        <div key={path.id} className={`selection-card ${selectedAdolescencePath?.id === path.id ? 'selected' : ''}`} onClick={() => setSelectedAdolescencePath(path)}>
+                                            <div className="card-title">{path.label}</div>
                                             <div className="card-body">
-                                                <p className="card-description" style={{ marginBottom: '0.8rem' }}>{path.desc}</p>
-                                                <p style={{ fontSize: '0.75rem', opacity: 0.7, fontStyle: 'italic', marginBottom: '1rem' }}>"{path.lore}"</p>
-
+                                                <p className="card-description">{path.desc}</p>
+                                                <p style={{ fontSize: '0.75rem', opacity: 0.6, fontStyle: 'italic', marginTop: '0.5rem' }}>"{path.lore}"</p>
                                                 <div className="mechanical-traits-preview">
-                                                    {path.mechanical_traits.map((trait, tIdx) => (
-                                                        <span key={tIdx} className={`trait-tag ${trait.type}`}>
-                                                            {trait.type === 'bonus' ? '⊕' : '⊖'} {trait.name}
-                                                        </span>
-                                                    ))}
+                                                    {path.mechanical_traits?.map((t, i) => <span key={i} className={`trait-tag ${t.type}`}>{t.name}</span>)}
                                                 </div>
-
-                                                <div className="impact-tags-container">
-                                                    {path.social_impacts && <span className="impact-tag social">👥 Social</span>}
-                                                    {path.rp_hooks && <span className="impact-tag rp-hook">🎭 Roleplay</span>}
-                                                    {path.personal_secrets && <span className="impact-tag secret">🤫 Secret</span>}
-                                                </div>
-
-                                                {selectedAdolescencePath?.id === path.id && (
-                                                    <div className="impact-details-box">
-                                                        {path.social_impacts && (
-                                                            <div>
-                                                                <h5>Impact Social</h5>
-                                                                <p>{path.social_impacts.pnj_reactions}</p>
-                                                            </div>
-                                                        )}
-                                                        {path.roleplay_hooks && (
-                                                            <div style={{ marginTop: '0.5rem' }}>
-                                                                <h5>Accroches RP</h5>
-                                                                <ul style={{ paddingLeft: '1.2rem', margin: '0.2rem 0' }}>
-                                                                    {path.roleplay_hooks?.map((hook, hI) => <li key={hI}>{hook}</li>)}
-                                                                </ul>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
                                             </div>
                                         </div>
                                     ))}
                                 </div>
-
                                 <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(5)}>
-                                        ← Retour
-                                    </button>
-                                    <button className="btn-spellbook btn-next" onClick={() => setStep(7)}>
-                                        Suivant →
-                                    </button>
+                                    <button className="btn-spellbook btn-back" onClick={() => setStep(5)}>← Retour</button>
+                                    <button className="btn-spellbook btn-next" onClick={() => setStep(7)}>Suivant →</button>
                                 </div>
                             </div>
                         )}
 
-                        {/* === STEP 7: BACKSTORY (ADULTE) === */}
+                        {/* STEP 7: PASSÉ ADULTE */}
                         {step === 7 && (
                             <div className="spellbook-section">
                                 <div className="section-header">
                                     <span className="section-icon">📖</span>
-                                    <h3>Passé Adulte (Histoire)</h3>
+                                    <h3>Passé Adulte</h3>
                                 </div>
-
-                                <div className="selection-grid" style={{ gridTemplateColumns: '1fr' }}>
+                                <div className="selection-grid">
                                     {getBackstoriesForClass(selectedClass).map((bg, idx) => (
-                                        <div
-                                            key={idx}
-                                            className={`selection-card ${selectedBackstory?.label === bg.label ? 'selected' : ''}`}
-                                            onClick={() => setSelectedBackstory(bg)}
-                                            style={{ display: 'flex', flexDirection: 'row', alignItems: 'stretch' }}
-                                        >
-                                            <div className="card-image" style={{ width: '200px', height: 'auto' }}>
-                                                <img
-                                                    src={LOCATION_BACKGROUNDS[bg.region] || 'https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1000&auto=format&fit=crop'}
-                                                    alt={bg.region}
-                                                />
-                                            </div>
-                                            <div className="card-body" style={{ textAlign: 'left', flexGrow: 1 }}>
-                                                <div className="card-title" style={{ fontSize: '1.2rem', marginBottom: '0.4rem' }}>{bg.label}</div>
-                                                <div style={{ fontSize: '0.7rem', color: 'var(--gold-dim)', textTransform: 'uppercase', marginBottom: '0.8rem' }}>Région: {bg.region}</div>
+                                        <div key={idx} className={`selection-card ${selectedBackstory?.label === bg.label ? 'selected' : ''}`} onClick={() => setSelectedBackstory(bg)}>
+                                            <div className="card-title">{bg.label}</div>
+                                            <div className="card-body">
                                                 <p className="card-description">{bg.desc}</p>
                                                 <div className="mechanical-traits-preview">
-                                                    {bg.mechanical_traits.map((trait, tIdx) => (
-                                                        <span key={tIdx} className={`trait-tag ${trait.type}`}>
-                                                            {trait.type === 'bonus' ? '⊕' : '⊖'} {trait.name}
-                                                        </span>
-                                                    ))}
+                                                    {bg.mechanical_traits?.map((t, i) => <span key={i} className={`trait-tag ${t.type}`}>{t.name}</span>)}
                                                 </div>
-
-                                                <div className="impact-tags-container">
-                                                    <span className="impact-tag social">👥 Social</span>
-                                                    {bg.personal_secrets?.length > 0 && <span className="impact-tag secret">🤫 Secret</span>}
-                                                    {bg.roleplay_hooks?.length > 0 && <span className="impact-tag rp-hook">🎭 Roleplay</span>}
-                                                </div>
-
-                                                {selectedBackstory?.label === bg.label && (
-                                                    <div className="impact-details-box">
-                                                        <div>
-                                                            <h5>Relations Mondiales</h5>
-                                                            <p>Réputation initiale : {bg.starting_reputation && Object.entries(bg.starting_reputation).map(([k, v]) => `${k} (${v > 0 ? '+' : ''}${v})`).join(', ')}</p>
-                                                        </div>
-                                                        {bg.roleplay_hooks?.length > 0 && (
-                                                            <div style={{ marginTop: '0.5rem' }}>
-                                                                <h5>Accroches de l'Âge Adulte</h5>
-                                                                <ul style={{ paddingLeft: '1.2rem', margin: '0.2rem 0' }}>
-                                                                    {bg.roleplay_hooks.map((hook, hI) => <li key={hI}>{hook}</li>)}
-                                                                </ul>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
                                             </div>
                                         </div>
                                     ))}
                                 </div>
-
                                 <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(6)}>
-                                        ← Retour
-                                    </button>
-                                    <button className="btn-spellbook btn-next" onClick={() => setStep(8)}>
-                                        Suivant →
-                                    </button>
+                                    <button className="btn-spellbook btn-back" onClick={() => setStep(6)}>← Retour</button>
+                                    <button className="btn-spellbook btn-next" onClick={() => setStep(8)}>Suivant →</button>
                                 </div>
                             </div>
                         )}
 
-                        {/* === STEP 8: ÉQUIPEMENT ET CAPACITÉS === */}
+                        {/* STEP 8: ÉQUIPEMENT */}
                         {step === 8 && (
                             <div className="spellbook-section">
                                 <div className="section-header">
-                                    <span className="section-icon">⚔️</span>
-                                    <h3>Équipement et Capacités</h3>
+                                    <span className="section-icon">🛡️</span>
+                                    <h3>Paquetage & Capacités</h3>
                                 </div>
-
-                                <div style={{ marginBottom: '2.5rem' }}>
-                                    <h4 style={{ color: 'var(--gold-dim)', letterSpacing: '2px', marginBottom: '1rem', fontSize: '0.9rem', textAlign: 'center' }}>PAQUETAGE DE DÉPART</h4>
-                                    <div className="selection-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', maxHeight: 'none' }}>
-                                        {classData?.starting_equipment_options.map((opt, idx) => (
-                                            <div
-                                                key={idx}
-                                                className={`selection-card ${selectedEquipmentIndex === idx ? 'selected' : ''}`}
-                                                onClick={() => setSelectedEquipmentIndex(idx)}
-                                                style={{ padding: '1.5rem' }}
-                                            >
-                                                <div className="card-title" style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>{opt.label}</div>
-                                                <p className="card-description" style={{ fontSize: '0.75rem' }}>
-                                                    {opt.items.map(i => i.name).join(', ')}
-                                                </p>
+                                <div className="selection-grid">
+                                    {classData?.starting_equipment_options.map((opt, idx) => (
+                                        <div key={idx} className={`selection-card ${selectedEquipmentIndex === idx ? 'selected' : ''}`} onClick={() => setSelectedEquipmentIndex(idx)}>
+                                            <div className="card-title">{opt.label}</div>
+                                            <div className="card-body">
+                                                <p className="card-description">{opt.items.map(i => i.name).join(', ')}</p>
                                             </div>
-                                        ))}
-                                    </div>
+                                        </div>
+                                    ))}
                                 </div>
-
-                                <div style={{ marginBottom: '2rem' }}>
-                                    <h4 style={{ color: 'var(--gold-dim)', letterSpacing: '2px', marginBottom: '1rem', fontSize: '0.9rem', textAlign: 'center' }}>CAPACITÉS INITIALES (CHOISISSEZ 2)</h4>
-                                    <div className="selection-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', maxHeight: '250px' }}>
-                                        {classData?.initial_ability_options.map(ability => (
-                                            <div
-                                                key={ability.name}
-                                                className={`selection-card ${selectedAbilityNames.includes(ability.name) ? 'selected' : ''}`}
-                                                onClick={() => toggleAbility(ability.name)}
-                                                style={{ padding: '1rem' }}
-                                            >
-                                                <div className="card-title" style={{ fontSize: '0.85rem' }}>✨ {ability.name}</div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
                                 <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(7)}>
-                                        ← Retour
-                                    </button>
-                                    <button className="btn-spellbook btn-next" onClick={() => setStep(9)} disabled={selectedAbilityNames.length !== 2}>
-                                        Suivant →
-                                    </button>
+                                    <button className="btn-spellbook btn-back" onClick={() => setStep(7)}>← Retour</button>
+                                    <button className="btn-spellbook btn-next" onClick={() => setStep(9)}>Suivant →</button>
                                 </div>
                             </div>
                         )}
 
-                        {/* === STEP 9: NOM === */}
+                        {/* STEP 9: NOM */}
                         {step === 9 && (
                             <div className="spellbook-section">
                                 <div className="section-header">
                                     <span className="section-icon">📜</span>
-                                    <h3>Nommez votre Héros</h3>
+                                    <h3>Identité</h3>
                                 </div>
-
-                                <div style={{ padding: '2rem 3rem' }}>
-                                    <input
-                                        type="text"
-                                        className="input-field"
-                                        placeholder="Entrez un nom légendaire..."
-                                        value={name}
-                                        onChange={e => setName(e.target.value)}
-                                        maxLength={30}
-                                        autoFocus
-                                    />
-                                    {name && (
-                                        <div style={{ marginTop: '3rem', textAlign: 'center', fontFamily: 'var(--font-decorative)', fontSize: '3rem', color: 'var(--gold-primary)', textShadow: '0 0 20px rgba(212,175,55,0.4)' }}>
-                                            {name}
-                                        </div>
-                                    )}
+                                <div style={{ padding: '2rem' }}>
+                                    <input type="text" className="input-field" placeholder="Nom du héros..." value={name} onChange={e => setName(e.target.value)} autoFocus />
+                                    {name && <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '2.5rem', fontFamily: 'Cinzel Decorative', color: 'var(--gold-primary)' }}>{name}</div>}
                                 </div>
-
                                 <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(8)}>
-                                        ← Retour
-                                    </button>
-                                    <button className="btn-spellbook btn-next" onClick={() => setStep(10)} disabled={!name.trim()}>
-                                        Suivant →
-                                    </button>
+                                    <button className="btn-spellbook btn-back" onClick={() => setStep(8)}>← Retour</button>
+                                    <button className="btn-spellbook btn-next" onClick={() => setStep(10)}>Suivant →</button>
                                 </div>
                             </div>
                         )}
 
-                        {/* === STEP 10: STATS === */}
+                        {/* STEP 10: ATTRIBUTS */}
                         {step === 10 && (
                             <div className="spellbook-section">
                                 <div className="section-header">
                                     <span className="section-icon">🎲</span>
-                                    <h3>Caractéristiques de Destin</h3>
+                                    <h3>Jet d'Attributs</h3>
                                 </div>
-
                                 <div className="stats-grid">
                                     {Object.entries(attributes).map(([key, val]) => (
-                                        <div key={key} className={`stat-card ${rollingStat === key ? 'rolling' : ''}`} onClick={() => rollStat(key)} style={{ cursor: 'pointer' }}>
-                                            <div style={{ fontSize: '0.8rem', color: 'var(--gold-dim)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '0.5rem' }}>
-                                                {STAT_ICONS[key]} {STAT_LABELS[key]}
-                                            </div>
-                                            <div className="stat-value">{val === 0 ? '?' : val}</div>
-                                            {val > 0 && <div style={{ color: 'var(--gold-bright)', fontWeight: 'bold' }}>{getModifier(val)}</div>}
+                                        <div key={key} className={`stat-card ${rollingStat === key ? 'rolling' : ''}`} onClick={() => rollStat(key)}>
+                                            <div style={{ color: 'var(--gold-dim)', fontSize: '0.8rem' }}>{STAT_LABELS[key].toUpperCase()}</div>
+                                            <div className="stat-value">{val || '?'}</div>
+                                            <div style={{ color: 'var(--gold-primary)', fontSize: '1.2rem' }}>{val ? getModifier(val) : '--'}</div>
                                         </div>
                                     ))}
                                 </div>
-
-                                <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
-                                    <button className="btn-spellbook btn-next" onClick={rollAll} disabled={isRolling || allRolled} style={{ minWidth: '300px' }}>
-                                        🎲 Lancer le Destin
-                                    </button>
-                                </div>
-
                                 <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(9)}>
-                                        ← Retour
-                                    </button>
-                                    <button className="btn-spellbook btn-next" onClick={() => setStep(11)} disabled={!allRolled}>
-                                        Suivant →
-                                    </button>
+                                    <button className="btn-spellbook btn-back" onClick={() => setStep(9)}>← Retour</button>
+                                    <button className="btn-spellbook btn-next" onClick={() => setStep(11)} disabled={!allRolled || isRolling}>Suivant →</button>
                                 </div>
                             </div>
                         )}
 
-                        {/* === STEP 11: RÉCAPITULATIF === */}
+                        {/* STEP 11: FINALISATION */}
                         {step === 11 && (
                             <div className="spellbook-section">
                                 <div className="section-header">
                                     <span className="section-icon">✨</span>
-                                    <h3>L'Éveil de la Légende</h3>
+                                    <h3>L'Éveil</h3>
                                 </div>
-
-                                <div style={{ display: 'flex', gap: '3rem', alignItems: 'center', marginBottom: '2rem' }}>
-                                    <div style={{ flexShrink: 0 }}>
-                                        <img
-                                            src={portraitUrl || classPortraits[selectedClass]}
-                                            alt="Portrait"
-                                            style={{ width: '220px', height: '220px', objectFit: 'cover', borderRadius: '12px', border: '3px solid var(--gold-primary)', boxShadow: '0 0 30px rgba(0,0,0,0.5)' }}
-                                        />
-                                    </div>
-                                    <div style={{ flexGrow: 1 }}>
-                                        <h2 style={{ fontFamily: 'var(--font-decorative)', fontSize: '3rem', color: 'var(--gold-primary)', margin: '0 0 0.5rem 0' }}>{name}</h2>
-                                        <div style={{ fontSize: '1.2rem', color: 'var(--gold-dim)', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '1rem' }}>
-                                            {selectedClass} • {classData?.subclasses[selectedSubclass]?.label}
-                                        </div>
-                                        <div style={{ fontSize: '0.9rem', color: 'var(--gold-bright)', marginBottom: '0.5rem' }}>
-                                            Né : {selectedBirthOrigin.label} | Événement : {selectedChildhoodEvent.label}
-                                        </div>
-                                        <p style={{ fontStyle: 'italic', opacity: 0.8, lineHeight: '1.4', fontSize: '0.9rem' }}>{selectedBackstory?.desc}</p>
-                                    </div>
+                                <div style={{ textAlign: 'center', padding: '2rem' }}>
+                                    <p className="card-description">Votre personnage est prêt à entrer dans la légende.</p>
+                                    <h2 style={{ fontFamily: 'Cinzel Decorative', color: 'var(--gold-primary)', margin: '1.5rem 0' }}>{name}</h2>
+                                    <p style={{ color: 'var(--gold-dim)' }}>{selectedClass} ({classData.subclasses[selectedSubclass]?.label})</p>
                                 </div>
-
-                                <div className="selection-grid" style={{ gridTemplateColumns: 'repeat(6, 1fr)', maxHeight: 'none', marginBottom: '2rem' }}>
-                                    {Object.entries(attributes).map(([key, val]) => {
-                                        // Calculate final stat with bonuses
-                                        let finalVal = val;
-                                        [selectedBirthOrigin, selectedChildhoodEvent, selectedAdolescencePath, selectedBackstory].forEach(s => {
-                                            if (s?.stats?.[key]) finalVal += s.stats[key];
-                                        });
-                                        return (
-                                            <div key={key} className="stat-card" style={{ padding: '0.8rem' }}>
-                                                <div style={{ fontSize: '0.6rem', color: 'var(--gold-dim)' }}>{STAT_ICONS[key]} {STAT_LABELS[key]}</div>
-                                                <div className="stat-value" style={{ fontSize: '1.5rem' }}>{finalVal}</div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-
                                 <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(10)}>
-                                        ← Modifier
-                                    </button>
-                                    <button className="btn-spellbook btn-next btn-create" onClick={handleCreate}>
-                                        ✨ Commencer l'Aventure
-                                    </button>
+                                    <button className="btn-spellbook btn-back" onClick={() => setStep(10)}>← Retour</button>
+                                    <button className="btn-spellbook btn-next" onClick={handleCreate}>Commencer l'Aventure →</button>
                                 </div>
                             </div>
                         )}

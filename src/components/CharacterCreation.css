@@ -35,12 +35,9 @@
 .spellbook-shell {
     position: relative;
     max-width: 1350px;
-    /* Increased from 1200px */
     width: 95%;
-    /* Use more available space */
     background: var(--dark-leather);
     padding: 3.5rem 3rem;
-    /* Increased padding */
     border-radius: 20px;
     box-shadow:
         0 40px 100px rgba(0, 0, 0, 0.9),
@@ -104,7 +101,6 @@
     text-align: center;
     cursor: pointer;
     margin: -1rem 0 2rem 0;
-    /* Tighten up spacing */
     transition: all 0.3s ease;
     width: 100%;
     position: relative;
@@ -128,8 +124,6 @@
 .quick-start-banner:hover span {
     color: var(--gold-primary);
     text-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
-    letter-spacing: 4px;
-    /* Subtle expansion on hover */
 }
 
 /* ===== SECTIONS ===== */
@@ -180,73 +174,56 @@
     text-transform: uppercase;
 }
 
-/* ===== SELECTION CARDS ===== */
+/* ===== SELECTION CARDS (NEW MINIMALIST) ===== */
+
+.selection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 0.5rem;
+}
 
 .selection-card {
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(212, 175, 55, 0.15);
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-    position: relative;
+    background: rgba(0, 0, 0, 0.95);
+    border: 1px solid rgba(255, 215, 0, 0.15);
+    border-radius: 8px;
     overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
+    position: relative;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    min-height: 180px;
 }
 
 .selection-card:hover {
-    border-color: var(--gold-primary);
     transform: translateY(-5px);
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(212, 175, 55, 0.2);
+    border-color: rgba(255, 215, 0, 0.4);
+    box-shadow: 0 8px 25px rgba(255, 215, 0, 0.1);
 }
 
 .selection-card.selected {
-    background: rgba(212, 175, 55, 0.08);
-    border: 2px solid var(--gold-primary);
-    box-shadow: 0 0 30px rgba(212, 175, 55, 0.15);
+    border-color: #ffd700;
+    background: rgba(10, 10, 5, 1);
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.15), inset 0 0 15px rgba(255, 215, 0, 0.05);
 }
 
-.card-image {
-    width: 100%;
-    height: 160px;
-    position: relative;
-    background: #000;
-}
-
-.card-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0.5;
-    transition: opacity 0.4s ease;
-}
-
-.selection-card:hover .card-image img {
-    opacity: 0.8;
-}
-
-.card-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    padding: 1.2rem;
-}
-
-.card-title {
+.selection-card .card-title {
     font-family: 'Cinzel', serif;
+    color: #ffd700;
     font-size: 1.1rem;
-    font-weight: 800;
-    color: var(--gold-primary);
-    letter-spacing: 2px;
+    padding: 1.2rem 1.2rem 0.5rem;
+    letter-spacing: 1px;
     text-transform: uppercase;
-    margin: 0;
+    font-weight: 800;
 }
 
 .card-body {
-    padding: 1.2rem;
+    padding: 0 1.2rem 1.2rem;
+    flex-grow: 1;
 }
 
 .card-description {
@@ -353,9 +330,6 @@
     background: rgba(212, 175, 55, 0.05);
 }
 
-/* ===== RESPONSIVE ===== */
-
-
 /* ===== MECHANICAL TRAITS ===== */
 
 .mechanical-traits-preview {
@@ -373,26 +347,26 @@
     text-transform: uppercase;
     letter-spacing: 1px;
     font-weight: 600;
+    border: 1px solid transparent;
 }
 
 .trait-tag.bonus {
-    background: rgba(77, 255, 136, 0.1);
+    background: rgba(77, 255, 136, 0.15);
     color: #4dff88;
-    border: 1px solid rgba(77, 255, 136, 0.3);
+    border-color: rgba(77, 255, 136, 0.3);
 }
 
 .trait-tag.penalty {
-    background: rgba(255, 77, 77, 0.1);
+    background: rgba(255, 77, 77, 0.15);
     color: #ff4d4d;
-    border: 1px solid rgba(255, 77, 77, 0.3);
+    border-color: rgba(255, 77, 77, 0.3);
 }
 
 .trait-tag.neutral {
-    background: rgba(251, 238, 168, 0.1);
+    background: rgba(251, 238, 168, 0.15);
     color: #fbeea8;
-    border: 1px solid rgba(251, 238, 168, 0.3);
+    border-color: rgba(251, 238, 168, 0.3);
 }
-
 
 /* ===== HISTORY SIDEBAR ===== */
 
@@ -437,31 +411,32 @@
     display: flex;
     align-items: center;
     gap: 0.4rem;
+    border: 1px solid transparent;
 }
 
 .impact-tag.social {
     background: rgba(66, 153, 225, 0.15);
     color: #4299E1;
-    border: 1px solid rgba(66, 153, 225, 0.3);
+    border-color: rgba(66, 153, 225, 0.3);
 }
 
 .impact-tag.rp-hook {
     background: rgba(212, 175, 55, 0.15);
     color: var(--gold-bright);
-    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-color: rgba(212, 175, 55, 0.3);
 }
 
 .impact-tag.secret {
     background: rgba(159, 122, 234, 0.15);
     color: #B794F4;
-    border: 1px solid rgba(159, 122, 234, 0.3);
+    border-color: rgba(159, 122, 234, 0.3);
     cursor: help;
 }
 
 .impact-details-box {
     margin-top: 1rem;
     padding: 0.8rem;
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.6);
     border-radius: 8px;
     font-size: 0.75rem;
     color: #e2e8f0;
@@ -474,7 +449,6 @@
     font-size: 0.7rem;
     margin-bottom: 0.4rem;
     text-transform: uppercase;
-    letter-spacing: 1px;
 }
 
 .history-sidebar h4 {
@@ -501,7 +475,6 @@
     font-size: 0.65rem;
     color: var(--gold-dim);
     text-transform: uppercase;
-    letter-spacing: 1px;
     display: block;
     margin-bottom: 0.2rem;
 }
@@ -532,9 +505,9 @@
 
     .history-sidebar {
         width: 100%;
-        max-height: none;
         position: static;
         order: 2;
+        margin-top: 2rem;
     }
 }
 
