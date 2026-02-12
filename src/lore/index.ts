@@ -12,6 +12,7 @@ import { ALL_PROFESSIONS } from './professions';
 import { ALL_RESOURCES } from './resources';
 import { ALL_RECIPES } from './recipes';
 import { ALL_CREATURES } from './bestiary';
+import { ALL_NPCS } from './npcs';
 
 // ============================================================================
 // REGISTRY GLOBAL
@@ -98,6 +99,23 @@ export function initializeLoreSystem(): void {
     });
   });
   
+  // Enregistrement des NPCs
+  console.log(`[Lore] Enregistrement de ${ALL_NPCS.length} NPCs...`);
+  ALL_NPCS.forEach(npc => {
+    const tags = [npc.role, npc.personality, npc.region];
+    if (npc.faction) tags.push(npc.faction);
+    if (npc.isHostile) tags.push('hostile');
+    
+    GlobalLoreRegistry.register({
+      id: npc.id,
+      name: npc.name,
+      type: 'npc',
+      tags,
+      description: npc.description,
+      data: npc
+    });
+  });
+  
   const endTime = performance.now();
   const totalEntities = GlobalLoreRegistry.getAll().length;
   
@@ -108,6 +126,7 @@ export function initializeLoreSystem(): void {
   console.log(`[Lore] - Ressources: ${ALL_RESOURCES.length}`);
   console.log(`[Lore] - Recettes: ${ALL_RECIPES.length}`);
   console.log(`[Lore] - Créatures: ${ALL_CREATURES.length}`);
+  console.log(`[Lore] - NPCs: ${ALL_NPCS.length}`);
   
   // Validation (optionnel en développement)
   if (process.env.NODE_ENV === 'development') {
@@ -133,6 +152,7 @@ export * from './professions';
 export * from './resources';
 export * from './recipes';
 export * from './bestiary';
+export * from './npcs';
 
 // Export des données brutes
 export {
@@ -140,7 +160,8 @@ export {
   ALL_PROFESSIONS,
   ALL_RESOURCES,
   ALL_RECIPES,
-  ALL_CREATURES
+  ALL_CREATURES,
+  ALL_NPCS
 };
 
 // ============================================================================
@@ -206,7 +227,8 @@ export function getLoreStats() {
     professions: ALL_PROFESSIONS.length,
     resources: ALL_RESOURCES.length,
     recipes: ALL_RECIPES.length,
-    creatures: ALL_CREATURES.length
+    creatures: ALL_CREATURES.length,
+    npcs: ALL_NPCS.length
   };
 }
 

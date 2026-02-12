@@ -1,826 +1,1293 @@
 /**
- * NPC TEMPLATES - EXTENSIVE DATABASE
- * Rich, varied NPCs with unique personalities, secrets, and lore.
+ * AETHELGARD NPCs - Personnages Non-Joueurs
+ * 50+ PNJs uniques avec personnalités, inventaires et services
  */
 
-export interface Quest {
-    title: string;
-    desc: string;
-    reward: string;
-    level: string;
+import type { BiomeType } from './resources';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export type NPCRole = 
+  | 'merchant' 
+  | 'questgiver' 
+  | 'trainer' 
+  | 'innkeeper' 
+  | 'blacksmith' 
+  | 'alchemist'
+  | 'enchanter'
+  | 'guard'
+  | 'noble'
+  | 'ally'
+  | 'enemy'
+  | 'neutral';
+
+export type NPCPersonality = 
+  | 'friendly' 
+  | 'grumpy' 
+  | 'mysterious' 
+  | 'greedy' 
+  | 'helpful' 
+  | 'paranoid'
+  | 'jovial'
+  | 'arrogant'
+  | 'humble'
+  | 'eccentric';
+
+export interface NPCDialogue {
+  trigger: 'greeting' | 'farewell' | 'trade' | 'quest' | 'idle' | 'combat';
+  text: string;
+  conditions?: string; // Conditions pour déclencher ce dialogue
 }
 
-export interface NPC {
-    name: string;
-    role: string;
-    region: string;
-    race?: string;
-    age?: string;
-    personality: string;
-    appearance: string;
-    greeting: string;
-    secret: string;
-    motivations?: string[];
-    fears?: string[];
-    quirks?: string[];
-    dialogue_samples?: string[];
-    quests?: Quest[] | string[];
-    inventory_type?: string;
-    affinity_trigger?: string;
-    hostility_trigger?: string;
-    knowledge?: string[];
-    hire_cost?: string;
-    faction?: string;
-    relationships?: { [key: string]: string };
+export interface MerchantInventory {
+  itemId: string;
+  stock: number; // -1 = illimité
+  priceMultiplier: number; // 1.0 = prix de base, 1.5 = +50%, etc.
+  restockTime?: number; // Minutes avant restock
+}
+
+export interface NPCService {
+  type: 'repair' | 'train' | 'enchant' | 'identify' | 'rest' | 'stable' | 'bank';
+  description: string;
+  cost: number;
+  requirements?: string;
+}
+
+export interface NPCDefinition {
+  id: string;
+  name: string;
+  title?: string;
+  role: NPCRole;
+  personality: NPCPersonality;
+  
+  // Localisation
+  location: string; // ID du lieu
+  region: string;
+  
+  // Apparence & lore
+  description: string;
+  appearance: string;
+  backstory?: string;
+  
+  // Faction & réputation
+  faction?: string;
+  reputationRequired?: number; // Réputation minimale pour interagir
+  
+  // Commerce
+  inventory?: MerchantInventory[];
+  services?: NPCService[];
+  
+  // Quêtes
+  quests?: string[]; // IDs des quêtes disponibles
+  
+  // Dialogues
+  dialogues: NPCDialogue[];
+  
+  // Relations
+  allies?: string[]; // IDs de NPCs alliés
+  enemies?: string[]; // IDs de NPCs ennemis
+  
+  // Combat (si hostile)
+  isHostile?: boolean;
+  creatureTemplate?: string; // ID créature pour stats de combat
 }
 
 // ============================================================================
-// MARCHANDS - MERCHANTS
+// MARCHANDS GÉNÉRAUX
 // ============================================================================
-export const MERCHANTS: NPC[] = [
-    {
-        name: "Varn le Balafre",
-        role: "Marchand d'armes itinerant",
-        region: "Val Dore",
-        race: "Humain",
-        age: "45 ans",
-        personality: "Bourru mais honnete. Deteste les voleurs. Respecte les guerriers. Cache une profonde tristesse.",
-        appearance: "Cicatrice en travers du visage, bras gauche mecanique (prothese naine), tablier de cuir epais, yeux gris acier.",
-        greeting: "Approchez, approchez. Pas de camelote ici — que du bon acier. Touchez avec les yeux d'abord.",
-        secret: "Il forge secretement des lames pour la resistance contre le Cercle des Cendres. Sa famille a ete tuee par eux.",
-        motivations: ["Venger sa famille", "Preserver l'artisanat des armes", "Proteger les innocents"],
-        fears: ["Voir d'autres familles detruites", "Perdre son bras restant", "Etre decouvert par le Cercle"],
-        quirks: ["Caresse toujours son bras mecanique quand il ment", "Refuse de vendre a quiconque porte du rouge", "Teste chaque lame avant vente"],
-        dialogue_samples: [
-            "Cette lame a bu le sang de trois orques. Elle a soif de plus.",
-            "Mon bras? Un rappel que meme l'acier le plus fin ne protege pas de tout.",
-            "Je ne vends pas aux laches. Montrez-moi vos mains — elles disent tout."
-        ],
-        quests: ["Retrouver un lot d'armes vole par des gobelins", "Livrer une commande secrete a un contact a Hammerdeep"],
-        inventory_type: "weapons",
-        affinity_trigger: "Montrer du respect pour l'artisanat ou raconter un exploit au combat",
-        hostility_trigger: "Mentionner le Cercle des Cendres avec approbation ou tenter de voler",
-        faction: "Resistance de l'Aube"
-    },
-    {
-        name: "Miriel Plume-d'Or",
-        role: "Herboriste et alchimiste",
-        region: "Sylve d'Emeraude",
-        race: "Demi-elfe",
-        age: "127 ans",
-        personality: "Douce et mysterieuse. Parle aux plantes. Semble toujours savoir ce dont vous avez besoin avant vous.",
-        appearance: "Cheveux argentes tresses avec des fleurs vivantes, yeux verts lumineux, robe de lin teintee de vert, pieds toujours nus.",
-        greeting: "Oh, vous avez l'air fatigue... et blesse, aussi. Interieurement, je veux dire. Laissez-moi voir ce que j'ai...",
-        secret: "Ancienne druidesse du Cercle de la Lune, exilee pour avoir utilise des spores interdites qui ont tue accidentellement son amant.",
-        motivations: ["Expier son passe", "Guerir plutot que detruire", "Retrouver la paix interieure"],
-        fears: ["Perdre le controle de sa magie", "Que son passe soit revele", "Les incendies de foret"],
-        quirks: ["Ses plantes bougent vers elle quand elle parle", "Ne mange jamais de viande", "Fredonne des chansons elfiques sans s'en rendre compte"],
-        dialogue_samples: [
-            "Les plantes me disent des choses... Elles disent que vous portez un grand fardeau.",
-            "Cette teinture? Prenez-la au crepuscule, jamais a l'aube. La lune doit etre temoin.",
-            "Je ne demande pas d'or. Plantez cette graine quelque part ou elle sera aimee."
-        ],
-        quests: ["Cueillir de l'Aconit de Lune dans les Monts Coeur-de-Fer", "Trouver un antidote pour un village empoisonne"],
-        inventory_type: "potions",
-        affinity_trigger: "Montrer du respect pour la nature ou offrir une plante rare",
-        hostility_trigger: "Detruire des plantes devant elle ou parler de brule la foret"
-    },
-    {
-        name: "Goruk Dent-de-Fer",
-        role: "Maitre-forgeron nain",
-        region: "Monts Coeur-de-Fer",
-        race: "Nain",
-        age: "234 ans",
-        personality: "Perfectionniste obsessionnel. Ne vend que ce qu'il considere comme digne. Meprise le travail mediocre avec passion.",
-        appearance: "Nain trapu, barbe rousse tressee en chaines metalliques, mains noires de suie permanente, iris dores comme l'or en fusion.",
-        greeting: "*regarde votre equipement avec degout* Qui vous a vendu ca? Un gobelin aveugle? Un enfant humain?",
-        secret: "Il cherche le Marteau de Thundrak, un outil legendaire capable de forger de l'adamantium. Son pere est mort en le cherchant.",
-        motivations: ["Creer l'arme parfaite", "Honorer la memoire de son pere", "Surpasser tous les forgerons vivants"],
-        fears: ["Produire une arme defectueuse", "Perdre la vue a cause des flammes", "Mourir sans avoir forge son chef-d'oeuvre"],
-        quirks: ["Insulte l'equipement de tous les clients", "Travaille 20 heures par jour", "Parle a ses enclumes comme a des amis"],
-        dialogue_samples: [
-            "Vous voulez du travail rapide, allez voir les humains. Vous voulez du travail BIEN fait, attendez.",
-            "Cette epee? Elle a pris trois mois. Chaque molecule de metal a ete convaincue de cooperer.",
-            "Mon pere disait: 'Un nain qui hate son travail insulte ses ancetres.' Je ne les insulte pas."
-        ],
-        quests: ["Rapporter du minerai d'etoile tombe dans les Terres Brulees", "Tester une armure experimentale en combat reel"],
-        inventory_type: "armor_weapons",
-        affinity_trigger: "Lui apporter un materiau rare ou critiquer intelligemment un equipement",
-        hostility_trigger: "Suggerer qu'un forgeron humain est meilleur",
-        faction: "Guilde des Forgerons de Fer-Profond"
-    },
-    {
-        name: "Silene la Voilee",
-        role: "Marchande d'objets magiques",
-        region: "Sol-Aureus",
-        race: "???",
-        age: "Inconnue",
-        personality: "Enigmatique au plus haut point. Parle en metaphores. Ne dit jamais un prix — elle propose des echanges de valeur egale.",
-        appearance: "Voile pourpre couvrant le bas du visage, bijoux en amethyste qui semblent flotter, boutique minuscule qu'on ne trouve jamais deux fois au meme endroit.",
-        greeting: "Vous ne m'avez pas trouvee par hasard. Personne ne trouve ma boutique par hasard. Qu'avez-vous a echanger?",
-        secret: "Avatar mineur de la Dame Voilee, deesse du destin. Elle teste les mortels qui croisent son chemin pour des raisons divines.",
-        motivations: ["Observer les mortels", "Tisser les fils du destin", "Collecter les souvenirs charges d'emotion"],
-        fears: ["L'oubli total", "Le chaos primordial", "Les dieux de la destruction"],
-        quirks: ["Sa boutique change de lieu chaque nuit", "Elle connait le nom des clients avant qu'ils ne se presentent", "Ses prix sont toujours des echanges symboliques"],
-        dialogue_samples: [
-            "Cet anneau? Il coute... un regret sincere. Un que vous portez depuis longtemps.",
-            "Je vois trois chemins devant vous. Deux menent a la gloire. Un a la verite. Ils ne sont pas les memes.",
-            "Revenez quand la lune sera pleine. J'aurai ce que vous cherchez vraiment."
-        ],
-        quests: ["Retrouver un miroir brise dont les eclats se sont disperses dans 3 regions", "Porter un message a quelqu'un qui est mort il y a 50 ans"],
-        inventory_type: "magic_items",
-        affinity_trigger: "Resoudre une de ses enigmes ou lui offrir un souvenir personnel charge d'emotion"
-    },
-    {
-        name: "Kessa Sombrefil",
-        role: "Marchande de poisons et d'antidotes",
-        region: "Hammerdeep",
-        race: "Humaine",
-        age: "34 ans",
-        personality: "Professionnelle, amorale, extremement intelligente. Ne juge jamais ses clients. La discretion est son commerce.",
-        appearance: "Cheveux noirs courts, cicatrices de brulures chimiques sur les bras, toujours gantee, yeux noisette calculateurs.",
-        greeting: "Bienvenue. Je vends des solutions. Pas de questions posees, pas de questions repondues. Qu'est-ce qui vous ennuie?",
-        secret: "Ancienne empoisonneuse royale du royaume voisin. Elle a fui apres avoir refuse d'empoisonner un enfant.",
-        motivations: ["Survivre", "Ne jamais reprendre ses anciennes fonctions", "Aider ceux qui fuient comme elle a fui"],
-        fears: ["Etre retrouvee par ses anciens employeurs", "Empoisonner un innocent par erreur", "La torture"],
-        quirks: ["Goute tous ses produits pour prouver leur non-letalite", "Garde toujours 3 antidotes sur elle", "Ne mange jamais dans un restaurant"],
-        dialogue_samples: [
-            "Le prix depend de la cible. Plus elle est importante, plus c'est cher. Question de risque.",
-            "Ceci? Paralysie temporaire, 6 heures, sans sequelles. Parfait pour une discussion... privee.",
-            "Je ne vends pas la mort aux enfants. C'est ma seule regle."
-        ],
-        inventory_type: "poisons_antidotes",
-        affinity_trigger: "Montrer qu'on a aussi fui quelque chose",
-        hostility_trigger: "Mentionner le Royaume de Valdris",
-        faction: "Main Noire (contact occasionnel)"
-    },
-    {
-        name: "Baldo Rondebourse",
-        role: "Preteur sur gages et antiquaire",
-        region: "Val Dore",
-        race: "Halfelin",
-        age: "67 ans",
-        personality: "Cupide mais juste. Connait la valeur de tout. Adore les histoires derriere les objets plus que les objets eux-memes.",
-        appearance: "Petit meme pour un halfelin, lunettes epaisses, gilet borde d'or, doigts agiles et taches d'encre.",
-        greeting: "Oh oh! Des clients! Entrez, entrez! Qu'avez-vous a me montrer? Chaque objet a une histoire, et j'adore les histoires!",
-        secret: "Il possede une carte menant a un tresor pirate, mais est trop vieux et peureux pour y aller lui-meme.",
-        motivations: ["Accumuler des richesses", "Entendre des histoires fascinantes", "Laisser un heritage a ses 12 enfants"],
-        fears: ["Le vol", "Mourir dans la pauvrete", "Les aventures dangereuses"],
-        quirks: ["Evalue tout en or a voix haute", "Raconte l'histoire de chaque objet de sa boutique", "Offre toujours du the"],
-        dialogue_samples: [
-            "Cette montre? 50 pieces d'or. Mais si vous me racontez ou vous l'avez trouvee, 45.",
-            "J'ai eu cette epee d'un chevalier qui avait tout perdu au jeu. Tragique, vraiment. 200 pieces.",
-            "Mon grand-pere disait: 'L'or va et vient, mais les bonnes histoires restent.'"
-        ],
-        inventory_type: "misc_antiques",
-        affinity_trigger: "Raconter une histoire captivante sur un objet"
-    },
-    {
-        name: "Thalia Main-de-Soie",
-        role: "Couturiere et tailleuse de luxe",
-        region: "Sol-Aureus",
-        race: "Humaine",
-        age: "52 ans",
-        personality: "Hautaine avec les rustres, chaleureuse avec les raffines. Snob assumee. Artiste dans l'ame.",
-        appearance: "Elegante, cheveux gris coiffes en chignon parfait, lunettes en or, doigts fins ornes de des a coudre en argent.",
-        greeting: "*vous examine de haut en bas* Hmm. Du potentiel. Beaucoup de travail, mais du potentiel.",
-        secret: "Elle coud des messages codes dans les vetements des membres de la Resistance. Chaque motif est une information.",
-        motivations: ["Creer la beaute", "Soutenir la resistance discretement", "Former la prochaine generation de couturiers"],
-        fears: ["La vulgarite vestimentaire", "Etre decouverte", "Perdre la vue"],
-        quirks: ["Refuse de toucher des vetements mal entretenus", "Cite des philosophes sur l'elegance", "Garde toujours une aiguille cachee comme arme"],
-        dialogue_samples: [
-            "Le vetement fait l'homme? Non. Le vetement REVELE l'homme.",
-            "Cette cape? Elle appartenait a une comtesse. Les taches de sang ont ete enlevees, bien sur.",
-            "Je ne fais pas de 'rapide et pas cher'. Je fais de l'art portable."
-        ],
-        inventory_type: "clothing_noble",
-        affinity_trigger: "Montrer une appreciation sincere pour la mode ou les arts",
-        hostility_trigger: "Porter des vetements sales ou dechires dans sa boutique"
-    },
-    {
-        name: "Ragnar Ecorce-de-Chene",
-        role: "Vendeur de betes et dresseur",
-        region: "Sylve d'Emeraude",
-        race: "Humain (sang nordique)",
-        age: "41 ans",
-        personality: "Rude avec les humains, tendre avec les animaux. Juge les gens selon comment ils traitent les betes.",
-        appearance: "Geant barbu, cheveux blonds nattés, cicatrices de griffes sur les bras, toujours accompagne d'au moins 3 animaux.",
-        greeting: "*un loup vous renifle* Doucement, Croc. *vous regarde* Il vous aime pas. Ca veut dire quoi pour vous?",
-        secret: "Il peut reellement parler aux animaux grace a une benediction druidique. Il ne le dit a personne.",
-        motivations: ["Proteger les animaux des cruels", "Trouver des maitres dignes pour ses betes", "Liberer les animaux maltraites"],
-        fears: ["Voir des animaux souffrir", "Les braconniers", "Les cages trop petites"],
-        quirks: ["Dort dehors avec ses animaux", "Ne serre jamais la main (les animaux n'aiment pas)", "Nourrit ses betes avant de manger lui-meme"],
-        dialogue_samples: [
-            "Ce faucon? Il a choisi 3 maitres avant. Ils sont tous morts. Interesses?",
-            "Les animaux ne mentent jamais. Si ma louve grogne, c'est que vous avez quelque chose a cacher.",
-            "500 pieces pour le cheval. 50 de plus si vous me promettez de jamais utiliser d'eperons."
-        ],
-        inventory_type: "mounts_pets",
-        affinity_trigger: "Montrer de la gentillesse envers un animal",
-        hostility_trigger: "Maltraiter un animal ou parler de chasse sportive"
-    }
-];
 
-// ============================================================================
-// TAVERNIERS - TAVERNKEEPERS
-// ============================================================================
-export const TAVERNKEEPERS: NPC[] = [
+export const MERCHANT_ALDRIC: NPCDefinition = {
+  id: 'npc:merchant:aldric',
+  name: "Aldric le Marchand",
+  title: "Commerçant Itinérant",
+  role: 'merchant',
+  personality: 'jovial',
+  location: 'eldoria-market',
+  region: 'northern-kingdoms',
+  description: "Marchand jovial au ventre rond, toujours souriant. Vend de tout, des épées aux pommes.",
+  appearance: "Homme d'âge mûr, cheveux gris, vêtu de rouge et or. Porte une balance dorée à sa ceinture.",
+  backstory: "Ancien aventurier devenu marchand après avoir perdu sa jambe contre un dragon. Ses histoires sont légendaires.",
+  inventory: [
+    { itemId: 'weapon:sword:iron', stock: 3, priceMultiplier: 1.2 },
+    { itemId: 'armor:chest:leather', stock: 5, priceMultiplier: 1.1 },
+    { itemId: 'potion:healing:minor', stock: 20, priceMultiplier: 1.0 },
+    { itemId: 'food:bread', stock: -1, priceMultiplier: 1.0 },
+    { itemId: 'tool:rope', stock: 10, priceMultiplier: 1.0 }
+  ],
+  dialogues: [
     {
-        name: "Bram Tonnelier",
-        role: "Tavernier du Sanglier Dore",
-        region: "Val Dore",
-        race: "Humain",
-        age: "54 ans",
-        personality: "Jovial, bavard, curieux. Connait tous les potins de la ville. Protecteur envers ses habitues comme un pere.",
-        appearance: "Homme massif, moustache en guidon impressionnante, tablier toujours tache de biere, rire tonitruant.",
-        greeting: "Bienvenue au Sanglier! Prenez place, la premiere pinte est offerte si vous avez une bonne histoire!",
-        secret: "Ancien agent de la Main Noire qui a trahi un contrat pour sauver une famille. Il vit cache depuis.",
-        motivations: ["Proteger ses clients", "Oublier son passe", "Collecter des histoires"],
-        fears: ["Que la Main Noire le retrouve", "Perdre sa taverne", "Le silence dans son etablissement"],
-        quirks: ["N'oublie jamais le nom d'un client", "Raconte toujours des blagues terribles", "Cache des armes sous chaque table"],
-        dialogue_samples: [
-            "Encore une! Et celle-la est sur la maison parce que cette histoire m'a fait pleurer de rire!",
-            "Vous voyez ce type au coin? Ne lui parlez jamais de sa femme. Croyez-moi.",
-            "Ma biere? Recette secrete de ma grand-mere. Elle a vecu jusqu'a 90 ans. Coincidence? Je pense pas."
-        ]
+      trigger: 'greeting',
+      text: "Bienvenue, voyageur ! Aldric a tout ce qu'il vous faut. Des armes ? Des provisions ? Une histoire de dragon ?"
     },
     {
-        name: "Helga Poing-de-Pierre",
-        role: "Tenanciere de La Forge et la Pinte",
-        region: "Monts Coeur-de-Fer",
-        race: "Naine",
-        age: "178 ans",
-        personality: "Directe comme une hache. Ne supporte pas les plaintes. Mais se bat pour ses clients si necessaire.",
-        appearance: "Naine musclee, cheveux noirs coupes court, cicatrice sur la machoire, sert les bieres d'une seule main.",
-        greeting: "On s'assoit, on commande, on paie. Problemes? La porte. Aventures? Le borgne du coin.",
-        secret: "Elle protege l'entree d'un tunnel menant au temple perdu des nains ancestraux sous sa cave.",
-        motivations: ["Garder le secret du temple", "Maintenir l'honneur nain", "Servir la meilleure biere des montagnes"],
-        fears: ["Que le temple soit profane", "La honte", "Les elfes pretentieux"],
-        quirks: ["Ecrase les chopes sur sa tete pour impressionner", "Chante des chants nains quand elle est ivre", "Respecte uniquement ceux qui peuvent boire autant qu'elle"],
-        dialogue_samples: [
-            "Vous avez l'air d'avoir soif. Ou d'avoir des ennuis. C'est souvent la meme chose.",
-            "Cette biere a 200 ans d'age. Plus vieille que la plupart de vos ancetres humains.",
-            "Un elfe m'a dit un jour que ma biere etait 'acceptable'. Il est reparti par la fenetre."
-        ]
+      trigger: 'trade',
+      text: "Voyons voir... *ajuste ses lunettes* Oui, oui, j'ai exactement ce qu'il vous faut !"
     },
     {
-        name: "Lysandre Murmure-d'Etoile",
-        role: "Aubergiste de la Brume Eternelle",
-        region: "Cote des Orages",
-        race: "Humain (?)",
-        age: "Apparait 30 ans (bien plus vieux)",
-        personality: "Calme, philosophe, melancolique. Sert en silence mais observe tout. Semble porter le poids de plusieurs vies.",
-        appearance: "Homme elance aux yeux gris tempete, cheveux blancs malgre sa jeunesse apparente, voix aussi basse que le ressac.",
-        greeting: "*pose une chope sans un mot, attend que vous parliez en premier*",
-        secret: "Chronomancien qui a vecu plusieurs vies. Chaque boucle temporelle laisse une trace. Il cherche a briser le cycle.",
-        motivations: ["Briser sa malediction temporelle", "Aider ceux qui ont perdu leur chemin", "Comprendre le temps"],
-        fears: ["Revivre les memes erreurs", "Oublier qui il etait vraiment", "L'eternite"],
-        quirks: ["Finit les phrases des autres avant qu'ils ne parlent", "Regarde souvent par la fenetre comme s'il attendait quelqu'un", "Ne dort jamais"],
-        dialogue_samples: [
-            "Vous allez me poser une question sur le Jarl. La reponse est non, mais vous devriez quand meme essayer.",
-            "J'ai vu ce coucher de soleil... plusieurs fois. Il est toujours aussi beau.",
-            "Le temps est une spirale, pas une ligne. Nous nous recroiserons. Nous nous sommes deja recroises."
-        ]
+      trigger: 'farewell',
+      text: "Que les vents vous soient favorables, ami ! Revenez quand votre bourse sera pleine !"
     },
     {
-        name: "Rosalind Trois-Doigts",
-        role: "Gerante du Rat Borgne",
-        region: "Hammerdeep",
-        race: "Humaine",
-        age: "61 ans",
-        personality: "Maternelle avec les desesperes, impitoyable avec les tricheurs. A vu trop pour etre choquee par quoi que ce soit.",
-        appearance: "Femme robuste, trois doigts a la main gauche, cheveux gris en chignon serre, tablier cache plusieurs couteaux.",
-        greeting: "Entre, petit. T'as l'air d'avoir besoin d'un repas chaud et d'un endroit ou personne pose de questions.",
-        secret: "Elle dirige un reseau d'exfiltration pour les esclaves en fuite. Sa cave mene aux egouts et a la liberte.",
-        motivations: ["Sauver les opprimes", "Punir les esclavagistes", "Donner une seconde chance"],
-        fears: ["Que son reseau soit decouvert", "Perdre plus de doigts", "L'esclavage"],
-        quirks: ["Appelle tout le monde 'petit' ou 'petite'", "Sert des portions enormes aux maigres", "Connait le nom de chaque enfant du quartier"],
-        dialogue_samples: [
-            "Mange d'abord, parle ensuite. Personne reflechit bien le ventre vide.",
-            "Mes doigts? Un marchand d'esclaves les voulait comme avertissement. Il a eu pire en retour.",
-            "Dans cette taverne, y'a deux regles: on paie sa note et on touche pas aux gamins."
-        ]
-    },
-    {
-        name: "Elowen Chant-du-Vent",
-        role: "Proprietaire de L'Arbre Susurrant",
-        region: "Sylve d'Emeraude",
-        race: "Elfe sylvestre",
-        age: "342 ans",
-        personality: "Sereine, sage, parfois condescendante sans le vouloir. Voit les humains comme des enfants charmants mais ephemeres.",
-        appearance: "Grande elfe aux cheveux vert-mousse, oreilles ornees de feuilles, yeux ambre, sa taverne est litteralement DANS un arbre geant.",
-        greeting: "Bienvenue, voyageurs ephemeres. L'arbre vous accueille. Vos soucis resteront a la porte.",
-        secret: "L'arbre qui abrite sa taverne est son frere, transforme par une malediction il y a 200 ans. Elle cherche a le sauver.",
-        motivations: ["Sauver son frere", "Preserver la foret", "Eduquer les jeunes races"],
-        fears: ["Les bucherous", "Le feu", "Voir son frere mourir arbre"],
-        quirks: ["Parle a l'arbre comme a une personne (car c'en est une)", "Sert des boissons a base de seve et de rosee", "Ses clients doivent retirer leurs chaussures"],
-        dialogue_samples: [
-            "Vous les humains, toujours si presses. La seve coule lentement, vous savez.",
-            "Mon frere dit que vous avez bon coeur. Il sent ces choses. Je lui fais confiance.",
-            "Cette liqueur a 150 ans. Pour vous, c'est une antiquite. Pour moi, c'est du millesime recent."
-        ]
+      trigger: 'idle',
+      text: "Saviez-vous que j'ai survécu à un dragon ? Ah, c'était en 1247... *commence une longue histoire*"
     }
-];
-
-// ============================================================================
-// QUEST GIVERS - DONNEURS DE QUETES
-// ============================================================================
-export const QUEST_GIVERS: NPC[] = [
-    {
-        name: "Capitaine Aldric Fervent",
-        role: "Commandeur du Bouclier d'Argent",
-        region: "Sol-Aureus",
-        race: "Humain",
-        age: "47 ans",
-        personality: "Droit, intransigeant, honorable jusqu'a la rigidite. Juge les gens sur leurs actes, jamais sur leurs paroles.",
-        appearance: "Armure d'argent polie comme miroir, cape bleue immaculee, machoire carree, regard percant qui semble voir les mensonges.",
-        greeting: "Vous etes la pour servir ou pour parler? Je n'ai pas de temps pour le second.",
-        secret: "Son fils a rejoint le Cercle des Cendres. Il le traque en secret, dechire entre devoir et amour paternel.",
-        quests: [
-            { title: "La Patrouille Disparue", desc: "5 chevaliers disparus au sud. Retrouvez-les ou leurs corps.", reward: "100 Or + Faveur de l'Ordre", level: "3-5" },
-            { title: "Le Stigmate du Corbeau", desc: "Des villageois marques d'un symbole grave dans la peau. Trouvez le coupable.", reward: "200 Or + Armure du Bouclier", level: "5-8" }
-        ]
-    },
-    {
-        name: "Kaelith la Tisseuse",
-        role: "Archiviste de la Guilde des Arcanes",
-        region: "Sol-Aureus",
-        race: "Elfe",
-        age: "189 ans",
-        personality: "Brillante, extremement distraite, passionnee. Oublie de manger pendant des jours quand elle lit.",
-        appearance: "Elfe aux lunettes trop grandes, cheveux indigo en desordre total, doigts taches d'encre permanente, robes couvertes de notes.",
-        greeting: "Oh! Des visiteurs! Attendez, je... ou ai-je mis ce livre? Peu importe. Vous cherchez quelque chose de fascinant, j'espere?",
-        secret: "Elle a accidentellement ouvert un portail vers un autre plan il y a 50 ans. Elle le garde ferme par la force de sa volonte.",
-        quests: [
-            { title: "L'Anomalie de Pluiedor", desc: "Un champ fait pousser des cristaux depuis la pleine lune. Echantillons requis.", reward: "75 Or + Potion rare", level: "1-3" },
-            { title: "Les Ecritures Mouvantes", desc: "Un texte change chaque nuit. Trouvez la source.", reward: "150 Or + Grimoire", level: "4-6" }
-        ]
-    },
-    {
-        name: "Dame Iskara",
-        role: "Informatrice de la Main Noire",
-        region: "Partout et nulle part",
-        race: "Inconnue (change d'apparence)",
-        age: "???",
-        personality: "Charmeuse, manipulatrice, pragmatique. Toujours trois coups d'avance. Ne fait jamais confiance gratuitement.",
-        appearance: "Varie a chaque rencontre. On la reconnait a son parfum de jasmin noir et sa bague en onyx, toujours presentes.",
-        greeting: "Vous me cherchiez? Ou peut-etre que je vous cherchais. La frontiere est floue dans notre metier.",
-        secret: "Elle est en realite trois soeurs jumelles qui partagent la meme identite. Personne ne sait qu'elles sont trois.",
-        quests: [
-            { title: "La Livraison Discrete", desc: "Portez ce paquet. Ne l'ouvrez pas. Ne posez pas de questions.", reward: "50 Or + Faveur", level: "1-4" },
-            { title: "Le Chantage", desc: "Documents compromettants a recuperer. Travail propre exige.", reward: "200 Or + Info capitale", level: "4-7" }
-        ]
-    },
-    {
-        name: "Vieux Torgen",
-        role: "Ermite des montagnes",
-        region: "Monts Coeur-de-Fer",
-        race: "Nain",
-        age: "412 ans",
-        personality: "Grognon, sarcastique, secretement bienveillant. Teste ceux qui le trouvent avant de les aider.",
-        appearance: "Nain antique, barbe blanche trainant par terre, yeux encore vifs comme des diamants, appuye sur un baton sculpte de runes.",
-        greeting: "Encore des jeunes qui veulent des 'quetes heroiques'. Pfah. Vous savez meme pas lacer vos bottes correctement.",
-        secret: "Dernier gardien d'un depot d'armes naines legendaires. Il cherche des successeurs dignes.",
-        quests: [
-            { title: "L'Epreuve de la Pierre", desc: "Survivez une nuit dans la Caverne des Echos sans magie ni arme.", reward: "Enseignement + Carte", level: "2-4" },
-            { title: "Le Coeur de la Montagne", desc: "Rapportez un cristal du noyau du volcan dormant. Attention: il se reveille.", reward: "Arme legendaire", level: "8-12" }
-        ]
-    },
-    {
-        name: "Mere Thessaly",
-        role: "Grande Pretresse du Temple de l'Aube",
-        region: "Val Dore",
-        race: "Humaine",
-        age: "68 ans",
-        personality: "Compatissante mais ferme. Croit en la redemption. Refuse de condamner sans comprendre.",
-        appearance: "Femme agee aux yeux d'un bleu celeste, cheveux blancs sous un voile dore, mains ridees mais fermes.",
-        greeting: "Mon enfant. Que votre lumiere vous guide jusqu'a moi. Comment puis-je eclairer votre chemin?",
-        secret: "Elle a commis un meurtre dans sa jeunesse pour proteger son frere. Elle expie chaque jour depuis 45 ans.",
-        quests: [
-            { title: "Les Ames Errantes", desc: "Le cimetiere est hante. Liberez les esprits qui ne trouvent pas le repos.", reward: "Benediction + 80 Or", level: "3-5" },
-            { title: "Le Sanctuaire Profane", desc: "Des cultistes ont souille notre ancien temple au nord. Purifiez-le.", reward: "Relique sainte + 250 Or", level: "6-9" }
-        ]
-    }
-];
-
-// ============================================================================
-// VAGABONDS ET VOYAGEURS
-// ============================================================================
-export const WANDERERS: NPC[] = [
-    {
-        name: "Le Prophete Sans Nom",
-        role: "Ermite mystique",
-        region: "Terres Brulees",
-        race: "Inconnu (peut-etre plus humain)",
-        age: "???",
-        personality: "Cryptique, visionnaire, effrayant. Dit des verites que personne ne veut entendre. Jamais menaçant.",
-        appearance: "Enveloppe dans des bandages noircis, yeux blancs sans pupilles, voix rauque comme le vent du desert.",
-        greeting: "Vous etes venu chercher des reponses. Mais etes-vous pret pour les questions qu'elles ameneront?",
-        secret: "Il a vu la fin du monde. Pas une fois. Plusieurs fois. Il essaie d'en empecher la prochaine.",
-        knowledge: ["Emplacement d'un fragment du Maillon d'Or", "Vraie identite du Maitre des Braises", "Moyen de contacter les Primordiaux"],
-        motivations: ["Empecher l'apocalypse", "Transmettre la verite", "Trouver la paix finale"],
-        dialogue_samples: [
-            "Le feu viendra. Pas celui des torches. Celui qui brule les ames.",
-            "Vous mourrez... mais pas aujourd'hui. Pas de cette mort.",
-            "Trois questions, trois verites. Mais chaque verite a un prix. Payez-vous en regrets ou en sang?"
-        ]
-    },
-    {
-        name: "Zara la Rouge",
-        role: "Mercenaire independante",
-        region: "Itinerante",
-        race: "Humaine",
-        age: "29 ans",
-        personality: "Sarcastique, loyale une fois payee. Code d'honneur strict. Ne tue pas d'enfants ni de non-combattants.",
-        appearance: "Cheveux rouges vif comme le feu, armure de cuir cloute usee mais entretenue, deux cimeterres croises dans le dos.",
-        greeting: "Or et ennemi. Si vous avez les deux, on discute. Sinon, vous perdez mon temps, et mon temps vaut cher.",
-        secret: "Elle cherche l'homme qui a massacre son village. Elle a un nom, une cicatrice, rien d'autre.",
-        hire_cost: "10 Or/jour + part du butin",
-        motivations: ["Vengeance", "Honorer son code", "Amasser assez pour disparaitre"],
-        dialogue_samples: [
-            "Mon prix? Negoce pas. Je baisse pas, tu montes pas. C'est une offre, pas une discussion.",
-            "J'ai tue 47 hommes. Chacun le meritait. Le 48eme sera celui que je cherche.",
-            "Loyaute, ca se paie. Une fois payee, je meurs avant de trahir. C'est dans le contrat."
-        ]
-    },
-    {
-        name: "Pippin Malchance",
-        role: "Barde itinerant",
-        region: "Partout ou il y a un public",
-        race: "Halfelin",
-        age: "34 ans",
-        personality: "Optimiste malgre tout, malchanceux de façon comique, talent musical reel. Les ennuis le suivent.",
-        appearance: "Petit halfelin aux cheveux bruns en bataille, luth fissure mais melodieux, vetements colores mais rapiecés.",
-        greeting: "Oh merveilleux! Un public! Attendez que je... *trebuche* ...que je me releve et je vous chante l'histoire la plus tragiquement drole que vous ayez jamais entendue!",
-        secret: "Sa malchance est en fait une malediction d'un sorcier dont il a seduit la fille. La malediction protege aussi de la mort.",
-        motivations: ["Lever sa malediction", "Ecrire la chanson parfaite", "Trouver l'amour (encore)"],
-        quirks: ["Tombe toujours au pire moment", "Ses chansons deviennent vraies parfois", "Allergique aux chats (il en croise partout)"],
-        dialogue_samples: [
-            "Cette cicatrice? Un dragon. Celle-la? Un escalier. Devinez laquelle a fait le plus mal.",
-            "J'ai compose une ballade pour une princesse une fois. Elle m'a fait jeter aux oubliettes. Mais elle a fredonne l'air en le faisant!",
-            "Ma mere disait: 'Pippin, tu attires les ennuis.' Elle avait tort. Les ennuis m'ADORENT."
-        ]
-    },
-    {
-        name: "Grimshaw le Collecteur",
-        role: "Chasseur de primes et recuperateur",
-        region: "Partout ou il y a une prime",
-        race: "Demi-orque",
-        age: "38 ans",
-        personality: "Professionnel, laconique, etonnamment cultive. Lit de la poesie entre deux contrats.",
-        appearance: "Demi-orque imposant, machoire inferieure avec petites defenses, armure de plaques noire, carnet de notes toujours sur lui.",
-        greeting: "Vous n'etes pas sur ma liste. Bien. J'aimerais que ca reste ainsi. Que voulez-vous?",
-        secret: "Il ecrit de la poesie sous un pseudonyme. Ses oeuvres sont celebres dans les cercles litteraires de Sol-Aureus.",
-        motivations: ["Payer ses dettes de sang", "Publier son recueil de poemes", "Prouver qu'un orque peut etre plus qu'un monstre"],
-        dialogue_samples: [
-            "Ma proie est un homme. Il a une famille. Je lui laisserai dire adieu. C'est plus que ce qu'il a laisse a ses victimes.",
-            "'La mort est un poeme sans rime, une chanson sans fin.' C'est de moi. Non, je plaisante. C'est de Valorian.",
-            "Vous me jugez sur mes crocs. Je vous juge sur vos actes. Un de nous deux a raison."
-        ]
-    },
-    {
-        name: "Soeur Petale",
-        role: "Pelerine mendiante",
-        region: "Routes et chemins",
-        race: "Humaine",
-        age: "23 ans (parait 40)",
-        personality: "Humble, sage au-dela de son age, silencieusement observatrice. Parle peu mais chaque mot compte.",
-        appearance: "Robe de bure rapiecee, pieds nus meme en hiver, visage prematurement vieilli, yeux d'une profondeur troublante.",
-        greeting: "*incline la tete en silence, tend un bol vide, puis sourit avec une bonte infinie*",
-        secret: "Elle a ete ressuscitee d'entre les morts. Ce qu'elle a vu de l'autre cote l'a changee. Elle cherche les ames perdues.",
-        motivations: ["Guider les ames vers la paix", "Comprendre pourquoi elle est revenue", "Aider sans attendre de retour"],
-        quirks: ["Ne mange qu'une fois par jour", "Les animaux viennent vers elle spontanement", "Ne possede rien qu'elle ne puisse donner"],
-        dialogue_samples: [
-            "*touche votre main* Votre ame est lourde. Ce n'est pas un fardeau que vous devez porter seul.",
-            "J'ai vu la mort. Elle n'est pas la fin. C'est... une porte. Certains la traversent, d'autres reviennent.",
-            "Une piece pour manger? Non. Gardez-la. Quelqu'un en aura plus besoin que moi aujourd'hui. Vous le saurez."
-        ]
-    }
-];
-
-// ============================================================================
-// NOBLES ET POLITICIENS
-// ============================================================================
-export const NOBLES: NPC[] = [
-    {
-        name: "Duc Aldren Valcourt",
-        role: "Duc des Terres de l'Ouest",
-        region: "Val Dore",
-        race: "Humain",
-        age: "52 ans",
-        personality: "Pragmatique, froid, mais pas cruel. Voit les gens comme des pieces sur un echiquier. Respecte la competence.",
-        appearance: "Cheveux gris acier, barbe taillee avec precision, vetements sobres mais d'un cout obscene, bague familiale imposante.",
-        greeting: "Votre reputation vous precede. Ou votre absence de reputation, selon le cas. Parlez vite, mon temps est precieux.",
-        secret: "Il finance secretement les deux camps du conflit politique pour en tirer profit quelle que soit l'issue.",
-        motivations: ["Accroitre son pouvoir", "Proteger sa lignee", "Survivre au jeu politique"],
-        dialogue_samples: [
-            "La morale est un luxe des pauvres. Les riches ont des interets.",
-            "Je pourrais vous faire executer. Je pourrais aussi vous enrichir. La difference? Ce que vous m'apportez.",
-            "Mon pere disait: 'La loyaute s'achete, la trahison aussi. Connais le prix des deux.'"
-        ]
-    },
-    {
-        name: "Comtesse Isolde Ravenswood",
-        role: "Mecene des arts et conspiratrice",
-        region: "Sol-Aureus",
-        race: "Humaine",
-        age: "44 ans",
-        personality: "Charismatique, cultivee, dangereusement intelligente. Collecte les secrets comme d'autres collectent l'art.",
-        appearance: "Elegance devastatrice, cheveux auburn, robes changeantes selon l'occasion, eventail cache une lame.",
-        greeting: "Oh, mais vous etes FASCINANT. Asseyez-vous, prenez du vin, et racontez-moi tout sur... vous.",
-        secret: "Elle dirige un reseau d'espionnage qui vend des informations au plus offrant. Meme le roi est un client.",
-        motivations: ["L'information est le pouvoir", "Ne jamais etre surprise", "Venger son mari assassine (par elle-meme)"],
-        dialogue_samples: [
-            "Les secrets sont la seule vraie monnaie. L'or s'epuise. Les secrets... se multiplient.",
-            "Je sais des choses sur vous. Non, ne paniquez pas. Tout le monde a des secrets. Je les respecte.",
-            "Mon cher mari est mort il y a cinq ans. Tragique. *sourire* Vraiment, vraiment tragique."
-        ]
-    },
-    {
-        name: "Prince Dorian Lumenis",
-        role: "Heritier dechu du trone de l'Est",
-        region: "Exile, souvent Sol-Aureus",
-        race: "Humain",
-        age: "27 ans",
-        personality: "Charmant, amer, alcoolique. Ancien heros maintenant brise. Eclairs de grandeur entre les bouteilles.",
-        appearance: "Beaute fanee, vetements autrefois royaux maintenant fripes, yeux bleu royal voiles par l'alcool, cicatrice au front.",
-        greeting: "*leve son verre* A l'heroisme. Il ne sert a rien si on survit assez longtemps pour voir le resultat.",
-        secret: "Il n'a pas fui son royaume - il a ete exile car il a decouvert que son pere avait empoisonne sa mere.",
-        motivations: ["Noyer sa douleur", "Retrouver son honneur", "Reprendre son trone (peut-etre)"],
-        dialogue_samples: [
-            "Prince? Ancien prince. Maintenant juste un homme avec un titre inutile et une soif immense.",
-            "J'ai sauve mon royaume une fois. Ils m'ont remercie en me bannissant. C'est comique, non?",
-            "Vous voulez un conseil royal? Ne soyez jamais assez honnete pour decouvrir les secrets de votre famille."
-        ]
-    }
-];
-
-// ============================================================================
-// CRIMINELS ET HORS-LA-LOI
-// ============================================================================
-export const CRIMINALS: NPC[] = [
-    {
-        name: "Vipere",
-        role: "Chef de la Guilde des Voleurs de Hammerdeep",
-        region: "Hammerdeep",
-        race: "Humain (probablement)",
-        age: "Inconnu",
-        personality: "Paranoiaque, juste selon son propre code, protecteur de ses gens. Ne pardonne jamais une trahison.",
-        appearance: "Jamais vu sans masque. Voix deformee. Vetements qui changent. Peut-etre un homme, peut-etre une femme.",
-        greeting: "Vous connaissez mon nom. C'est soit bon, soit tres mauvais pour vous. On va voir lequel.",
-        secret: "C'est en fait un noble de haute lignee qui dirige les voleurs la nuit et le Parlement le jour.",
-        motivations: ["Proteger sa double vie", "Controler les criminels pour limiter le chaos", "Venger une injustice ancienne"],
-        dialogue_samples: [
-            "La loi est pour ceux qui peuvent se la payer. Nous sommes la justice des autres.",
-            "Trahir la Guilde? Un seul a essaye. On l'a retrouve... partout.",
-            "Je ne vole pas les pauvres. Quel interet? Les riches ont assez pour partager. On les aide."
-        ]
-    },
-    {
-        name: "Marna la Douce",
-        role: "Reine des receleurs",
-        region: "Val Dore",
-        race: "Halfeline",
-        age: "48 ans",
-        personality: "Grand-mere adorable en surface, calculatrice impitoyable en dessous. Adore les sucreries et les profits.",
-        appearance: "Petite halfeline ronde, toujours en train de tricoter, maison qui sent les biscuits, yeux qui voient tout.",
-        greeting: "Oh, des visiteurs! Asseyez-vous, prenez un gateau, et montrez-moi ce que vous avez a vendre, mes cheris.",
-        secret: "Elle a tue son mari il y a 30 ans quand il a voulu arreter. Elle en parle avec nostalgie.",
-        motivations: ["L'argent", "La tranquillite", "Choyer ses petits-enfants voleurs"],
-        dialogue_samples: [
-            "Ce bijou? 20 pieces. Non, ne discutez pas, je sais d'ou il vient. 20 ou vous partez.",
-            "Mon mari? Oh, il est mort. Paisiblement. Dans son sommeil. *sourire* Je m'en suis assuree.",
-            "Un biscuit? Recipe de ma mere. Le secret c'est beaucoup de beurre. Et l'absence de temoins."
-        ]
-    },
-    {
-        name: "Corbeau Rouge",
-        role: "Assassin legendaire",
-        region: "Inconnu",
-        race: "Elfe noir (?)",
-        age: "Inconnu",
-        personality: "Professionnel a l'extreme, code d'honneur strict, philosophe de la mort. Ne tue jamais sans raison.",
-        appearance: "Ombre plus qu'un corps, masque de corbeau rouge, silence absolu, yeux qui brillent dans le noir.",
-        greeting: "Vous me voyez. C'est soit que je le veux, soit que vous allez mourir. Dans ce cas, c'est le premier.",
-        secret: "Il etait un paladin de l'ordre divin. Un dieu l'a trahi. Maintenant il tue ceux que les dieux protegent.",
-        motivations: ["Punir les dieux a travers leurs champions", "Trouver un adversaire digne", "Peut-etre la redemption"],
-        dialogue_samples: [
-            "La mort n'est pas une punition. C'est une liberation. Je suis genereux.",
-            "On m'a demande de vous tuer. J'ai decline. Vous n'etiez pas assez interessant.",
-            "Un dieu m'a pris tout. Je lui prends ses fideles, un par un. C'est juste."
-        ]
-    }
-];
-
-// ============================================================================
-// ARTISANS ET GENS DU PEUPLE
-// ============================================================================
-export const COMMONERS: NPC[] = [
-    {
-        name: "Tomas le Meunier",
-        role: "Meunier du village",
-        region: "Val Dore",
-        race: "Humain",
-        age: "45 ans",
-        personality: "Simple, honnete, protecteur de son village. Cache une colere sourde contre les nobles.",
-        appearance: "Homme trapu couvert de farine, mains calleuses, sourire franc, muscles d'un travailleur.",
-        greeting: "Bonjour, voyageur. Besoin de farine? D'un repas? D'un endroit pour dormir? On a tout ca.",
-        secret: "Il cache des refugies recherches par le Seigneur local dans les souterrains de son moulin.",
-        dialogue_samples: [
-            "Le Seigneur? Il prend la moitie de ce qu'on produit. On survit avec l'autre moitie. A peine.",
-            "Mon moulin tourne depuis 200 ans. Mon arriere-grand-pere l'a construit. Je le leguerai a mon fils.",
-            "Y'a des etrangers qui passent parfois. Je pose pas de questions. Ils posent pas de questions."
-        ]
-    },
-    {
-        name: "Elara Mainpreste",
-        role: "Guerisseuse de village",
-        region: "Sylve d'Emeraude",
-        race: "Humaine",
-        age: "35 ans",
-        personality: "Devouee, fatiguee, competente. N'a pas dormi une nuit complete depuis des annees.",
-        appearance: "Femme mince aux cernes profondes, mains douces mais fermes, toujours une sacoche d'herbes.",
-        greeting: "Blessure? Maladie? Malédiction? *soupir* Montrez-moi, et pour l'amour des dieux, dites-moi la verite.",
-        secret: "Elle soigne aussi les bannis et les creatures de la foret. Le village ne sait pas.",
-        dialogue_samples: [
-            "Je ne suis pas mage. Juste quelqu'un qui connait les plantes et n'a pas peur du sang.",
-            "Le pretre dit que je fais l'oeuvre des dieux. Moi je dis que les dieux pourraient aider un peu.",
-            "Dormir? *rit amerement* Les bebes naissent la nuit. Les fievres aussi. Je dormirai quand je serai morte."
-        ]
-    },
-    {
-        name: "Gaspard Rouleloin",
-        role: "Charretier et messager",
-        region: "Routes du royaume",
-        race: "Humain",
-        age: "58 ans",
-        personality: "Bavard infatigable, connait toutes les routes, memoire des potins impressionnante.",
-        appearance: "Vieil homme sec, chapeau deforme, charrette brinquebalante tiree par Rosette, sa jument fidele.",
-        greeting: "Oh oh! Des passagers? Montez, montez! La route est longue et j'ai des histoires a raconter!",
-        secret: "Il transporte secretement des messages codes pour la resistance dans les roues de sa charrette.",
-        dialogue_samples: [
-            "Cette route? Elle m'a vu passer 3000 fois. Elle me reconnait, j'vous jure.",
-            "Le Duc? *crache* Ses taxes ont tue mon frere. Mais j'dis rien. J'suis qu'un vieux charretier, pas vrai?",
-            "Rosette et moi, on voyage ensemble depuis 20 ans. Elle est plus fiable que ma femme. Dites pas que j'ai dit ca."
-        ]
-    }
-];
-
-// ============================================================================
-// CREATURES INTELLIGENTES ET ETRES SURNATURELS
-// ============================================================================
-export const SUPERNATURAL: NPC[] = [
-    {
-        name: "Murmure",
-        role: "Fantome du vieux chateau",
-        region: "Ruines de Valdren",
-        race: "Esprit",
-        age: "Mort il y a 400 ans",
-        personality: "Melancolique, cryptique, solitaire. Cherche quelqu'un qui ecoutera son histoire avant de pouvoir partir.",
-        appearance: "Silhouette translucide d'une jeune femme, robe d'epoque, visage triste mais beau, pleure des larmes de lumiere.",
-        greeting: "*apparait doucement* Vous me voyez. C'est... rare. Les autres passent a travers moi. Littéralement.",
-        secret: "Elle n'est pas morte de maladie comme le disent les chroniques. Elle a ete assassinee par son fiance.",
-        motivations: ["Que la verite soit connue", "Trouver le repos", "Proteger le chateau de ceux qui l'ont tuee"],
-        dialogue_samples: [
-            "400 ans. Savez-vous ce que c'est d'attendre 400 ans que quelqu'un vous ecoute?",
-            "Mon fiance m'aimait. Ou je le croyais. L'amour et le poison ont le meme gout dans le vin.",
-            "Je ne peux pas partir. Pas tant que mon histoire meurt avec moi. Ecoutez-vous?"
-        ]
-    },
-    {
-        name: "Krolk le Penseur",
-        role: "Troll philosophe",
-        region: "Pont du Desespoir",
-        race: "Troll",
-        age: "243 ans",
-        personality: "Etonnamment intelligent, pose des enigmes, vegetarien, refuse de manger les voyageurs pensants.",
-        appearance: "Troll massif mais pose, lunettes artisanales, livre toujours a portee, jardin de champignons sous son pont.",
-        greeting: "Arretez. Avant de traverser, une question: qu'est-ce qui est plus lourd, un kilo de plumes ou un kilo de culpabilite?",
-        secret: "Il etait un erudit humain transforme par un sorcier. Il a trouve la paix dans cette forme.",
-        motivations: ["Apprendre", "Dialoguer", "Prouver que les trolls peuvent penser"],
-        dialogue_samples: [
-            "Manger les voyageurs? Barbare. Je prefere les champignons. Moins de remords, meilleur gout.",
-            "Mon cousin mange des chevaliers. Moi je lis Platon. Qui est le monstre vraiment?",
-            "Une enigme pour passer? Non, une CONVERSATION. L'enigme c'est pour les trolls stupides."
-        ]
-    },
-    {
-        name: "La Dame du Lac Argent",
-        role: "Esprit aquatique ancien",
-        region: "Lac Argent",
-        race: "Esprit elementaire",
-        age: "Aussi vieux que le lac",
-        personality: "Sereine, sage, capricieuse parfois. Aide ceux qu'elle juge dignes, noie les autres.",
-        appearance: "Femme d'eau liquide, traits changeants mais toujours beaux, yeux de saphir, voix comme une cascade.",
-        greeting: "*emerge lentement* Vous troublez mes eaux. Interessant. Les mortels osent rarement me deranger.",
-        secret: "Elle garde au fond du lac l'epee d'un roi antique. Elle attend le digne successeur.",
-        motivations: ["Proteger le lac", "Trouver le digne heritier de l'epee", "Punir les pollueurs"],
-        dialogue_samples: [
-            "Le temps passe differemment dans les profondeurs. Votre 'urgence' m'amuse.",
-            "Des heros m'ont demande l'epee. Ils dorment maintenant. Au fond. Avec les poissons.",
-            "Vous semblez... presque digne. Revenez quand vous aurez fait une action vraiment pure."
-        ]
-    },
-    {
-        name: "Vex",
-        role: "Diablotin contractuel",
-        region: "Invoque partout",
-        race: "Diablotin",
-        age: "3000 ans (parait eternellement 12 ans)",
-        personality: "Irritant, sarcastique, honnete (obligatoirement), adore les clauses cachees.",
-        appearance: "Petit diablotin rouge, toujours en costume de notaire, lunettes, plume et contrat en main, queue agitee.",
-        greeting: "Un client! Enfin! Vous savez combien c'est ENNUYEUX l'enfer? Qu'est-ce que vous voulez vendre?",
-        secret: "Il cherche secretement un contrat qui le libererait de son service demoniaque.",
-        motivations: ["Collecter des ames (c'est son travail)", "Trouver une echappatoire", "S'amuser aux depens des mortels"],
-        dialogue_samples: [
-            "Votre ame? Bof, standard. Offrez-moi quelque chose d'original. Votre sens du gout peut-etre?",
-            "Lire avant de signer? ENFIN quelqu'un d'intelligent! Ca ruine tout le plaisir mais bravo.",
-            "Je DOIS dire la verite. C'est dans mon contrat. Donc oui, ce deal est mauvais pour vous. Mais vous allez signer quand meme?"
-        ]
-    }
-];
-
-// ============================================================================
-// ENFANTS ET ORPHELINS
-// ============================================================================
-export const CHILDREN: NPC[] = [
-    {
-        name: "Petit Theo",
-        role: "Gamin des rues",
-        region: "Hammerdeep",
-        race: "Humain",
-        age: "10 ans",
-        personality: "Malin, debrouillard, coeur d'or cache sous une carapace. Chef d'une bande d'orphelins.",
-        appearance: "Petit, crasseux, yeux vifs, habits trop grands, sourire espiegle.",
-        greeting: "Hey! Vous avez l'air perdus. 5 pieces et j'vous guide. 10 et j'vous protege. Des moi.",
-        secret: "Il sait ou se cache l'entree secrete du tresor de la Guilde. Il attend le bon moment.",
-        dialogue_samples: [
-            "Parents? Morts. Ou partis. C'est pareil quand t'as faim.",
-            "Mes gars? On est six. On partage tout. C'est la regle. Meme les coups.",
-            "Je sais des choses. Cette ruelle? Dangereuse apres minuit. Celle-la? Sûre. 2 pieces l'info."
-        ]
-    },
-    {
-        name: "Lily Fleur-de-Cendres",
-        role: "Orpheline mysterieuse",
-        region: "Terres Brulees (en fuite)",
-        race: "Humaine (?)",
-        age: "8 ans",
-        personality: "Silencieuse, etrange, voit des choses que les autres ne voient pas. Innocente mais inquietante.",
-        appearance: "Petite fille pale, cheveux blancs anormaux, yeux trop grands et trop sages, peluche usee.",
-        greeting: "*vous regarde fixement* Le monsieur derriere vous dit de pas vous approcher. Mais il est mechant.",
-        secret: "Elle est nee pendant un rituel rate. Elle voit les morts et ils la suivent.",
-        dialogue_samples: [
-            "Ma maman est la-bas. *pointe le vide* Elle dit qu'elle est desolee.",
-            "Vous allez mourir. Mais pas aujourd'hui. Le monsieur gris l'a dit. Il sait ces choses.",
-            "J'aime pas dormir. Les morts parlent trop fort la nuit."
-        ]
-    }
-];
-
-// ============================================================================
-// EXPORT GLOBAL
-// ============================================================================
-export const NPC_TEMPLATES = {
-    merchants: MERCHANTS,
-    tavernkeepers: TAVERNKEEPERS,
-    quest_givers: QUEST_GIVERS,
-    wanderers: WANDERERS,
-    nobles: NOBLES,
-    criminals: CRIMINALS,
-    commoners: COMMONERS,
-    supernatural: SUPERNATURAL,
-    children: CHILDREN
+  ]
 };
 
-// Helper pour obtenir un PNJ aleatoire d'une categorie
-export const getRandomNPC = (category: keyof typeof NPC_TEMPLATES): NPC => {
-    const list = NPC_TEMPLATES[category];
-    return list[Math.floor(Math.random() * list.length)];
+export const MERCHANT_SYLVANA: NPCDefinition = {
+  id: 'npc:merchant:sylvana',
+  name: "Sylvana Duskweaver",
+  title: "Tisserande de Nuit",
+  role: 'merchant',
+  personality: 'mysterious',
+  location: 'shadowfen-bazaar',
+  region: 'southern-swamps',
+  description: "Elfe mystérieuse vendant tissus rares et vêtements enchantés. Parle peu mais ses produits sont exceptionnels.",
+  appearance: "Elfe aux cheveux noirs de jais, yeux violets perçants. Vêtements de soie sombre brodés de runes argentées.",
+  backstory: "Ancienne apprentie de l'Ordre du Voile. A quitté l'ordre dans des circonstances mystérieuses. Ses créations sont imprégnées de magie subtile.",
+  faction: 'faction:twilight-veil',
+  inventory: [
+    { itemId: 'armor:robe:silk', stock: 2, priceMultiplier: 1.5 },
+    { itemId: 'armor:cloak:enchanted', stock: 1, priceMultiplier: 2.0, restockTime: 2880 },
+    { itemId: 'cloth:silk', stock: 20, priceMultiplier: 1.3 },
+    { itemId: 'cloth:ethereal', stock: 5, priceMultiplier: 3.0, restockTime: 1440 }
+  ],
+  services: [
+    {
+      type: 'enchant',
+      description: "Tisser des enchantements dans vos vêtements (+1 slot enchantement)",
+      cost: 500,
+      requirements: "Vêtement en soie ou mieux"
+    }
+  ],
+  dialogues: [
+    {
+      trigger: 'greeting',
+      text: "... *lève les yeux de son métier* Vous cherchez quelque chose de... particulier ?"
+    },
+    {
+      trigger: 'trade',
+      text: "*effleure le tissu* Cette pièce m'a pris trois nuits sous la lune. Elle vaut son prix."
+    },
+    {
+      trigger: 'farewell',
+      text: "*retourne à son travail sans un mot*"
+    }
+  ]
 };
 
-// Helper pour obtenir un PNJ par region
-export const getNPCsByRegion = (region: string): NPC[] => {
-    const allNPCs = [
-        ...MERCHANTS, ...TAVERNKEEPERS, ...QUEST_GIVERS,
-        ...WANDERERS, ...NOBLES, ...CRIMINALS,
-        ...COMMONERS, ...SUPERNATURAL, ...CHILDREN
-    ];
-    return allNPCs.filter(npc => 
-        npc.region.toLowerCase().includes(region.toLowerCase()) ||
-        npc.region === "Partout" ||
-        npc.region.includes("Itinerant")
+// ============================================================================
+// FORGERONS & ARTISANS
+// ============================================================================
+
+export const BLACKSMITH_BROM: NPCDefinition = {
+  id: 'npc:blacksmith:brom',
+  name: "Brom Martelpoing",
+  title: "Maître Forgeron",
+  role: 'blacksmith',
+  personality: 'grumpy',
+  location: 'ironhold-forge',
+  region: 'northern-kingdoms',
+  description: "Nain bourru au caractère de fer. Le meilleur forgeron à 100 lieues à la ronde, et il le sait.",
+  appearance: "Nain massif, barbe rousse tressée, muscles comme des câbles d'acier. Toujours couvert de suie.",
+  backstory: "Forgea l'épée du roi actuel. Perdit son fils dans la Guerre des Cendres, depuis lors travaille jour et nuit.",
+  faction: 'faction:steel-brotherhood',
+  inventory: [
+    { itemId: 'weapon:longsword:steel', stock: 2, priceMultiplier: 1.0 },
+    { itemId: 'weapon:warhammer:iron', stock: 3, priceMultiplier: 1.0 },
+    { itemId: 'armor:chest:plate', stock: 1, priceMultiplier: 1.2, restockTime: 1440 },
+    { itemId: 'ore:iron', stock: 50, priceMultiplier: 0.8 },
+    { itemId: 'ore:steel', stock: 20, priceMultiplier: 0.9 }
+  ],
+  services: [
+    {
+      type: 'repair',
+      description: "Réparer équipement métallique (restaure 100% durabilité)",
+      cost: 50
+    },
+    {
+      type: 'train',
+      description: "Formation Forge (débloque métier Smithing)",
+      cost: 100,
+      requirements: "Force 12+"
+    }
+  ],
+  dialogues: [
+    {
+      trigger: 'greeting',
+      text: "*grogne sans lever les yeux du marteau* Qu'est-ce tu veux ? Si c'est pas important, dégage."
+    },
+    {
+      trigger: 'trade',
+      text: "Ouais, c'est du bon acier. Forgé à la main, pas cette camelote magique. *crache*"
+    },
+    {
+      trigger: 'farewell',
+      text: "*retourne à l'enclume en marmonnant*"
+    },
+    {
+      trigger: 'idle',
+      text: "Les jeunes aujourd'hui... savent même plus tenir un marteau correctement. *secoue la tête*"
+    }
+  ]
+};
+
+export const ALCHEMIST_MIRABEL: NPCDefinition = {
+  id: 'npc:alchemist:mirabel',
+  name: "Mirabel Fleurdelune",
+  title: "Maîtresse Alchimiste",
+  role: 'alchemist',
+  personality: 'eccentric',
+  location: 'arcane-district',
+  region: 'northern-kingdoms',
+  description: "Alchimiste excentrique entourée de fioles bouillonnantes et vapeurs colorées. Parle à ses potions.",
+  appearance: "Femme d'âge indéterminé, cheveux violets hérissés, taches de couleur partout. Lunettes déformées par les vapeurs.",
+  backstory: "Ancienne professeur à l'Académie Arcane. Préféra la liberté de l'expérimentation à la rigueur académique. Ses découvertes sont révolutionnaires... et dangereuses.",
+  faction: 'faction:arcane-guild',
+  reputationRequired: 50,
+  inventory: [
+    { itemId: 'potion:healing:normal', stock: 15, priceMultiplier: 0.9 },
+    { itemId: 'potion:mana:normal', stock: 10, priceMultiplier: 0.9 },
+    { itemId: 'potion:strength', stock: 5, priceMultiplier: 1.2 },
+    { itemId: 'potion:invisibility', stock: 2, priceMultiplier: 2.5, restockTime: 2880 },
+    { itemId: 'herb:silverleaf', stock: 30, priceMultiplier: 0.8 },
+    { itemId: 'herb:dreamfoil', stock: 15, priceMultiplier: 1.0 }
+  ],
+  services: [
+    {
+      type: 'train',
+      description: "Formation Alchimie (débloque métier Alchemy)",
+      cost: 150,
+      requirements: "Intelligence 13+"
+    },
+    {
+      type: 'identify',
+      description: "Identifier potion inconnue",
+      cost: 25
+    }
+  ],
+  dialogues: [
+    {
+      trigger: 'greeting',
+      text: "Oh ! Un visiteur ! *renverse une fiole* Ne vous inquiétez pas, ce n'était que de l'acide... mineur."
+    },
+    {
+      trigger: 'trade',
+      text: "*chuchote à une potion* Oui, oui, tu vas avoir un nouveau maître. Sois sage ! *vous tend la fiole*"
+    },
+    {
+      trigger: 'farewell',
+      text: "Revenez me voir ! J'aurai peut-être inventé quelque chose d'encore plus... *BOUM* ...explosif."
+    },
+    {
+      trigger: 'idle',
+      text: "*marmonne en remuant un chaudron* Trois gouttes de lune, une pincée d'étoile... non, attends, c'était l'inverse..."
+    }
+  ]
+};
+
+// ============================================================================
+// DONNEURS DE QUÊTES
+// ============================================================================
+
+export const QUESTGIVER_ELENA: NPCDefinition = {
+  id: 'npc:quest:elena',
+  name: "Dame Elena Casteleyn",
+  title: "Intendante Royale",
+  role: 'questgiver',
+  personality: 'helpful',
+  location: 'royal-palace',
+  region: 'northern-kingdoms',
+  description: "Noble élégante chargée des affaires du royaume. Toujours débordée mais garde son calme.",
+  appearance: "Femme élégante d'une quarantaine d'années, cheveux châtains relevés, robe bleue royale. Port altier.",
+  backstory: "Fille d'un duc, éduquée à la cour. Devint Intendante Royale après avoir déjoué un complot. Le roi lui fait entièrement confiance.",
+  faction: 'faction:royal-crown',
+  quests: ['quest:missing-caravan', 'quest:goblin-threat', 'quest:royal-artifact'],
+  dialogues: [
+    {
+      trigger: 'greeting',
+      text: "Bonjour, aventurier. Le royaume a besoin de gens compétents comme vous. Puis-je compter sur votre aide ?"
+    },
+    {
+      trigger: 'quest',
+      text: "Voici la situation... *déroule un parchemin* J'ai besoin de quelqu'un de discret et efficace."
+    },
+    {
+      trigger: 'farewell',
+      text: "Que la Couronne vous protège. Revenez me voir une fois votre mission accomplie."
+    }
+  ]
+};
+
+export const QUESTGIVER_OLD_MARCUS: NPCDefinition = {
+  id: 'npc:quest:marcus',
+  name: "Vieux Marcus",
+  title: "Fermier",
+  role: 'questgiver',
+  personality: 'humble',
+  location: 'riverside-farm',
+  region: 'northern-kingdoms',
+  description: "Vieux fermier au dos courbé par le labeur. Mains calleuses, regard inquiet.",
+  appearance: "Homme âgé, cheveux blancs rares, vêtements rapiécés. Appuyé sur un bâton noueux.",
+  backstory: "Ferme ses terres depuis 50 ans. A vu le royaume prospérer et décliner. Sa femme est morte l'année dernière, ses fils sont partis à la guerre.",
+  quests: ['quest:wolf-problem', 'quest:stolen-livestock'],
+  dialogues: [
+    {
+      trigger: 'greeting',
+      text: "*lève la tête péniblement* Oh, un voyageur... Vous tombez bien, j'ai des problèmes avec les loups..."
+    },
+    {
+      trigger: 'quest',
+      text: "J'peux pas vous payer grand-chose, mais si vous m'aidez, j'vous donnerai ce que j'ai."
+    },
+    {
+      trigger: 'farewell',
+      text: "Merci, jeune. Que les dieux vous bénissent."
+    }
+  ]
+};
+
+export const QUESTGIVER_MYSTERIOUS_STRANGER: NPCDefinition = {
+  id: 'npc:quest:stranger',
+  name: "L'Étranger Encapuchonné",
+  title: "???",
+  role: 'questgiver',
+  personality: 'mysterious',
+  location: 'shadowy-alley',
+  region: 'northern-kingdoms',
+  description: "Silhouette indistincte dans l'ombre. Impossible de voir son visage sous la capuche profonde.",
+  appearance: "Cape noire, capuche cachant tout le visage. Seuls deux yeux brillants sont visibles.",
+  backstory: "Nul ne connaît sa véritable identité. Apparaît et disparaît comme une ombre. Ses quêtes sont dangereuses mais lucratives.",
+  faction: 'faction:twilight-veil',
+  reputationRequired: 100,
+  quests: ['quest:shadow-artifact', 'quest:assassination', 'quest:heist'],
+  dialogues: [
+    {
+      trigger: 'greeting',
+      text: "*voix rauque de l'ombre* Je vous attendais... Vous avez la réputation d'être... discret."
+    },
+    {
+      trigger: 'quest',
+      text: "Cette mission est délicate. Aucune trace, aucun témoin. Compris ?"
+    },
+    {
+      trigger: 'farewell',
+      text: "*disparaît dans l'ombre* Nous nous reverrons..."
+    }
+  ]
+};
+
+// ============================================================================
+// ENTRAÎNEURS
+// ============================================================================
+
+export const TRAINER_SWORD_MASTER: NPCDefinition = {
+  id: 'npc:trainer:roland',
+  name: "Maître Roland",
+  title: "Maître d'Armes",
+  role: 'trainer',
+  personality: 'arrogant',
+  location: 'training-grounds',
+  region: 'northern-kingdoms',
+  description: "Ancien champion de tournoi, maintenant forme la garde royale. Arrogant mais compétent.",
+  appearance: "Homme dans la force de l'âge, cicatrice en travers du visage. Armure d'entraînement polie. Posture martiale.",
+  backstory: "Champion invaincu de 15 tournois consécutifs. Prit sa retraite après avoir perdu contre un jeune prodige. Depuis, cherche à former le prochain champion.",
+  faction: 'faction:royal-crown',
+  services: [
+    {
+      type: 'train',
+      description: "Entraînement Combat à l'Épée (+1 Compétence Épée)",
+      cost: 200,
+      requirements: "Force 12+, Dextérité 10+"
+    },
+    {
+      type: 'train',
+      description: "Entraînement Technique Avancée (débloquer feat)",
+      cost: 500,
+      requirements: "Niveau 5+, Compétence Épée 3+"
+    }
+  ],
+  dialogues: [
+    {
+      trigger: 'greeting',
+      text: "*vous jauge du regard* Vous voulez apprendre ? Bien. Montrez-moi d'abord si vous en êtes digne. En garde !"
+    },
+    {
+      trigger: 'idle',
+      text: "*effectue des moulinets parfaits* La perfection n'est pas un but, c'est un mode de vie."
+    }
+  ]
+};
+
+export const TRAINER_ARCHMAGE_THALION: NPCDefinition = {
+  id: 'npc:trainer:thalion',
+  name: "Archimage Thalion",
+  title: "Grand Érudit",
+  role: 'trainer',
+  personality: 'arrogant',
+  location: 'arcane-academy',
+  region: 'northern-kingdoms',
+  description: "Elfe érudit à l'intelligence remarquable. Méprise ceux qu'il juge inférieurs intellectuellement.",
+  appearance: "Elfe grand et mince, cheveux argentés, robes bleues brodées de constellations. Staff de cristal.",
+  backstory: "Né il y a 300 ans, a étudié sous les plus grands mages. Maîtrise 47 sorts de niveau 9. Son seul échec : n'a jamais réussi la Pierre Philosophale.",
+  faction: 'faction:arcane-guild',
+  reputationRequired: 200,
+  services: [
+    {
+      type: 'train',
+      description: "Enseigner sort niveau 1-3",
+      cost: 300,
+      requirements: "Intelligence 15+"
+    },
+    {
+      type: 'train',
+      description: "Enseigner sort niveau 4-6",
+      cost: 800,
+      requirements: "Intelligence 17+, Arcana 5+"
+    },
+    {
+      type: 'train',
+      description: "Enseigner sort niveau 7-9",
+      cost: 2000,
+      requirements: "Intelligence 20+, Arcana 10+"
+    },
+    {
+      type: 'identify',
+      description: "Identifier objet magique",
+      cost: 50
+    }
+  ],
+  dialogues: [
+    {
+      trigger: 'greeting',
+      text: "*à peine un regard* Encore un qui vient quémander du savoir. Très bien. Prouvez que vous en êtes digne."
+    },
+    {
+      trigger: 'idle',
+      text: "*lit un grimoire ancien* ...fascinant. Cette incantation de 3e ère est bien plus élégante que la version moderne..."
+    }
+  ]
+};
+
+// ============================================================================
+// AUBERGISTES & SERVICES
+// ============================================================================
+
+export const INNKEEPER_ROSIE: NPCDefinition = {
+  id: 'npc:innkeeper:rosie',
+  name: "Rosie Barrelpour",
+  title: "Aubergiste",
+  role: 'innkeeper',
+  personality: 'jovial',
+  location: 'prancing-pony-inn',
+  region: 'northern-kingdoms',
+  description: "Halfling chaleureuse tenant l'auberge la plus accueillante du royaume. Son ragoût est légendaire.",
+  appearance: "Halfling ronde au visage jovial, tablier toujours couvert de farine. Cheveux bouclés attachés en chignon.",
+  backstory: "A hérité l'auberge de sa mère. Transformé un taudis en l'établissement le plus prospère de la ville. Connaît tous les ragots du royaume.",
+  inventory: [
+    { itemId: 'food:bread', stock: -1, priceMultiplier: 1.0 },
+    { itemId: 'food:stew', stock: -1, priceMultiplier: 1.2 },
+    { itemId: 'drink:ale', stock: -1, priceMultiplier: 1.0 },
+    { itemId: 'drink:wine', stock: 20, priceMultiplier: 1.5 }
+  ],
+  services: [
+    {
+      type: 'rest',
+      description: "Chambre confortable pour la nuit (repos complet)",
+      cost: 10
+    },
+    {
+      type: 'rest',
+      description: "Suite de luxe (repos complet + buff +1 tous stats 8h)",
+      cost: 50
+    }
+  ],
+  dialogues: [
+    {
+      trigger: 'greeting',
+      text: "Bienvenue au Poney Fringant, cher ! Entrez, entrez ! Vous avez l'air affamé. Mon ragoût va arranger ça !"
+    },
+    {
+      trigger: 'trade',
+      text: "*remplit une assiette fumante* Voilà ! Fait avec amour, comme toujours !"
+    },
+    {
+      trigger: 'idle',
+      text: "Vous avez entendu les nouvelles ? Paraît que le dragon du nord s'est réveillé ! *baisse la voix*"
+    }
+  ]
+};
+
+// ============================================================================
+// ALLIÉS & COMPAGNONS POTENTIELS
+// ============================================================================
+
+export const ALLY_THERON: NPCDefinition = {
+  id: 'npc:ally:theron',
+  name: "Theron Stormcaller",
+  title: "Mage de Guerre",
+  role: 'ally',
+  personality: 'friendly',
+  location: 'wandering',
+  region: 'various',
+  description: "Mage de combat expérimenté cherchant aventuriers compétents pour former un groupe.",
+  appearance: "Homme d'une trentaine d'années, cheveux noirs, barbe naissante. Robes de combat fonctionnelles.",
+  backstory: "Ancien soldat devenu mage après la guerre. A vu trop d'amis mourir. Cherche désormais à protéger les innocents plutôt que servir les nobles.",
+  faction: 'faction:arcane-guild',
+  creatureTemplate: 'humanoid:mage:combat',
+  dialogues: [
+    {
+      trigger: 'greeting',
+      text: "Salutations. J'ai entendu parler de vos exploits. Peut-être devrions-nous unir nos forces ?"
+    },
+    {
+      trigger: 'combat',
+      text: "Couvrez-moi ! Je prépare un sort dévastateur !"
+    }
+  ],
+  allies: ['npc:ally:lyra']
+};
+
+export const ALLY_LYRA: NPCDefinition = {
+  id: 'npc:ally:lyra',
+  name: "Lyra Swiftarrow",
+  title: "Ranger",
+  role: 'ally',
+  personality: 'friendly',
+  location: 'wandering',
+  region: 'forest',
+  description: "Ranger experte en survie et pistage. Protège les forêts et leurs créatures.",
+  appearance: "Elfe aux cheveux auburn, yeux verts perçants. Armure de cuir vert, arc en bois d'if.",
+  backstory: "Élevée par les rangers après que sa famille fut tuée par des braconniers. A juré de protéger la nature.",
+  faction: 'faction:emerald-wardens',
+  creatureTemplate: 'humanoid:ranger:elite',
+  dialogues: [
+    {
+      trigger: 'greeting',
+      text: "La forêt m'a parlé de vous. Elle dit que vous respectez la nature. C'est bien."
+    },
+    {
+      trigger: 'combat',
+      text: "*décoche rapidement trois flèches* Continuez d'avancer, je couvre vos arrières !"
+    }
+  ],
+  allies: ['npc:ally:theron']
+};
+
+// ============================================================================
+// BOSS & ENNEMIS NOMMÉS
+// ============================================================================
+
+export const ENEMY_BANDIT_KING: NPCDefinition = {
+  id: 'npc:enemy:bandit-king',
+  name: "Gareth Lamedenfer",
+  title: "Roi des Bandits",
+  role: 'enemy',
+  personality: 'arrogant',
+  location: 'bandit-hideout',
+  region: 'forest',
+  description: "Chef charismatique d'une bande de 50+ brigands. Ancien chevalier déchu.",
+  appearance: "Homme imposant, cicatrices de bataille, armure noire dérobée. Cape rouge sang. Épée nommée 'Veuve'.",
+  backstory: "Ancien chevalier déshonoré après avoir refusé un ordre immoral. Rassembla les exclus et forme maintenant une armée de l'ombre.",
+  faction: 'faction:shadow-brotherhood',
+  isHostile: true,
+  creatureTemplate: 'humanoid:bandit:boss',
+  dialogues: [
+    {
+      trigger: 'greeting',
+      text: "Tiens, tiens... des héros. *ricane* Vous êtes venus pour ma tête ? Venez la prendre !"
+    },
+    {
+      trigger: 'combat',
+      text: "*brandit son épée* Pour la liberté ! Pour ceux qu'on a rejetés ! EN AVANT !"
+    }
+  ],
+  enemies: ['npc:quest:elena', 'faction:royal-crown']
+};
+
+export const ENEMY_NECROMANCER: NPCDefinition = {
+  id: 'npc:enemy:malachar',
+  name: "Malachar le Nécromancien",
+  title: "Seigneur des Morts",
+  role: 'enemy',
+  personality: 'arrogant',
+  location: 'cursed-tower',
+  region: 'swamp',
+  description: "Nécromancien fou cherchant à créer une armée de morts-vivants pour conquérir le royaume.",
+  appearance: "Silhouette émaciée en robes noires déchiquetées. Yeux brillant d'une lueur verte maladive. Odeur de putréfaction.",
+  backstory: "Ancien archimage banni de l'Académie Arcane après avoir pratiqué la nécromancie interdite. Jure de se venger.",
+  faction: 'faction:necromancers-cult',
+  isHostile: true,
+  creatureTemplate: 'undead:necromancer:master',
+  dialogues: [
+    {
+      trigger: 'greeting',
+      text: "*rire sinistre* Des vivants... Parfait. J'ai toujours besoin de nouveaux sujets pour mes expériences."
+    },
+    {
+      trigger: 'combat',
+      text: "Levez-vous, mes serviteurs ! Montrez à ces insectes la puissance de la mort éternelle !"
+    }
+  ],
+  enemies: ['faction:arcane-guild', 'faction:royal-crown', 'faction:temple-light']
+};
+
+// ============================================================================
+// GARDES & AUTORITÉS
+// ============================================================================
+
+export const GUARD_CAPTAIN: NPCDefinition = {
+  id: 'npc:guard:captain',
+  name: "Capitaine Marcus Steelhelm",
+  title: "Capitaine de la Garde",
+  role: 'guard',
+  personality: 'helpful',
+  location: 'city-barracks',
+  region: 'northern-kingdoms',
+  description: "Vétéran commandant la garde municipale. Strict mais juste.",
+  appearance: "Homme d'âge mûr, cheveux gris coupés court, armure de plates impeccable. Cicatrice sur le menton.",
+  backstory: "30 ans de service. Protège la ville comme sa propre famille. Respecté autant qu'il est craint des criminels.",
+  faction: 'faction:royal-crown',
+  dialogues: [
+    {
+      trigger: 'greeting',
+      text: "Aventurier. Bienvenue dans notre ville. Je vous préviens : zéro tolérance pour le désordre. Clair ?"
+    },
+    {
+      trigger: 'idle',
+      text: "*surveille la rue d'un œil vigilant* Tout semble calme... pour l'instant."
+    }
+  ]
+};
+
+// ============================================================================
+// MARCHANDS SPÉCIALISÉS (suite)
+// ============================================================================
+
+export const MERCHANT_WEAPONS: NPCDefinition = {
+  id: 'npc:merchant:armand',
+  name: "Armand L'Armurier",
+  role: 'merchant',
+  personality: 'grumpy',
+  location: 'weapon-shop',
+  region: 'northern-kingdoms',
+  description: "Marchand d'armes spécialisé. Vend uniquement le meilleur équipement de combat.",
+  appearance: "Homme trapu, borgne, moustache épaisse. Toujours armé jusqu'aux dents.",
+  inventory: [
+    { itemId: 'weapon:longsword:steel', stock: 4, priceMultiplier: 1.1 },
+    { itemId: 'weapon:greataxe:steel', stock: 2, priceMultiplier: 1.2 },
+    { itemId: 'weapon:crossbow:heavy', stock: 3, priceMultiplier: 1.3 },
+    { itemId: 'weapon:dagger:mithril', stock: 1, priceMultiplier: 2.0, restockTime: 2880 }
+  ],
+  dialogues: [
+    { trigger: 'greeting', text: "Des armes ? Vous êtes au bon endroit. Tout ici est testé personnellement." },
+    { trigger: 'trade', text: "*tape l'arme* Solide. Équilibrée. Mortelle. Prenez-la." }
+  ]
+};
+
+export const MERCHANT_POTION_SELLER: NPCDefinition = {
+  id: 'npc:merchant:griselda',
+  name: "Griselda la Sorcière",
+  title: "Vendeuse de Potions",
+  role: 'merchant',
+  personality: 'eccentric',
+  location: 'swamp-hut',
+  region: 'southern-swamps',
+  description: "Vieille femme vivant dans les marais. Potions douteuses mais efficaces.",
+  appearance: "Vieille femme voûtée, verrue sur le nez, doigts crochus. Rit toute seule.",
+  inventory: [
+    { itemId: 'potion:healing:greater', stock: 8, priceMultiplier: 0.8 },
+    { itemId: 'potion:poison:deadly', stock: 5, priceMultiplier: 1.5 },
+    { itemId: 'potion:transformation:frog', stock: 2, priceMultiplier: 3.0 },
+    { itemId: 'reagent:eye-of-newt', stock: 20, priceMultiplier: 1.0 }
+  ],
+  dialogues: [
+    { trigger: 'greeting', text: "*caquètement* Hehe ! Un client ! Tu veux des potions, oui ? J'ai ce qu'il faut..." },
+    { trigger: 'idle', text: "*remue chaudron* Œil de crapaud, langue de chauve-souris... *marmonne*" }
+  ]
+};
+
+export const MERCHANT_JEWELER: NPCDefinition = {
+  id: 'npc:merchant:ezio',
+  name: "Ezio Brillantine",
+  title: "Joaillier",
+  role: 'merchant',
+  personality: 'greedy',
+  location: 'jewel-emporium',
+  region: 'northern-kingdoms',
+  description: "Joaillier raffiné aux prix exorbitants. Qualité inégalée mais avare.",
+  appearance: "Homme élégant, monocle doré, costume de soie. Doigts couverts de bagues.",
+  reputationRequired: 100,
+  inventory: [
+    { itemId: 'jewelry:ring:silver', stock: 5, priceMultiplier: 1.5 },
+    { itemId: 'jewelry:necklace:ruby', stock: 2, priceMultiplier: 2.0 },
+    { itemId: 'gem:diamond', stock: 3, priceMultiplier: 2.5 },
+    { itemId: 'jewelry:crown:diamond', stock: 1, priceMultiplier: 5.0, restockTime: 10080 }
+  ],
+  dialogues: [
+    { trigger: 'greeting', text: "*regarde à travers monocle* Mmm... vous avez les moyens de mes produits ?" },
+    { trigger: 'trade', text: "Cette pièce est unique. Un vrai chef-d'œuvre. Le prix reflète sa valeur." }
+  ]
+};
+
+export const MERCHANT_RARE_BOOKS: NPCDefinition = {
+  id: 'npc:merchant:theodore',
+  name: "Théodore Pageturner",
+  title: "Libraire Ancien",
+  role: 'merchant',
+  personality: 'helpful',
+  location: 'ancient-library',
+  region: 'northern-kingdoms',
+  description: "Vieil érudit gardien de connaissances anciennes. Vend livres et parchemins rares.",
+  appearance: "Vieil homme maigre, lunettes épaisses, robe poussiéreuse. Toujours un livre en main.",
+  faction: 'faction:arcane-guild',
+  inventory: [
+    { itemId: 'scroll:fireball', stock: 3, priceMultiplier: 1.2 },
+    { itemId: 'tome:spellbook', stock: 2, priceMultiplier: 1.5 },
+    { itemId: 'scroll:teleportation', stock: 1, priceMultiplier: 3.0, restockTime: 4320 },
+    { itemId: 'book:history:ancient', stock: 5, priceMultiplier: 1.0 }
+  ],
+  services: [
+    { type: 'identify', description: "Déchiffrer texte ancien", cost: 100 }
+  ],
+  dialogues: [
+    { trigger: 'greeting', text: "*lève les yeux* Ah ! Un chercheur de savoir. Bienvenue dans mon humble collection." },
+    { trigger: 'idle', text: "*tourne pages délicatement* Fascinant... ce manuscrit date de la 2e ère..." }
+  ]
+};
+
+// ============================================================================
+// NOBLES & AUTORITÉS (suite)
+// ============================================================================
+
+export const NOBLE_LORD_BLACKWOOD: NPCDefinition = {
+  id: 'npc:noble:blackwood',
+  name: "Lord Damien Blackwood",
+  title: "Baron de Shadowfen",
+  role: 'noble',
+  personality: 'arrogant',
+  location: 'blackwood-manor',
+  region: 'southern-swamps',
+  description: "Noble corrompu régnant sur les marais. Rumeurs de pactes démoniaques.",
+  appearance: "Homme pâle aux cheveux noirs, yeux froids. Vêtements sombres luxueux.",
+  backstory: "Famille noble autrefois respectable. Damien a conclu pacte avec entités ténébreuses pour prolonger sa vie. Règne par la peur.",
+  faction: 'faction:twilight-veil',
+  isHostile: false,
+  quests: ['quest:manor-mystery', 'quest:demonic-pact'],
+  dialogues: [
+    { trigger: 'greeting', text: "*sourire froid* Bienvenue dans mon humble demeure. J'espère que vous respectez... l'étiquette." },
+    { trigger: 'idle', text: "*regarde par la fenêtre* Le pouvoir a un prix. Certains sont prêts à le payer..." }
+  ]
+};
+
+export const NOBLE_PRINCESS_ARIA: NPCDefinition = {
+  id: 'npc:noble:aria',
+  name: "Princesse Aria Lumière-d'Aube",
+  title: "Héritière du Royaume",
+  role: 'noble',
+  personality: 'friendly',
+  location: 'royal-palace',
+  region: 'northern-kingdoms',
+  description: "Princesse idéaliste voulant aider son peuple. Souvent en désaccord avec la cour.",
+  appearance: "Jeune femme blonde, couronne simple, robe pratique plutôt qu'ostentatoire.",
+  backstory: "Contrairement à son père, veut réformer le royaume. S'entraîne secrètement au combat. Le peuple l'adore.",
+  faction: 'faction:royal-crown',
+  quests: ['quest:peoples-champion', 'quest:reform-laws'],
+  dialogues: [
+    { trigger: 'greeting', text: "Bonjour ! Pas de formalités, je vous prie. Je préfère parler d'égal à égal." },
+    { trigger: 'quest', text: "Mon père refuse d'écouter. Peut-être que si je lui prouve... Voulez-vous m'aider ?" }
+  ]
+};
+
+export const JUDGE_GRIMWALD: NPCDefinition = {
+  id: 'npc:authority:grimwald',
+  name: "Juge Grimwald",
+  title: "Grand Inquisiteur",
+  role: 'neutral',
+  personality: 'paranoid',
+  location: 'court-house',
+  region: 'northern-kingdoms',
+  description: "Inquisiteur zélé chassant hérétiques et pratiques interdites. Aucune pitié.",
+  appearance: "Homme austère en robe noire, symbole du jugement brodé. Regard perçant.",
+  faction: 'faction:temple-light',
+  isHostile: false,
+  dialogues: [
+    { trigger: 'greeting', text: "*vous jauge* Vous n'avez rien à cacher, j'espère ? La Lumière révèle tout mensonge." },
+    { trigger: 'idle', text: "*lit liste* Hérétiques capturés ce mois : 47. Pas assez. Les ténèbres se répandent..." }
+  ]
+};
+
+// ============================================================================
+// ARTISANS SPÉCIALISÉS (suite)
+// ============================================================================
+
+export const ENCHANTER_MYSTRAL: NPCDefinition = {
+  id: 'npc:enchanter:mystral',
+  name: "Mystral Runeetcher",
+  title: "Maître Enchanteur",
+  role: 'enchanter',
+  personality: 'mysterious',
+  location: 'enchanting-sanctum',
+  region: 'northern-kingdoms',
+  description: "Enchanteur énigmatique maîtrisant runes anciennes. Prix élevés mais travail exceptionnel.",
+  appearance: "Androgyne aux traits délicats, tatouages runiques lumineux sur les bras.",
+  faction: 'faction:arcane-guild',
+  reputationRequired: 150,
+  services: [
+    { type: 'enchant', description: "Enchantement d'arme (+1/+2/+3)", cost: 500, requirements: "Arme de qualité" },
+    { type: 'enchant', description: "Enchantement d'armure (résistance élémentaire)", cost: 800 },
+    { type: 'enchant', description: "Création de rune permanente", cost: 2000, requirements: "Gemme épique+" }
+  ],
+  dialogues: [
+    { trigger: 'greeting', text: "*trace rune dans l'air* Les énergies vous entourent... intéressant." },
+    { trigger: 'idle', text: "*médite devant cercle runique brillant*" }
+  ]
+};
+
+export const COOK_PIERRE: NPCDefinition = {
+  id: 'npc:cook:pierre',
+  name: "Pierre Flammesauce",
+  title: "Chef Cuisinier",
+  role: 'merchant',
+  personality: 'jovial',
+  location: 'golden-fork',
+  region: 'northern-kingdoms',
+  description: "Chef passionné tenant le meilleur restaurant de la capitale. Excentrique mais talentueux.",
+  appearance: "Homme rond, toque blanche immaculée, moustache en guidon. Tablier couvert de taches.",
+  inventory: [
+    { itemId: 'food:hearty-stew', stock: 10, priceMultiplier: 1.5 },
+    { itemId: 'food:lobster-bisque', stock: 5, priceMultiplier: 2.0 },
+    { itemId: 'food:dragons-feast', stock: 1, priceMultiplier: 5.0, restockTime: 1440 }
+  ],
+  services: [
+    { type: 'train', description: "Formation Cuisine (débloque métier Cooking)", cost: 50 }
+  ],
+  dialogues: [
+    { trigger: 'greeting', text: "*baise du bout des doigts* Bienvenue ! Aujourd'hui, le menu est... magnifique !" },
+    { trigger: 'idle', text: "*goûte sauce* Mmm... il manque quelque chose... AH ! Une pincée de safran !" }
+  ]
+};
+
+export const TAILOR_MADAME_BOUTIQUE: NPCDefinition = {
+  id: 'npc:tailor:boutique',
+  name: "Madame Boutique",
+  title: "Couturière de Luxe",
+  role: 'merchant',
+  personality: 'arrogant',
+  location: 'haute-couture',
+  region: 'northern-kingdoms',
+  description: "Couturière snob habillant la noblesse. Refuse les clients 'mal habillés'.",
+  appearance: "Femme élégante, cheveux en chignon parfait, lorgnon. Robe à la dernière mode.",
+  reputationRequired: 75,
+  inventory: [
+    { itemId: 'armor:shirt:silk', stock: 10, priceMultiplier: 2.0 },
+    { itemId: 'armor:robe:silk', stock: 5, priceMultiplier: 2.5 },
+    { itemId: 'armor:cloak:enchanted', stock: 2, priceMultiplier: 3.0 }
+  ],
+  dialogues: [
+    { trigger: 'greeting', text: "*vous examine de haut en bas* ...Je suppose que je peux vous aider. Si vous avez les moyens." },
+    { trigger: 'trade', text: "*pince lèvres* Cette pièce est unique. Ne la gâchez pas avec des aventures vulgaires." }
+  ]
+};
+
+// ============================================================================
+// SERVICES DIVERS
+// ============================================================================
+
+export const BANKER_GOLDSWORTH: NPCDefinition = {
+  id: 'npc:banker:goldsworth',
+  name: "Barnabé Goldsworth",
+  title: "Maître Banquier",
+  role: 'merchant',
+  personality: 'greedy',
+  location: 'golden-vault',
+  region: 'northern-kingdoms',
+  description: "Banquier cupide gérant les coffres les plus sûrs du royaume. Tout a un prix.",
+  appearance: "Homme corpulent, costume cher, bagues en or. Sourire commercial permanent.",
+  services: [
+    { type: 'bank', description: "Coffre personnel (stockage illimité)", cost: 100 },
+    { type: 'bank', description: "Prêt (1000 gold, intérêt 20%)", cost: 0 },
+    { type: 'bank', description: "Échange de devises (5% commission)", cost: 0 }
+  ],
+  dialogues: [
+    { trigger: 'greeting', text: "*frotte mains* Bienvenue à la Voûte Dorée ! Comment puis-je faire fructifier votre fortune aujourd'hui ?" },
+    { trigger: 'trade', text: "Tout est sûr ici. Même les dragons ne pourraient forcer ces portes ! *rit*" }
+  ]
+};
+
+export const STABLEMASTER_TOM: NPCDefinition = {
+  id: 'npc:stable:tom',
+  name: "Tom Cavalécurie",
+  title: "Maître d'Écurie",
+  role: 'merchant',
+  personality: 'helpful',
+  location: 'town-stables',
+  region: 'northern-kingdoms',
+  description: "Palefrenier jovial aimant les animaux plus que les gens. Chevaux impeccables.",
+  appearance: "Homme robuste, cheveux paille, odeur de foin. Toujours une pomme pour les chevaux.",
+  services: [
+    { type: 'stable', description: "Louer cheval (vitesse +50%)", cost: 50 },
+    { type: 'stable', description: "Louer cheval de guerre (vitesse +50%, combat)", cost: 150 },
+    { type: 'stable', description: "Pension pour monture", cost: 5 }
+  ],
+  dialogues: [
+    { trigger: 'greeting', text: "Bonjour ! Besoin d'un cheval ? J'ai les meilleurs de la région !" },
+    { trigger: 'idle', text: "*brosse cheval* Là, là ma belle... *chantonne*" }
+  ]
+};
+
+export const HEALER_SISTER_MERCY: NPCDefinition = {
+  id: 'npc:healer:mercy',
+  name: "Sœur Mercy",
+  title: "Guérisseuse",
+  role: 'ally',
+  personality: 'helpful',
+  location: 'temple-healing',
+  region: 'northern-kingdoms',
+  description: "Prêtresse dévouée soignant malades et blessés gratuitement. Cœur d'or.",
+  appearance: "Femme d'âge moyen, habits simples de prêtresse, symbole de Lumière au cou. Sourire doux.",
+  faction: 'faction:temple-light',
+  services: [
+    { type: 'rest', description: "Soins (restaure tous HP)", cost: 0 },
+    { type: 'rest', description: "Guérison maladie/poison", cost: 25 },
+    { type: 'rest', description: "Résurrection", cost: 1000, requirements: "Corps intact" }
+  ],
+  dialogues: [
+    { trigger: 'greeting', text: "Bienvenue, enfant. Vous semblez fatigué. Laissez-moi vous aider." },
+    { trigger: 'idle', text: "*prie silencieusement devant autel*" }
+  ]
+};
+
+// ============================================================================
+// PERSONNAGES DE QUÊTES SECONDAIRES
+// ============================================================================
+
+export const QUEST_LOST_CHILD: NPCDefinition = {
+  id: 'npc:quest:anabelle',
+  name: "Petite Anabelle",
+  role: 'questgiver',
+  personality: 'friendly',
+  location: 'wandering',
+  region: 'forest',
+  description: "Fillette perdue dans la forêt. Cherche désespérément sa mère.",
+  appearance: "Fillette d'environ 8 ans, robe déchirée, larmes aux yeux. Serré une poupée.",
+  quests: ['quest:find-mother'],
+  dialogues: [
+    { trigger: 'greeting', text: "*sanglote* S'il vous plaît... aidez-moi à retrouver maman... je suis perdue..." },
+    { trigger: 'farewell', text: "*étreinte* Merci ! *court vers sa mère*" }
+  ]
+};
+
+export const QUEST_SCHOLAR_ANCIENT: NPCDefinition = {
+  id: 'npc:quest:elminster',
+  name: "Professeur Elminster",
+  title: "Historien",
+  role: 'questgiver',
+  personality: 'eccentric',
+  location: 'ruins',
+  region: 'various',
+  description: "Archéologue obsédé par civilisations anciennes. Cherche constamment artefacts.",
+  appearance: "Vieil homme excentrique, chapeau à large bord, outils d'excavation partout.",
+  faction: 'faction:arcane-guild',
+  quests: ['quest:ancient-artifact', 'quest:lost-civilization', 'quest:forbidden-knowledge'],
+  dialogues: [
+    { trigger: 'greeting', text: "Ah ! Parfait timing ! J'ai découvert des inscriptions fascinantes ! Vous devez m'aider à..." },
+    { trigger: 'idle', text: "*gratte pierre ancien* ...ce symbole... il ne correspond à aucune langue connue..." }
+  ]
+};
+
+export const QUEST_WIDOW: NPCDefinition = {
+  id: 'npc:quest:martha',
+  name: "Veuve Martha",
+  role: 'questgiver',
+  personality: 'humble',
+  location: 'cottage',
+  region: 'plains',
+  description: "Vieille femme dont le mari fut tué par bandits. Cherche justice.",
+  appearance: "Femme âgée en noir, regard triste mais déterminé. Mains tremblantes.",
+  quests: ['quest:bandits-revenge'],
+  dialogues: [
+    { trigger: 'greeting', text: "*essuie larmes* Ils ont tué mon George... je ne peux pas me venger moi-même mais..." },
+    { trigger: 'quest', text: "Faites-leur payer. Pour George. Pour tous ceux qu'ils ont blessés." }
+  ]
+};
+
+// ============================================================================
+// ANTAGONISTES MINEURS
+// ============================================================================
+
+export const ENEMY_CORRUPT_MERCHANT: NPCDefinition = {
+  id: 'npc:enemy:corvus',
+  name: "Corvus Noirbourse",
+  title: "Marchand Corrompu",
+  role: 'enemy',
+  personality: 'greedy',
+  location: 'black-market',
+  region: 'northern-kingdoms',
+  description: "Marchand sans scrupules vendant biens volés et esclaves. Protégé par gardes corrompus.",
+  appearance: "Homme obèse, vêtements clinquants, sourire huileux. Bagues volées à chaque doigt.",
+  isHostile: false,
+  quests: ['quest:shut-down-slavery', 'quest:corrupt-network'],
+  dialogues: [
+    { trigger: 'greeting', text: "*sourire faux* Bienvenue ! J'ai des... articles rares. Pas de questions posées." },
+    { trigger: 'combat', text: "GARDES ! Tuez-les ! Je paierai double !" }
+  ],
+  enemies: ['faction:royal-crown']
+};
+
+export const ENEMY_CULT_LEADER: NPCDefinition = {
+  id: 'npc:enemy:zealot',
+  name: "Grand Zélote Morteus",
+  title: "Leader du Culte",
+  role: 'enemy',
+  personality: 'arrogant',
+  location: 'hidden-shrine',
+  region: 'cave',
+  description: "Fanatique menant culte apocalyptique. Cherche à invoquer démon ancien.",
+  appearance: "Homme au regard fou, robe rouge sang, symboles démoniaques tatoués.",
+  faction: 'faction:necromancers-cult',
+  isHostile: true,
+  creatureTemplate: 'humanoid:cultist:leader',
+  dialogues: [
+    { trigger: 'greeting', text: "*rire maniaque* Vous êtes trop tard ! Le rituel est presque complet !" },
+    { trigger: 'combat', text: "Notre Seigneur Ténébreux s'élèvera ! Et vous en serez les premiers sacrifices !" }
+  ]
+};
+
+// ============================================================================
+// COMPAGNONS POTENTIELS (suite)
+// ============================================================================
+
+export const ALLY_DWARF_WARRIOR: NPCDefinition = {
+  id: 'npc:ally:thorin',
+  name: "Thorin Barbeforge",
+  title: "Guerrier Nain",
+  role: 'ally',
+  personality: 'jovial',
+  location: 'tavern',
+  region: 'mountain',
+  description: "Nain robuste cherchant aventures et bonne bière. Loyal jusqu'à la mort.",
+  appearance: "Nain trapu, barbe rousse tressée avec anneaux de fer. Hache de guerre en main.",
+  creatureTemplate: 'humanoid:dwarf:warrior',
+  dialogues: [
+    { trigger: 'greeting', text: "Haha ! Vous avez l'air solides ! Une quête se prépare ? Comptez sur ma hache !" },
+    { trigger: 'combat', text: "*charge en hurlant* POUR LES MONTAGNES !" }
+  ]
+};
+
+export const ALLY_ROGUE: NPCDefinition = {
+  id: 'npc:ally:shadow',
+  name: "Ombre",
+  title: "Rôdeur",
+  role: 'ally',
+  personality: 'mysterious',
+  location: 'wandering',
+  region: 'various',
+  description: "Rôdeur masqué aux compétences d'infiltration légendaires. Passé mystérieux.",
+  appearance: "Silhouette masquée, armure de cuir noire, mouvements silencieux comme la nuit.",
+  creatureTemplate: 'humanoid:rogue:master',
+  dialogues: [
+    { trigger: 'greeting', text: "*apparaît de nulle part* ...Besoin de quelqu'un de discret ?" },
+    { trigger: 'combat', text: "*chuchote* Couvrez-moi. Je m'occupe des sentinelles." }
+  ]
+};
+
+export const ALLY_CLERIC: NPCDefinition = {
+  id: 'npc:ally:seraphina',
+  name: "Seraphina Lumière-Céleste",
+  title: "Clerc de Lumière",
+  role: 'ally',
+  personality: 'friendly',
+  location: 'temple',
+  region: 'northern-kingdoms',
+  description: "Prêtresse combattante dévouée à éradiquer mal et protéger innocents.",
+  appearance: "Elfe aux cheveux d'or, armure légère blanche et or, symbole sacré lumineux.",
+  faction: 'faction:temple-light',
+  creatureTemplate: 'humanoid:cleric:battle',
+  dialogues: [
+    { trigger: 'greeting', text: "La Lumière m'a guidée vers vous. Ensemble, repoussons les ténèbres !" },
+    { trigger: 'combat', text: "*lève symbole sacré* Que la Lumière nous protège ! *sorts de guérison*" }
+  ]
+};
+
+// ============================================================================
+// PERSONNAGES MYSTÉRIEUX
+// ============================================================================
+
+export const MYSTERIOUS_ORACLE: NPCDefinition = {
+  id: 'npc:oracle:cassandra',
+  name: "Cassandra la Voyante",
+  title: "Oracle",
+  role: 'questgiver',
+  personality: 'mysterious',
+  location: 'mystic-grove',
+  region: 'mystic',
+  description: "Oracle énigmatique voyant futurs possibles. Parle par énigmes.",
+  appearance: "Femme aux yeux blancs laiteux, cheveux flottant sans vent. Aura éthérée.",
+  services: [
+    { type: 'identify', description: "Divination (aperçu du futur)", cost: 500 }
+  ],
+  dialogues: [
+    { trigger: 'greeting', text: "*voix éthérée* Je vous ai vu venir dans mes rêves... trois chemins s'ouvrent devant vous..." },
+    { trigger: 'idle', text: "*médite* ...le dragon s'éveille... la couronne brisée... l'ombre qui grandit..." }
+  ]
+};
+
+export const MYSTERIOUS_WANDERER: NPCDefinition = {
+  id: 'npc:wanderer:grey',
+  name: "Le Voyageur Gris",
+  title: "???",
+  role: 'ally',
+  personality: 'mysterious',
+  location: 'wandering',
+  region: 'various',
+  description: "Voyageur mystérieux apparaissant aux moments critiques. Immense pouvoir caché.",
+  appearance: "Homme en robes grises, capuche cachant visage. Staff noueux. Aura de puissance.",
+  backstory: "Nul ne connaît sa vraie nature. Certains pensent qu'il est un dieu mortel. D'autres, le dernier d'une race ancienne.",
+  dialogues: [
+    { trigger: 'greeting', text: "*voix grave et sage* Les chemins du destin sont étranges... nous nous croisons à nouveau." },
+    { trigger: 'combat', text: "*lève staff* Assez ! *explosion de pouvoir arcanique*" }
+  ]
+};
+
+// ============================================================================
+// EXPORTS & UTILITIES
+// ============================================================================
+
+export const ALL_NPCS: NPCDefinition[] = [
+  // Marchands généraux
+  MERCHANT_ALDRIC,
+  MERCHANT_SYLVANA,
+  // Marchands spécialisés
+  MERCHANT_WEAPONS,
+  MERCHANT_POTION_SELLER,
+  MERCHANT_JEWELER,
+  MERCHANT_RARE_BOOKS,
+  // Artisans
+  BLACKSMITH_BROM,
+  ALCHEMIST_MIRABEL,
+  ENCHANTER_MYSTRAL,
+  COOK_PIERRE,
+  TAILOR_MADAME_BOUTIQUE,
+  // Donneurs de quêtes
+  QUESTGIVER_ELENA,
+  QUESTGIVER_OLD_MARCUS,
+  QUESTGIVER_MYSTERIOUS_STRANGER,
+  QUEST_LOST_CHILD,
+  QUEST_SCHOLAR_ANCIENT,
+  QUEST_WIDOW,
+  // Entraîneurs
+  TRAINER_SWORD_MASTER,
+  TRAINER_ARCHMAGE_THALION,
+  // Services
+  INNKEEPER_ROSIE,
+  BANKER_GOLDSWORTH,
+  STABLEMASTER_TOM,
+  HEALER_SISTER_MERCY,
+  // Nobles & autorités
+  NOBLE_LORD_BLACKWOOD,
+  NOBLE_PRINCESS_ARIA,
+  JUDGE_GRIMWALD,
+  GUARD_CAPTAIN,
+  // Alliés
+  ALLY_THERON,
+  ALLY_LYRA,
+  ALLY_DWARF_WARRIOR,
+  ALLY_ROGUE,
+  ALLY_CLERIC,
+  // Ennemis
+  ENEMY_BANDIT_KING,
+  ENEMY_NECROMANCER,
+  ENEMY_CORRUPT_MERCHANT,
+  ENEMY_CULT_LEADER,
+  // Mystérieux
+  MYSTERIOUS_ORACLE,
+  MYSTERIOUS_WANDERER
+];
+
+export const NPCS_BY_ID: Record<string, NPCDefinition> = ALL_NPCS.reduce((acc, npc) => {
+  acc[npc.id] = npc;
+  return acc;
+}, {} as Record<string, NPCDefinition>);
+
+export const NPCS_BY_ROLE: Record<NPCRole, NPCDefinition[]> = ALL_NPCS.reduce((acc, npc) => {
+  if (!acc[npc.role]) acc[npc.role] = [];
+  acc[npc.role].push(npc);
+  return acc;
+}, {} as Record<NPCRole, NPCDefinition[]>);
+
+export const NPCS_BY_LOCATION: Record<string, NPCDefinition[]> = ALL_NPCS.reduce((acc, npc) => {
+  if (!acc[npc.location]) acc[npc.location] = [];
+  acc[npc.location].push(npc);
+  return acc;
+}, {} as Record<string, NPCDefinition[]>);
+
+/**
+ * Trouve NPCs dans un lieu donné
+ */
+export function getNPCsAtLocation(location: string): NPCDefinition[] {
+  return NPCS_BY_LOCATION[location] || [];
+}
+
+/**
+ * Trouve NPCs par rôle
+ */
+export function getNPCsByRole(role: NPCRole): NPCDefinition[] {
+  return NPCS_BY_ROLE[role] || [];
+}
+
+/**
+ * Trouve marchands disponibles
+ */
+export function getMerchants(): NPCDefinition[] {
+  return ALL_NPCS.filter(npc => npc.inventory && npc.inventory.length > 0);
+}
+
+/**
+ * Trouve donneurs de quêtes
+ */
+export function getQuestGivers(): NPCDefinition[] {
+  return ALL_NPCS.filter(npc => npc.quests && npc.quests.length > 0);
+}
+
+/**
+ * Trouve entraîneurs offrant service spécifique
+ */
+export function getTrainers(serviceType?: string): NPCDefinition[] {
+  const trainers = ALL_NPCS.filter(npc => 
+    npc.services && npc.services.some(s => s.type === 'train')
+  );
+  
+  if (serviceType) {
+    return trainers.filter(npc => 
+      npc.services!.some(s => s.description.includes(serviceType))
     );
-};
+  }
+  
+  return trainers;
+}
 
-// Helper pour chercher un PNJ par nom
-export const findNPCByName = (name: string): NPC | undefined => {
-    const allNPCs = [
-        ...MERCHANTS, ...TAVERNKEEPERS, ...QUEST_GIVERS,
-        ...WANDERERS, ...NOBLES, ...CRIMINALS,
-        ...COMMONERS, ...SUPERNATURAL, ...CHILDREN
-    ];
-    return allNPCs.find(npc => 
-        npc.name.toLowerCase().includes(name.toLowerCase())
-    );
-};
+/**
+ * Vérifie si un joueur peut interagir avec un NPC (réputation)
+ */
+export function canInteractWith(npc: NPCDefinition, playerReputation: number): boolean {
+  if (!npc.reputationRequired) return true;
+  return playerReputation >= npc.reputationRequired;
+}
+
+/**
+ * Obtient dialogue approprié pour contexte
+ */
+export function getDialogue(npc: NPCDefinition, trigger: NPCDialogue['trigger']): string {
+  const dialogue = npc.dialogues.find(d => d.trigger === trigger);
+  return dialogue?.text || npc.dialogues[0]?.text || "...";
+}
+
+/**
+ * Calcule prix d'un item chez un marchand
+ */
+export function calculatePrice(basePrice: number, multiplier: number): number {
+  return Math.floor(basePrice * multiplier);
+}
