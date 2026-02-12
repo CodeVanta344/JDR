@@ -1,6 +1,7 @@
 export const WORLD_NAME = "Aethelgard";
 
 export { ENRICHED_BACKSTORIES, getBackstoriesForClass, formatBackstoryForGM, HISTORICAL_EVENTS } from './lore/backstories';
+export { BIRTH_ORIGINS, CHILDHOOD_EVENTS, ADOLESCENCE_PATHS } from './lore/lifepath';
 
 /**
  * PHASE 21.1: DEEP WORLD HISTORY & CHRONOLOGY
