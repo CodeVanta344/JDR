@@ -1029,24 +1029,32 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
 
     const nextTurn = () => {
         if (combatState === 'finished') return;
-        let nextIndex = (currentTurnIndex + 1) % combatants.length;
+        
+        // CRITICAL FIX: Use combatantsRef to get latest state (not stale closure)
+        const currentCombatants = combatantsRef.current;
+        
+        let nextIndex = (currentTurnIndex + 1) % currentCombatants.length;
         let loops = 0;
-        while (combatants[nextIndex].hp <= 0 && loops < combatants.length) {
-            nextIndex = (nextIndex + 1) % combatants.length;
+        while (currentCombatants[nextIndex].hp <= 0 && loops < currentCombatants.length) {
+            nextIndex = (nextIndex + 1) % currentCombatants.length;
             loops++;
         }
+        
+        // Check if we completed a full round (wrapped back to start)
+        const newRound = nextIndex < currentTurnIndex ? round + 1 : round;
         if (nextIndex < currentTurnIndex) {
-            setRound(r => r + 1);
-            addLog({ role: 'system', content: `🕒 --- **DEBUT DU ROUND ${round + 1}** ---` });
+            setRound(newRound);
+            addLog({ role: 'system', content: `🕒 --- **DEBUT DU ROUND ${newRound}** ---` });
         }
+        
         setCurrentTurnIndex(nextIndex);
         setSelectedAction(null);
 
-        const nextActor = combatants[nextIndex];
-        let newCombatants = [...combatants];
+        const nextActor = currentCombatants[nextIndex];
+        let newCombatants = [...currentCombatants];
 
         if (nextActor) {
-            // Update PM and Status
+            // Update PM and Status - ONLY for the new actor
             newCombatants = newCombatants.map(u => u.id === nextActor.id ? { ...u, hasActed: false, currentPM: u.maxPM } : u);
 
             if (nextActor.travelStatus === 'traveling') {
@@ -1059,7 +1067,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                     addLog({ role: 'system', content: `🕓 **${nextActor.name}** approche... (${newTurns} tours restants)` });
                     // If traveling, we set state and skip to next
                     setCombatants(newCombatants);
-                    if (onUpdateCombatState) onUpdateCombatState({ combatants: newCombatants, turnIndex: nextIndex, round: (nextIndex < currentTurnIndex ? round + 1 : round), active: true, logs, updatedAt: Date.now() });
+                    if (onUpdateCombatState) onUpdateCombatState({ combatants: newCombatants, turnIndex: nextIndex, round: newRound, active: true, logs, updatedAt: Date.now() });
                     setTimeout(nextTurn, 1000);
                     return;
                 }
@@ -1086,7 +1094,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
             if (onUpdateCombatState) onUpdateCombatState({
                 combatants: newCombatants,
                 turnIndex: nextIndex,
-                round: (nextIndex < currentTurnIndex ? round + 1 : round),
+                round: newRound,
                 active: true,
                 logs,
                 updatedAt: Date.now()
