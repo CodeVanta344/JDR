@@ -485,7 +485,8 @@ export default function App() {
     const updateSyncedCombat = async (newState) => {
         // Any client can request an update (e.g. they attacked), but ideally we check validity
         // For simplicity, we trust the client logic from CombatManager for now, but we push the result to DB
-        await supabase.from('world_state').upsert({ key: `combat_${session.id}`, value: newState });
+        const timestampedState = { ...newState, updatedAt: Date.now() };
+        await supabase.from('world_state').upsert({ key: `combat_${session.id}`, value: timestampedState });
     };
 
 
