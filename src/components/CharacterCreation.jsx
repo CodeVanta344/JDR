@@ -64,6 +64,19 @@ export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImag
     const [portraitUrl, setPortraitUrl] = useState(null);
     const [classPortraits, setClassPortraits] = useState({});
 
+    // Callback for real-time lifepath stats
+    const handleLifepathUpdate = useCallback((effects) => {
+        const stats = effects.final_stats;
+        setLifepathStats({
+            str: stats.strength || 0,
+            dex: stats.dexterity || 0,
+            con: stats.constitution || 0,
+            int: stats.intelligence || 0,
+            wis: stats.wisdom || 0,
+            cha: stats.charisma || 0
+        });
+    }, []);
+
     useEffect(() => {
         const defaults = {};
         Object.entries(CLASSES).forEach(([key, data]) => {
@@ -458,17 +471,7 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                                 {step === 3 && (
                                     <LifePathWizard
                                         hideSidebar={true}
-                                        onUpdate={useCallback((effects) => {
-                                            const stats = effects.final_stats;
-                                            setLifepathStats({
-                                                str: stats.strength || 0,
-                                                dex: stats.dexterity || 0,
-                                                con: stats.constitution || 0,
-                                                int: stats.intelligence || 0,
-                                                wis: stats.wisdom || 0,
-                                                cha: stats.charisma || 0
-                                            });
-                                        }, [])}
+                                        onUpdate={handleLifepathUpdate}
                                         onComplete={(effects) => {
                                             setLifepathData(effects);
                                             // Permanently apply to attributes and clear lifepathStats
@@ -550,16 +553,65 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                                 {/* STEP 7: FINAL */}
                                 {step === 7 && (
                                     <>
-                                        <div className="final-dossier" style={{ width: '100%', maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
-                                            <p className="dossier-intro" style={{ letterSpacing: '4px', color: '#666' }}>Le destin de votre héros est scellé.</p>
-                                            <h2 className="dossier-name" style={{ fontSize: '4rem', color: 'var(--gold-primary)', margin: '1rem 0' }}>{name}</h2>
-                                            <div className="dossier-subtitle" style={{ fontSize: '1.2rem', color: '#ccc' }}>
-                                                <span>{selectedClass}</span>
-                                                <span style={{ margin: '0 1rem', color: 'var(--gold-dim)' }}>•</span>
-                                                <span>{classData.subclasses[selectedSubclass]?.label}</span>
+                                        <div className="final-dossier">
+                                            <div className="dossier-header">
+                                                <h2 className="dossier-name">{name}</h2>
+                                                <div className="dossier-subtitle">
+                                                    <span>{selectedClass}</span>
+                                                    <span className="dossier-separator">•</span>
+                                                    <span>{classData.subclasses[selectedSubclass]?.label}</span>
+                                                    <span className="dossier-separator">•</span>
+                                                    <span>Niveau 1</span>
+                                                </div>
                                             </div>
-                                            <div className="card-lore" style={{ marginTop: '3rem', fontStyle: 'italic', color: '#888', lineHeight: '1.6' }}>
-                                                {classData.subclasses[selectedSubclass]?.desc}
+
+                                            <div className="dossier-content-grid">
+                                                {/* Column 1: Stats */}
+                                                <div className="dossier-section">
+                                                    <h3 className="dossier-section-title">Attributs</h3>
+                                                    <div className="dossier-stats-grid">
+                                                        {Object.entries(attributes).map(([key, val]) => (
+                                                            <div key={key} className="dossier-stat-row">
+                                                                <span className="stat-label">{STAT_LABELS[key]}</span>
+                                                                <span className="stat-val">{val}</span>
+                                                                <span className="stat-mod">{getModifier(val)}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                {/* Column 2: Lifepath */}
+                                                <div className="dossier-section">
+                                                    <h3 className="dossier-section-title">Origines</h3>
+                                                    <div className="dossier-lifepath">
+                                                        <div className="lifepath-item">
+                                                            <span className="lp-label">Naissance</span>
+                                                            <span className="lp-val">{lifepathData?.origin?.label || selectedBirthOrigin?.label || 'Inconnu'}</span>
+                                                        </div>
+                                                        <div className="lifepath-item">
+                                                            <span className="lp-label">Enfance</span>
+                                                            <span className="lp-val">{lifepathData?.childhood?.label || selectedChildhoodEvent?.label || 'Ordinaire'}</span>
+                                                        </div>
+                                                        <div className="lifepath-item">
+                                                            <span className="lp-label">Vécu</span>
+                                                            <span className="lp-val">{lifepathData?.adult?.label || selectedBackstory?.label || 'Aventurier'}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Column 3: Equipment & Bio */}
+                                                <div className="dossier-section">
+                                                    <h3 className="dossier-section-title">Inventaire</h3>
+                                                    <ul className="dossier-equipment">
+                                                        {classData?.starting_equipment_options[selectedEquipmentIndex]?.items.map((item, i) => (
+                                                            <li key={i}>{item.name}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            </div>
+
+                                            <div className="dossier-bio">
+                                                <p>"{classData.subclasses[selectedSubclass]?.desc}"</p>
                                             </div>
                                         </div>
                                         <div className="wizard-footer">

@@ -1,209 +1,231 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
-import { Canvas, useFrame, useLoader } from '@react-three/fiber';
-import { PerspectiveCamera, OrbitControls, Text, Environment } from '@react-three/drei';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { PerspectiveCamera, OrbitControls, Text, Environment, Float, Stars, Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
 
-// Particle system for dice roll effect
-const DiceParticles = ({ isRolling }) => {
-    const particlesRef = useRef();
-    const particleCount = 50;
-    
-    const particles = useMemo(() => {
-        const positions = new Float32Array(particleCount * 3);
-        const velocities = [];
-        
-        for (let i = 0; i < particleCount; i++) {
-            positions[i * 3] = (Math.random() - 0.5) * 4;
-            positions[i * 3 + 1] = (Math.random() - 0.5) * 4;
-            positions[i * 3 + 2] = (Math.random() - 0.5) * 4;
-            velocities.push({
-                x: (Math.random() - 0.5) * 0.02,
-                y: (Math.random() - 0.5) * 0.02,
-                z: (Math.random() - 0.5) * 0.02
-            });
-        }
-        
-        return { positions, velocities };
-    }, []);
+// --- GEOMETRY & FACE DATA ---
+// Helper to create face transforms (pos + rot) would be complex math.
+// For now, we use simplified reliable placements for D6 and D20 (approximated).
 
-    useFrame(() => {
-        if (!isRolling || !particlesRef.current) return;
-        
-        const positions = particlesRef.current.geometry.attributes.position.array;
-        
-        for (let i = 0; i < particleCount; i++) {
-            positions[i * 3] += particles.velocities[i].x;
-            positions[i * 3 + 1] += particles.velocities[i].y;
-            positions[i * 3 + 2] += particles.velocities[i].z;
-        }
-        
-        particlesRef.current.geometry.attributes.position.needsUpdate = true;
-    });
+const D6_FACES = [
+    { val: 1, pos: [0, 0, 1.01], rot: [0, 0, 0] },
+    { val: 6, pos: [0, 0, -1.01], rot: [0, Math.PI, 0] },
+    { val: 2, pos: [0, 1.01, 0], rot: [-Math.PI / 2, 0, 0] },
+    { val: 5, pos: [0, -1.01, 0], rot: [Math.PI / 2, 0, 0] },
+    { val: 3, pos: [1.01, 0, 0], rot: [0, Math.PI / 2, 0] },
+    { val: 4, pos: [-1.01, 0, 0], rot: [0, -Math.PI / 2, 0] },
+];
 
+// Approximate D20 Face Centers/Rotations based on a standard Icosahedron
+// This is a manual mapping for visual plausibility
+const phi = (1 + Math.sqrt(5)) / 2;
+const D20_FACES = [
+    // Top Cap (5 faces)
+    { val: 20, pos: [0, 1, phi], rot: [0.5, 0, 0] }, // Top-most
+    { val: 19, pos: [0, 1, -phi], rot: [-0.5, Math.PI, 0] },
+    // ... Filling all 20 is math-heavy. We'll implement a procedural placement approach if possible,
+    // or just map the most visible ones (Crit/Fail) and scatter the rest for effect.
+    // Actually, let's use a clever trick: Render the Icosahedron and place text at vertex/face centers?
+];
+
+// Simplified Text Component
+const DiceFaceText = ({ value, position, rotation, color = "white", scale = 1 }) => (
+    <Text
+        position={position}
+        rotation={rotation}
+        fontSize={0.5 * scale}
+        color={color}
+        anchorX="center"
+        anchorY="middle"
+        font="https://fonts.gstatic.com/s/cinzel/v19/8vIJ7ww63mVu7gt78Uk6.woff" // Medieval font
+        characters="0123456789"
+    >
+        {value}
+    </Text>
+);
+
+// --- MATERIALS ---
+const GemMaterial = ({ color }) => (
+    <meshPhysicalMaterial
+        color={color}
+        transmission={0.6} // Glass-like
+        thickness={1.5}    // Refraction depth
+        roughness={0.1}    // Polish
+        metalness={0.1}    // Slight metallic shine
+        ior={1.5}          // Index of Refraction (Gemstone)
+        emissive={color}
+        emissiveIntensity={0.2}
+        clearcoat={1}
+        clearcoatRoughness={0.1}
+        bgToneMapping={1}
+    />
+);
+
+const GoldInlayMaterial = <meshStandardMaterial color="#FFD700" metalness={1} roughness={0.2} />;
+
+// --- DICE MESH COMPONENT ---
+const DiceMesh = ({ type, color }) => {
+    // D20 Logic
+    if (type === 'd20') {
+        const radius = 1.2;
+        return (
+            <mesh castShadow receiveShadow>
+                <icosahedronGeometry args={[radius, 0]} />
+                <GemMaterial color={color} />
+
+                <DiceFaceText value="20" position={[0.4, 0.4, 1.05]} rotation={[0.4, -0.2, 0.1]} color="#FFD700" scale={0.6} />
+                <DiceFaceText value="1" position={[-0.4, -0.4, -1.05]} rotation={[0, Math.PI, 0]} color="#ff4444" scale={0.6} />
+                <DiceFaceText value="19" position={[-0.8, 0.5, 0.5]} rotation={[0.7, 0.6, -0.2]} color="white" scale={0.5} />
+                <DiceFaceText value="2" position={[0.8, -0.5, 0.5]} rotation={[-0.5, -0.6, 0]} color="white" scale={0.5} />
+
+                {/* Additional numbers for fullness */}
+                <DiceFaceText value="18" position={[0, 1.1, 0.2]} rotation={[-Math.PI / 2, 0, 0]} color="white" scale={0.5} />
+                <DiceFaceText value="3" position={[0, -1.1, -0.2]} rotation={[Math.PI / 2, 0, 0]} color="white" scale={0.5} />
+                <DiceFaceText value="10" position={[1.1, 0, 0]} rotation={[0, Math.PI / 2, 0]} color="white" scale={0.5} />
+                <DiceFaceText value="11" position={[-1.1, 0, 0]} rotation={[0, -Math.PI / 2, 0]} color="white" scale={0.5} />
+                <DiceFaceText value="15" position={[0.5, 0.5, -0.8]} rotation={[0, Math.PI, 0]} color="white" scale={0.5} />
+                <DiceFaceText value="6" position={[-0.5, -0.5, 0.8]} rotation={[0, 0, 0]} color="white" scale={0.5} />
+            </mesh>
+        );
+    }
+
+    // D6 Logic
+    if (type === 'd6') {
+        return (
+            <mesh castShadow receiveShadow>
+                <boxGeometry args={[2, 2, 2]} />
+                <GemMaterial color={color} />
+                {D6_FACES.map((f, i) => (
+                    <DiceFaceText
+                        key={i}
+                        value={f.val}
+                        position={f.pos}
+                        rotation={f.rot}
+                        color={f.val === 6 ? '#FFD700' : (f.val === 1 ? '#ff4444' : 'white')}
+                    />
+                ))}
+            </mesh>
+        );
+    }
+
+    // Default Fallback
     return (
-        <points ref={particlesRef}>
-            <bufferGeometry>
-                <bufferAttribute
-                    attach="attributes-position"
-                    count={particleCount}
-                    array={particles.positions}
-                    itemSize={3}
-                />
-            </bufferGeometry>
-            <pointsMaterial 
-                size={0.05} 
-                color="#d4af37" 
-                transparent 
-                opacity={isRolling ? 0.6 : 0}
-                blending={THREE.AdditiveBlending}
-            />
-        </points>
+        <mesh castShadow receiveShadow>
+            {type === 'd12' ? <dodecahedronGeometry args={[1.1, 0]} /> :
+                type === 'd10' ? <octahedronGeometry args={[1.2, 0]} /> :
+                    type === 'd8' ? <octahedronGeometry args={[1.2, 0]} /> :
+                        type === 'd4' ? <tetrahedronGeometry args={[1.3, 0]} /> :
+                            <icosahedronGeometry args={[1.2, 0]} />}
+            <GemMaterial color={color} />
+            <DiceFaceText value={type.toUpperCase()} position={[0, 0, 1.1]} rotation={[0, 0, 0]} />
+        </mesh>
     );
 };
 
+// --- PARTICLE SYSTEMS ---
+const MagicParticles = ({ isRolling, color }) => {
+    return (
+        <group>
+            {/* Aetherial dust */}
+            <Sparkles
+                count={40}
+                scale={isRolling ? 3 : 4}
+                size={isRolling ? 2 : 1}
+                speed={isRolling ? 2 : 0.2}
+                opacity={0.5}
+                color={color}
+            />
+        </group>
+    );
+};
+
+
+// --- MAIN COMPONENT ---
 export const Dice3D = ({ type = 'd20', value, onComplete, autoRoll = true }) => {
     const meshRef = useRef();
     const groupRef = useRef();
     const [isRolling, setIsRolling] = useState(autoRoll);
     const [velocity, setVelocity] = useState({ x: 0, y: 0, z: 0 });
-    const [position, setPosition] = useState({ x: 0, y: 0, z: 0 });
+    const [rotationVel, setRotationVel] = useState({ x: 0, y: 0, z: 0 });
     const rollTimeRef = useRef(0);
+
+    const diceColor = useMemo(() => {
+        switch (type) {
+            case 'd20': return '#FFD700'; // Gold
+            case 'd12': return '#a3c2ff'; // Blueish
+            case 'd10': return '#ff8da1'; // Reddish
+            case 'd8': return '#c4a3ff';  // Purple
+            case 'd6': return '#98ff98';  // Green
+            default: return '#FFD700';
+        }
+    }, [type]);
 
     useEffect(() => {
         if (autoRoll) {
-            // Initial velocity for rolling animation (stronger)
+            // Strong initial throw
             setVelocity({
-                x: (Math.random() - 0.5) * 0.5,
-                y: (Math.random() - 0.5) * 0.5,
-                z: (Math.random() - 0.5) * 0.5
+                x: (Math.random() - 0.5) * 0.8,
+                y: (Math.random() * 0.5) + 0.2,
+                z: (Math.random() - 0.5) * 0.8
             });
-            setPosition({ x: 0, y: 2, z: 0 }); // Start from above
+            setRotationVel({
+                x: Math.random() * 10,
+                y: Math.random() * 10,
+                z: Math.random() * 10
+            });
             rollTimeRef.current = 0;
         }
     }, [autoRoll]);
 
     useFrame((state, delta) => {
-        if (!meshRef.current || !isRolling) return;
+        if (!groupRef.current || !isRolling) return;
 
         rollTimeRef.current += delta;
+        const time = rollTimeRef.current;
 
-        // Gravity and bounce physics
-        const gravity = -0.02;
-        const damping = 0.97;
-        const newVelocity = {
-            x: velocity.x * damping,
-            y: velocity.y + gravity,
-            z: velocity.z * damping
-        };
+        // Physics Simulation
+        if (time < 2.0) {
+            // Decay
+            const damping = 0.98;
+            setVelocity(v => ({ x: v.x * damping, y: v.y - 0.02, z: v.z * damping })); // Gravity
+            setRotationVel(v => ({ x: v.x * damping, y: v.y * damping, z: v.z * damping }));
 
-        setVelocity(newVelocity);
+            // Apply Move
+            groupRef.current.position.x += velocity.x;
+            groupRef.current.position.y += velocity.y;
+            groupRef.current.position.z += velocity.z;
 
-        // Update position
-        const newPos = {
-            x: position.x + newVelocity.x,
-            y: position.y + newVelocity.y,
-            z: position.z + newVelocity.z
-        };
+            // Apply Rotate
+            groupRef.current.rotation.x += rotationVel.x * delta;
+            groupRef.current.rotation.y += rotationVel.y * delta;
+            groupRef.current.rotation.z += rotationVel.z * delta;
 
-        // Bounce on ground
-        if (newPos.y < 0) {
-            newPos.y = 0;
-            newVelocity.y = -newVelocity.y * 0.6; // Bounce with energy loss
-            setVelocity(newVelocity);
-        }
-
-        setPosition(newPos);
-        groupRef.current.position.set(newPos.x, newPos.y, newPos.z);
-
-        // Update rotation
-        meshRef.current.rotation.x += newVelocity.x * 2;
-        meshRef.current.rotation.y += newVelocity.y * 2;
-        meshRef.current.rotation.z += newVelocity.z * 2;
-
-        // Stop after 2.5 seconds or when settled
-        const isSettled = Math.abs(newVelocity.y) < 0.01 && newPos.y < 0.1;
-        if (rollTimeRef.current > 2.5 || (rollTimeRef.current > 1 && isSettled)) {
-            setIsRolling(false);
-            // Align to show the result face
-            const finalRotation = getFinalRotation(type, value);
-            meshRef.current.rotation.set(finalRotation.x, finalRotation.y, finalRotation.z);
-            groupRef.current.position.set(0, 0, 0);
-            if (onComplete) {
-                setTimeout(() => onComplete(value), 300);
+            // Simple floor bounce
+            if (groupRef.current.position.y < -1) {
+                groupRef.current.position.y = -1;
+                setVelocity(v => ({ ...v, y: Math.abs(v.y) * 0.6 })); // Bounce
             }
+        } else {
+            // Settle to final face
+            setIsRolling(false);
+
+            // Snap to show the result "face up" cleanly
+            // For now, we just reset rotation to 0 and show the text
+            // In a pro version, we would lerp to the exact quaternion of the result face
+            groupRef.current.rotation.set(0, 0, 0);
+            groupRef.current.position.set(0, 0, 0);
+
+            if (onComplete) onComplete(value);
         }
     });
 
-    const getFinalRotation = (diceType, resultValue) => {
-        // D20 face rotations to show specific numbers on top
-        const d20Rotations = {
-            1: { x: 0, y: 0, z: 0 },
-            20: { x: Math.PI, y: 0, z: 0 },
-            2: { x: Math.PI * 0.31, y: 0, z: 0 },
-            19: { x: Math.PI * 0.69, y: 0, z: 0 },
-            3: { x: Math.PI * 0.31, y: Math.PI * 0.4, z: 0 },
-            18: { x: Math.PI * 0.69, y: Math.PI * 0.4, z: 0 },
-            // Add more precise rotations for each face
-        };
-        
-        if (diceType === 'd20' && d20Rotations[resultValue]) {
-            return d20Rotations[resultValue];
-        }
-        
-        // Fallback: semi-random but stable rotation
-        const angle = (resultValue / 20) * Math.PI * 2;
-        return { x: angle, y: angle * 0.7, z: angle * 0.3 };
-    };
-
-    const getDiceGeometry = () => {
-        switch (type) {
-            case 'd20':
-                return <icosahedronGeometry args={[1.2, 0]} />;
-            case 'd12':
-                return <dodecahedronGeometry args={[1.1, 0]} />;
-            case 'd10':
-            case 'd8':
-                return <octahedronGeometry args={[1.2, 0]} />;
-            case 'd6':
-                return <boxGeometry args={[1.5, 1.5, 1.5]} />;
-            case 'd4':
-                return <tetrahedronGeometry args={[1.3, 0]} />;
-            default:
-                return <icosahedronGeometry args={[1.2, 0]} />;
-        }
-    };
-
-    const getColor = () => {
-        switch (type) {
-            case 'd20': return '#d4af37'; // Gold
-            case 'd12': return '#4a90e2'; // Blue
-            case 'd10': return '#e74c3c'; // Red
-            case 'd8': return '#9b59b6';  // Purple
-            case 'd6': return '#2ecc71';  // Green
-            case 'd4': return '#f39c12';  // Orange
-            default: return '#d4af37';
-        }
-    };
-
-    // Enhanced material with better lighting
-    const material = (
-        <meshStandardMaterial
-            color={getColor()}
-            metalness={0.7}
-            roughness={0.3}
-            emissive={getColor()}
-            emissiveIntensity={0.3}
-            envMapIntensity={1.5}
-        />
-    );
-
     return (
         <group ref={groupRef}>
-            <mesh ref={meshRef} castShadow receiveShadow>
-                {getDiceGeometry()}
-                {material}
-            </mesh>
-            <DiceParticles isRolling={isRolling} />
+            <DiceMesh type={type} color={diceColor} />
+            <MagicParticles isRolling={isRolling} color={diceColor} />
+
+            {/* Inner Glow light */}
+            <pointLight distance={3} intensity={0.5} color={diceColor} />
         </group>
     );
 };
@@ -211,81 +233,64 @@ export const Dice3D = ({ type = 'd20', value, onComplete, autoRoll = true }) => 
 export const DiceRollScene = ({ diceType, value, onComplete }) => {
     return (
         <div style={{
-            width: '300px',
-            height: '300px',
+            width: '320px',
+            height: '320px',
             position: 'relative',
-            background: 'radial-gradient(circle, rgba(20,20,30,0.9) 0%, rgba(0,0,0,1) 100%)',
-            borderRadius: '20px',
-            overflow: 'hidden',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.8), inset 0 0 40px rgba(212, 175, 55, 0.1)'
+            background: 'radial-gradient(circle at center, #1a1a2e 0%, #000000 100%)',
+            borderRadius: '24px',
+            border: '1px solid rgba(255, 215, 0, 0.3)',
+            boxShadow: '0 0 50px rgba(0,0,0,0.8)',
+            overflow: 'hidden'
         }}>
-            <Canvas shadows>
-                <PerspectiveCamera makeDefault position={[0, 2, 6]} fov={45} />
-                
-                {/* Enhanced lighting setup */}
-                <ambientLight intensity={0.3} />
-                <directionalLight 
-                    position={[5, 10, 5]} 
-                    intensity={1.5} 
-                    castShadow
-                    shadow-mapSize-width={2048}
-                    shadow-mapSize-height={2048}
-                />
+            <Canvas shadows gl={{ antialias: true, toneMappingExposure: 1.2 }}>
+                <PerspectiveCamera makeDefault position={[0, 4, 6]} fov={35} />
+
+                {/* Cinematic Lighting */}
+                <ambientLight intensity={0.2} />
                 <spotLight
-                    position={[-5, 10, 5]}
+                    position={[5, 10, 5]}
                     angle={0.4}
                     penumbra={1}
-                    intensity={1}
+                    intensity={2}
                     castShadow
-                    color="#d4af37"
+                    color="#ffd700"
                 />
-                <pointLight position={[0, -2, 0]} intensity={0.5} color="#4a90e2" />
-                
-                {/* Environment map for reflections */}
+                <spotLight
+                    position={[-5, 2, -5]}
+                    angle={0.5}
+                    intensity={1.5}
+                    color="#4a90e2"
+                />
                 <Environment preset="city" />
-                
-                {/* Ground plane */}
-                <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, -1, 0]}>
-                    <planeGeometry args={[10, 10]} />
-                    <meshStandardMaterial 
-                        color="#0a0a15" 
-                        metalness={0.9}
-                        roughness={0.1}
-                    />
-                </mesh>
-                
-                <Dice3D type={diceType} value={value} onComplete={onComplete} />
-                <OrbitControls enableZoom={false} enablePan={false} />
+
+                <Float speed={2} rotationIntensity={0.2} floatIntensity={0.5}>
+                    <Dice3D type={diceType} value={value} onComplete={onComplete} />
+                </Float>
+
+                <OrbitControls enableZoom={false} enablePan={false} maxPolarAngle={Math.PI / 1.5} />
             </Canvas>
-            
-            {/* Result overlay with glow */}
+
+            {/* UI Overlay */}
             <div style={{
                 position: 'absolute',
-                bottom: '20px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                color: '#d4af37',
-                fontSize: '3rem',
-                fontWeight: '900',
-                textShadow: '0 0 20px rgba(212, 175, 55, 0.8), 0 0 40px rgba(212, 175, 55, 0.4)',
-                opacity: value ? 1 : 0,
-                transition: 'opacity 0.5s',
-                fontFamily: 'var(--font-display)',
-                letterSpacing: '4px'
-            }}>
-                {value}
-            </div>
-            
-            {/* Animated border glow */}
-            <div style={{
-                position: 'absolute',
-                inset: 0,
-                borderRadius: '20px',
-                border: '2px solid var(--gold-primary)',
-                opacity: 0.3,
-                animation: 'pulse 2s ease-in-out infinite',
+                bottom: '30px',
+                width: '100%',
+                textAlign: 'center',
                 pointerEvents: 'none'
-            }} />
+            }}>
+                <div style={{
+                    fontSize: '4rem',
+                    fontFamily: 'serif',
+                    color: '#FFD700',
+                    textShadow: '0 0 30px rgba(255, 215, 0, 0.6)',
+                    fontWeight: 'bold',
+                    opacity: value ? 1 : 0,
+                    transform: value ? 'translateY(0)' : 'translateY(20px)',
+                    transition: 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                }}>
+                    {value}
+                </div>
+            </div>
         </div>
     );
 };

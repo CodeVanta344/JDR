@@ -24,6 +24,7 @@ import { TradeModal } from './components/TradeModal';
 import { HUDHeader } from './components/HUD/HUDHeader';
 import { NarrationPanel } from './components/HUD/NarrationPanel';
 import { CodexPanel } from './components/CodexPanel';
+import WaitingRoom from './components/WaitingRoom';
 import { WeatherOverlay } from './components/WeatherOverlay';
 import { SceneBackground } from './components/SceneBackground';
 import { ParticleSystem } from './components/ParticleSystem';
@@ -938,25 +939,49 @@ export default function App() {
             if (sessionError || !sessionData) throw sessionError;
 
             setSession(sessionData);
-            setAdventureStarted(true); // Ensure local state reflects started session
             window.history.pushState({}, '', `?s=${sessionData.id}`);
 
-            // 2. Create Host Player Record (not ready yet, so they go to Character Creation)
+            // 2. Create Host Player Record
             const { data: playerData, error: playerError } = await supabase
                 .from('players')
                 .insert({
                     session_id: sessionData.id,
                     user_id: profile.id,
                     name: profile.name || 'Hero',
-                    is_host: true,
-                    is_ready: false
+                    is_host: true
                 })
                 .select()
                 .single();
 
             if (playerError || !playerData) throw playerError;
-            setCharacter(playerData);
-            setPlayers([playerData]);
+
+            // 3. Generate Random Character Data
+            const randomData = generateRandomCharacter(sessionData.id, profile.id);
+
+            // 4. Apply Random Data & Ready Status
+            const finalChar = {
+                ...randomData,
+                id: playerData.id,
+                is_ready: true
+            };
+
+            const { data: charData, error: charError } = await supabase
+                .from('players')
+                .update(finalChar)
+                .eq('id', playerData.id)
+                .select()
+                .single();
+
+            if (charError || !charData) throw charError;
+
+            setCharacter(charData);
+            setPlayers([charData]);
+
+            // 5. Trigger Adventure Start (AI Intro)
+            // Force start to bypass locks and checks
+            setTimeout(() => {
+                handleStartAdventure(true);
+            }, 500);
 
         } catch (e) {
             console.error("Solo Adventure Error:", e);
@@ -2406,142 +2431,25 @@ export default function App() {
                 />
             ) : !adventureStarted ? (
                 /* WAITING ROOM: Player has created character, waiting for all to be ready */
-                <div className="creation-overlay" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <div className="stone-panel ornate-border" style={{
-                        maxWidth: '700px',
-                        width: '90%',
-                        padding: '3rem',
-                        textAlign: 'center',
-                        background: 'rgba(10, 10, 15, 0.95)',
-                        animation: 'fadeIn 0.8s ease-out'
-                    }}>
-                        <div className="category-tag" style={{ color: 'var(--gold-primary)', letterSpacing: '3px', fontSize: '0.8rem', marginBottom: '1rem' }}>SALLE D'ATTENTE</div>
-                        <h2 className="text-gold" style={{ fontSize: '2rem', letterSpacing: '4px', marginBottom: '2rem' }}>RASSEMBLEMENT DES HEROS</h2>
-
-                        <div style={{ marginBottom: '2rem' }}>
-                            {players.map(p => {
-                                const hasClass = !!p.class;
-                                const isReady = p.class && p.is_ready;
-                                const isYou = p.id === character?.id;
-                                return (
-                                    <div key={p.id} style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        padding: '0.8rem 1.2rem',
-                                        marginBottom: '0.5rem',
-                                        background: isReady ? 'rgba(77, 255, 136, 0.05)' : isYou ? 'rgba(212,175,55,0.05)' : 'rgba(255, 255, 255, 0.02)',
-                                        border: `1px solid ${isReady ? 'rgba(77, 255, 136, 0.2)' : isYou ? 'var(--gold-dim)' : 'rgba(255,255,255,0.05)'}`,
-                                        borderRadius: '4px'
-                                    }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                            {p.portrait_url ? (
-                                                <img src={p.portrait_url} alt="" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--gold-dim)' }} />
-                                            ) : (
-                                                <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--void-panel)', border: '1px solid var(--gold-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>?</div>
-                                            )}
-                                            <div>
-                                                <div style={{ color: '#fff', fontSize: '1rem' }}>
-                                                    {p.name} {isYou && <span style={{ color: 'var(--gold-primary)', fontSize: '0.7rem' }}>(VOUS)</span>}
-                                                </div>
-                                                <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{p.class || 'Cree son personnage...'}</div>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            {!hasClass ? (
-                                                <div style={{
-                                                    width: '20px', height: '20px',
-                                                    border: '2px solid var(--gold-dim)',
-                                                    borderTopColor: 'var(--gold-primary)',
-                                                    borderRadius: '50%',
-                                                    animation: 'spin 1s linear infinite'
-                                                }} />
-                                            ) : isReady ? (
-                                                <span style={{ color: '#4dff88', fontSize: '0.8rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                    PRET <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#4dff88', boxShadow: '0 0 8px #4dff88' }}></span>
-                                                </span>
-                                            ) : (
-                                                <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>EN ATTENTE</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-
-                        {/* Force Start Button for Host */}
-                        {session?.host_id === profile?.id && players.length >= 2 && character?.class && !loading && (
-                            <div style={{ marginBottom: '1rem' }}>
-                                <button
-                                    onClick={() => {
-                                        if (confirm("Forcer le lancement de l'aventure ?")) {
-                                            handleStartAdventure(true);
-                                        }
-                                    }}
-                                    className="btn-secondary"
-                                    style={{
-                                        padding: '0.5rem 1rem',
-                                        fontSize: '0.9rem',
-                                        border: '1px solid var(--text-muted)',
-                                        color: 'var(--text-muted)',
-                                        background: 'transparent'
-                                    }}
-                                >
-                                    ⚠️ Forcer le Lancement
-                                </button>
-                            </div>
-                        )}
-
-                        {/* Ready Button for current player */}
-                        {character?.class && !loading && (
-                            <div style={{ marginBottom: '1.5rem' }}>
-                                <button
-                                    onClick={handleToggleReady}
-                                    className={character.is_ready ? 'btn-gold' : 'btn-medieval'}
-                                    style={{
-                                        padding: '1rem 3rem',
-                                        fontSize: '1.1rem',
-                                        letterSpacing: '2px',
-                                        background: character.is_ready ? 'rgba(77, 255, 136, 0.15)' : 'transparent',
-                                        border: `2px solid ${character.is_ready ? '#4dff88' : 'var(--gold-primary)'}`,
-                                        color: character.is_ready ? '#4dff88' : 'var(--gold-primary)'
-                                    }}
-                                >
-                                    {character.is_ready ? 'PRET !' : 'JE SUIS PRET'}
-                                </button>
-                            </div>
-                        )}
-
-                        {loading && (
-                            <div style={{ marginBottom: '1.5rem', color: 'var(--gold-primary)', fontStyle: 'italic', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-                                <div style={{
-                                    width: '30px', height: '30px',
-                                    border: '3px solid var(--gold-dim)',
-                                    borderTopColor: 'var(--gold-primary)',
-                                    borderRadius: '50%',
-                                    animation: 'spin 1s linear infinite'
-                                }} />
-                                <span>Le Maître du Jeu prépare l'aventure...</span>
-                            </div>
-                        )}
-
-                        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic' }}>
-                            {(() => {
-                                const withClass = players.filter(p => p.class);
-                                const ready = players.filter(p => p.class && p.is_ready);
-                                if (withClass.length < players.length) {
-                                    return `${withClass.length} / ${players.length} heros ont cree leur personnage`;
-                                }
-                                if (ready.length === players.length) {
-                                    return "Tous les heros sont prets ! L'aventure commence...";
-                                }
-                                return `${ready.length} / ${players.length} heros sont prets`;
-                            })()}
-                        </p>
-
-                        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-                    </div>
-                </div>
+                <WaitingRoom
+                    players={players}
+                    character={character}
+                    onToggleReady={handleToggleReady}
+                    onStart={() => {
+                        if (confirm("Forcer le lancement de l'aventure ?")) {
+                            handleStartAdventure(true);
+                        }
+                    }}
+                    onInvite={() => {
+                        const url = window.location.origin + window.location.pathname + '?s=' + session.id;
+                        navigator.clipboard.writeText(url);
+                        showNotification("Lien d'invitation copié ! Partagez-le avec vos amis.", "success");
+                    }}
+                    loading={loading}
+                    sessionId={session.id}
+                    profile={profile}
+                    sessionHostId={session.host_id}
+                />
             ) : null}
 
             {character?.class && adventureStarted && (
@@ -2568,7 +2476,7 @@ export default function App() {
                             onInvite={() => {
                                 const url = window.location.origin + window.location.pathname + '?s=' + session.id;
                                 navigator.clipboard.writeText(url);
-                                alert("Lien d'invitation copié ! Partagez-le avec vos amis.");
+                                showNotification("Lien d'invitation copief ! Partagez-le avec vos amis.", "success");
                             }}
                             onToggleHelper={() => setShowHelper(!showHelper)}
                             showHelper={showHelper}

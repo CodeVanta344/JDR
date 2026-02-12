@@ -119,8 +119,7 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                 {[
                     { id: 'stats', label: 'STATS' },
                     { id: 'equip', label: 'ÉQUIP.' },
-                    { id: 'abilities', label: 'APTITUDES' },
-                    { id: 'codex', label: 'CODEX' }
+                    { id: 'abilities', label: 'APTITUDES' }
                 ].map(tab => (
                     <button
                         key={tab.id}
@@ -393,108 +392,7 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                     </div>
                 )}
 
-                {activeTab === 'codex' && (
-                    <div className="animate-fade-in list-view">
-                        <h4 style={{ fontSize: '0.7rem', color: 'var(--gold-dim)', marginBottom: '1.2rem', textTransform: 'uppercase', letterSpacing: '1.5px' }}>Journal d'Aventure</h4>
-                        <div style={{ display: 'grid', gap: '1rem' }}>
-                            {(character.active_quests && character.active_quests.length > 0) && (
-                                <div style={{ padding: '1rem', background: 'rgba(255,200,50,0.05)', borderRadius: '6px', borderLeft: '3px solid #ffc832' }}>
-                                    <div style={{ fontWeight: 'bold', color: '#ffc832', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <span>⚔</span> QUÊTES ACTIVES
-                                    </div>
-                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                                        {character.active_quests.map((quest, i) => (
-                                            <div key={i} style={{ padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                                <div style={{ color: '#fff', fontWeight: 'bold' }}>▸ {quest.name || quest}</div>
-                                                {quest.description && <div style={{ fontSize: '0.75rem', color: '#888', marginTop: '2px' }}>{quest.description}</div>}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
 
-                            <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', borderLeft: '3px solid var(--gold-primary)' }}>
-                                <div style={{ fontWeight: 'bold', color: 'var(--gold-primary)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span>👤</span> PERSONNAGES RENCONTRÉS
-                                </div>
-                                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                                    {(character.visited_npcs && character.visited_npcs.length > 0) ? character.visited_npcs.map((npc, i) => (
-                                        <div key={i} style={{ padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                            • {typeof npc === 'object' ? npc.name : npc} {npc.role && <span style={{ color: '#666', marginLeft: '0.5rem' }}>({npc.role})</span>}
-                                        </div>
-                                    )) : (
-                                        <div style={{ color: '#555', fontStyle: 'italic' }}>Aucun personnage rencontré pour l'instant.</div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', borderLeft: '3px solid var(--aether-blue)' }}>
-                                <div style={{ fontWeight: 'bold', color: 'var(--aether-blue)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span>🗺</span> LIEUX DÉCOUVERTS
-                                </div>
-                                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                                    {(character.discovered_locations && character.discovered_locations.length > 0) ? character.discovered_locations.map((loc, i) => (
-                                        <div key={i} style={{ padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                            ◈ {typeof loc === 'object' ? loc.name : loc} {loc.region && <span style={{ color: '#666', marginLeft: '0.5rem' }}>- {loc.region}</span>}
-                                        </div>
-                                    )) : (
-                                        <div style={{ color: '#555', fontStyle: 'italic' }}>Aucun lieu découvert pour l'instant.</div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {(character.discovered_visuals && character.discovered_visuals.length > 0) && (
-                                <div style={{ padding: '1rem', background: 'rgba(0,255,200,0.05)', borderRadius: '6px', borderLeft: '3px solid #00ffc8' }}>
-                                    <div style={{ fontWeight: 'bold', color: '#00ffc8', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <span>🗺</span> CARTES & DOCUMENTS
-                                    </div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '0.8rem', marginTop: '0.8rem' }}>
-                                        {character.discovered_visuals.map((visual, i) => (
-                                            <div key={i} style={{ background: 'rgba(0,0,0,0.3)', borderRadius: '4px', overflow: 'hidden', cursor: 'pointer', border: '1px solid rgba(0,255,200,0.1)', transition: 'transform 0.2s' }} onClick={() => setEnlargedImage(visual.url)}>
-                                                <img src={visual.url} alt={visual.name} style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} />
-                                                <div style={{ padding: '4px', fontSize: '0.65rem', color: '#fff', textAlign: 'center', background: 'rgba(0,0,0,0.6)' }}>{visual.name}</div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {(character.discovered_secrets && character.discovered_secrets.length > 0) && (
-                                <div style={{ padding: '1rem', background: 'rgba(150,100,255,0.05)', borderRadius: '6px', borderLeft: '3px solid #9664ff' }}>
-                                    <div style={{ fontWeight: 'bold', color: '#9664ff', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <span>🔮</span> SECRETS & INDICES
-                                    </div>
-                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                                        {character.discovered_secrets.map((secret, i) => (
-                                            <div key={i} style={{ padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>✦ {secret}</div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {(character.important_events && character.important_events.length > 0) && (
-                                <div style={{ padding: '1rem', background: 'rgba(255,100,100,0.05)', borderRadius: '6px', borderLeft: '3px solid #ff6464' }}>
-                                    <div style={{ fontWeight: 'bold', color: '#ff6464', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <span>📜</span> ÉVÉNEMENTS MARQUANTS
-                                    </div>
-                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                                        {character.important_events.map((event, i) => (
-                                            <div key={i} style={{ padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>◆ {event}</div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {(!character.visited_npcs || character.visited_npcs.length === 0) &&
-                                (!character.discovered_locations || character.discovered_locations.length === 0) &&
-                                (!character.active_quests || character.active_quests.length === 0) && (
-                                    <div style={{ padding: '2rem', textAlign: 'center', color: '#555', fontStyle: 'italic' }}>
-                                        Votre aventure commence à peine...<br /> Le codex se remplira au fil de vos découvertes.
-                                    </div>
-                                )}
-                        </div>
-                    </div>
-                )}
             </div>
 
             {/* Footer */}

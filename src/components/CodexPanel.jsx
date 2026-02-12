@@ -5,6 +5,7 @@ import { ALCHEMY } from '../lore/professions/craft/alchemy';
 import { MINING } from '../lore/professions/gather/mining';
 import { GUILDES } from '../lore/factions/index';
 import { LEGENDARY_WEAPONS } from '../lore/legendary-items';
+import { MARKETS } from '../lore/economy-system';
 import './CodexPanel.css';
 
 // type CodexTab = 'professions' | 'factions' | 'legendary_items' | 'world_events' | 'economy';
@@ -28,31 +29,31 @@ export function CodexPanel({ isOpen, onClose }) {
         <div className="codex-tabs">
           <button
             className={activeTab === 'professions' ? 'active' : ''}
-            onClick={() => setActiveTab('professions')}
+            onClick={() => { setActiveTab('professions'); setSelectedItem(null); }}
           >
             ⚒️ Métiers
           </button>
           <button
             className={activeTab === 'factions' ? 'active' : ''}
-            onClick={() => setActiveTab('factions')}
+            onClick={() => { setActiveTab('factions'); setSelectedItem(null); }}
           >
             🛡️ Factions
           </button>
           <button
             className={activeTab === 'legendary_items' ? 'active' : ''}
-            onClick={() => setActiveTab('legendary_items')}
+            onClick={() => { setActiveTab('legendary_items'); setSelectedItem(null); }}
           >
             ⚔️ Items Légendaires
           </button>
           <button
             className={activeTab === 'world_events' ? 'active' : ''}
-            onClick={() => setActiveTab('world_events')}
+            onClick={() => { setActiveTab('world_events'); setSelectedItem(null); }}
           >
             🌍 Événements Mondiaux
           </button>
           <button
             className={activeTab === 'economy' ? 'active' : ''}
-            onClick={() => setActiveTab('economy')}
+            onClick={() => { setActiveTab('economy'); setSelectedItem(null); }}
           >
             💰 Économie
           </button>
@@ -81,7 +82,7 @@ export function CodexPanel({ isOpen, onClose }) {
               {selectedItem && selectedItem.id && (
                 <div className="profession-details">
                   <h3>{selectedItem.name}</h3>
-                  
+
                   <div className="lore-section">
                     <h4>📜 Histoire</h4>
                     <p>{selectedItem.lore_background}</p>
@@ -95,14 +96,14 @@ export function CodexPanel({ isOpen, onClose }) {
 
                   <div className="ranks-section">
                     <h4>🎖️ Rangs de Progression</h4>
-                    {selectedItem.ranks.map(rank => (
+                    {selectedItem.ranks?.map(rank => (
                       <div key={rank.level} className="rank-card">
                         <h5>Niveau {rank.level} - {rank.title}</h5>
                         <p className="xp-required">XP Requis : {rank.xp_required}</p>
                         <div className="rank-bonuses">
                           <strong>Bonus Passifs :</strong>
                           <ul>
-                            {rank.passive_bonuses.map((bonus, i) => (
+                            {rank.passive_bonuses?.map((bonus, i) => (
                               <li key={i}>{bonus}</li>
                             ))}
                           </ul>
@@ -172,7 +173,7 @@ export function CodexPanel({ isOpen, onClose }) {
               {selectedItem && selectedItem.lore && (
                 <div className="faction-details">
                   <h3>{selectedItem.symbol} {selectedItem.name}</h3>
-                  
+
                   <div className="faction-info">
                     <p><strong>QG :</strong> {selectedItem.headquarters}</p>
                     <p><strong>Chef :</strong> {selectedItem.leader}</p>
@@ -259,7 +260,7 @@ export function CodexPanel({ isOpen, onClose }) {
               {selectedItem && selectedItem.lore?.creation_story && (
                 <div className="legendary-details">
                   <h3>{selectedItem.name}</h3>
-                  
+
                   <div className="creation-story">
                     <h4>🔥 Histoire de Création</h4>
                     <p>{selectedItem.lore.creation_story}</p>
@@ -295,7 +296,7 @@ export function CodexPanel({ isOpen, onClose }) {
                       Difficulté : <strong>{selectedItem.acquisition_quest.difficulty}</strong>
                     </p>
                     <p>Niveau Recommandé : {selectedItem.acquisition_quest.estimated_level}</p>
-                    
+
                     <div className="quest-stages">
                       {selectedItem.acquisition_quest.quest_stages.map(stage => (
                         <div key={stage.stage_number} className="stage-card">
@@ -322,13 +323,55 @@ export function CodexPanel({ isOpen, onClose }) {
 
           {activeTab === 'economy' && (
             <div className="economy-view">
-              <h3>💰 Marchés d'Aethelgard</h3>
-              <p>Système économique dynamique avec prix variables selon événements.</p>
-              <div className="markets-info">
-                <p>🏛️ Aethelmere : Prospérité Maximale (x1.25 prix)</p>
-                <p>⚓ Port-Azure : Commerce Maritime</p>
-                <p>❄️ Bastion-de-Fer : Forge & Minerais</p>
-                <p>🌳 Sylvanor : Herbes & Alchimie</p>
+              <div className="economy-header">
+                <h3>💰 Marchés d'Aethelgard</h3>
+                <p>Système économique dynamique. Les prix fluctuent selon la prospérité, les événements et les spécialités locales.</p>
+              </div>
+
+              <div className="markets-grid">
+                {MARKETS.map(market => (
+                  <div key={market.city_id} className="market-card">
+                    <div className="market-card-header">
+                      <h4>{market.city_name}</h4>
+                      <span className={`prosperity-badge level-${market.prosperity_level}`}>
+                        Prospérité: {market.prosperity_level}/5
+                      </span>
+                    </div>
+
+                    <div className="market-section">
+                      <h5>🌟 Spécialités (Prix réduits)</h5>
+                      <ul>
+                        {market.specialties.map((spec, i) => (
+                          <li key={i}>{spec}</li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="market-section">
+                      <h5>📦 Demande (Prix élevés)</h5>
+                      <ul>
+                        {market.imports_needed.map((imp, i) => (
+                          <li key={i}>{imp}</li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {market.current_events.length > 0 && (
+                      <div className="market-events">
+                        <h5>⚠️ Événements en cours</h5>
+                        {market.current_events.map(event => (
+                          <div key={event.id} className="event-card">
+                            <div className="event-title">
+                              <strong>{event.name}</strong>
+                              <span className="event-duration">Reste {event.duration_days}j</span>
+                            </div>
+                            <p>{event.description}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           )}

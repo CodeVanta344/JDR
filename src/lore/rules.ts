@@ -154,43 +154,140 @@ export const getXPForNextLevel = (currentLevel: number): number => {
   return LEVEL_THRESHOLDS[currentLevel + 1] || LEVEL_THRESHOLDS[30];
 };
 
-export const rollDice = (diceString: string): { total: number; rolls: number[] } => {
+// ============= SYSTÈME D100 - RÈGLES COMPLÈTES =============
+
+/**
+ * Types de dés disponibles (système d100)
+ */
+export const DICE_TYPES = {
+  d4: 4,     // Dague faible, coup de poing
+  d6: 6,     // Arme simple légère (ancien système)
+  d8: 8,     // Arme simple standard
+  d10: 10,   // Arme martiale
+  d12: 12,   // Grande arme (ancien système)
+  d20: 20,   // Sorts mineurs, dague d100
+  d30: 30,   // Épée courte d100
+  d40: 40,   // Épée longue d100
+  d50: 50,   // Arme lourde d100
+  d60: 60,   // Arme deux mains d100
+  d100: 100  // Jets compétence, chance pure
+} as const;
+
+/**
+ * Lancé de dés universel (supporte d4 à d100)
+ */
+export const rollDice = (diceString: string): { total: number; rolls: number[]; isCritical: boolean; isFumble: boolean } => {
   const match = diceString.match(/(\d+)?d(\d+)([+-]\d+)?/i);
-  if (!match) return { total: 0, rolls: [] };
+  if (!match) return { total: 0, rolls: [], isCritical: false, isFumble: false };
   
   const count = parseInt(match[1] || '1');
   const sides = parseInt(match[2]);
   const modifier = parseInt(match[3] || '0');
   
   const rolls: number[] = [];
+  let criticals = 0;
+  let fumbles = 0;
+
   for (let i = 0; i < count; i++) {
-    rolls.push(Math.floor(Math.random() * sides) + 1);
+    const roll = Math.floor(Math.random() * sides) + 1;
+    rolls.push(roll);
+    
+    // Détection critique (95-100 pour d100, max pour autres dés)
+    if (sides === 100 && roll >= 95) criticals++;
+    else if (sides === 20 && roll === 20) criticals++;
+    else if (roll === sides && sides >= 12) criticals++;
+    
+    // Détection fumble (1-5 pour d100, 1 pour autres dés)
+    if (sides === 100 && roll <= 5) fumbles++;
+    else if (roll === 1) fumbles++;
   }
   
   const total = rolls.reduce((a, b) => a + b, 0) + modifier;
-  return { total, rolls };
+  return { 
+    total, 
+    rolls, 
+    isCritical: criticals > 0,
+    isFumble: fumbles > 0 && criticals === 0 // Fumble only if no critical
+  };
 };
 
+/**
+ * Calcul modificateur attribut (système d100)
+ * Formule : (Attribut - 10) × 1.25 arrondi
+ * Exemple : STR 18 → (18-10) × 1.25 = +10
+ */
 export const getModifier = (stat: number): number => {
-  return Math.floor((stat - 10) / 2);
+  return Math.round((stat - 10) * 1.25);
 };
 
+/**
+ * Conversion ancien DC (d20) vers nouveau DC (d100)
+ * Formule : (DC_d20 × 5) - 5
+ */
+export const convertDC = (oldDC: number): number => {
+  return (oldDC * 5) - 5;
+};
+
+/**
+ * Seuils de difficulté standard (système d100)
+ */
+export const DIFFICULTY_THRESHOLDS = {
+  TRIVIAL: 15,        // Routine absolue
+  VERY_EASY: 25,      // Novice peut réussir
+  EASY: 35,           // Accessible avec minimal effort
+  MEDIUM: 50,         // Compétence modérée requise
+  HARD: 65,           // Challenge pour expert
+  VERY_HARD: 80,      // Héroïque, quasi-impossible
+  LEGENDARY: 95       // Digne des légendes
+} as const;
+
+/**
+ * Jet de compétence d100
+ */
+export const skillCheck = (
+  skillValue: number,
+  attributeMod: number,
+  dc: number
+): { success: boolean; roll: number; total: number; isCritical: boolean; margin: number } => {
+  const roll = Math.floor(Math.random() * 100) + 1;
+  const total = roll + skillValue + attributeMod;
+  const margin = total - dc;
+  const isCritical = roll >= 95;
+  
+  return { 
+    success: total >= dc || isCritical, // Critique auto-réussite
+    roll, 
+    total,
+    isCritical,
+    margin 
+  };
+};
+
+/**
+ * Calcul CA (Classe d'Armure) système d100
+ * Formule : 20 + (AC_armure × 3) + (DEX_mod × 1.5) + (bonus_bouclier × 3)
+ */
 export const calculateAC = (
   baseAC: number,
   dexMod: number,
   armorCategory: 'light' | 'medium' | 'heavy',
   hasShield: boolean
 ): number => {
-  let ac = baseAC;
+  // Base d100 : 20 (au lieu de 10)
+  let ac = 20 + (baseAC * 3);
   
   if (armorCategory === 'light') {
-    ac += dexMod;
+    // Armure légère : bonus DEX complet × 1.5
+    ac += Math.round(dexMod * 1.5);
   } else if (armorCategory === 'medium') {
-    ac += Math.min(dexMod, 2);
+    // Armure intermédiaire : DEX limité à +5 (équivalent ancien +2)
+    ac += Math.min(Math.round(dexMod * 1.5), 5);
   }
+  // Armure lourde : pas de bonus DEX
   
   if (hasShield) {
-    ac += 2;
+    // Bouclier : +6 (ancien +2 × 3)
+    ac += 6;
   }
   
   return ac;

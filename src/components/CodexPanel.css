@@ -441,8 +441,15 @@
 }
 
 @keyframes shimmer {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(180deg); }
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  50% {
+    transform: rotate(180deg);
+  }
 }
 
 .legendary-card:hover {
@@ -484,6 +491,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -513,4 +521,185 @@
 .profession-details::-webkit-scrollbar-thumb:hover,
 .faction-details::-webkit-scrollbar-thumb:hover {
   background: #f4d03f;
+}
+
+/* ============================================================
+   ECONOMY VIEW
+   ============================================================ */
+
+.economy-header {
+  margin-bottom: 2rem;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+  padding-bottom: 1rem;
+}
+
+.economy-header h3 {
+  color: #d4af37;
+  font-family: 'Cinzel', serif;
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.economy-header p {
+  color: #aaa;
+  font-style: italic;
+}
+
+.markets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  padding-bottom: 2rem;
+}
+
+.market-card {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 1px solid #3a5a7a;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.market-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  border-color: #d4af37;
+}
+
+.market-card-header {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.market-card-header h4 {
+  margin: 0;
+  color: #f4d03f;
+  font-family: 'Cinzel', serif;
+  font-size: 1.1rem;
+}
+
+.prosperity-badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+  background: #333;
+  color: #ccc;
+  /* Level-specific colors applied via inline styles or separate classes if dynamic */
+}
+
+/* Dynamic colors for prosperity badges */
+.prosperity-badge.level-1 {
+  background: #3e1a1a;
+  color: #ff6b6b;
+}
+
+.prosperity-badge.level-2 {
+  background: #3e2a1a;
+  color: #ff9f43;
+}
+
+.prosperity-badge.level-3 {
+  background: #3e3e1a;
+  color: #feca57;
+}
+
+.prosperity-badge.level-4 {
+  background: #1a3e1a;
+  color: #1dd1a1;
+}
+
+.prosperity-badge.level-5 {
+  background: #1a3e3e;
+  color: #54a0ff;
+  box-shadow: 0 0 10px rgba(84, 160, 255, 0.4);
+}
+
+
+.market-section {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.market-section h5 {
+  margin: 0 0 0.5rem 0;
+  color: #8fadcf;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.market-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.market-section li {
+  color: #ccc;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+  padding-left: 0.8rem;
+  position: relative;
+}
+
+.market-section li::before {
+  content: '•';
+  color: #d4af37;
+  position: absolute;
+  left: 0;
+}
+
+.market-events {
+  padding: 1rem;
+  background: rgba(212, 175, 55, 0.05);
+  flex-grow: 1;
+}
+
+.market-events h5 {
+  margin: 0 0 0.8rem 0;
+  color: #eebb4d;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.event-card {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 4px;
+  padding: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+
+.event-title {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+  font-size: 0.9rem;
+  color: #fff;
+  align-items: center;
+}
+
+.event-duration {
+  font-size: 0.75rem;
+  color: #aaa;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+
+.event-card p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #ccc;
+  line-height: 1.4;
 }

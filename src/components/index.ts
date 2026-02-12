@@ -14,3 +14,6 @@ export {
   LazyTutorial,
   withLazyLoading,
 } from './LazyComponents';
+
+export { SessionLobby } from './SessionLobby';
+export { default as WaitingRoom } from './WaitingRoom';
