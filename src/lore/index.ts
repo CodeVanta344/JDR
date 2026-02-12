@@ -14,6 +14,8 @@ import { ALL_RECIPES } from './recipes';
 import { ALL_CREATURES } from './bestiary';
 import { ALL_NPCS } from './npcs';
 import { ALL_QUESTS } from './quests';
+import { ALL_ITEMS } from './items-catalog';
+import { ALL_LOCATIONS } from './world-map';
 
 // ============================================================================
 // REGISTRY GLOBAL
@@ -133,6 +135,45 @@ export function initializeLoreSystem(): void {
     });
   });
   
+  // Enregistrement des items
+  console.log(`[Lore] Enregistrement de ${ALL_ITEMS.length} items...`);
+  ALL_ITEMS.forEach(item => {
+    const tags = [item.type, item.rarity];
+    if (item.category) tags.push(item.category);
+    if (item.requirements?.class) tags.push(...item.requirements.class);
+    
+    GlobalLoreRegistry.register({
+      id: item.id,
+      name: item.name,
+      type: 'item',
+      tags,
+      description: item.description,
+      data: item
+    });
+  });
+  
+  // Enregistrement des locations
+  console.log(`[Lore] Enregistrement de ${ALL_LOCATIONS.length} lieux...`);
+  ALL_LOCATIONS.forEach(location => {
+    const tags = [
+      location.type, 
+      location.biome, 
+      location.region, 
+      location.dangerLevel,
+      `level-${location.suggestedLevel}`
+    ];
+    if (location.controlledBy) tags.push(location.controlledBy);
+    
+    GlobalLoreRegistry.register({
+      id: location.id,
+      name: location.name,
+      type: 'location',
+      tags,
+      description: location.description,
+      data: location
+    });
+  });
+  
   const endTime = performance.now();
   const totalEntities = GlobalLoreRegistry.getAll().length;
   
@@ -145,6 +186,8 @@ export function initializeLoreSystem(): void {
   console.log(`[Lore] - Créatures: ${ALL_CREATURES.length}`);
   console.log(`[Lore] - NPCs: ${ALL_NPCS.length}`);
   console.log(`[Lore] - Quêtes: ${ALL_QUESTS.length}`);
+  console.log(`[Lore] - Items: ${ALL_ITEMS.length}`);
+  console.log(`[Lore] - Lieux: ${ALL_LOCATIONS.length}`);
   
   // Validation (optionnel en développement)
   if (process.env.NODE_ENV === 'development') {
@@ -172,6 +215,8 @@ export * from './recipes';
 export * from './bestiary';
 export * from './npcs';
 export * from './quests';
+export * from './items-catalog';
+export * from './world-map';
 
 // Export des données brutes
 export {
@@ -181,7 +226,9 @@ export {
   ALL_RECIPES,
   ALL_CREATURES,
   ALL_NPCS,
-  ALL_QUESTS
+  ALL_QUESTS,
+  ALL_ITEMS,
+  ALL_LOCATIONS
 };
 
 // ============================================================================
@@ -249,7 +296,9 @@ export function getLoreStats() {
     recipes: ALL_RECIPES.length,
     creatures: ALL_CREATURES.length,
     npcs: ALL_NPCS.length,
-    quests: ALL_QUESTS.length
+    quests: ALL_QUESTS.length,
+    items: ALL_ITEMS.length,
+    locations: ALL_LOCATIONS.length
   };
 }
 
