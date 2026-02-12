@@ -653,8 +653,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
         if (actualMove) {
             const newCombatants = currentCombatants.map(u => u.id === freshActor.id ? { ...u, posX: newX, posY: newY, currentPM: u.currentPM - 1, facing: newFacing, hasMoved: true } : u);
             setCombatants(newCombatants);
-            lastSyncRef.current = Date.now();
-            if (onUpdateCombatState) onUpdateCombatState({ combatants: newCombatants, turnIndex: currentTurnIndex, round, active: true, logs, updatedAt: lastSyncRef.current });
+            if (onUpdateCombatState) onUpdateCombatState({ combatants: newCombatants, turnIndex: currentTurnIndex, round, active: true, logs, updatedAt: Date.now() });
             if (onSFX) onSFX('footstep');
         }
     };
@@ -959,8 +958,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                     addLog({ role: 'system', content: `🕓 **${nextActor.name}** approche... (${newTurns} tours restants)` });
                     // If traveling, we set state and skip to next
                     setCombatants(newCombatants);
-                    lastSyncRef.current = Date.now();
-                    if (onUpdateCombatState) onUpdateCombatState({ combatants: newCombatants, turnIndex: nextIndex, round: (nextIndex < currentTurnIndex ? round + 1 : round), active: true, logs, updatedAt: lastSyncRef.current });
+                    if (onUpdateCombatState) onUpdateCombatState({ combatants: newCombatants, turnIndex: nextIndex, round: (nextIndex < currentTurnIndex ? round + 1 : round), active: true, logs, updatedAt: Date.now() });
                     setTimeout(nextTurn, 1000);
                     return;
                 }
@@ -984,14 +982,13 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
             setCombatants(newCombatants);
 
             // SYNC TURN CHANGE
-            lastSyncRef.current = Date.now();
             if (onUpdateCombatState) onUpdateCombatState({
                 combatants: newCombatants,
                 turnIndex: nextIndex,
                 round: (nextIndex < currentTurnIndex ? round + 1 : round),
                 active: true,
                 logs,
-                updatedAt: lastSyncRef.current
+                updatedAt: Date.now()
             });
         }
     };
