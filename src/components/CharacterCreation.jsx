@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CLASSES, CLASS_CATEGORIES, ENRICHED_BACKSTORIES, getBackstoriesForClass, formatBackstoryForGM, LOCATION_BACKGROUNDS, BIRTH_ORIGINS, CHILDHOOD_EVENTS, ADOLESCENCE_PATHS } from '../lore';
 import { MagicBackground } from './MagicBackground';
+import { LifePathBuilder } from './LifePathBuilder';
 import './CharacterCreation.css';
 
 // Utility: Roll 4d6 drop lowest
@@ -48,6 +49,8 @@ export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImag
     const [selectedClass, setSelectedClass] = useState('Guerrier');
     const [selectedSubclass, setSelectedSubclass] = useState(null);
     const [selectedBackstory, setSelectedBackstory] = useState(null);
+    const [lifepathData, setLifepathData] = useState(null);
+    // Old states kept for compatibility but will be replaced by lifepathData
     const [selectedBirthOrigin, setSelectedBirthOrigin] = useState(BIRTH_ORIGINS[0]);
     const [selectedChildhoodEvent, setSelectedChildhoodEvent] = useState(CHILDHOOD_EVENTS[0]);
     const [selectedAdolescencePath, setSelectedAdolescencePath] = useState(ADOLESCENCE_PATHS[0]);
@@ -123,36 +126,58 @@ export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImag
         const chosenAbilities = clsData.initial_ability_options.filter(a => selectedAbilityNames.includes(a.name));
         const finalStats = { ...attributes };
 
-        // Apply all Life Path Stat Bonuses
-        const lifePathStages = [selectedBirthOrigin, selectedChildhoodEvent, selectedAdolescencePath, selectedBackstory];
-        lifePathStages.forEach(stage => {
-            if (stage && stage.stats) {
-                Object.entries(stage.stats).forEach(([stat, mod]) => {
-                    finalStats[stat] = (finalStats[stat] || 0) + mod;
-                });
-            }
-        });
+        // Use NEW lifepath data if available, fallback to old system
+        let allTraits = [];
+        let fullNarrative = '';
+        let startingReputation = {};
+        let knownNpcs = [];
+        let factionTies = [];
+        let discoveredSecrets = [];
+        let lifePathRecord = {};
 
-        // Accumulate mechanical traits
-        const allTraits = [
-            ...(selectedBirthOrigin?.mechanical_traits || []),
-            ...(selectedChildhoodEvent?.mechanical_traits || []),
-            ...(selectedAdolescencePath?.mechanical_traits || []),
-            ...(selectedBackstory?.mechanical_traits || [])
-        ];
+        if (lifepathData) {
+            // NEW SYSTEM: Use comprehensive lifepath data
+            allTraits = lifepathData.mechanical_traits || [];
+            fullNarrative = lifepathData.narrative_summary || '';
+            startingReputation = lifepathData.reputation || {};
+            knownNpcs = lifepathData.allies || [];
+            factionTies = Object.keys(startingReputation).filter(f => Math.abs(startingReputation[f]) >= 10);
+            discoveredSecrets = lifepathData.personal_secrets || [];
+            lifePathRecord = {
+                birth: lifepathData.origin?.label || '',
+                childhood: lifepathData.childhood?.label || '',
+                adolescence: lifepathData.adolescence?.label || '',
+                adult: lifepathData.adult?.label || ''
+            };
+        } else {
+            // OLD SYSTEM: Fallback to legacy states
+            const lifePathStages = [selectedBirthOrigin, selectedChildhoodEvent, selectedAdolescencePath, selectedBackstory];
+            lifePathStages.forEach(stage => {
+                if (stage && stage.stats) {
+                    Object.entries(stage.stats).forEach(([stat, mod]) => {
+                        finalStats[stat] = (finalStats[stat] || 0) + mod;
+                    });
+                }
+            });
 
-        // Format Complete Narrative for GM with Extreme Detailing
-        const formatStageImpacts = (stage, title) => {
-            if (!stage) return '';
-            let s = `### ${title}: ${stage.label}\n> ${stage.lore}\n`;
-            if (stage.social_impacts) s += `**Réactions Sociales**: ${stage.social_impacts.pnj_reactions}\n`;
-            if (stage.personal_secrets) s += `**Secret Personnel**: ${stage.personal_secrets}\n`;
-            if (stage.gm_hooks) s += `**Accroche MJ**: ${stage.gm_hooks}\n`;
-            if (stage.roleplay_hooks) s += `**Accroches RP**: ${stage.roleplay_hooks.join(' ; ')}\n`;
-            return s + '\n';
-        };
+            allTraits = [
+                ...(selectedBirthOrigin?.mechanical_traits || []),
+                ...(selectedChildhoodEvent?.mechanical_traits || []),
+                ...(selectedAdolescencePath?.mechanical_traits || []),
+                ...(selectedBackstory?.mechanical_traits || [])
+            ];
 
-        const fullNarrative = `
+            const formatStageImpacts = (stage, title) => {
+                if (!stage) return '';
+                let s = `### ${title}: ${stage.label}\n> ${stage.lore}\n`;
+                if (stage.social_impacts) s += `**Réactions Sociales**: ${stage.social_impacts.pnj_reactions}\n`;
+                if (stage.personal_secrets) s += `**Secret Personnel**: ${stage.personal_secrets}\n`;
+                if (stage.gm_hooks) s += `**Accroche MJ**: ${stage.gm_hooks}\n`;
+                if (stage.roleplay_hooks) s += `**Accroches RP**: ${stage.roleplay_hooks.join(' ; ')}\n`;
+                return s + '\n';
+            };
+
+            fullNarrative = `
 # CHRONIQUES DE ${name.toUpperCase()}
 
 ${formatStageImpacts(selectedBirthOrigin, "1. ORIGINE")}
@@ -165,7 +190,21 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
 **Secrets**: ${selectedBackstory.personal_secrets?.join(' ; ')}
 **Accroches RP**: ${selectedBackstory.roleplay_hooks?.join(' ; ')}
 **Notes de l'MJ**: ${selectedBackstory.gm_notes?.join(' ; ')}` : ''}
-        `.trim();
+            `.trim();
+
+            startingReputation = {
+                ...(selectedBackstory?.starting_reputation || {}),
+                ...(selectedChildhoodEvent?.reputation_impact || {})
+            };
+            knownNpcs = selectedBackstory?.known_npcs || [];
+            factionTies = selectedBackstory?.faction_ties || [];
+            discoveredSecrets = selectedBackstory?.personal_secrets || [];
+            lifePathRecord = {
+                birth: selectedBirthOrigin?.label,
+                childhood: selectedChildhoodEvent?.label,
+                adolescence: selectedAdolescencePath?.label
+            };
+        }
 
         const charData = {
             name,
@@ -173,33 +212,27 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
             mechanic: clsData.mechanic,
             desc: clsData.desc,
             stats: finalStats,
-            gold: Math.floor(100 * (selectedBackstory?.social_class?.starting_gold_modifier || 1.0)),
+            gold: Math.floor(100 * (lifepathData?.social_class_modifier || selectedBackstory?.social_class?.starting_gold_modifier || 1.0)),
             abilities: chosenAbilities,
             equipment: selectedEquipment,
             hp: (clsData.hitDie || 8) + 10 + (Math.floor((finalStats.con - 10) / 2) * 2),
             maxHp: (clsData.hitDie || 8) + 10 + (Math.floor((finalStats.con - 10) / 2) * 2),
             resource: 100,
             max_resource: 100,
-            inventory: [...selectedEquipment],
+            inventory: [...selectedEquipment, ...(lifepathData?.starting_items || [])],
             portrait_url: portraitUrl || classPortraits[selectedClass],
-            backstory: selectedBackstory?.label,
-            life_path: {
-                birth: selectedBirthOrigin?.label,
-                childhood: selectedChildhoodEvent?.label,
-                adolescence: selectedAdolescencePath?.label
-            },
+            backstory: lifepathData?.adult?.label || selectedBackstory?.label,
+            life_path: lifePathRecord,
             mechanical_traits: allTraits,
             backstory_gm_context: fullNarrative,
-            starting_reputation: {
-                ...(selectedBackstory?.starting_reputation || {}),
-                ...(selectedChildhoodEvent?.reputation_impact || {})
-            },
-            visited_npcs: selectedBackstory?.known_npcs || [],
-            faction_ties: selectedBackstory?.faction_ties || [],
-            discovered_secrets: selectedBackstory?.personal_secrets || [],
+            starting_reputation: startingReputation,
+            visited_npcs: knownNpcs,
+            faction_ties: factionTies,
+            discovered_secrets: discoveredSecrets,
             discovered_locations: [],
             active_quests: [],
-            important_events: []
+            important_events: [],
+            languages: lifepathData?.languages || []
         };
         onCreate(charData);
     };
@@ -371,125 +404,28 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                             </div>
                         )}
 
-                        {/* STEP 4: ORIGINE */}
+                        {/* STEP 4: LIFEPATH COMPLET (Origine, Enfance, Adolescence, Passé Adulte) */}
                         {step === 4 && (
-                            <div className="spellbook-section">
-                                <div className="section-header">
-                                    <span className="section-icon">👶</span>
-                                    <h3>Origine</h3>
-                                </div>
-                                <div className="selection-grid">
-                                    {BIRTH_ORIGINS.map((origin) => (
-                                        <div key={origin.id} className={`selection-card ${selectedBirthOrigin?.id === origin.id ? 'selected' : ''}`} onClick={() => setSelectedBirthOrigin(origin)}>
-                                            <div className="card-title">{origin.label}</div>
-                                            <div className="card-body">
-                                                <p className="card-description">{origin.desc}</p>
-                                                <p style={{ fontSize: '0.75rem', opacity: 0.6, fontStyle: 'italic', marginTop: '0.5rem' }}>"{origin.lore}"</p>
-                                                <div className="mechanical-traits-preview">
-                                                    {origin.mechanical_traits?.map((t, i) => <span key={i} className={`trait-tag ${t.type}`}>{t.name}</span>)}
-                                                </div>
-                                                {selectedBirthOrigin?.id === origin.id && (
-                                                    <div className="impact-details-box">
-                                                        {origin.social_impacts && <div><h5>Social</h5><p>{origin.social_impacts.pnj_reactions}</p></div>}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(3)}>← Retour</button>
-                                    <button className="btn-spellbook btn-next" onClick={() => setStep(5)}>Suivant →</button>
-                                </div>
-                            </div>
+                            <LifePathBuilder
+                                onComplete={(data) => {
+                                    setLifepathData(data);
+                                    // Appliquer les stats cumulées aux attributs
+                                    setAttributes(prev => ({
+                                        str: prev.str + (data.stats.str || 0),
+                                        dex: prev.dex + (data.stats.dex || 0),
+                                        con: prev.con + (data.stats.con || 0),
+                                        int: prev.int + (data.stats.int || 0),
+                                        wis: prev.wis + (data.stats.wis || 0),
+                                        cha: prev.cha + (data.stats.cha || 0)
+                                    }));
+                                    setStep(5); // Passe à l'équipement
+                                }}
+                                onBack={() => setStep(3)}
+                            />
                         )}
 
-                        {/* STEP 5: ENFANCE */}
+                        {/* STEP 5: ÉQUIPEMENT */}
                         {step === 5 && (
-                            <div className="spellbook-section">
-                                <div className="section-header">
-                                    <span className="section-icon">🧸</span>
-                                    <h3>Enfance</h3>
-                                </div>
-                                <div className="selection-grid">
-                                    {CHILDHOOD_EVENTS.map((event) => (
-                                        <div key={event.id} className={`selection-card ${selectedChildhoodEvent?.id === event.id ? 'selected' : ''}`} onClick={() => setSelectedChildhoodEvent(event)}>
-                                            <div className="card-title">{event.label}</div>
-                                            <div className="card-body">
-                                                <p className="card-description">{event.desc}</p>
-                                                <p style={{ fontSize: '0.75rem', opacity: 0.6, fontStyle: 'italic', marginTop: '0.5rem' }}>"{event.lore}"</p>
-                                                <div className="mechanical-traits-preview">
-                                                    {event.mechanical_traits?.map((t, i) => <span key={i} className={`trait-tag ${t.type}`}>{t.name}</span>)}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(4)}>← Retour</button>
-                                    <button className="btn-spellbook btn-next" onClick={() => setStep(6)}>Suivant →</button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* STEP 6: ADOLESCENCE */}
-                        {step === 6 && (
-                            <div className="spellbook-section">
-                                <div className="section-header">
-                                    <span className="section-icon">⚔️</span>
-                                    <h3>Adolescence</h3>
-                                </div>
-                                <div className="selection-grid">
-                                    {ADOLESCENCE_PATHS.map((path) => (
-                                        <div key={path.id} className={`selection-card ${selectedAdolescencePath?.id === path.id ? 'selected' : ''}`} onClick={() => setSelectedAdolescencePath(path)}>
-                                            <div className="card-title">{path.label}</div>
-                                            <div className="card-body">
-                                                <p className="card-description">{path.desc}</p>
-                                                <p style={{ fontSize: '0.75rem', opacity: 0.6, fontStyle: 'italic', marginTop: '0.5rem' }}>"{path.lore}"</p>
-                                                <div className="mechanical-traits-preview">
-                                                    {path.mechanical_traits?.map((t, i) => <span key={i} className={`trait-tag ${t.type}`}>{t.name}</span>)}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(5)}>← Retour</button>
-                                    <button className="btn-spellbook btn-next" onClick={() => setStep(7)}>Suivant →</button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* STEP 7: PASSÉ ADULTE */}
-                        {step === 7 && (
-                            <div className="spellbook-section">
-                                <div className="section-header">
-                                    <span className="section-icon">📖</span>
-                                    <h3>Passé Adulte</h3>
-                                </div>
-                                <div className="selection-grid">
-                                    {getBackstoriesForClass(selectedClass).map((bg, idx) => (
-                                        <div key={idx} className={`selection-card ${selectedBackstory?.label === bg.label ? 'selected' : ''}`} onClick={() => setSelectedBackstory(bg)}>
-                                            <div className="card-title">{bg.label}</div>
-                                            <div className="card-body">
-                                                <p className="card-description">{bg.desc}</p>
-                                                <p style={{ fontSize: '0.75rem', opacity: 0.6, fontStyle: 'italic', marginTop: '0.5rem' }}>"{bg.lore}"</p>
-                                                <div className="mechanical-traits-preview">
-                                                    {bg.mechanical_traits?.map((t, i) => <span key={i} className={`trait-tag ${t.type}`}>{t.name}</span>)}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(6)}>← Retour</button>
-                                    <button className="btn-spellbook btn-next" onClick={() => setStep(8)}>Suivant →</button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* STEP 8: ÉQUIPEMENT */}
-                        {step === 8 && (
                             <div className="spellbook-section">
                                 <div className="section-header">
                                     <span className="section-icon">🛡️</span>
@@ -506,14 +442,14 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                                     ))}
                                 </div>
                                 <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(7)}>← Retour</button>
-                                    <button className="btn-spellbook btn-next" onClick={() => setStep(9)}>Suivant →</button>
+                                    <button className="btn-spellbook btn-back" onClick={() => setStep(4)}>← Retour</button>
+                                    <button className="btn-spellbook btn-next" onClick={() => setStep(6)}>Suivant →</button>
                                 </div>
                             </div>
                         )}
 
-                        {/* STEP 9: NOM */}
-                        {step === 9 && (
+                        {/* STEP 6: NOM */}
+                        {step === 6 && (
                             <div className="spellbook-section">
                                 <div className="section-header">
                                     <span className="section-icon">📜</span>
@@ -524,14 +460,14 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                                     {name && <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '2.5rem', fontFamily: 'Cinzel Decorative', color: 'var(--gold-primary)' }}>{name}</div>}
                                 </div>
                                 <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(8)}>← Retour</button>
-                                    <button className="btn-spellbook btn-next" onClick={() => setStep(10)}>Suivant →</button>
+                                    <button className="btn-spellbook btn-back" onClick={() => setStep(5)}>← Retour</button>
+                                    <button className="btn-spellbook btn-next" onClick={() => setStep(7)}>Suivant →</button>
                                 </div>
                             </div>
                         )}
 
-                        {/* STEP 10: ATTRIBUTS */}
-                        {step === 10 && (
+                        {/* STEP 7: ATTRIBUTS */}
+                        {step === 7 && (
                             <div className="spellbook-section">
                                 <div className="section-header">
                                     <span className="section-icon">🎲</span>
@@ -547,14 +483,14 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                                     ))}
                                 </div>
                                 <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(9)}>← Retour</button>
-                                    <button className="btn-spellbook btn-next" onClick={() => setStep(11)} disabled={!allRolled || isRolling}>Suivant →</button>
+                                    <button className="btn-spellbook btn-back" onClick={() => setStep(6)}>← Retour</button>
+                                    <button className="btn-spellbook btn-next" onClick={() => setStep(8)} disabled={!allRolled || isRolling}>Suivant →</button>
                                 </div>
                             </div>
                         )}
 
-                        {/* STEP 11: FINALISATION */}
-                        {step === 11 && (
+                        {/* STEP 8: FINALISATION */}
+                        {step === 8 && (
                             <div className="spellbook-section">
                                 <div className="section-header">
                                     <span className="section-icon">✨</span>
@@ -566,7 +502,7 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                                     <p style={{ color: 'var(--gold-dim)' }}>{selectedClass} ({classData.subclasses[selectedSubclass]?.label})</p>
                                 </div>
                                 <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(10)}>← Retour</button>
+                                    <button className="btn-spellbook btn-back" onClick={() => setStep(7)}>← Retour</button>
                                     <button className="btn-spellbook btn-next" onClick={handleCreate}>Commencer l'Aventure →</button>
                                 </div>
                             </div>
