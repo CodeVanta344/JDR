@@ -86,6 +86,7 @@ export const LifePathWizard: React.FC<Props> = ({ onComplete, onCancel }) => {
 
       // Dynamic import selon catégorie
       switch (category) {
+        // Birth
         case 'location':
           const { BIRTH_LOCATIONS } = await import('../../../lore/character-creation/lifepath/birth/locations');
           fetched = BIRTH_LOCATIONS;
@@ -98,8 +99,51 @@ export const LifePathWizard: React.FC<Props> = ({ onComplete, onCancel }) => {
           const { OMENS } = await import('../../../lore/character-creation/lifepath/birth/omens');
           fetched = OMENS;
           break;
-        // TODO: Ajouter autres catégories (childhood, adolescence, youngAdult)
+        
+        // Childhood
+        case 'family':
+          const { FAMILIES } = await import('../../../lore/character-creation/lifepath/childhood/families');
+          fetched = FAMILIES;
+          break;
+        case 'education':
+          const { EDUCATIONS } = await import('../../../lore/character-creation/lifepath/childhood/education');
+          fetched = EDUCATIONS;
+          break;
+        case 'trauma':
+          const { TRAUMAS } = await import('../../../lore/character-creation/lifepath/childhood/traumas');
+          fetched = TRAUMAS;
+          break;
+        
+        // Adolescence
+        case 'training':
+          const { TRAININGS } = await import('../../../lore/character-creation/lifepath/adolescence/training');
+          fetched = TRAININGS;
+          break;
+        case 'exploit':
+          const { EXPLOITS } = await import('../../../lore/character-creation/lifepath/adolescence/exploits');
+          fetched = EXPLOITS;
+          break;
+        case 'encounter':
+          const { ENCOUNTERS } = await import('../../../lore/character-creation/lifepath/adolescence/encounters');
+          fetched = ENCOUNTERS;
+          break;
+        
+        // Young Adult
+        case 'profession':
+          const { PROFESSIONS } = await import('../../../lore/character-creation/lifepath/young-adult/professions');
+          fetched = PROFESSIONS;
+          break;
+        case 'motivation':
+          const { MOTIVATIONS } = await import('../../../lore/character-creation/lifepath/young-adult/motivations');
+          fetched = MOTIVATIONS;
+          break;
+        case 'connection':
+          const { CONNECTIONS } = await import('../../../lore/character-creation/lifepath/young-adult/connections');
+          fetched = CONNECTIONS;
+          break;
+        
         default:
+          console.warn(`Catégorie inconnue : ${category}`);
           fetched = [];
       }
 
