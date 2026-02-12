@@ -112,86 +112,93 @@ export function LifePathBuilder({ onComplete, onBack }: LifePathBuilderProps) {
             className={`lifepath-option-card ${isSelected ? 'selected' : ''}`}
             onClick={onSelect}
         >
-            {option.img && (
-                <div className="option-image" style={{ backgroundImage: `url(${option.img})` }} />
-            )}
-            
             <div className="option-content">
-                <h3 className="option-label">{option.label}</h3>
+                {/* HEADER AVEC ICÔNE */}
+                <div className="option-header">
+                    <h3 className="option-label">{option.label}</h3>
+                    {isSelected && <span className="selected-badge">✓ SÉLECTIONNÉ</span>}
+                </div>
+                
+                {/* DESCRIPTION PRINCIPALE */}
                 <p className="option-desc">{option.desc}</p>
                 
-                <div className="option-lore">
-                    <span className="lore-icon">📜</span>
+                {/* CITATION LORE - TOUJOURS VISIBLE */}
+                <div className="option-lore-quote">
+                    <div className="quote-marks">"</div>
                     <em>{option.lore}</em>
+                    <div className="quote-marks closing">"</div>
                 </div>
 
-                {/* STATS */}
+                {/* STATS - GRANDE VISIBILITÉ */}
                 {option.stats && Object.keys(option.stats).length > 0 && (
-                    <div className="option-stats">
-                        <strong>Statistiques:</strong>
-                        <div className="stats-grid">
+                    <div className="option-stats-showcase">
+                        <div className="stats-title">
+                            <span className="icon">⚡</span>
+                            <strong>MODIFICATEURS DE STATS</strong>
+                        </div>
+                        <div className="stats-grid-large">
                             {Object.entries(option.stats).map(([stat, value]) => (
-                                <span key={stat} className={`stat-badge ${value > 0 ? 'positive' : 'negative'}`}>
-                                    {stat.toUpperCase()}: {value > 0 ? '+' : ''}{value}
-                                </span>
+                                <div key={stat} className={`stat-card ${value > 0 ? 'positive' : 'negative'}`}>
+                                    <div className="stat-name">{stat.toUpperCase()}</div>
+                                    <div className="stat-value">{value > 0 ? '+' : ''}{value}</div>
+                                </div>
                             ))}
                         </div>
                     </div>
                 )}
 
-                {/* MECHANICAL TRAITS */}
-                <div className="option-traits">
-                    <strong>Effets mécaniques:</strong>
-                    {option.mechanical_traits.map((trait, idx) => (
-                        <div key={idx} className={`trait ${trait.type}`}>
-                            <span className="trait-icon">{trait.type === 'bonus' ? '✅' : '⚠️'}</span>
-                            <div>
-                                <strong>{trait.name}</strong>
-                                <p>{trait.desc}</p>
+                {/* TRAITS MÉCANIQUES - SECTION VISIBLE */}
+                <div className="option-traits-section">
+                    <div className="section-header">
+                        <span className="icon">🎯</span>
+                        <strong>EFFETS MÉCANIQUES</strong>
+                    </div>
+                    {option.mechanical_traits.slice(0, 2).map((trait, idx) => (
+                        <div key={idx} className={`trait-card ${trait.type}`}>
+                            <div className="trait-header">
+                                <span className="trait-icon">{trait.type === 'bonus' ? '✓' : '✗'}</span>
+                                <strong className="trait-name">{trait.name}</strong>
                             </div>
+                            <p className="trait-desc">{trait.desc}</p>
                         </div>
                     ))}
+                    {option.mechanical_traits.length > 2 && (
+                        <details className="more-traits">
+                            <summary>+ {option.mechanical_traits.length - 2} autres effets</summary>
+                            {option.mechanical_traits.slice(2).map((trait, idx) => (
+                                <div key={idx} className={`trait-card ${trait.type}`}>
+                                    <div className="trait-header">
+                                        <span className="trait-icon">{trait.type === 'bonus' ? '✓' : '✗'}</span>
+                                        <strong className="trait-name">{trait.name}</strong>
+                                    </div>
+                                    <p className="trait-desc">{trait.desc}</p>
+                                </div>
+                            ))}
+                        </details>
+                    )}
                 </div>
 
-                {/* SOCIAL IMPACTS */}
-                <div className="option-social">
-                    <strong>🎭 Impact social:</strong>
-                    <p className="social-reactions">{option.social_impacts.pnj_reactions}</p>
-                    
-                    <div className="reputation-list">
-                        <strong>Réputation:</strong>
-                        {Object.entries(option.social_impacts.reputation_bonus).map(([faction, value]) => (
-                            <span key={faction} className={`rep-badge ${value > 0 ? 'positive' : 'negative'}`}>
-                                {faction}: {value > 0 ? '+' : ''}{value}
-                            </span>
-                        ))}
+                {/* IMPACT SOCIAL - TOUJOURS VISIBLE */}
+                <div className="option-social-section">
+                    <div className="section-header">
+                        <span className="icon">🎭</span>
+                        <strong>IMPACT SOCIAL & RÉACTIONS</strong>
                     </div>
+                    <p className="social-text">{option.social_impacts.pnj_reactions}</p>
                 </div>
 
-                {/* GM HOOKS */}
-                <details className="option-secrets">
-                    <summary>🎲 Accroches pour le MJ</summary>
-                    <p className="gm-hooks">{option.gm_hooks}</p>
-                    <p className="personal-secret"><strong>Secret personnel:</strong> {option.personal_secrets}</p>
-                </details>
-
-                {/* ROLEPLAY HOOKS */}
-                <details className="option-roleplay">
-                    <summary>🎭 Conseils Roleplay</summary>
-                    <ul>
-                        {option.roleplay_hooks.map((hook, idx) => (
-                            <li key={idx}>{hook}</li>
-                        ))}
-                    </ul>
-                </details>
-
-                {/* ITEMS/LANGUAGES */}
-                {(option.starting_items || option.languages || option.skill_bonuses) && (
-                    <div className="option-extras">
+                {/* EXTRAS (collapsible) */}
+                {(option.starting_items || option.languages || option.gm_hooks) && (
+                    <details className="option-extras-collapsible">
+                        <summary className="extras-summary">
+                            <span className="icon">📜</span>
+                            <strong>DÉTAILS SUPPLÉMENTAIRES</strong>
+                        </summary>
+                        
                         {option.starting_items && option.starting_items.length > 0 && (
-                            <div className="extras-section">
-                                <strong>📦 Items de départ:</strong>
-                                <ul>
+                            <div className="extras-block">
+                                <strong className="extras-title">📦 Items de départ:</strong>
+                                <ul className="extras-list">
                                     {option.starting_items.map((item, idx) => (
                                         <li key={idx}>{item}</li>
                                     ))}
