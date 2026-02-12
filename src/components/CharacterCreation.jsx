@@ -50,10 +50,12 @@ export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImag
     const [selectedSubclass, setSelectedSubclass] = useState(null);
     const [selectedBackstory, setSelectedBackstory] = useState(null);
     const [lifepathData, setLifepathData] = useState(null);
+
     // Old states kept for compatibility but will be replaced by lifepathData
     const [selectedBirthOrigin, setSelectedBirthOrigin] = useState(BIRTH_ORIGINS[0]);
     const [selectedChildhoodEvent, setSelectedChildhoodEvent] = useState(CHILDHOOD_EVENTS[0]);
     const [selectedAdolescencePath, setSelectedAdolescencePath] = useState(ADOLESCENCE_PATHS[0]);
+
     const [selectedEquipmentIndex, setSelectedEquipmentIndex] = useState(0);
     const [selectedAbilityNames, setSelectedAbilityNames] = useState([]);
     const [attributes, setAttributes] = useState({ str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 });
@@ -246,11 +248,12 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
     };
 
     const getModifier = (val) => {
-        const mod = Math.floor((val - 10) / 2);
+        const num = parseInt(val);
+        if (isNaN(num) || num <= 0) return "--";
+        const mod = Math.floor((num - 10) / 2);
         return mod >= 0 ? `+${mod}` : `${mod}`;
     };
 
-    const categoryClasses = CLASS_CATEGORIES[selectedCategory]?.classes || [];
     const classData = CLASSES[selectedClass];
 
     return (
@@ -258,80 +261,14 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
             <MagicBackground />
             <div className="creation-container">
                 <div className="creation-layout">
-                    {/* Character History Sidebar */}
-                    <div className="history-sidebar">
-                        <h4><span className="section-icon">📜</span> Chroniques</h4>
-
-                        <div className="history-item">
-                            <span className="history-label">Voie</span>
-                            <span className="history-value">{selectedClass} {selectedSubclass && classData?.subclasses?.[selectedSubclass] ? `(${classData.subclasses[selectedSubclass]?.label || '...'})` : ''}</span>
-                        </div>
-
-                        {step > 3 && selectedBirthOrigin && (
-                            <div className="history-item">
-                                <span className="history-label">Naissance</span>
-                                <span className="history-value">{selectedBirthOrigin.label}</span>
-                                <div className="history-traits">
-                                    {selectedBirthOrigin.mechanical_traits?.map((t, i) => (
-                                        <span key={i} className={`trait-tag ${t.type}`}>{t.name}</span>
-                                    ))}
-                                </div>
+                    {/* STEP 1: SÉLECTION DE CLASSE (SPLIT VIEW) */}
+                    {step === 1 && (
+                        <div className="spellbook-shell">
+                            <div className="spellbook-nav">
+                                {[1, 2, 3, 4, 5, 6, 7].map(s => (
+                                    <div key={s} className={`nav-dot ${step === s ? 'active' : ''} ${step > s ? 'completed' : ''}`} />
+                                ))}
                             </div>
-                        )}
-
-                        {step > 3 && selectedChildhoodEvent && (
-                            <div className="history-item">
-                                <span className="history-label">Enfance</span>
-                                <span className="history-value">{selectedChildhoodEvent.label}</span>
-                                <div className="history-traits">
-                                    {selectedChildhoodEvent.mechanical_traits?.map((t, i) => (
-                                        <span key={i} className={`trait-tag ${t.type}`}>{t.name}</span>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {step > 3 && selectedAdolescencePath && (
-                            <div className="history-item">
-                                <span className="history-label">Adolescence</span>
-                                <span className="history-value">{selectedAdolescencePath.label}</span>
-                                <div className="history-traits">
-                                    {selectedAdolescencePath.mechanical_traits?.map((t, i) => (
-                                        <span key={i} className={`trait-tag ${t.type}`}>{t.name}</span>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {step > 3 && selectedBackstory && (
-                            <div className="history-item">
-                                <span className="history-label">Passé Adulte</span>
-                                <span className="history-value">{selectedBackstory.label}</span>
-                                <div className="history-traits">
-                                    {selectedBackstory.mechanical_traits.map((t, i) => (
-                                        <span key={i} className={`trait-tag ${t.type}`}>{t.name}</span>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {name && (
-                            <div className="history-item" style={{ borderLeftColor: 'var(--gold-primary)', marginTop: '2rem' }}>
-                                <span className="history-label">Légende</span>
-                                <span className="history-value" style={{ color: 'var(--gold-primary)', fontSize: '1rem' }}>{name}</span>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="spellbook-shell">
-                        <div className="spellbook-nav">
-                            {[1, 2, 3, 4, 5, 6, 7].map(s => (
-                                <div key={s} className={`nav-dot ${step === s ? 'active' : ''} ${step > s ? 'completed' : ''}`} />
-                            ))}
-                        </div>
-
-                        {/* STEP 1: SÉLECTION DE CLASSE (SPLIT VIEW) */}
-                        {step === 1 && (
                             <div className="spellbook-section">
                                 {onQuickStart && (
                                     <div className="quick-start-banner" onClick={onQuickStart}>
@@ -344,182 +281,253 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                                 </div>
 
                                 <div className="class-selection-container">
-                                    {/* LISTE DES CLASSES */}
                                     <div className="class-list">
                                         {Object.entries(CLASSES).map(([key, cls]) => (
-                                            <div key={key}
-                                                className={`class-list-card ${selectedClass === key ? 'selected' : ''}`}
-                                                onClick={() => setSelectedClass(key)}>
+                                            <div key={key} className={`class-list-card ${selectedClass === key ? 'selected' : ''}`} onClick={() => setSelectedClass(key)}>
                                                 <div className="class-list-icon">{CLASS_CATEGORIES[cls.category]?.icon || '🛡️'}</div>
                                                 <div className="class-list-info">
                                                     <div className="class-list-title">{cls.label}</div>
-                                                    <div className="class-list-desc">
-                                                        {cls.desc.split('.')[0].substring(0, 60)}...
-                                                    </div>
+                                                    <div className="class-list-desc">{cls.desc}</div>
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
 
-                                    {/* PREVIEW CLASSE */}
                                     <div className="class-preview-panel">
-                                        <img
-                                            src={CLASSES[selectedClass].portrait || CATEGORY_META[CLASSES[selectedClass].category]?.img}
-                                            className="class-preview-image"
-                                            alt={selectedClass}
-                                        />
-                                        <div className="class-preview-content">
-                                            <h2 className="class-preview-title">{CLASSES[selectedClass].label}</h2>
-                                            <div className="class-preview-quote">"{CLASSES[selectedClass].desc}"</div>
-
-                                            <div className="class-mechanic-box">
-                                                <span className="mechanic-title">MÉCANIQUE UNIQUE: {CLASSES[selectedClass].mechanic.name.toUpperCase()}</span>
-                                                <div className="mechanic-desc">
-                                                    {CLASSES[selectedClass].mechanic.desc.split('\n')[0]}
+                                        {selectedClass && CLASSES[selectedClass] ? (
+                                            <>
+                                                <img src={CLASSES[selectedClass].portrait || CATEGORY_META[CLASSES[selectedClass].category]?.img} className="class-preview-image" alt={selectedClass} />
+                                                <div className="class-preview-content">
+                                                    <h2 className="class-preview-title">{CLASSES[selectedClass].label}</h2>
+                                                    <div className="class-preview-quote">"{CLASSES[selectedClass].quote}"</div>
+                                                    <div className="class-mechanic-box">
+                                                        <span className="mechanic-title">Mécanique Unique : {CLASSES[selectedClass].mechanic.name}</span>
+                                                        <p className="mechanic-desc">
+                                                            {CLASSES[selectedClass].mechanic.desc.split('**').map((part, i) =>
+                                                                i % 2 === 1 ? <strong key={i}>{part}</strong> : part
+                                                            )}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                            </div>
-
-                                            <div className="preview-actions">
-                                                <button className="btn-spellbook btn-back" onClick={onBack} style={{ width: 'auto', marginRight: '1rem' }}>← Retour</button>
-                                                <button className="btn-select-class" onClick={() => setStep(2)}>
-                                                    Choisir la Spécialisation
-                                                </button>
-                                            </div>
-                                        </div>
+                                                <div className="preview-actions">
+                                                    <button className="btn-spellbook btn-back" onClick={onBack} style={{ width: 'auto', marginRight: '1rem' }}>← Retour</button>
+                                                    <button className="btn-select-class" onClick={() => setStep(2)}>Choisir la Spécialisation</button>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>Sélectionnez une classe</div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
-                        )}
+                        </div>
+                    )}
 
-                        {/* STEP 2: SOUS-CLASSE */}
-                        {step === 2 && (
-                            <div className="spellbook-section">
-                                <div className="section-header">
-                                    <span className="section-icon">🎯</span>
-                                    <h3>Spécialisation</h3>
+                    {/* STEPS 2-7: UNIFIED WIZARD LAYOUT WITH SIDEBAR */}
+                    {step > 1 && (
+                        <div className="wizard-sidebar-layout">
+                            <div className="effects-sidebar">
+                                <div className="sidebar-title">EFFETS CUMULÉS</div>
+                                <div className="sidebar-section">
+                                    <h4 className="sidebar-label">STATISTIQUES</h4>
+                                    <div className="sidebar-stats-dashboard">
+                                        {Object.entries(attributes).map(([key, val]) => (
+                                            <div key={key} className={`dashboard-stat ${val > 10 ? 'positive' : ''}`}>
+                                                <div className="stat-meta">
+                                                    <span className="stat-abbr">{key.toUpperCase()}</span>
+                                                    <span className="stat-full-name">{STAT_LABELS[key]}</span>
+                                                </div>
+                                                <div className="stat-display">
+                                                    <span className="stat-number">{val}</span>
+                                                    <span className="stat-bracket-mod">{getModifier(val)}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                                <div className="selection-grid">
-                                    {Object.entries(classData?.subclasses || {}).map(([key, sub]) => (
-                                        <div key={key} className={`selection-card ${selectedSubclass === key ? 'selected' : ''}`} onClick={() => setSelectedSubclass(key)}>
-                                            <div className="card-title">{sub.label}</div>
-                                            <div className="card-body">
-                                                <p className="card-description">{sub.desc}</p>
-                                                <div style={{ marginTop: '0.8rem' }} className="trait-tag neutral">{sub.details.feature}</div>
+
+                                <div className="sidebar-section">
+                                    <h4 className="sidebar-label">CAPACITÉS</h4>
+                                    <div className="sidebar-traits-container">
+                                        <div className="trait-card-mini">
+                                            <div className="trait-header">
+                                                <span className="trait-source">{selectedClass}</span>
+                                                <span className="trait-separator">•</span>
+                                                <strong className="trait-title">{CLASSES[selectedClass]?.mechanic?.name}</strong>
+                                            </div>
+                                            <p className="trait-snippet">{CLASSES[selectedClass]?.mechanic?.desc?.slice(0, 100)}...</p>
+                                        </div>
+                                        {selectedSubclass && classData?.subclasses?.[selectedSubclass] && (
+                                            <div className="trait-card-mini highlighted">
+                                                <div className="trait-header">
+                                                    <span className="trait-source">SPÉCIALISATION</span>
+                                                    <span className="trait-separator">•</span>
+                                                    <strong className="trait-title">{classData.subclasses[selectedSubclass].label}</strong>
+                                                </div>
+                                                <p className="trait-snippet">{classData.subclasses[selectedSubclass].details.feature}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {selectedEquipmentIndex !== null && classData?.starting_equipment_options?.[selectedEquipmentIndex] && (
+                                    <div className="sidebar-section">
+                                        <h4 className="sidebar-label">ÉQUIPEMENT</h4>
+                                        <div className="sidebar-equipment-list">
+                                            {classData.starting_equipment_options[selectedEquipmentIndex].items.map((item, i) => (
+                                                <div key={i} className="equipment-item-mini">{item.name}</div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="wizard-main">
+                                <div className="wizard-header">
+                                    <div className="wizard-tabs-nav">
+                                        {[2, 3, 4, 5, 6, 7].map(s => (
+                                            <div key={s}
+                                                className={`wizard-tab-item ${step === s ? 'active' : ''} ${step > s ? 'completed' : ''}`}
+                                                onClick={() => step > s ? setStep(s) : null}>
+                                                <span className="tab-number">0{s - 1}</span>
+                                                <span className="tab-label">
+                                                    {s === 2 ? 'SPÉCIALISATION' : s === 3 ? 'PARCOURS' : s === 4 ? 'ÉQUIPEMENT' : s === 5 ? 'NOM' : s === 6 ? 'ATTRIBUTS' : 'FINAL'}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <h2 className="wizard-title-headline">
+                                        {step === 2 && 'CHOIX DE LA SPÉCIALISATION'}
+                                        {step === 3 && 'CHRONIQUES DU PARCOURS'}
+                                        {step === 4 && 'ARSENAL & ÉQUIPEMENT'}
+                                        {step === 5 && 'NOM DE L\'ÉVEILLÉ'}
+                                        {step === 6 && 'DÉTERMINATION DU POTENTIEL'}
+                                        {step === 7 && 'L\'ÉVEIL DU HÉROS'}
+                                    </h2>
+                                </div>
+
+                                {/* STEP 2: SUBCLASS */}
+                                {step === 2 && (
+                                    <>
+                                        <div className="wizard-options">
+                                            {Object.entries(classData?.subclasses || {}).map(([key, sub]) => (
+                                                <div key={key} className={`life-choice-card ${selectedSubclass === key ? 'selected' : ''}`} onClick={() => setSelectedSubclass(key)}>
+                                                    <div className="card-title">{sub.label}</div>
+                                                    <div className="card-desc">{sub.desc}</div>
+                                                    <div className="card-traits">
+                                                        <span className="stat-tag bonus">{sub.details.feature}</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="wizard-footer">
+                                            <button className="btn-secondary" onClick={() => setStep(1)}>← Retour</button>
+                                            <button className="btn-primary" onClick={() => setStep(3)} disabled={!selectedSubclass}>Confirmer la Spécialisation →</button>
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* STEP 3: LIFEPATH */}
+                                {step === 3 && (
+                                    <LifePathWizard
+                                        hideSidebar={true}
+                                        onComplete={(effects) => {
+                                            setLifepathData(effects);
+                                            setAttributes(prev => ({
+                                                str: prev.str + (effects.final_stats.strength || 0),
+                                                dex: prev.dex + (effects.final_stats.dexterity || 0),
+                                                con: prev.con + (effects.final_stats.constitution || 0),
+                                                int: prev.int + (effects.final_stats.intelligence || 0),
+                                                wis: prev.wis + (effects.final_stats.wisdom || 0),
+                                                cha: prev.cha + (effects.final_stats.charisma || 0)
+                                            }));
+                                            setStep(4);
+                                        }}
+                                        onCancel={() => setStep(2)}
+                                    />
+                                )}
+
+                                {/* STEP 4: EQUIPMENT */}
+                                {step === 4 && (
+                                    <>
+                                        <div className="wizard-options">
+                                            {classData?.starting_equipment_options.map((opt, idx) => (
+                                                <div key={idx} className={`life-choice-card ${selectedEquipmentIndex === idx ? 'selected' : ''}`} onClick={() => setSelectedEquipmentIndex(idx)}>
+                                                    <div className="card-title">{opt.label}</div>
+                                                    <div className="card-desc">
+                                                        <ul className="items-list" style={{ background: 'transparent', border: 'none', padding: 0 }}>
+                                                            {opt.items.map((item, i) => (
+                                                                <li key={i} style={{ background: 'rgba(0,0,0,0.2)', marginBottom: '0.4rem', padding: '0.5rem', borderRadius: '4px' }}>{item.name}</li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="wizard-footer">
+                                            <button className="btn-secondary" onClick={() => setStep(3)}>← Retour</button>
+                                            <button className="btn-primary" onClick={() => setStep(5)} disabled={selectedEquipmentIndex === null}>Valider l'Équipement →</button>
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* STEP 5: NAME */}
+                                {step === 5 && (
+                                    <>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '4rem 0' }}>
+                                            <input type="text" className="magical-input" placeholder="Nom du Héros" value={name} onChange={e => setName(e.target.value)} autoFocus />
+                                            {name && <div className="name-preview" style={{ marginTop: '2rem', fontSize: '1.5rem', color: 'var(--gold-dim)' }}>{name}</div>}
+                                        </div>
+                                        <div className="wizard-footer">
+                                            <button className="btn-secondary" onClick={() => setStep(4)}>← Retour</button>
+                                            <button className="btn-primary" onClick={() => setStep(6)} disabled={!name}>Confirmer l'Identité →</button>
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* STEP 6: ATTRIBUTES */}
+                                {step === 6 && (
+                                    <>
+                                        <div className="wizard-options" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2rem' }}>
+                                            {Object.entries(attributes).map(([key, val]) => (
+                                                <div key={key} className={`stat-rune ${rollingStat === key ? 'rolling' : ''}`} onClick={() => rollStat(key)} style={{ cursor: 'pointer' }}>
+                                                    <div className="stat-label" style={{ fontSize: '0.8rem', color: '#666', letterSpacing: '2px' }}>{STAT_LABELS[key].toUpperCase()}</div>
+                                                    <div className="stat-value" style={{ fontSize: '3rem', color: 'var(--gold-primary)', fontFamily: '"Cinzel Decorative", serif' }}>{val || '?'}</div>
+                                                    <div className="stat-modifier" style={{ fontSize: '1rem', color: '#888' }}>{val ? getModifier(val) : '--'}</div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="wizard-footer">
+                                            <button className="btn-secondary" onClick={() => setStep(5)}>← Retour</button>
+                                            <button className="btn-primary" onClick={() => setStep(7)} disabled={!allRolled}>Finaliser les Caractéristiques →</button>
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* STEP 7: FINAL */}
+                                {step === 7 && (
+                                    <>
+                                        <div className="final-dossier" style={{ width: '100%', maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
+                                            <p className="dossier-intro" style={{ letterSpacing: '4px', color: '#666' }}>Le destin de votre héros est scellé.</p>
+                                            <h2 className="dossier-name" style={{ fontSize: '4rem', color: 'var(--gold-primary)', margin: '1rem 0' }}>{name}</h2>
+                                            <div className="dossier-subtitle" style={{ fontSize: '1.2rem', color: '#ccc' }}>
+                                                <span>{selectedClass}</span>
+                                                <span style={{ margin: '0 1rem', color: 'var(--gold-dim)' }}>•</span>
+                                                <span>{classData.subclasses[selectedSubclass]?.label}</span>
+                                            </div>
+                                            <div className="card-lore" style={{ marginTop: '3rem', fontStyle: 'italic', color: '#888', lineHeight: '1.6' }}>
+                                                {classData.subclasses[selectedSubclass]?.desc}
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-                                <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(1)}>← Retour</button>
-                                    <button className="btn-spellbook btn-next" onClick={() => setStep(3)}>Suivant →</button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* STEP 3: LIFEPATH COMPLET */}
-                        {step === 3 && (
-                            <LifePathWizard
-                                onComplete={(effects) => {
-                                    setLifepathData(effects);
-                                    // Appliquer les stats cumulées aux attributs
-                                    setAttributes(prev => ({
-                                        str: prev.str + (effects.final_stats.strength || 0),
-                                        dex: prev.dex + (effects.final_stats.dexterity || 0),
-                                        con: prev.con + (effects.final_stats.constitution || 0),
-                                        int: prev.int + (effects.final_stats.intelligence || 0),
-                                        wis: prev.wis + (effects.final_stats.wisdom || 0),
-                                        cha: prev.cha + (effects.final_stats.charisma || 0)
-                                    }));
-                                    setStep(4); // Passe à l'équipement
-                                }}
-                                onCancel={() => setStep(2)}
-                            />
-                        )}
-
-                        {/* STEP 4: ÉQUIPEMENT */}
-                        {step === 4 && (
-                            <div className="spellbook-section">
-                                <div className="section-header">
-                                    <span className="section-icon">🛡️</span>
-                                    <h3>Paquetage & Capacités</h3>
-                                </div>
-                                <div className="selection-grid">
-                                    {classData?.starting_equipment_options.map((opt, idx) => (
-                                        <div key={idx} className={`selection-card ${selectedEquipmentIndex === idx ? 'selected' : ''}`} onClick={() => setSelectedEquipmentIndex(idx)}>
-                                            <div className="card-title">{opt.label}</div>
-                                            <div className="card-body">
-                                                <p className="card-description">{opt.items.map(i => i.name).join(', ')}</p>
-                                            </div>
+                                        <div className="wizard-footer">
+                                            <button className="btn-secondary" onClick={() => setStep(6)}>← Retour</button>
+                                            <button className="btn-primary" onClick={handleCreate}>Lancer l'Aventure →</button>
                                         </div>
-                                    ))}
-                                </div>
-                                <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(3)}>← Retour</button>
-                                    <button className="btn-spellbook btn-next" onClick={() => setStep(5)}>Suivant →</button>
-                                </div>
+                                    </>
+                                )}
                             </div>
-                        )}
-
-                        {/* STEP 5: NOM */}
-                        {step === 5 && (
-                            <div className="spellbook-section">
-                                <div className="section-header">
-                                    <span className="section-icon">📜</span>
-                                    <h3>Identité</h3>
-                                </div>
-                                <div style={{ padding: '2rem' }}>
-                                    <input type="text" className="input-field" placeholder="Nom du héros..." value={name} onChange={e => setName(e.target.value)} autoFocus />
-                                    {name && <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '2.5rem', fontFamily: 'Cinzel Decorative', color: 'var(--gold-primary)' }}>{name}</div>}
-                                </div>
-                                <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(4)}>← Retour</button>
-                                    <button className="btn-spellbook btn-next" onClick={() => setStep(6)}>Suivant →</button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* STEP 6: ATTRIBUTS */}
-                        {step === 6 && (
-                            <div className="spellbook-section">
-                                <div className="section-header">
-                                    <span className="section-icon">🎲</span>
-                                    <h3>Jet d'Attributs</h3>
-                                </div>
-                                <div className="stats-grid">
-                                    {Object.entries(attributes).map(([key, val]) => (
-                                        <div key={key} className={`stat-card ${rollingStat === key ? 'rolling' : ''}`} onClick={() => rollStat(key)}>
-                                            <div style={{ color: 'var(--gold-dim)', fontSize: '0.8rem' }}>{STAT_LABELS[key].toUpperCase()}</div>
-                                            <div className="stat-value">{val || '?'}</div>
-                                            <div style={{ color: 'var(--gold-primary)', fontSize: '1.2rem' }}>{val ? getModifier(val) : '--'}</div>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(5)}>← Retour</button>
-                                    <button className="btn-spellbook btn-next" onClick={() => setStep(7)} disabled={!allRolled || isRolling}>Suivant →</button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* STEP 7: FINALISATION */}
-                        {step === 7 && (
-                            <div className="spellbook-section">
-                                <div className="section-header">
-                                    <span className="section-icon">✨</span>
-                                    <h3>L'Éveil</h3>
-                                </div>
-                                <div style={{ textAlign: 'center', padding: '2rem' }}>
-                                    <p className="card-description">Votre personnage est prêt à entrer dans la légende.</p>
-                                    <h2 style={{ fontFamily: 'Cinzel Decorative', color: 'var(--gold-primary)', margin: '1.5rem 0' }}>{name}</h2>
-                                    <p style={{ color: 'var(--gold-dim)' }}>{selectedClass} ({classData.subclasses[selectedSubclass]?.label})</p>
-                                </div>
-                                <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(6)}>← Retour</button>
-                                    <button className="btn-spellbook btn-next" onClick={handleCreate}>Commencer l'Aventure →</button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </>

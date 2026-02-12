@@ -15,28 +15,20 @@ import type {
 
 // ===== FONCTION CALCUL CUMULATIF =====
 export function accumulateEffects(selection: LifepathSelection): AccumulatedEffects {
-  // Collecter tous les choix (12 maximum : 3 par étape × 4 étapes)
+  // SIMPLIFIÉ : Collecter 4 choix (1 par étape)
   const allChoices: LifeChoice[] = [];
   
-  // Birth
+  // Birth - Origines
   if (selection.birth.location) allChoices.push(selection.birth.location);
-  if (selection.birth.status) allChoices.push(selection.birth.status);
-  if (selection.birth.omen) allChoices.push(selection.birth.omen);
   
-  // Childhood
+  // Childhood - Enfance
   if (selection.childhood.family) allChoices.push(selection.childhood.family);
-  if (selection.childhood.education) allChoices.push(selection.childhood.education);
-  if (selection.childhood.trauma) allChoices.push(selection.childhood.trauma);
   
-  // Adolescence
+  // Adolescence - Formation
   if (selection.adolescence.training) allChoices.push(selection.adolescence.training);
-  if (selection.adolescence.exploit) allChoices.push(selection.adolescence.exploit);
-  if (selection.adolescence.encounter) allChoices.push(selection.adolescence.encounter);
   
-  // Young Adult
+  // Young Adult - Profession
   if (selection.youngAdult.profession) allChoices.push(selection.youngAdult.profession);
-  if (selection.youngAdult.motivation) allChoices.push(selection.youngAdult.motivation);
-  if (selection.youngAdult.connection) allChoices.push(selection.youngAdult.connection);
 
   // Initialiser résultat
   const final_stats: Record<StatKey, number> = {
@@ -173,19 +165,12 @@ function generateNarrativeSummary(choices: LifeChoice[]): string {
 
 // ===== HELPER : VÉRIFIER SÉLECTION COMPLÈTE =====
 export function isLifepathComplete(selection: Partial<LifepathSelection>): selection is LifepathSelection {
+  // SIMPLIFIÉ : Seulement 4 choix requis (1 par phase)
   return !!(
     selection.birth?.location &&
-    selection.birth?.status &&
-    selection.birth?.omen &&
     selection.childhood?.family &&
-    selection.childhood?.education &&
-    selection.childhood?.trauma &&
     selection.adolescence?.training &&
-    selection.adolescence?.exploit &&
-    selection.adolescence?.encounter &&
-    selection.youngAdult?.profession &&
-    selection.youngAdult?.motivation &&
-    selection.youngAdult?.connection
+    selection.youngAdult?.profession
   );
 }
 

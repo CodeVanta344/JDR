@@ -457,6 +457,7 @@ export const CLASSES = {
         hitDie: 12,
         resourceStat: "con",
         desc: "Un maître de la guerre infatigable. Absence totale de magie compensée par une puissance physique brute inégalée.",
+        quote: "L'acier ne ment jamais. Le sang non plus.",
         mechanic: {
             name: "Adrénaline",
             desc: "La magie vous est inaccessible. Chaque coup porté ou reçu génère de l'Adrénaline (points de ressource). \n\n• **Rage de Sang**: À plus de 50 points, vos dégâts physiques augmentent de 25%.\n• **Second Souffle**: Vous pouvez dépenser toute votre Adrénaline pour vous soigner (1 PV par point dépensé)."
@@ -517,11 +518,12 @@ export const CLASSES = {
         hitDie: 6,
         resourceStat: "int",
         desc: "Maître absolu des arcanes complexes. Puissance cosmique au prix d'une fragilité physique extrême.",
+        quote: "La réalité n'est qu'une suggestion que je m'apprête à réviser.",
         mechanic: {
             name: "Surcharge Arcanique",
             desc: "Vos sorts sont dévastateurs mais instables. Chaque lancement génère de la **Chaleur**.\n\n• **Malus Physique**: -2 sur les tests de Force et Constitution.\n• **Surcharge**: Si votre Mana tombe à 0 ou si vous lancez trop de sorts, vous entrez en Surcharge : vos dégâts sont doublés mais vous perdez 5 PV par tour jusqu'à stabilisation."
         },
-        stats: { str: 6, dex: 12, con: 8, int: 18, wis: 14, cha: 12 },
+        stats: { str: 6, dex: 10, con: 8, int: 20, wis: 14, cha: 12 },
         protection: { armor: ["none"], weapons: ["simple", "arcane"], shields: false },
 
         starting_equipment_options: [
@@ -575,6 +577,7 @@ export const CLASSES = {
         hitDie: 8,
         resourceStat: "dex",
         desc: "Une ombre mortelle. Pas de magie, mais une agilité et une précision qui défient les lois arcaniques.",
+        quote: "L'ombre ne traite pas. Elle prend.",
         mechanic: {
             name: "Précision Chirurgicale",
             desc: "L'énergie coule dans vos gestes. \n\n• **Point Faible**: Vos attaques contre les ennemis avec moins de 50% de PV ont +5 au jet de toucher.\n• **Combo**: Chaque attaque réussie réduit le coût en Énergie de votre prochaine capacité de 5 points (cumulable 3 fois)."
@@ -634,6 +637,7 @@ export const CLASSES = {
         hitDie: 8,
         resourceStat: "wis",
         desc: "Bras armé et soignant des Dieux. Classe Hybride combinant soutien divin et robustesse physique.",
+        quote: "Par ma foi, les blessés se relèveront et les impies tomberont.",
         mechanic: {
             name: "Ferveur Divine",
             desc: "Votre foi alimente vos miracles. \n\n• **Lumière Intérieure**: Vos soins critiques restaurent 50% de Mana.\n• **Bouclier de Foi**: Porter une armure lourde ne pénalise pas vos sorts divins."
@@ -693,6 +697,7 @@ export const CLASSES = {
         hitDie: 10,
         resourceStat: "cha",
         desc: "Chevalier saint. Classe Hybride d'élite. Excellent au combat physique, soutenu par une magie sacrée simple.",
+        quote: "Je suis le bouclier des innocents et le fléau des ténèbres.",
         mechanic: {
             name: "Châtiment Sanctifié",
             desc: "Votre charisme dicte votre puissance sacrée.\n\n• **Smite**: Vous pouvez convertir du Mana en dés de dégâts supplémentaires (1d8 par 10 points) lors d'une attaque réussie.\n• **Protection d'Aura**: Les alliés proches gagnent +2 à leur Classe d'Armure tant que vous êtes debout."
@@ -751,6 +756,7 @@ export const CLASSES = {
         hitDie: 10,
         resourceStat: "wis",
         desc: "Maître des terres sauvages. Classe Hybride mêlant archerie experte et magie naturelle utilitaire.",
+        quote: "La nature a mille yeux, et chacun d'eux vous observe.",
         mechanic: {
             name: "Instinct de Traqueur",
             desc: "La nature est votre alliée.\n\n• **Camouflage Naturel**: Vous avez Avantage aux jets de Discrétion en forêt ou milieux naturels.\n• **Tir de Réaction**: Si un ennemi se déplace à portée de votre arc, vous pouvez dépenser 10 Mana pour effectuer une attaque immédiate."
@@ -809,13 +815,13 @@ export const CLASSES = {
         hitDie: 8,
         resourceStat: "cha",
         desc: "Artiste et diplomate. Classe Hybride très polyvalente. Magie sonore simple et compétences physiques agiles.",
+        quote: "L'histoire s'écrit avec du sang, mais elle se chante avec le cœur.",
         mechanic: {
             name: "Inspiration Bardique",
             desc: "Vos mots ont un poids réel.\n\n• **Écho Harmonique**: Lancer un sort restaure 5 Mana à l'allié le plus proche.\n• **Polyvalence**: Vous pouvez utiliser n'importe quel objet magique sans restriction de classe."
         },
         stats: { str: 8, dex: 14, con: 12, int: 12, wis: 10, cha: 18 },
         protection: { armor: ["light"], weapons: ["simple", "finesse", "arcane"], shields: false },
-
         starting_equipment_options: [
             {
                 label: "Le Troubadour Errant",
@@ -837,7 +843,7 @@ export const CLASSES = {
         initial_ability_options: [
             { name: "Inspiration Bardique", cost: 10, cooldown: 2, level: 1, type: "Soutien", actionType: "Action Bonus", flavor: "Une mélodie épique qui ravive la flamme dans le cœur de vos compagnons et les pousse au-delà de leurs limites.", desc: "Donne un bonus de +1d6 au prochain jet d'un allié.", vfx: "note_gold" },
             { name: "Mot de Guérison", cost: 15, cooldown: 2, level: 1, dice: "1d4", scaling: "cha", range: 6, type: "Sonore", actionType: "Action Bonus", flavor: "Un chant doux et apaisant qui calme les douleurs les plus vives et redonne la force de se battre.", desc: "Soin rapide par le chant.", vfx: "heal_pink" },
-            { name: "Moquerie Vicieuse", cost: 8, cooldown: 1, level: 1, dice: "1d4", scaling: "cha", range: 8, type: "Psychique", actionType: "Action", flavor: "Une insulte si cinglante qu'elle s'enracine dans l'esprit de l'adversaire, le faisant douter de ses propres forces.", desc: "La cible a un désavantage sur son prochain jet d'attaque.", vfx: "mock_purple" }
+            { name: "Moquerie Vicieuse", cost: 8, cooldown: 0, level: 1, dice: "1d4", scaling: "cha", range: 8, type: "Psychique", actionType: "Action", flavor: "Une insulte si cinglante qu'elle s'enracine dans l'esprit de l'adversaire, le faisant douter de ses propres forces.", desc: "La cible a un désavantage sur son prochain jet d'attaque.", vfx: "mock_purple" }
         ],
         subclasses: {
             "savoir": { label: "Collège du Savoir", desc: "Maître des secrets.", details: { style: "Magie", feature: "Mots Coupants : Utilisez votre réaction pour distraire une cible et réduire son jet d'attaque de 1d6." } },
@@ -868,13 +874,13 @@ export const CLASSES = {
         hitDie: 8,
         resourceStat: "wis",
         desc: "Gardien de l'équilibre naturel. Utilise la magie sauvage pour soigner ou punir.",
+        quote: "L'équilibre n'est pas la paix, c'est une lutte constante.",
         mechanic: {
             name: "Lien Naturel",
             desc: "Votre magie provient de la terre elle-même.\n\n• **Forme Sauvage**: Vous pouvez vous transformer en animal (Loup, Ours) une fois par combat.\n• **Cœur de la Planète**: Vos sorts de soin sont 25% plus efficaces en extérieur."
         },
         stats: { str: 10, dex: 12, con: 14, int: 10, wis: 18, cha: 12 },
         protection: { armor: ["light", "medium"], weapons: ["simple", "arcane"], shields: true },
-
         starting_equipment_options: [
             {
                 label: "Le Défenseur du Bosquet",
@@ -921,7 +927,7 @@ export const CLASSES = {
         ],
         portrait: "/portraits/druide.png"
     }
-};
+}
 
 export const BESTIARY = {
     "Gobelin": {
