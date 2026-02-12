@@ -4,7 +4,8 @@ import './SessionHub.css';
 
 export function SessionHub({ players, character, session, onToggleReady, onStart, loading, onLeave }) {
     const isHost = session?.host_id === character?.user_id;
-    const allReady = players.length >= 2 && players.every(p => p.is_ready);
+    // Le host n'a pas besoin d'être "prêt" - vérifie seulement les autres joueurs
+    const allReady = players.length >= 2 && players.filter(p => p.user_id !== session?.host_id).every(p => p.is_ready);
     const playerCount = players.length;
 
     return (
