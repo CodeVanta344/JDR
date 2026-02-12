@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from './supabaseClient';
 import { WORLD_CONTEXT, BESTIARY, LEVEL_THRESHOLDS, CLASSES, ENVIRONMENTAL_RULES, EQUIPMENT_RULES, NPC_TEMPLATES, IMPORTANT_NPCS, QUEST_HOOKS, TAVERNS_AND_LOCATIONS, RUMORS_AND_GOSSIP, RANDOM_ENCOUNTERS, BESTIARY_EXTENDED, WORLD_MYTHS_EXTENDED, LEGENDARY_ITEMS, WORLD_HISTORY, FACTION_LORE, WORLD_MYTHS_AND_LEGENDS, CULTURAL_LORE, LOCATION_BACKGROUNDS } from './lore';
+import { initializeLoreSystem } from './lore';
+import { preloadCommonData } from './lore/optimization';
 import { CharacterCreation } from './components/CharacterCreation';
 import { CharacterSheet } from './components/CharacterSheet';
 import { SessionLobby } from './components/SessionLobby';
@@ -96,6 +98,20 @@ export default function App() {
         weather, setWeather,
         fetchAvailableSessions
     } = useGameState(profile);
+
+    // --- LORE SYSTEM INITIALIZATION ---
+    useEffect(() => {
+        const startTime = performance.now();
+        console.log('[App] Initializing Lore System...');
+        
+        initializeLoreSystem();
+        
+        // Preload common data in background
+        preloadCommonData().then(() => {
+            const duration = performance.now() - startTime;
+            console.log(`[App] Lore System ready in ${duration.toFixed(2)}ms`);
+        });
+    }, []);
 
     // --- PRIVATE HUD PERSISTENCE (GRIMOIRE & NPC) ---
     useEffect(() => {
