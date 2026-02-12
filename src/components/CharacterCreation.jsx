@@ -473,6 +473,7 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                                             <div className="card-title">{bg.label}</div>
                                             <div className="card-body">
                                                 <p className="card-description">{bg.desc}</p>
+                                                <p style={{ fontSize: '0.75rem', opacity: 0.6, fontStyle: 'italic', marginTop: '0.5rem' }}>"{bg.lore}"</p>
                                                 <div className="mechanical-traits-preview">
                                                     {bg.mechanical_traits?.map((t, i) => <span key={i} className={`trait-tag ${t.type}`}>{t.name}</span>)}
                                                 </div>

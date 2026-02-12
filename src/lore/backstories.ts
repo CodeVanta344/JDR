@@ -56,6 +56,7 @@ export interface EnrichedBackstory {
   starting_reputation: Record<string, number>;
   roleplay_hooks: string[];
   gm_notes: string[];
+  lore: string;
 }
 
 export const HISTORICAL_EVENTS: Record<string, BackstoryEvent> = {
@@ -132,6 +133,7 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     category: "military",
     compatible_classes: ["Guerrier", "Paladin"],
     desc: "Vous avez servi dans l'Ordre du Bouclier d'Argent pendant dix ans. Vous avez vu les horreurs de la guerre et les compromis moraux de vos supérieurs. Votre départ n'était pas volontaire.",
+    lore: "Le poids de l'armure n'est rien comparé à celui des souvenirs. Vous entendez encore le cri de ceux que vous n'avez pas pu sauver.",
     stats: { str: 2, cha: -1 },
     origin: {
       id: "val_dore",
@@ -183,6 +185,7 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     category: "arcane",
     compatible_classes: ["Mage", "Clerc", "Druide"],
     desc: "Vous êtes né des derniers jours de l'Ère des Cendres, ou êtes descendant direct d'un survivant. La marque de cette époque est sur vous - visions, cicatrices magiques, ou simple malédiction héréditaire.",
+    lore: "La terre elle-même se souvient du feu. Et vous aussi. Vos cauchemars ont le goût de la cendre froide.",
     stats: { int: 2, con: -1 },
     origin: {
       id: "terres_brulees",
@@ -234,6 +237,7 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     category: "noble",
     compatible_classes: ["Guerrier", "Paladin", "Mage", "Barde"],
     desc: "Votre famille était l'une des plus respectées du Val Doré jusqu'au scandale. Accusés de trahison, vos parents ont été exécutés et vos terres confisquées. Vous savez que vous êtes innocents.",
+    lore: "Le sang bleu ne tache pas moins que le rouge. Mais il coûte beaucoup plus cher à nettoyer.",
     stats: { cha: 2, str: -1 },
     origin: {
       id: "val_dore_noble",
@@ -285,6 +289,7 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     category: "wilderness",
     compatible_classes: ["Druide", "Rôdeur", "Voleur"],
     desc: "Élevé par les druides de la Sylve ou orphelin recueilli par les elfes, vous avez grandi entre deux mondes. La forêt est votre foyer, mais vous êtes appelé vers le monde extérieur.",
+    lore: "Les racines les plus profondes poussent souvent dans les sols les plus amers.",
     stats: { wis: 2, cha: -1 },
     origin: {
       id: "sylve_emeraude",
@@ -336,6 +341,7 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     category: "criminal",
     compatible_classes: ["Voleur", "Barde", "Rôdeur"],
     desc: "Vous étiez un espion et voleur au service du plus grand syndicat criminel d'Aethelgard. Vous avez quitté l'organisation - chose que la Main Noire ne pardonne jamais.",
+    lore: "Une ombre qui bouge est une ombre qui vit. Une ombre immobile est déjà morte.",
     stats: { dex: 2, str: -1 },
     origin: {
       id: "bas_fonds",
@@ -387,6 +393,7 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     category: "religious",
     compatible_classes: ["Clerc", "Paladin"],
     desc: "Vous avez servi dans le clergé de Solarius, le dieu du Soleil et de la Justice. Mais vous avez vu les abus de l'Inquisition du Soleil et remis en question votre foi.",
+    lore: "La lumière la plus aveuglante est celle que l'on croit infaillible.",
     stats: { wis: 2, dex: -1 },
     origin: {
       id: "temple_solarius",
@@ -438,6 +445,7 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     category: "common",
     compatible_classes: ["Guerrier", "Paladin", "Clerc"],
     desc: "Vous avez grandi dans les forges éternelles de Hammerdeep, apprenant l'art sacré du métal. L'Effondrement du Niveau 12 a tout changé - vous avez perdu des proches et vu quelque chose dans les ténèbres.",
+    lore: "L'acier se souvient du marteau. La chair se souvient du feu.",
     stats: { con: 2, wis: -1 },
     origin: {
       id: "hammerdeep",
@@ -489,6 +497,7 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     category: "military",
     compatible_classes: ["Guerrier", "Druide", "Rôdeur"],
     desc: "Né sous les aurores boréales de Kuldahar, vous avez été élevé dans la tradition des Jarls. Le froid a forgé votre corps, et les sagas ont nourri votre esprit. L'Éclipse vous a marqué.",
+    lore: "Le froid ne tue pas. Il ne fait que trier ceux qui méritent de vivre.",
     stats: { str: 2, int: -1 },
     origin: {
       id: "kuldahar",
@@ -540,6 +549,7 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     category: "common",
     compatible_classes: ["Voleur", "Guerrier", "Rôdeur", "Barde"],
     desc: "Vous ne savez pas qui étaient vos parents. La guerre, une peste, ou simplement l'abandon - les rues ont été votre école. Vous avez survécu là où d'autres ont péri.",
+    lore: "Les rats mangent les miettes des rois. Je mange les rats. Qui est le roi, alors ?",
     stats: { dex: 1, con: 1, cha: -1 },
     origin: {
       id: "rues",
@@ -582,6 +592,7 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     category: "common",
     compatible_classes: ["Voleur", "Barde", "Rôdeur"],
     desc: "Vous aviez une caravane prospère jusqu'à ce que la Guerre des Guildes détruise tout. Trahison, embuscade, ou simplement malchance - vous avez tout perdu sauf votre esprit affûté.",
+    lore: "L'or fond. Les soies brûlent. Seule la dette est éternelle.",
     stats: { cha: 1, int: 1, str: -1 },
     origin: {
       id: "routes_commerciales",
@@ -633,6 +644,7 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     category: "arcane",
     compatible_classes: ["Mage", "Barde"],
     desc: "Vos recherches sur les harmoniques de l'Aether ont été jugées 'déviantes' par l'Académie de Sol-Aureus. Vous avez été banni avant d'avoir pu terminer votre thèse, emportant vos notes et une soif de prouver que vos théories étaient justes.",
+    lore: "Ils appellent cela 'hérésie'. J'appelle cela 'progrès indispensable'.",
     stats: { int: 2, cha: 1, wis: -1 },
     origin: {
       id: "val_dore_academie",
@@ -680,6 +692,7 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     category: "noble",
     compatible_classes: ["Mage", "Clerc", "Paladin"],
     desc: "Votre famille prétend descendre directement des Gardiens de la Lumière. Que ce soit vrai ou non, vous possédez une affinité innée avec le cosmos. Vos parents ont tout sacrifié pour cacher votre existence aux yeux de l'Inquisition.",
+    lore: "Les étoiles ne se soucient pas de nos petits problèmes. Mais elles nous regardent quand même.",
     stats: { wis: 2, int: 1, str: -1 },
     origin: {
       id: "cote_orages_astral",
@@ -727,6 +740,7 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     category: "wilderness",
     compatible_classes: ["Rôdeur", "Guerrier", "Druide"],
     desc: "Vous avez passé la majeure partie de votre vie à la lisière des Terres Brûlées, empêchant les créatures de l'ombre d'attaquer les colonies frontalières. Le silence de la forêt est votre langue natale, et la traque est votre religion.",
+    lore: "Ce n'est pas ce que vous entendez qui vous tuera. C'est ce que vous n'entendez plus.",
     stats: { dex: 2, con: 1, int: -1 },
     origin: {
       id: "terres_brulees_frontiere",
@@ -774,6 +788,7 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     category: "religious",
     compatible_classes: ["Clerc", "Paladin", "Guerrier"],
     desc: "Vous étiez un bras armé de l'Inquisition du Soleil, mais après avoir participé à un massacre d'innocents sous prétexte d'hérésie, votre foi s'est brisée. Vous cherchez maintenant la rédemption, tout en utilisant les compétences et les secrets de votre ancienne vie.",
+    lore: "Le sang lave les péchés, disaient-ils. Mais qui lave le sang ?",
     stats: { wis: 2, str: 1, dex: -1 },
     origin: {
       id: "val_dore_cathedrale",
@@ -821,6 +836,7 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     category: "criminal",
     compatible_classes: ["Guerrier", "Voleur"],
     desc: "Ancien esclave des fonderies clandestines sous Hammerdeep, vous avez mené une révolte sanglante pour gagner votre liberté. Vos muscles sont forgés par le travail forcé et votre volonté est plus dure que l'acier que vous frappiez.",
+    lore: "Une chaîne brisée est une arme. Un homme brisé est un danger.",
     stats: { con: 2, str: 1, int: -1 },
     origin: {
       id: "monts_coeur_fer_mines",
@@ -868,6 +884,7 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     category: "arcane",
     compatible_classes: ["Mage", "Clerc", "Barde"],
     desc: "Vous êtes l'un des rares rescapés (ou descendant direct) des expéditions ayant réveillé les savoirs d'Ashka. Vous portez en vous une version de l'histoire que les livres officiels ont tenté d'occulter, et vous maîtrisez des bribes d'une langue qui peut changer la réalité.",
+    lore: "L'histoire est écrite par les vainqueurs. La vérité est murmurée par les survivants.",
     stats: { int: 2, wis: 1, con: -1 },
     origin: {
       id: "terres_brulees_archives",
@@ -915,6 +932,7 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     category: "arcane",
     compatible_classes: ["Mage", "Barde", "Voleur"],
     desc: "Vous avez survécu à une exposition directe au Miroir des Ombres. Votre reflet ne vous ressemble plus tout à fait, et vous entendez parfois des voix venant des surfaces réfléchissantes. Cette malédiction est aussi votre plus grande force.",
+    lore: "Ne regardez jamais trop longtemps votre propre reflet. Il pourrait cligner des yeux avant vous.",
     stats: { int: 1, cha: 1, wis: -1 },
     origin: {
       id: "miroir_faille",
@@ -962,6 +980,7 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     category: "military",
     compatible_classes: ["Clerc", "Guerrier", "Mage"],
     desc: "Vous avez passé des années à recoudre des soldats au milieu de la boue et du sang. Pour vous, un corps est une machine complexe. Vous avez sauvé d'innombrables vies, mais le cri des blessés hante encore vos nuits.",
+    lore: "La mort est patiente. Le chirurgien doit être plus rapide.",
     stats: { int: 1, con: 1, cha: -1 },
     origin: {
       id: "frontiere_sud",
@@ -1009,6 +1028,7 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     category: "noble",
     compatible_classes: ["Barde", "Paladin", "Mage"],
     desc: "Vous étiez la voix de Sol-Aureus, négociant des traités entre les cités-états et les factions elfiques. Vous savez que les mots sont bien plus tranchants que n'importe quelle lame de mithril.",
+    lore: "Une guerre évitée est une victoire invisible. Mais personne ne chante de ballades pour les invisibles.",
     stats: { cha: 2, wis: 1, str: -2 },
     origin: {
       id: "sol_aureus_palais",
@@ -1056,6 +1076,7 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     category: "wilderness",
     compatible_classes: ["Voleur", "Rôdeur", "Guerrier"],
     desc: "Les tempêtes de la Côte des Orages rejettent souvent des treasures et des secrets. Vous avez survécu en récupérant ce que l'Océan des Murmures ne voulait plus. Vous avez appris à lire les vagues et à craindre ce qui rampe sous l'écume.",
+    lore: "L'océan rend toujours ce qu'il prend. Mais jamais sous la même forme.",
     stats: { dex: 1, wis: 1, int: 1 },
     origin: {
       id: "cote_orages_plages",
@@ -1103,6 +1124,7 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     category: "common",
     compatible_classes: ["Mage", "Clerc", "Barde"],
     desc: "Dans les niveaux les plus calmes de Hammerdeep se trouvent les Grands Archives de Pierre. Vous étiez chargé de cataloguer les généalogies naines et les découvertes minières. Vous connaissez les secrets enterrés sous des tonnes de granit.",
+    lore: "La pierre n'oublie jamais. C'est pour cela qu'il faut faire attention à ce qu'on lui confie.",
     stats: { int: 2, wis: 1, str: -1 },
     origin: {
       id: "hammerdeep_archives",
@@ -1150,6 +1172,7 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     category: "criminal",
     compatible_classes: ["Voleur", "Barde", "Mage"],
     desc: "Vous étiez l'un des 'Murmures' de Sol-Aureus, un espion de haut vol spécialisé dans l'interception de secrets politiques. Votre couverture a été grillée lors d'une mission délicate à la Cour Royale, et vous avez dû fuir les bas-fonds que vous connaissiez si bien.",
+    lore: "Un secret est une arme à un coup. Une fois révélé, il ne sert plus qu'à se faire tuer.",
     stats: { int: 1, cha: 1, str: -1 },
     origin: {
       id: "sol_aureus_ombre",
@@ -1205,6 +1228,7 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     category: "military",
     compatible_classes: ["Guerrier", "Rôdeur", "Paladin"],
     desc: "Vous avez passé cinq ans à protéger les caravanes les plus précieuses de la Guilde des Marchands à travers les Terres Brûlées. Vous avez survécu à des embuscades de Wyverns et à des pilleurs de tombes, mais un échec récent vous a laissé sans emploi et avec une dette de vie envers un marchand influent.",
+    lore: "Mon épée est à louer, mais ma loyauté ne s'achète pas. Elle se mérite.",
     stats: { str: 1, con: 1, wis: -1 },
     origin: {
       id: "caravanes_routes",
@@ -1260,6 +1284,7 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     category: "wilderness",
     compatible_classes: ["Mage", "Druide", "Clerc"],
     desc: "Vivant en isolation près de la Faille Vive dans les Terres Brûlées, vous avez passé des décennies à observer les vibrations du Miroir des Ombres. Le silence vous a parlé plus que n'importe quel traité d'alchimie. Vous êtes sorti de votre retraite car la Faille a commencé à 'saigner'.",
+    lore: "Le silence est le langage de l'univers. Nous ne faisons que du bruit pour ne pas avoir à l'écouter.",
     stats: { wis: 1, int: 1, con: -1 },
     origin: {
       id: "faille_vive_isolé",
@@ -1315,6 +1340,7 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     category: "religious",
     compatible_classes: ["Clerc", "Paladin", "Barde"],
     desc: "Fidèle serviteur d'un orphelinat tenu par le Clergé de Solarius, vous avez découvert une relique oubliée dans les fondations du temple. Pour la protéger de l'Inquisition, vous l'avez 'fusionnée' avec votre propre essence. Vous portez désormais le fardeau de la lumière et la responsabilité de ces enfants.",
+    lore: "La lumière pèse plus lourd que l'obscurité, car on doit la porter sans jamais la laisser tomber.",
     stats: { wis: 1, con: 1, dex: -1 },
     origin: {
       id: "orphelinat_temple",
@@ -1370,6 +1396,7 @@ export const ENRICHED_BACKSTORIES: EnrichedBackstory[] = [
     category: "criminal",
     compatible_classes: ["Voleur", "Mage", "Clerc"],
     desc: "Vous faisiez partie du Cercle des Cendres, séduit par leurs promesses de pouvoir sur le Miroir des Ombres. Mais après avoir été témoin d'un rituel de sacrifice particulièrement atroce lors de l'Arrivée de l'Ombre, vous avez trahi vos frères. Vous êtes en fuite, avec leurs secrets et leur marque sur votre peau.",
+    lore: "J'ai vu ce qui se cache derrière le miroir. Et croyez-moi, vous ne voulez pas qu'il vous voie.",
     stats: { int: 1, dex: 1, cha: -1 },
     origin: {
       id: "repaire_cercle",
