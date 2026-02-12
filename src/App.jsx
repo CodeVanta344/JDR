@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from './supabaseClient';
-import { WORLD_CONTEXT, BESTIARY, LEVEL_THRESHOLDS, CLASSES, ENVIRONMENTAL_RULES, EQUIPMENT_RULES, NPC_TEMPLATES, IMPORTANT_NPCS, QUEST_HOOKS, TAVERNS_AND_LOCATIONS, RUMORS_AND_GOSSIP, RANDOM_ENCOUNTERS, BESTIARY_EXTENDED, WORLD_MYTHS_EXTENDED, LEGENDARY_ITEMS, WORLD_HISTORY, FACTION_LORE, WORLD_MYTHS_AND_LEGENDS, CULTURAL_LORE } from './lore';
+import { WORLD_CONTEXT, BESTIARY, LEVEL_THRESHOLDS, CLASSES, ENVIRONMENTAL_RULES, EQUIPMENT_RULES, NPC_TEMPLATES, IMPORTANT_NPCS, QUEST_HOOKS, TAVERNS_AND_LOCATIONS, RUMORS_AND_GOSSIP, RANDOM_ENCOUNTERS, BESTIARY_EXTENDED, WORLD_MYTHS_EXTENDED, LEGENDARY_ITEMS, WORLD_HISTORY, FACTION_LORE, WORLD_MYTHS_AND_LEGENDS, CULTURAL_LORE, LOCATION_BACKGROUNDS } from './lore';
 import { CharacterCreation } from './components/CharacterCreation';
 import { CharacterSheet } from './components/CharacterSheet';
 import { SessionLobby } from './components/SessionLobby';
@@ -13,7 +13,7 @@ import { LootModal } from './components/LootModal';
 import { NPCDialogueModal } from './components/NPCDialogueModal';
 import { DiceChallengeModal } from './components/DiceChallengeModal';
 import { CombatDistanceModal } from './components/CombatDistanceModal';
-import { formatAIContent, calculateTotalStats, calculateMaxResource, resolvePlayerAbilities, generateArenaDecor } from './utils/gameUtils';
+import { formatAIContent, calculateTotalStats, calculateMaxResource, resolvePlayerAbilities, generateArenaDecor, generateRandomCharacter } from './utils/gameUtils';
 import { AudioManager } from './components/AudioManager';
 import { GameHelperModal } from './components/GameHelperModal';
 import { LevelUpModal } from './components/LevelUpModal';
@@ -797,6 +797,25 @@ export default function App() {
         chatRef.current?.scrollTo(0, chatRef.current.scrollHeight);
     }, [messages]);
 
+    // --- AUTOMATIC LOCATION BACKGROUND SWITCHING ---
+    useEffect(() => {
+        if (messages.length === 0) return;
+        const lastMsg = messages[messages.length - 1];
+
+        // Only trigger on GM/Narrator messages
+        if (lastMsg.role === 'narrage' || lastMsg.role === 'assistant') {
+            const content = lastMsg.content.toLowerCase();
+
+            // Check for location mentions
+            for (const [locName, imgPath] of Object.entries(LOCATION_BACKGROUNDS)) {
+                if (content.includes(locName.toLowerCase())) {
+                    setSceneImage(imgPath);
+                    break;
+                }
+            }
+        }
+    }, [messages]);
+
     const handleCreateSession = async () => {
         if (!profile) return;
         setLoading(true);
@@ -806,6 +825,71 @@ export default function App() {
             window.history.pushState({}, '', `?s=${data.id}`);
         }
         setLoading(false);
+    };
+
+    const handleQuickStart = async () => {
+        if (!profile) return;
+        setLoading(true);
+        try {
+            // 1. Create Session
+            const { data: sessionData, error: sessionError } = await supabase
+                .from('sessions')
+                .insert({ host_id: profile.id, is_started: false })
+                .select()
+                .single();
+
+            if (sessionError || !sessionData) throw sessionError;
+
+            setSession(sessionData);
+            window.history.pushState({}, '', `?s=${sessionData.id}`);
+
+            // 2. Create Host Player Record
+            const { data: playerData, error: playerError } = await supabase
+                .from('players')
+                .insert({
+                    session_id: sessionData.id,
+                    user_id: profile.id,
+                    name: profile.name || 'DebugHero',
+                    is_host: true
+                })
+                .select()
+                .single();
+
+            if (playerError || !playerData) throw playerError;
+            setCharacter(playerData);
+
+            // 3. Generate Random Character Data
+            const randomData = generateRandomCharacter(sessionData.id, profile.id);
+
+            // 4. Finalize Character
+            const finalChar = {
+                ...randomData,
+                id: playerData.id,
+                is_ready: true // Ensure ready
+            };
+
+            const { data: charData, error: charError } = await supabase
+                .from('players')
+                .update(finalChar)
+                .eq('id', playerData.id)
+                .select()
+                .single();
+
+            if (charError || !charData) throw charError;
+            setCharacter(charData);
+            setPlayers([charData]);
+
+            // 5. Force Start Adventure (Wait slightly for state sync if needed, but we pass true)
+            setTimeout(() => {
+                handleStartAdventure(true);
+            }, 500);
+
+        } catch (e) {
+            console.error("Quick Start Error:", e);
+            alert("Erreur lors du Quick Start : " + e.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleLeaveSession = async () => {
@@ -1050,7 +1134,7 @@ export default function App() {
     }, [session, players, profile]);
 
     const handleStartAdventure = async (force = false) => {
-        if (!session || players.length < 2) return;
+        if (!session || players.length < 1) return;
         if (!force && STARTING_LOCKS.has(session.id)) return;
 
         const lastStartAttempt = sessionStorage.getItem(`start_attempt_${session.id}`);
@@ -2140,6 +2224,7 @@ export default function App() {
                 <SessionLobby
                     onJoin={handleJoinSession}
                     onCreate={handleCreateSession}
+                    onQuickStart={handleQuickStart}
                     availableSessions={availableSessions}
                     loading={loading}
                 />

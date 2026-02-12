@@ -36,6 +36,19 @@ export const WORLD_HISTORY = {
 };
 
 
+export const LOCATION_BACKGROUNDS = {
+    "Kuldahar": "/assets/backgrounds/kuldahar.png",
+    "Sol-Aureus": "/assets/backgrounds/sol_aureus.png",
+    "Hammerdeep": "/assets/backgrounds/hammerdeep.png",
+    "Sylmanir": "/assets/backgrounds/sylmanir.png",
+    "Terres Brûlée": "/assets/backgrounds/terres_brulees.png",
+    "Ashka": "/assets/backgrounds/terres_brulees.png",
+    "Côte des Orages": "/assets/backgrounds/kuldahar.png",
+    "Val Doré": "/assets/backgrounds/sol_aureus.png",
+    "Monts Cœur-de-Fer": "/assets/backgrounds/hammerdeep.png",
+    "Sylve d'Émeraude": "/assets/backgrounds/sylmanir.png"
+};
+
 export const LORE_INTRO = `
 Bienvenue en Aethelgard, un monde dont les fondations tremblent encore des échos de l'Ère des Cendres. 
 Ici, la lumière de Solarius lutte quotidiennement contre les incursions de l'Abysse. Vous arrivez à une époque charnière : les anciens portails de l'Hégémonie d'Ashka recommencent à briller d'une lueur funeste dans les déserts du sud, et les Jarls du nord murmurent que le dragon de cristal de Kuldahar a ouvert un œil.

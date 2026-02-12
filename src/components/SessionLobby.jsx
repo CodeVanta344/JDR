@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export function SessionLobby({ onJoin, onCreate, availableSessions = [], loading }) {
+export function SessionLobby({ onJoin, onCreate, onQuickStart, availableSessions = [], loading }) {
     const [sessionId, setSessionId] = useState('');
 
     return (
@@ -47,6 +47,23 @@ export function SessionLobby({ onJoin, onCreate, availableSessions = [], loading
                                 disabled={loading}
                             >
                                 {loading ? 'INITIALISATION...' : 'CRÉER UNE SESSION'}
+                            </button>
+                            <button
+                                className="btn-medieval"
+                                style={{
+                                    width: '100%',
+                                    padding: '0.8rem',
+                                    marginTop: '1rem',
+                                    background: 'rgba(255,0,0,0.1)',
+                                    border: '1px solid rgba(255,0,0,0.3)',
+                                    color: '#ff4d4d',
+                                    fontSize: '0.8rem',
+                                    letterSpacing: '2px'
+                                }}
+                                onClick={onQuickStart}
+                                disabled={loading}
+                            >
+                                {loading ? '...' : 'DEBUG: QUICK START'}
                             </button>
                         </div>
 

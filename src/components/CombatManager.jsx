@@ -3,6 +3,7 @@ import { CLASSES, BESTIARY } from '../lore';
 import { CombatLogger } from '../utils/logger';
 import { supabase } from '../supabaseClient';
 import { DieVisual } from './DieVisual';
+import { DiceRollScene } from './Dice3D';
 
 const DamagePopup = ({ amount, onDone }) => {
     useEffect(() => {
@@ -203,10 +204,13 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
     const [logs, setLogs] = useState([]);
     const [decor, setDecor] = useState([]);
     const [remoteAction, setRemoteAction] = useState(null); // { attackerName, abilityName, roll, modifier, targetName, threshold, success, damage, id }
+    const [movingUnit, setMovingUnit] = useState(null); // { id, path: [{x, y}], currentStep: 0 }
+    const [attackAnimation, setAttackAnimation] = useState(null); // { attackerId, targetId, type, diceRoll }
     const logEndRef = useRef(null);
     const lastSyncRef = useRef(0);
     const lastActionIdRef = useRef(null);
     const combatantsRef = useRef(combatants);
+    const animationFrameRef = useRef(null);
 
     useEffect(() => {
         combatantsRef.current = combatants;
@@ -605,6 +609,36 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
         return combatantsRef.current.some(u => u.id !== excludeId && u.hp > 0 && u.posX === x && u.posY === y);
     };
 
+    // Animation helper for smooth step-by-step movement
+    const animateMovement = (unitId, fromX, fromY, toX, toY, onComplete) => {
+        const ANIMATION_DURATION = 300; // ms per step
+        const startTime = Date.now();
+
+        const animate = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / ANIMATION_DURATION, 1);
+
+            // Easing function (ease-out-cubic)
+            const eased = 1 - Math.pow(1 - progress, 3);
+
+            // Interpolate position
+            const currentX = fromX + (toX - fromX) * eased;
+            const currentY = fromY + (toY - fromY) * eased;
+
+            // Update unit's visual position (temporary animation state)
+            setMovingUnit({ id: unitId, animX: currentX, animY: currentY, progress: eased });
+
+            if (progress < 1) {
+                animationFrameRef.current = requestAnimationFrame(animate);
+            } else {
+                setMovingUnit(null);
+                if (onComplete) onComplete();
+            }
+        };
+
+        animationFrameRef.current = requestAnimationFrame(animate);
+    };
+
     const executeMove = (direction) => {
         console.log(`[executeMove] Called with direction: ${direction}, canMove: ${canMove}`);
         const currentCombatants = combatantsRef.current;
@@ -651,9 +685,13 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
         // Only consume PM if position actually changed
         const actualMove = (newX !== freshActor.posX || newY !== freshActor.posY);
         if (actualMove) {
-            const newCombatants = currentCombatants.map(u => u.id === freshActor.id ? { ...u, posX: newX, posY: newY, currentPM: u.currentPM - 1, facing: newFacing, hasMoved: true } : u);
-            setCombatants(newCombatants);
-            if (onUpdateCombatState) onUpdateCombatState({ combatants: newCombatants, turnIndex: currentTurnIndex, round, active: true, logs, updatedAt: Date.now() });
+            // Start smooth animation
+            animateMovement(freshActor.id, freshActor.posX, freshActor.posY, newX, newY, () => {
+                // Animation complete - update game state
+                const newCombatants = currentCombatants.map(u => u.id === freshActor.id ? { ...u, posX: newX, posY: newY, currentPM: u.currentPM - 1, facing: newFacing, hasMoved: true } : u);
+                setCombatants(newCombatants);
+                if (onUpdateCombatState) onUpdateCombatState({ combatants: newCombatants, turnIndex: currentTurnIndex, round, active: true, logs, updatedAt: Date.now() });
+            });
             if (onSFX) onSFX('footstep');
         }
     };
@@ -1018,6 +1056,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                 const primaryTarget = targetsWithDist[0].unit;
 
                 // --- STRATEGY: MOVEMENT ---
+                // AI moves ONE tile per turn towards target (more tactical & visible)
                 let enemyCanMove = freshActor.currentPM > 0;
                 if (enemyCanMove) {
                     // Decide target destination
@@ -1049,34 +1088,35 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                         }
                     }
 
-                    // Move step by step towards target destination
-                    let movesRemaining = freshActor.currentPM;
-                    while (movesRemaining > 0) {
-                        // Refresh actor state in each loop iteration because executeMove updates it async
-                        const loopActor = combatantsRef.current.find(u => u.id === currentActor.id);
-                        if (!loopActor || loopActor.currentPM <= 0) break;
-
-                        const dx = Math.sign(targetX - loopActor.posX);
-                        const dy = Math.sign(targetY - loopActor.posY);
-                        if (dx === 0 && dy === 0) break;
-
-                        // Try to move closer
+                    // Move ONE step towards target (not full path)
+                    const dx = Math.sign(targetX - freshActor.posX);
+                    const dy = Math.sign(targetY - freshActor.posY);
+                    
+                    if (dx !== 0 || dy !== 0) {
+                        // Prioritize primary axis (horizontal or vertical)
                         let moveX = 0, moveY = 0;
-                        if (dx !== 0 && isTileValid(loopActor.posX + dx, loopActor.posY) && !isTileOccupied(loopActor.posX + dx, loopActor.posY, loopActor.id)) {
-                            moveX = dx;
-                        } else if (dy !== 0 && isTileValid(loopActor.posX, loopActor.posY + dy) && !isTileOccupied(loopActor.posX, loopActor.posY + dy, loopActor.id)) {
-                            moveY = dy;
+                        if (Math.abs(targetX - freshActor.posX) >= Math.abs(targetY - freshActor.posY)) {
+                            // Horizontal priority
+                            if (dx !== 0 && isTileValid(freshActor.posX + dx, freshActor.posY) && !isTileOccupied(freshActor.posX + dx, freshActor.posY, freshActor.id)) {
+                                moveX = dx;
+                            } else if (dy !== 0 && isTileValid(freshActor.posX, freshActor.posY + dy) && !isTileOccupied(freshActor.posX, freshActor.posY + dy, freshActor.id)) {
+                                moveY = dy;
+                            }
                         } else {
-                            // Obstacle or reached target axis? Stop moving
-                            break;
+                            // Vertical priority
+                            if (dy !== 0 && isTileValid(freshActor.posX, freshActor.posY + dy) && !isTileOccupied(freshActor.posX, freshActor.posY + dy, freshActor.id)) {
+                                moveY = dy;
+                            } else if (dx !== 0 && isTileValid(freshActor.posX + dx, freshActor.posY) && !isTileOccupied(freshActor.posX + dx, freshActor.posY, freshActor.id)) {
+                                moveX = dx;
+                            }
                         }
 
                         if (moveX !== 0 || moveY !== 0) {
-                            executeMove(moveX > 0 ? 'right' : moveX < 0 ? 'left' : moveY > 0 ? 'down' : 'up');
-                            movesRemaining--;
-                            // Small delay for animation feel and state update
-                            await new Promise(r => setTimeout(r, 300));
-                        } else break;
+                            const direction = moveX > 0 ? 'right' : moveX < 0 ? 'left' : moveY > 0 ? 'down' : 'up';
+                            executeMove(direction);
+                            // Wait for move animation to complete before attacking
+                            await new Promise(r => setTimeout(r, 400));
+                        }
                     }
                 }
 
@@ -1393,10 +1433,45 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
 
     const RollOverlay = ({ roll, modifier, tacticalReason, threshold, success, action }) => (
         <div style={{ position: 'absolute', inset: 0, zIndex: 2000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}>
-            <DieVisual type="d20" value={roll} onComplete={() => handleRollComplete({ roll, modifier, threshold, success, targetId: rollOverlay.targetId, action })} />
-            <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-                <div style={{ fontSize: '1.2rem', color: 'white' }}>{roll} + {modifier} {tacticalReason && <span style={{ color: 'var(--gold-primary)', fontSize: '0.9rem' }}>({tacticalReason})</span>} = <span style={{ color: success ? '#00ff00' : '#ff4444' }}>{roll + modifier}</span></div>
-                <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Cible: {threshold} AC</div>
+            {/* 3D Dice Animation */}
+            <div style={{ marginBottom: '2rem' }}>
+                <DiceRollScene 
+                    diceType="d20" 
+                    value={roll} 
+                    onComplete={() => handleRollComplete({ roll, modifier, threshold, success, targetId: rollOverlay.targetId, action })} 
+                />
+            </div>
+            {/* Result Display */}
+            <div style={{ 
+                textAlign: 'center', 
+                padding: '2rem', 
+                background: 'rgba(10, 10, 20, 0.9)', 
+                borderRadius: '16px',
+                border: '2px solid var(--gold-dim)',
+                animation: 'slideUpFade 0.5s ease-out'
+            }}>
+                <div style={{ fontSize: '2rem', color: 'white', marginBottom: '1rem', fontWeight: 'bold' }}>
+                    {roll} <span style={{ color: 'var(--gold-primary)', fontSize: '1.5rem' }}>+{modifier}</span> 
+                    {tacticalReason && <span style={{ display: 'block', color: 'var(--gold-primary)', fontSize: '1rem', marginTop: '0.5rem' }}>({tacticalReason})</span>}
+                    <span style={{ display: 'block', fontSize: '2.5rem', marginTop: '0.5rem', color: success ? '#00ff00' : '#ff4444', textShadow: success ? '0 0 20px #00ff00' : '0 0 20px #ff4444' }}>
+                        = {roll + modifier}
+                    </span>
+                </div>
+                <div style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.6)' }}>
+                    Seuil de réussite: <span style={{ color: 'white', fontWeight: 'bold' }}>{threshold} AC</span>
+                </div>
+                {success && (
+                    <div style={{ 
+                        marginTop: '1rem', 
+                        fontSize: '2rem', 
+                        color: '#ff4444', 
+                        fontWeight: '900',
+                        textShadow: '0 0 20px rgba(255,0,0,0.8)',
+                        animation: 'shockwave 0.5s ease-out'
+                    }}>
+                        💥 TOUCHÉ !
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -1577,12 +1652,21 @@ return (
                         </div>
                     ))}
 
-                    {/* Arena Units (2D Positioning) */}
+                    {/* Arena Units (2D Positioning with smooth animation) */}
                     <div style={{ position: 'absolute', inset: 0, zIndex: 10 }}>
                         {combatants.map((u, index) => {
-                            const x = getPosPercent(u.posX);
-                            const y = getPosPercent(u.posY, true);
-                            return <UnitCard key={u.id} unit={u} style={{ left: `${x}%`, top: `${y}%` }} />;
+                            // Check if this unit is currently animating
+                            const isAnimating = movingUnit && movingUnit.id === u.id;
+                            const displayX = isAnimating ? movingUnit.animX : u.posX;
+                            const displayY = isAnimating ? movingUnit.animY : u.posY;
+                            
+                            const x = getPosPercent(displayX);
+                            const y = getPosPercent(displayY, true);
+                            return <UnitCard key={u.id} unit={u} style={{ 
+                                left: `${x}%`, 
+                                top: `${y}%`,
+                                transition: isAnimating ? 'none' : 'left 0.8s cubic-bezier(0.4, 0, 0.2, 1), top 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                            }} />;
                         })}
                     </div>
                 </div>

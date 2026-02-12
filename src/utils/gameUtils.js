@@ -1,4 +1,80 @@
-import { CLASSES } from '../lore';
+import { CLASSES, ENRICHED_BACKSTORIES } from '../lore';
+
+/**
+ * Generates a completely random character for debug/testing purposes.
+ * @param {string} sessionId - The current session ID.
+ * @param {string} userId - The user's ID.
+ * @returns {object} A fully formed character object.
+ */
+export const generateRandomCharacter = (sessionId, userId) => {
+    const classKeys = Object.keys(CLASSES);
+    const charClassKey = classKeys[Math.floor(Math.random() * classKeys.length)];
+    const classData = CLASSES[charClassKey];
+
+    const subclassKeys = Object.keys(classData.subclasses);
+    const subclassName = subclassKeys[Math.floor(Math.random() * subclassKeys.length)];
+
+    // Roll Stats (4d6 drop lowest)
+    const rollStat = () => {
+        const rolls = Array.from({ length: 4 }, () => Math.floor(Math.random() * 6) + 1);
+        rolls.sort((a, b) => b - a);
+        return rolls[0] + rolls[1] + rolls[2];
+    };
+
+    const stats = {
+        str: rollStat(),
+        dex: rollStat(),
+        con: rollStat(),
+        int: rollStat(),
+        wis: rollStat(),
+        cha: rollStat()
+    };
+
+    // Pick compatible backstory
+    const compatibleBackstories = ENRICHED_BACKSTORIES.filter(b => b.compatible_classes.includes(charClassKey));
+    const backstory = compatibleBackstories[Math.floor(Math.random() * compatibleBackstories.length)] || ENRICHED_BACKSTORIES[0];
+
+    // Pick a random starting equipment set
+    const equipmentOption = classData.starting_equipment_options[Math.floor(Math.random() * classData.starting_equipment_options.length)];
+    const inventory = equipmentOption.items.map(item => ({ ...item, id: crypto.randomUUID() }));
+
+    // Pick 2 random abilities from options
+    const abilities = [];
+    const options = [...classData.initial_ability_options];
+    for (let i = 0; i < 2; i++) {
+        if (options.length > 0) {
+            const idx = Math.floor(Math.random() * options.length);
+            abilities.push(options[idx].name);
+            options.splice(idx, 1);
+        }
+    }
+
+    const maxHp = classData.hitDie + Math.floor((stats.con - 10) / 2);
+    const maxRes = 20 + 5 + Math.floor((stats[classData.resourceStat || 'con'] - 10) / 2) * 5 + stats[classData.resourceStat || 'con'];
+
+    return {
+        name: `Héros_${Math.floor(Math.random() * 1000)}`,
+        class: `${charClassKey} (${classData.subclasses[subclassName].label})`,
+        hp: maxHp,
+        max_hp: maxHp,
+        inventory: inventory,
+        stats: { ...stats, mechanic: classData.mechanic },
+        abilities: abilities,
+        spells: [], // Some classes might have separate spells but initial_ability_options covers them for now
+        portrait_url: classData.portrait,
+        resource: maxRes,
+        max_resource: maxRes,
+        level: 1,
+        xp: 0,
+        gold: 100,
+        backstory: backstory.label,
+        backstory_gm_context: backstory.desc,
+        starting_reputation: backstory.starting_reputation || {},
+        session_id: sessionId,
+        user_id: userId,
+        is_ready: true
+    };
+};
 
 // Helper to convert structured data/JSON into immersive narrative text
 export const formatAIContent = (data) => {
