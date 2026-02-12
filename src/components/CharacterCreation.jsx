@@ -8,7 +8,7 @@ const rollAttribute = () => {
     return rolls.slice(1).reduce((a, b) => a + b, 0);
 };
 
-export function CharacterCreation({ onCreate, onBack, generateImage, sessionId }) {
+export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImage, sessionId }) {
     const [step, setStep] = useState(1); // 1: Category, 2: Class, 3: Subclass, 4: Backstory, 5: Equipment, 6: Abilities, 7: Stats, 8: Final
     const [selectedCategory, setSelectedCategory] = useState('MIGHT');
     const [name, setName] = useState('');
@@ -199,10 +199,23 @@ export function CharacterCreation({ onCreate, onBack, generateImage, sessionId }
                         </div>
                     </div>
 
-                    <div className="invite-section-compact stone-panel" style={{ border: '1px solid var(--gold-dim)', padding: '0.5rem 1rem' }}>
+                    <div className="invite-section-compact stone-panel" style={{ border: '1px solid var(--gold-dim)', padding: '0.5rem 1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
                         <div style={{ fontSize: '0.7rem', color: 'var(--gold-light)' }}>
                             <span style={{ color: 'var(--gold-primary)', fontWeight: 'bold' }}>CHRONIQUE:</span> {sessionId?.slice(0, 8)}
                         </div>
+                        <button
+                            onClick={onQuickStart}
+                            className="btn-medieval"
+                            style={{
+                                padding: '0.3rem 0.6rem',
+                                fontSize: '0.6rem',
+                                background: 'rgba(255,0,0,0.1)',
+                                border: '1px solid rgba(255,0,0,0.3)',
+                                color: '#ff4d4d'
+                            }}
+                        >
+                            DEBUG: QUICK START
+                        </button>
                         <button
                             onClick={() => {
                                 const url = window.location.origin + window.location.pathname + '?s=' + sessionId;

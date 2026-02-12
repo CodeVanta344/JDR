@@ -279,6 +279,14 @@ export default function App() {
         }
     }, [session, profile, character, loading]);
 
+    // --- AUTO-RANDOMIZE FOR QUICK JOIN ---
+    useEffect(() => {
+        if (character && window.pendingQuickStart && !loading) {
+            window.pendingQuickStart = false; // Consume flag
+            handleCharacterQuickStart();
+        }
+    }, [character, loading]);
+
     // --- SESSION DISCOVERY POLLING ---
     useEffect(() => {
         if (!session && profile) {
@@ -825,6 +833,73 @@ export default function App() {
             window.history.pushState({}, '', `?s=${data.id}`);
         }
         setLoading(false);
+    };
+
+    const handleCharacterQuickStart = async () => {
+        if (!character || !session) return;
+        setLoading(true);
+        try {
+            const randomData = generateRandomCharacter(session.id, profile.id);
+            const finalChar = {
+                ...randomData,
+                id: character.id,
+                is_ready: true
+            };
+            const { data, error } = await supabase
+                .from('players')
+                .update(finalChar)
+                .eq('id', character.id)
+                .select()
+                .single();
+
+            if (error) throw error;
+            setCharacter(data);
+
+            if (session.is_started) {
+                const catchupMsg = `[SYSTEM] ${data.name} (un ${data.class}) rejoint l'aventure en cours. Intègre-le narrativement à la scène actuelle.`;
+                await supabase.functions.invoke('game-master', {
+                    body: {
+                        action: catchupMsg,
+                        sessionId: session.id,
+                        playerId: data.id,
+                        lore: { context: WORLD_CONTEXT, bestiary: { ...BESTIARY, ...BESTIARY_EXTENDED }, classes: CLASSES }
+                    }
+                });
+            }
+        } catch (e) {
+            console.error("Character Quick Start Error:", e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleJoinQuickStart = async (id) => {
+        setLoading(true);
+        try {
+            const data = await fetchSession(id);
+            if (data) {
+                setSession(data);
+                window.history.pushState({}, '', `?s=${data.id}`);
+
+                // The useEffect for auto-creating player will trigger.
+                // We need to wait for character to be set, then trigger randomization.
+                // We'll use a one-time interval to check for character record.
+                const checkInterval = setInterval(() => {
+                    const charRef = window.tempCharacter; // Leak character to window for this sync check if needed, or better use a state effect
+                    // Use character state from component if possible
+                }, 500);
+                setTimeout(() => clearInterval(checkInterval), 5000);
+
+                // Better: set a "pendingQuickStart" flag
+                window.pendingQuickStart = true;
+            } else {
+                alert("Session introuvable.");
+            }
+        } catch (e) {
+            console.error("Join Quick Start Error:", e);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleQuickStart = async () => {
@@ -2225,6 +2300,7 @@ export default function App() {
                     onJoin={handleJoinSession}
                     onCreate={handleCreateSession}
                     onQuickStart={handleQuickStart}
+                    onJoinQuickStart={handleJoinQuickStart}
                     availableSessions={availableSessions}
                     loading={loading}
                 />
@@ -2242,6 +2318,7 @@ export default function App() {
                 <CharacterCreation
                     onCreate={handleCharacterCreate}
                     onBack={handleLeaveSession}
+                    onQuickStart={handleCharacterQuickStart}
                     generateImage={generateImage}
                     sessionId={session.id}
                 />

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export function SessionLobby({ onJoin, onCreate, onQuickStart, availableSessions = [], loading }) {
+export function SessionLobby({ onJoin, onCreate, onQuickStart, onJoinQuickStart, availableSessions = [], loading }) {
     const [sessionId, setSessionId] = useState('');
 
     return (
@@ -54,9 +54,9 @@ export function SessionLobby({ onJoin, onCreate, onQuickStart, availableSessions
                                     width: '100%',
                                     padding: '0.8rem',
                                     marginTop: '1rem',
-                                    background: 'rgba(255,0,0,0.1)',
-                                    border: '1px solid rgba(255,0,0,0.3)',
-                                    color: '#ff4d4d',
+                                    background: 'rgba(212, 175, 55, 0.1)',
+                                    border: '1px solid rgba(212, 175, 55, 0.3)',
+                                    color: 'var(--gold-primary)',
                                     fontSize: '0.8rem',
                                     letterSpacing: '2px'
                                 }}
@@ -100,20 +100,30 @@ export function SessionLobby({ onJoin, onCreate, onQuickStart, availableSessions
                                 />
                             </div>
                             <button
+                                className="btn-medieval"
                                 style={{
                                     width: '100%',
-                                    padding: '1.2rem',
-                                    background: 'transparent',
-                                    border: '1px solid var(--gold-dim)',
+                                    padding: '0.8rem',
+                                    marginTop: '1rem',
+                                    background: 'rgba(212, 175, 55, 0.1)',
+                                    border: '1px solid rgba(212, 175, 55, 0.3)',
                                     color: 'var(--gold-primary)',
-                                    fontWeight: 'bold',
-                                    cursor: (loading || !sessionId) ? 'not-allowed' : 'pointer',
-                                    letterSpacing: '1px'
+                                    fontSize: '0.8rem',
+                                    letterSpacing: '2px'
                                 }}
-                                onClick={() => onJoin(sessionId)}
+                                onClick={() => onJoinQuickStart(sessionId)}
                                 disabled={loading || !sessionId.trim()}
                             >
-                                {loading ? 'RECHERCHE...' : 'LÉGENDES CROISÉES'}
+                                {loading ? '...' : 'DEBUG: QUICK JOIN'}
+                            </button>
+
+                            <button
+                                className="btn-medieval"
+                                onClick={() => onJoin(sessionId)}
+                                style={{ width: '100%', marginTop: '1rem' }}
+                                disabled={loading || !sessionId.trim()}
+                            >
+                                {loading ? '...' : 'LÉGENDES CROISÉES'}
                             </button>
                         </div>
                     </div>
@@ -148,13 +158,28 @@ export function SessionLobby({ onJoin, onCreate, onQuickStart, availableSessions
                                                 <span style={{ display: 'block', fontSize: '0.6rem', color: 'var(--text-muted)', letterSpacing: '1px' }}>RÉGION</span>
                                                 <span style={{ fontSize: '0.8rem', color: 'var(--gold-dim)' }}>Arkhélia</span>
                                             </div>
-                                            <button
-                                                className="btn-medieval"
-                                                onClick={() => onJoin(sess.id)}
-                                                style={{ padding: '0.6rem 1.2rem', fontSize: '0.8rem' }}
-                                            >
-                                                REJOINDRE
-                                            </button>
+                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                <button
+                                                    className="btn-medieval"
+                                                    onClick={() => onJoinQuickStart(sess.id)}
+                                                    style={{
+                                                        padding: '0.6rem 1rem',
+                                                        fontSize: '0.7rem',
+                                                        background: 'rgba(212, 175, 55, 0.1)',
+                                                        border: '1px solid rgba(212, 175, 55, 0.3)',
+                                                        color: 'var(--gold-primary)'
+                                                    }}
+                                                >
+                                                    QUICK JOIN
+                                                </button>
+                                                <button
+                                                    className="btn-medieval"
+                                                    onClick={() => onJoin(sess.id)}
+                                                    style={{ padding: '0.6rem 1rem', fontSize: '0.7rem' }}
+                                                >
+                                                    REJOINDRE
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
