@@ -4,6 +4,14 @@ import { CombatLogger } from '../utils/logger';
 import { supabase } from '../supabaseClient';
 import { DieVisual } from './DieVisual';
 import { DiceRollScene } from './Dice3D';
+import { 
+    rollAttackD100, 
+    calculateDamageD100, 
+    calculateCombatantAC, 
+    convertACtoD100,
+    formatCombatLogD100 
+} from '../utils/combat-d100';
+import { getModifier, getProficiencyBonus } from '../lore/rules';
 
 const DamagePopup = ({ amount, onDone }) => {
     useEffect(() => {
@@ -464,19 +472,47 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                     }
                 });
 
+                // ========== STATS D100 ==========
+                // STR, DEX, CON etc. restent 1-30 (déjà dans p.stats)
+                const level = p.level || 1;
+                
+                // CA d100 : calculer depuis armure + DEX
+                const armorAC = p.equipment?.reduce((acc, item) => acc + (item.stats?.ac || 0), 0) || 0;
+                const combatantData = {
+                    ...stats,
+                    armor_ac: armorAC,
+                    armor_category: p.armor_category || 'light', // Devrait être défini dans équipement
+                    has_shield: p.has_shield || false,
+                    level
+                };
+                const calculatedAC = calculateCombatantAC(combatantData) + (bonusAC * 3); // bonusAC traits × 3 pour d100
+                
+                // ATK d100 : mod attribut + bonus maîtrise + bonus traits
+                const strMod = getModifier(stats.str || 15);
+                const profBonus = getProficiencyBonus(level);
+                const calculatedATK = strMod + profBonus + (bonusAtk * 3); // bonusAtk traits × 3
+
                 return {
                     id: p.id,
                     user_id: p.user_id,
                     name: p.name,
                     class: charClass,
-                    atk: Math.floor(((stats.str || 10) - 10) / 2) + 2 + bonusAtk,
-                    ac: 10 + dexMod + (p.equipment?.reduce((acc, item) => acc + (item.stats?.ac || 0), 0) || 0) + bonusAC,
+                    level,
+                    // Stats d100
+                    str: stats.str || 15,
+                    dex: stats.dex || 15,
+                    con: stats.con || 15,
+                    int: stats.int || 12,
+                    wis: stats.wis || 12,
+                    cha: stats.cha || 10,
+                    atk: calculatedATK,
+                    ac: calculatedAC,
                     hp: p.hp,
                     maxHp: p.max_hp,
                     resource: p.resource ?? 100,
                     maxResource: p.max_resource ?? 100,
                     resourceName: "Energie",
-                    initiative: Math.floor(Math.random() * 20) + 1 + dexMod,
+                    initiative: Math.floor(Math.random() * 20) + 1 + dexMod, // TODO: Initiative d100 (d100 + DEX)
                     isEnemy: false,
                     portrait_url: p.portrait_url,
                     spells: combinedAbilities,
@@ -501,14 +537,42 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
             const enemiesToUse = (initialEnemies && initialEnemies.length > 0) ? initialEnemies.map((e, idx) => {
                 const pos = getUniquePos(true);
                 const baseEnemy = BESTIARY[e.name.split(' ')[0]] || BESTIARY[e.class] || {};
+                
+                // ========== CONVERSION D100 ENNEMIS ==========
+                // Si AC ancien (10-22), convertir en d100 (20-60)
+                let enemyAC = e.ac || baseEnemy.stats?.ac || 12;
+                if (enemyAC < 20) {
+                    enemyAC = convertACtoD100(enemyAC);
+                }
+                
+                // ATK : si ancien (+2-6), multiplier ×2.5
+                let enemyATK = e.atk || baseEnemy.stats?.atk || 5;
+                if (enemyATK < 10) {
+                    enemyATK = Math.round(enemyATK * 2.5);
+                }
+                
+                // HP : si ancien (10-50), multiplier ×5
+                let enemyHP = e.hp || baseEnemy.stats?.hp || 20;
+                if (enemyHP < 100) {
+                    enemyHP = enemyHP * 5;
+                }
+                
                 return {
                     id: e.id || `ai-enemy-${idx}`,
                     name: e.name || "Ennemi Inconnu",
                     class: e.class || "Monstre",
-                    hp: e.hp || baseEnemy.stats?.hp || 20,
-                    maxHp: e.maxHp || e.hp || baseEnemy.stats?.hp || 20,
-                    atk: e.atk || baseEnemy.stats?.atk || 5,
-                    ac: e.ac || baseEnemy.stats?.ac || 12,
+                    hp: enemyHP,
+                    maxHp: e.maxHp ? (e.maxHp < 100 ? e.maxHp * 5 : e.maxHp) : enemyHP,
+                    atk: enemyATK,
+                    ac: enemyAC,
+                    // Stats par défaut (si bestiaire pas encore converti)
+                    str: e.str || baseEnemy.stats?.str || 14,
+                    dex: e.dex || baseEnemy.stats?.dex || 12,
+                    con: e.con || baseEnemy.stats?.con || 14,
+                    int: e.int || 8,
+                    wis: e.wis || 10,
+                    cha: e.cha || 8,
+                    level: e.level || baseEnemy.cr || 1,
                     resource: 50,
                     maxResource: 50,
                     resourceName: "Mana",
@@ -520,14 +584,42 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                     maxPM: baseEnemy.stats?.maxPM || 5,
                     currentPM: baseEnemy.stats?.maxPM || 5,
                     behavior_type: e.behavior_type || baseEnemy.behavior_type || "MELEE",
-                    actions: e.actions || baseEnemy.actions || [{ name: 'Attaque', range: 1.5 }],
+                    actions: e.actions || baseEnemy.actions || [{ name: 'Attaque', range: 1.5, damage_dice: '1d30' }],
                     facing: 'WEST',
                     hasMoved: false,
                     hasActed: false,
                     portrait_url: (e.portrait && e.portrait.startsWith('http')) ? e.portrait : (baseEnemy.portrait_url || `https://loremflickr.com/320/450/fantasy,monster,${e.name?.split(' ')[0] || 'creature'}/all`)
                 };
             }) : [
-                { id: 'e1', name: "Scouteur Gobelin", class: "Guerrier", hp: 15, maxHp: 15, atk: 3, ac: 13, resource: 20, maxResource: 20, resourceName: "Rage", initiative: 12, isEnemy: true, posX: 5, posY: 0, hasMoved: false, hasActed: false, portrait_url: "https://images.squarespace-cdn.com/content/v1/55ef483ce4b08053a4798e69/1472502693766-U9JOPM87W9PDKMOK99E6/goblinknight.jpg", maxPM: 5, currentPM: 5, behavior_type: "RANGED", actions: [{ name: 'Arc court', range: 12 }, { name: 'Cimeterre', range: 1.5 }] }
+                // Ennemis par défaut (DÉJÀ CONVERTIS D100)
+                { 
+                    id: 'e1', 
+                    name: "Scouteur Gobelin", 
+                    class: "Guerrier", 
+                    hp: 75,          // Ancien 15 × 5
+                    maxHp: 75, 
+                    atk: 8,          // Ancien 3 × 2.5 arrondi
+                    ac: 33,          // Ancien 13 converti
+                    str: 10, dex: 16, con: 12, int: 8, wis: 10, cha: 6,
+                    level: 1,
+                    resource: 20, 
+                    maxResource: 20, 
+                    resourceName: "Rage", 
+                    initiative: 12, 
+                    isEnemy: true, 
+                    posX: 5, 
+                    posY: 0, 
+                    hasMoved: false, 
+                    hasActed: false, 
+                    portrait_url: "https://images.squarespace-cdn.com/content/v1/55ef483ce4b08053a4798e69/1472502693766-U9JOPM87W9PDKMOK99E6/goblinknight.jpg", 
+                    maxPM: 5, 
+                    currentPM: 5, 
+                    behavior_type: "RANGED", 
+                    actions: [
+                        { name: 'Arc court', range: 12, damage_dice: '1d30' }, 
+                        { name: 'Cimeterre', range: 1.5, damage_dice: '1d30' }
+                    ] 
+                }
             ];
 
             const all = [...playerCombatants, ...enemiesToUse];
@@ -824,13 +916,26 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
         setCombatants(prev => prev.map(u => u.id === freshActor.id ? { ...u, resource: newResource, hasActed: true } : u));
         if (!freshActor.isEnemy && onResourceChange) onResourceChange(freshActor.id, newResource);
 
-        const roll = Math.floor(Math.random() * 20) + 1;
-        const baseModifier = freshActor.atk >= 5 ? 5 : 2;
+        // ========== SYSTÈME D100 - JET D'ATTAQUE ==========
+        const actorLevel = freshActor.level || 1;
         const { bonus: tacticalBonus, reason: tacticalReason } = getTacticalModifier(freshActor, target);
-        const totalModifier = baseModifier + tacticalBonus;
-        const success = (roll + totalModifier) >= target.ac;
-
-        setRollOverlay({ roll, modifier: totalModifier, tacticalReason, threshold: target.ac, success, type: 'hit', targetId: target.id, action });
+        
+        // Jet d'attaque d100
+        const rollData = rollAttackD100(freshActor, target, actorLevel, tacticalBonus);
+        const { roll, modifier, total, success, isCritical } = rollData;
+        
+        // Afficher overlay avec résultat
+        setRollOverlay({ 
+            roll, 
+            modifier, 
+            tacticalReason, 
+            threshold: target.ac, 
+            success, 
+            isCritical,
+            type: 'hit', 
+            targetId: target.id, 
+            action 
+        });
         if (onSFX) onSFX('dice');
     };
 
@@ -902,20 +1007,13 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
         setTimeout(() => {
             setRollOverlay(null);
             if (success && target) {
-                // Appliquer bonus_damage des traits LifePath + dés bonus
-                const baseDamage = currentActor.atk + (action.name !== 'Attaque' ? 5 : 0);
-                const traitBonus = currentActor.bonus_damage || 0;
+                // ========== SYSTÈME D100 - CALCUL DÉGÂTS ==========
+                const damageData = calculateDamageD100(currentActor, action, rollData.isCritical);
+                const damage = damageData.damage;
                 
-                // Calculer dés bonus (ex: +1d6 Sneak Attack)
-                let diceBonusDamage = 0;
-                if (currentActor.bonus_dice_damage) {
-                    const [count, sides] = currentActor.bonus_dice_damage.split('d').map(Number);
-                    for (let i = 0; i < count; i++) {
-                        diceBonusDamage += Math.floor(Math.random() * sides) + 1;
-                    }
-                }
-                
-                const damage = baseDamage + traitBonus + diceBonusDamage;
+                // Log formaté d100
+                const combatLog = formatCombatLogD100(currentActor, target, rollData, damageData);
+                addLog({ role: 'system', content: combatLog });
                 
                 setAnimatingId(currentActor.id);
                 if (onVFX) onVFX(action.name === 'Attaque' ? 'blood' : 'magic', cx, cy, action.name === 'Attaque' ? '#ff0000' : 'var(--aether-blue)');

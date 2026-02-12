@@ -37,7 +37,7 @@ const DiceFaceText = ({ value, position, rotation, color = "white", scale = 1 })
         color={color}
         anchorX="center"
         anchorY="middle"
-        font="https://fonts.gstatic.com/s/cinzel/v19/8vIJ7ww63mVu7gt78Uk6.woff" // Medieval font
+        font="/fonts/Cinzel.woff" // Local font file
         characters="0123456789"
     >
         {value}

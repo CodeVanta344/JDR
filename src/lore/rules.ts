@@ -267,6 +267,21 @@ export const skillCheck = (
 };
 
 /**
+ * Obtenir bonus de maîtrise pour un niveau donné (d100)
+ * Formule : +5 (lvl 1-4), +8 (lvl 5-8), +12 (lvl 9-12), etc.
+ */
+export const getProficiencyBonus = (level: number): number => {
+  if (level <= 4) return 5;
+  if (level <= 8) return 8;
+  if (level <= 12) return 12;
+  if (level <= 16) return 15;
+  if (level <= 20) return 20;
+  if (level <= 24) return 23;
+  if (level <= 28) return 28;
+  return 30; // Level 29-30
+};
+
+/**
  * Calcul CA (Classe d'Armure) système d100
  * Formule : 20 + (AC_armure × 3) + (DEX_mod × 1.5) + (bonus_bouclier × 3)
  */
