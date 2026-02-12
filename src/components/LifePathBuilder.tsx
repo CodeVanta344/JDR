@@ -219,7 +219,7 @@ export function LifePathBuilder({ onComplete, onBack }: LifePathBuilderProps) {
                                 <p>{option.skill_bonuses.join(', ')}</p>
                             </div>
                         )}
-                    </div>
+                    </details>
                 )}
             </div>
         </div>
