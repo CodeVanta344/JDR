@@ -264,9 +264,17 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
 
     // SYNC: Update local state from Shared State
     useEffect(() => {
+        console.log('[SYNC] useEffect triggered', { 
+            updatedAt: syncedCombatState?.updatedAt, 
+            lastSync: lastSyncRef.current, 
+            shouldSkip: syncedCombatState?.updatedAt && syncedCombatState?.updatedAt <= lastSyncRef.current,
+            active: syncedCombatState?.active
+        });
+        
         if (syncedCombatState && syncedCombatState.active) {
             // CRITICAL FIX: Only apply if this is a newer update than what we already have
             if (syncedCombatState.updatedAt && syncedCombatState.updatedAt <= lastSyncRef.current) {
+                console.log('[SYNC] Skipping - already have this update');
                 return; // Skip - we already have this or a newer update
             }
             
@@ -311,7 +319,8 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                 }
             }
         }
-    }, [syncedCombatState, currentUserId, onSFX, onVFX]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [syncedCombatState?.updatedAt, currentUserId]); // onSFX/onVFX omis pour éviter boucle re-render
 
     const getPosPercent = (pos, isY = false) => {
         const blocks = isY ? arenaConfig.blocksY : arenaConfig.blocksX;
