@@ -37,7 +37,7 @@ const DiceFaceText = ({ value, position, rotation, color = "white", scale = 1 })
         color={color}
         anchorX="center"
         anchorY="middle"
-        font="/fonts/Cinzel.woff" // Local font file
+        font="https://unpkg.com/@fontsource/cinzel@5.0.8/files/cinzel-latin-400-normal.woff" // Fallback to unpkg if local fails
         characters="0123456789"
     >
         {value}
