@@ -267,7 +267,7 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                             <span className="history-value">{selectedClass} {selectedSubclass && classData?.subclasses?.[selectedSubclass] ? `(${classData.subclasses[selectedSubclass]?.label || '...'})` : ''}</span>
                         </div>
 
-                        {step > 4 && selectedBirthOrigin && (
+                        {step > 3 && selectedBirthOrigin && (
                             <div className="history-item">
                                 <span className="history-label">Naissance</span>
                                 <span className="history-value">{selectedBirthOrigin.label}</span>
@@ -279,7 +279,7 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                             </div>
                         )}
 
-                        {step > 5 && selectedChildhoodEvent && (
+                        {step > 3 && selectedChildhoodEvent && (
                             <div className="history-item">
                                 <span className="history-label">Enfance</span>
                                 <span className="history-value">{selectedChildhoodEvent.label}</span>
@@ -291,7 +291,7 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                             </div>
                         )}
 
-                        {step > 6 && selectedAdolescencePath && (
+                        {step > 3 && selectedAdolescencePath && (
                             <div className="history-item">
                                 <span className="history-label">Adolescence</span>
                                 <span className="history-value">{selectedAdolescencePath.label}</span>
@@ -303,7 +303,7 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                             </div>
                         )}
 
-                        {step > 7 && selectedBackstory && (
+                        {step > 3 && selectedBackstory && (
                             <div className="history-item">
                                 <span className="history-label">Passé Adulte</span>
                                 <span className="history-value">{selectedBackstory.label}</span>
@@ -325,12 +325,12 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
 
                     <div className="spellbook-shell">
                         <div className="spellbook-nav">
-                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(s => (
+                            {[1, 2, 3, 4, 5, 6, 7].map(s => (
                                 <div key={s} className={`nav-dot ${step === s ? 'active' : ''} ${step > s ? 'completed' : ''}`} />
                             ))}
                         </div>
 
-                        {/* STEP 1: ARCHETYPES */}
+                        {/* STEP 1: SÉLECTION DE CLASSE (SPLIT VIEW) */}
                         {step === 1 && (
                             <div className="spellbook-section">
                                 {onQuickStart && (
@@ -339,48 +339,60 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                                     </div>
                                 )}
                                 <div className="section-header">
-                                    <span className="section-icon">📜</span>
-                                    <h3>Archétype</h3>
-                                </div>
-                                <div className="selection-grid">
-                                    {Object.entries(CATEGORY_META).map(([key, meta]) => (
-                                        <div key={key} className={`selection-card ${selectedCategory === key ? 'selected' : ''}`} onClick={() => setSelectedCategory(key)}>
-                                            <div className="card-title">{meta.icon} {meta.name}</div>
-                                            <div className="card-body"><p className="card-description">{meta.desc}</p></div>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={onBack}>← Annuler</button>
-                                    <button className="btn-spellbook btn-next" onClick={() => setStep(2)}>Suivant →</button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* STEP 2: CLASSE */}
-                        {step === 2 && (
-                            <div className="spellbook-section">
-                                <div className="section-header">
                                     <span className="section-icon">⚔️</span>
-                                    <h3>Classe</h3>
+                                    <h3>Choisissez votre Voie</h3>
                                 </div>
-                                <div className="selection-grid">
-                                    {categoryClasses.map(cls => (
-                                        <div key={cls} className={`selection-card ${selectedClass === cls ? 'selected' : ''}`} onClick={() => setSelectedClass(cls)}>
-                                            <div className="card-title">{cls}</div>
-                                            <div className="card-body"><p className="card-description">{CLASSES[cls].desc?.substring(0, 100)}...</p></div>
+
+                                <div className="class-selection-container">
+                                    {/* LISTE DES CLASSES */}
+                                    <div className="class-list">
+                                        {Object.entries(CLASSES).map(([key, cls]) => (
+                                            <div key={key}
+                                                className={`class-list-card ${selectedClass === key ? 'selected' : ''}`}
+                                                onClick={() => setSelectedClass(key)}>
+                                                <div className="class-list-icon">{CLASS_CATEGORIES[cls.category]?.icon || '🛡️'}</div>
+                                                <div className="class-list-info">
+                                                    <div className="class-list-title">{cls.label}</div>
+                                                    <div className="class-list-desc">
+                                                        {cls.desc.split('.')[0].substring(0, 60)}...
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* PREVIEW CLASSE */}
+                                    <div className="class-preview-panel">
+                                        <img
+                                            src={CLASSES[selectedClass].portrait || CATEGORY_META[CLASSES[selectedClass].category]?.img}
+                                            className="class-preview-image"
+                                            alt={selectedClass}
+                                        />
+                                        <div className="class-preview-content">
+                                            <h2 className="class-preview-title">{CLASSES[selectedClass].label}</h2>
+                                            <div className="class-preview-quote">"{CLASSES[selectedClass].desc}"</div>
+
+                                            <div className="class-mechanic-box">
+                                                <span className="mechanic-title">MÉCANIQUE UNIQUE: {CLASSES[selectedClass].mechanic.name.toUpperCase()}</span>
+                                                <div className="mechanic-desc">
+                                                    {CLASSES[selectedClass].mechanic.desc.split('\n')[0]}
+                                                </div>
+                                            </div>
+
+                                            <div className="preview-actions">
+                                                <button className="btn-spellbook btn-back" onClick={onBack} style={{ width: 'auto', marginRight: '1rem' }}>← Retour</button>
+                                                <button className="btn-select-class" onClick={() => setStep(2)}>
+                                                    Choisir la Spécialisation
+                                                </button>
+                                            </div>
                                         </div>
-                                    ))}
-                                </div>
-                                <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(1)}>← Retour</button>
-                                    <button className="btn-spellbook btn-next" onClick={() => setStep(3)}>Suivant →</button>
+                                    </div>
                                 </div>
                             </div>
                         )}
 
-                        {/* STEP 3: SOUS-CLASSE */}
-                        {step === 3 && (
+                        {/* STEP 2: SOUS-CLASSE */}
+                        {step === 2 && (
                             <div className="spellbook-section">
                                 <div className="section-header">
                                     <span className="section-icon">🎯</span>
@@ -398,14 +410,14 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                                     ))}
                                 </div>
                                 <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(2)}>← Retour</button>
-                                    <button className="btn-spellbook btn-next" onClick={() => setStep(4)}>Suivant →</button>
+                                    <button className="btn-spellbook btn-back" onClick={() => setStep(1)}>← Retour</button>
+                                    <button className="btn-spellbook btn-next" onClick={() => setStep(3)}>Suivant →</button>
                                 </div>
                             </div>
                         )}
 
-                        {/* STEP 4: LIFEPATH COMPLET (Origine, Enfance, Adolescence, Passé Adulte) */}
-                        {step === 4 && (
+                        {/* STEP 3: LIFEPATH COMPLET */}
+                        {step === 3 && (
                             <LifePathWizard
                                 onComplete={(effects) => {
                                     setLifepathData(effects);
@@ -418,14 +430,14 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                                         wis: prev.wis + (effects.final_stats.wisdom || 0),
                                         cha: prev.cha + (effects.final_stats.charisma || 0)
                                     }));
-                                    setStep(5); // Passe à l'équipement
+                                    setStep(4); // Passe à l'équipement
                                 }}
-                                onCancel={() => setStep(3)}
+                                onCancel={() => setStep(2)}
                             />
                         )}
 
-                        {/* STEP 5: ÉQUIPEMENT */}
-                        {step === 5 && (
+                        {/* STEP 4: ÉQUIPEMENT */}
+                        {step === 4 && (
                             <div className="spellbook-section">
                                 <div className="section-header">
                                     <span className="section-icon">🛡️</span>
@@ -442,14 +454,14 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                                     ))}
                                 </div>
                                 <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(4)}>← Retour</button>
-                                    <button className="btn-spellbook btn-next" onClick={() => setStep(6)}>Suivant →</button>
+                                    <button className="btn-spellbook btn-back" onClick={() => setStep(3)}>← Retour</button>
+                                    <button className="btn-spellbook btn-next" onClick={() => setStep(5)}>Suivant →</button>
                                 </div>
                             </div>
                         )}
 
-                        {/* STEP 6: NOM */}
-                        {step === 6 && (
+                        {/* STEP 5: NOM */}
+                        {step === 5 && (
                             <div className="spellbook-section">
                                 <div className="section-header">
                                     <span className="section-icon">📜</span>
@@ -460,14 +472,14 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                                     {name && <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '2.5rem', fontFamily: 'Cinzel Decorative', color: 'var(--gold-primary)' }}>{name}</div>}
                                 </div>
                                 <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(5)}>← Retour</button>
-                                    <button className="btn-spellbook btn-next" onClick={() => setStep(7)}>Suivant →</button>
+                                    <button className="btn-spellbook btn-back" onClick={() => setStep(4)}>← Retour</button>
+                                    <button className="btn-spellbook btn-next" onClick={() => setStep(6)}>Suivant →</button>
                                 </div>
                             </div>
                         )}
 
-                        {/* STEP 7: ATTRIBUTS */}
-                        {step === 7 && (
+                        {/* STEP 6: ATTRIBUTS */}
+                        {step === 6 && (
                             <div className="spellbook-section">
                                 <div className="section-header">
                                     <span className="section-icon">🎲</span>
@@ -483,14 +495,14 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                                     ))}
                                 </div>
                                 <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(6)}>← Retour</button>
-                                    <button className="btn-spellbook btn-next" onClick={() => setStep(8)} disabled={!allRolled || isRolling}>Suivant →</button>
+                                    <button className="btn-spellbook btn-back" onClick={() => setStep(5)}>← Retour</button>
+                                    <button className="btn-spellbook btn-next" onClick={() => setStep(7)} disabled={!allRolled || isRolling}>Suivant →</button>
                                 </div>
                             </div>
                         )}
 
-                        {/* STEP 8: FINALISATION */}
-                        {step === 8 && (
+                        {/* STEP 7: FINALISATION */}
+                        {step === 7 && (
                             <div className="spellbook-section">
                                 <div className="section-header">
                                     <span className="section-icon">✨</span>
@@ -502,7 +514,7 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                                     <p style={{ color: 'var(--gold-dim)' }}>{selectedClass} ({classData.subclasses[selectedSubclass]?.label})</p>
                                 </div>
                                 <div className="spellbook-actions">
-                                    <button className="btn-spellbook btn-back" onClick={() => setStep(7)}>← Retour</button>
+                                    <button className="btn-spellbook btn-back" onClick={() => setStep(6)}>← Retour</button>
                                     <button className="btn-spellbook btn-next" onClick={handleCreate}>Commencer l'Aventure →</button>
                                 </div>
                             </div>

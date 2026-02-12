@@ -178,8 +178,8 @@
 
 .selection-grid {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 1.5rem;
     max-height: 65vh;
     overflow-y: auto;
     padding-right: 1rem;
@@ -215,10 +215,10 @@
     display: flex;
     flex-direction: column;
     position: relative;
-    box-shadow: 
+    box-shadow:
         0 8px 24px rgba(0, 0, 0, 0.6),
         inset 0 1px 0 rgba(212, 175, 55, 0.1);
-    min-height: 280px;
+    min-height: 220px;
 }
 
 .selection-card::before {
@@ -236,7 +236,7 @@
 .selection-card:hover {
     transform: translateY(-8px);
     border-color: rgba(212, 175, 55, 0.6);
-    box-shadow: 
+    box-shadow:
         0 16px 40px rgba(212, 175, 55, 0.25),
         0 0 0 1px rgba(212, 175, 55, 0.3),
         inset 0 1px 0 rgba(212, 175, 55, 0.2);
@@ -250,7 +250,7 @@
     border-color: #ffd700;
     border-width: 3px;
     background: linear-gradient(135deg, rgba(22, 22, 26, 1) 0%, rgba(26, 20, 10, 1) 100%);
-    box-shadow: 
+    box-shadow:
         0 0 0 3px rgba(255, 215, 0, 0.2),
         0 16px 48px rgba(255, 215, 0, 0.35),
         inset 0 1px 0 rgba(255, 255, 255, 0.15);
@@ -258,14 +258,17 @@
 }
 
 @keyframes selectedCardPulse {
-    0%, 100% {
-        box-shadow: 
+
+    0%,
+    100% {
+        box-shadow:
             0 0 0 3px rgba(255, 215, 0, 0.2),
             0 16px 48px rgba(255, 215, 0, 0.35),
             inset 0 1px 0 rgba(255, 255, 255, 0.15);
     }
+
     50% {
-        box-shadow: 
+        box-shadow:
             0 0 0 4px rgba(255, 215, 0, 0.3),
             0 16px 48px rgba(255, 215, 0, 0.5),
             inset 0 1px 0 rgba(255, 255, 255, 0.2);
@@ -279,29 +282,39 @@
     right: 1rem;
     background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
     color: white;
-    padding: 0.4rem 0.9rem;
+    padding: 0.5rem 1rem;
     border-radius: 16px;
     font-family: 'Cinzel', serif;
-    font-size: 0.7rem;
+    font-size: 0.85rem;
     font-weight: 700;
     letter-spacing: 1px;
-    box-shadow: 0 2px 8px rgba(74, 222, 128, 0.4);
+    box-shadow: 0 4px 12px rgba(74, 222, 128, 0.4);
     animation: badgePop 0.4s ease;
     z-index: 10;
 }
 
 @keyframes badgePop {
-    0% { transform: scale(0); opacity: 0; }
-    50% { transform: scale(1.2); }
-    100% { transform: scale(1); opacity: 1; }
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 .selection-card .card-title {
     font-family: 'Cinzel Decorative', serif;
     color: #ffd700;
-    font-size: 1.6rem;
+    font-size: 1.8rem;
     padding: 1.8rem 2rem 0.8rem;
-    letter-spacing: 3px;
+    letter-spacing: 2px;
     text-transform: uppercase;
     font-weight: 900;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
@@ -311,20 +324,20 @@
 }
 
 .card-body {
-    padding: 1.8rem 2rem 2rem;
+    padding: 1.5rem 2rem 2rem;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1.2rem;
 }
 
 .card-description {
     font-family: 'IM Fell English', serif;
-    font-size: 1.05rem;
-    line-height: 1.8;
-    color: rgba(232, 220, 196, 0.95);
+    font-size: 1.35rem;
+    line-height: 1.5;
+    color: #fcefdc;
     margin: 0;
-    text-align: justify;
+    text-align: left;
 }
 
 .trait-tag {
@@ -660,4 +673,188 @@
     .btn-spellbook {
         width: 100%;
     }
+}
+
+/* ===== SPLIT VIEW CLASS SELECTION ===== */
+
+.class-selection-container {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 2rem;
+    height: 70vh;
+    overflow: hidden;
+}
+
+.class-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+    padding-bottom: 2rem;
+}
+
+.class-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.class-list::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.class-list::-webkit-scrollbar-thumb {
+    background: rgba(212, 175, 55, 0.3);
+    border-radius: 3px;
+}
+
+.class-list-card {
+    background: rgba(22, 22, 26, 0.8);
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    border-radius: 8px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.class-list-card:hover {
+    background: rgba(212, 175, 55, 0.1);
+    border-color: rgba(212, 175, 55, 0.4);
+    transform: translateX(4px);
+}
+
+.class-list-card.selected {
+    background: linear-gradient(90deg, rgba(212, 175, 55, 0.2) 0%, transparent 100%);
+    border-color: #ffd700;
+    box-shadow: -2px 0 0 #ffd700;
+}
+
+.class-list-icon {
+    font-size: 1.8rem;
+    filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.3));
+}
+
+.class-list-info {
+    flex: 1;
+}
+
+.class-list-title {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #ffd700;
+    margin-bottom: 0.3rem;
+    text-transform: uppercase;
+}
+
+.class-list-desc {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.75rem;
+    color: #aaa;
+    line-height: 1.3;
+}
+
+/* PREVIEW PANEL */
+
+.class-preview-panel {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.class-preview-image {
+    height: 55%;
+    width: 100%;
+    object-fit: cover;
+    mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+    border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+}
+
+.class-preview-content {
+    padding: 1.5rem;
+    margin-top: -3rem;
+    /* Overlap image */
+    position: relative;
+    z-index: 2;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.class-preview-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 2.5rem;
+    color: #ffd700;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 4px 10px rgba(0, 0, 0, 0.8);
+}
+
+.class-preview-quote {
+    font-family: 'IM Fell English', serif;
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    border-left: 3px solid rgba(212, 175, 55, 0.5);
+    padding-left: 1rem;
+}
+
+.class-mechanic-box {
+    background: rgba(212, 175, 55, 0.08);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: auto;
+}
+
+.mechanic-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    color: #ffd700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.mechanic-desc {
+    font-size: 0.85rem;
+    color: #ddd;
+    line-height: 1.5;
+}
+
+.preview-actions {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-select-class {
+    background: linear-gradient(135deg, #ae8b2d 0%, #d4af37 100%);
+    color: #000;
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 1rem 3rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.btn-select-class:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5);
+    background: linear-gradient(135deg, #c5a035 0%, #ffd700 100%);
 }
