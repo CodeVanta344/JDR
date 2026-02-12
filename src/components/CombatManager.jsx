@@ -737,7 +737,9 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
             // Start smooth animation
             animateMovement(freshActor.id, freshActor.posX, freshActor.posY, newX, newY, () => {
                 // Animation complete - update game state
-                const newCombatants = currentCombatants.map(u => u.id === freshActor.id ? { ...u, posX: newX, posY: newY, currentPM: u.currentPM - 1, facing: newFacing, hasMoved: true } : u);
+                // CRITICAL FIX: Use combatantsRef.current to get latest state (not stale closure)
+                const latestCombatants = combatantsRef.current;
+                const newCombatants = latestCombatants.map(u => u.id === freshActor.id ? { ...u, posX: newX, posY: newY, currentPM: u.currentPM - 1, facing: newFacing, hasMoved: true } : u);
                 setCombatants(newCombatants);
                 if (onUpdateCombatState) onUpdateCombatState({ combatants: newCombatants, turnIndex: currentTurnIndex, round, active: true, logs, updatedAt: Date.now() });
             });
