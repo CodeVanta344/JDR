@@ -1,0 +1,1158 @@
+{
+  "meta": {
+    "title": "Aethelgard - Le Royaume des Cinq Terres",
+    "author": "Chroniqueurs d'Aethelgard",
+    "version": "1.0",
+    "created": "2026-02-12",
+    "description": "Carte narrative du royaume d'Aethelgard, terre de héros et de légendes où s'affrontent cinq grandes civilisations sous la menace draconique.",
+    "theme": "medieval-fantasy",
+    "scale": "Continental",
+    "era": "An 1247 de l'Ère Impériale"
+  },
+
+  "regions": [
+    {
+      "id": "cote_orages",
+      "name": "Côte des Orages",
+      "icon": "❄️",
+      "type": "kingdom",
+      "climate": "Arctique/Subarctique",
+      "terrain": "Fjords glacés, toundra, montagnes côtières",
+      "population": "~450,000 (95% Humains nordiques, 5% Nains)",
+      "government": "Confédération de Jarls (aristocratie guerrière)",
+      "culture": "Nordique/Viking - Honneur, bravoure, tradition orale",
+      "religion": "Anciens Esprits (Tempête, Mer, Glace), Torvald Brise-Glace (héros divinisé)",
+      "economy": "Pêche hauturière, fourrures, pillage organisé, mercenariat",
+      "military": "Berserkers, drakkars de guerre, infanterie lourde, maîtres de hache",
+      "threats": "Tempêtes glaciales, géants des glaces, rivalités entre clans",
+      "description": "Terres sauvages du grand Nord où règne un froid impitoyable neuf mois sur douze. Les Jarls gouvernent depuis leurs halls de bois massif, où le feu ne s'éteint jamais. Ici, la force dicte la loi, mais l'hospitalité envers les invités est sacrée. Les plus grands forgerons du continent travaillent dans la Forge de Givre, produisant des armes capables de fendre le permafrost.",
+      "lore_quote": "« Le fer se forge dans le froid, et les hommes aussi. Seuls les faibles cherchent la chaleur du Sud. »",
+      "factions": [
+        {
+          "name": "Jarls de Kuldahar",
+          "alignment": "Lawful Neutral",
+          "power": 85,
+          "attitude": "Méfiants mais honorables"
+        },
+        {
+          "name": "Clans de Berserkers",
+          "alignment": "Chaotic Neutral",
+          "power": 70,
+          "attitude": "Imprévisibles, respectent la force"
+        },
+        {
+          "name": "Loups d'Hiver (mercenaires)",
+          "alignment": "True Neutral",
+          "power": 75,
+          "attitude": "Professionnels, loyaux si payés"
+        }
+      ],
+      "coordinates": {
+        "lat": 62.5,
+        "lon": 15.0
+      },
+      "color": "#a8c5dd"
+    },
+
+    {
+      "id": "val_dore",
+      "name": "Val Doré",
+      "icon": "☀️",
+      "type": "imperial_heartland",
+      "climate": "Tempéré continental",
+      "terrain": "Plaines fertiles, collines douces, fleuves navigables",
+      "population": "~1,200,000 (80% Humains, 10% Demi-Elfes, 5% Nains, 5% Halflings)",
+      "government": "Monarchie impériale (Empereur Aurelian IV) avec Conseil de Nobles",
+      "culture": "Impériale/Féodale - Raffinement, hiérarchie stricte, art et érudition",
+      "religion": "Culte de la Lumière (Solarian le Radieux), panthéon impérial",
+      "economy": "Agriculture intensive (blé, vigne), artisanat de luxe, banque, commerce international",
+      "military": "Légions impériales, chevaliers montés, mages de guerre, forteresses permanentes",
+      "threats": "Conspirations politiques, corruption, tensions de classe",
+      "description": "Cœur battant de l'Empire, le Val Doré est une mer de champs dorés parsemée de cités fortifiées et de châteaux imposants. Sol-Aureus, la capitale, est une merveille architecturale où l'or coule littéralement dans les fontaines publiques. La noblesse y mène une vie de faste tandis que les paysans labourent les terres qui nourrissent tout le continent. C'est ici que les décisions qui façonnent le destin d'Aethelgard sont prises.",
+      "lore_quote": "« Sous le soleil de Sol-Aureus, tous les chemins mènent à la gloire… ou à la potence. »",
+      "factions": [
+        {
+          "name": "Maison Impériale Sol-Aureus",
+          "alignment": "Lawful Neutral",
+          "power": 95,
+          "attitude": "Autoritaire mais juste"
+        },
+        {
+          "name": "Conseil des Ducs",
+          "alignment": "Lawful Evil",
+          "power": 80,
+          "attitude": "Intrigants, assoiffés de pouvoir"
+        },
+        {
+          "name": "Guilde Arcanique",
+          "alignment": "True Neutral",
+          "power": 85,
+          "attitude": "Détachés, privilégient la connaissance"
+        },
+        {
+          "name": "Ordre des Chevaliers de l'Aube",
+          "alignment": "Lawful Good",
+          "power": 75,
+          "attitude": "Idéalistes, protecteurs du peuple"
+        }
+      ],
+      "coordinates": {
+        "lat": 45.0,
+        "lon": 20.0
+      },
+      "color": "#ffd97d"
+    },
+
+    {
+      "id": "monts_coeur_fer",
+      "name": "Monts Cœur-de-Fer",
+      "icon": "⚒️",
+      "type": "mountain_kingdom",
+      "climate": "Montagnard - Froid en altitude, tempéré dans les vallées",
+      "terrain": "Chaînes montagneuses titanesques, pics enneigés, gouffres insondables",
+      "population": "~300,000 (90% Nains, 5% Gnomes, 5% Humains mineurs)",
+      "government": "Théocratie de la Forge (Grand Forgeron élu à vie)",
+      "culture": "Naine - Maîtrise artisanale, honneur familial, traditions millénaires",
+      "religion": "Moradin le Forgeur, Déesse de la Pierre (Berronar), culte des Ancêtres",
+      "economy": "Métallurgie avancée, gemmes précieuses, ingénierie militaire, bière légendaire",
+      "military": "Phalanges naines (murs de boucliers), canons à poudre noire, golems de guerre",
+      "threats": "Orques des Profondeurs, dragons des montagnes, effondrements de tunnels",
+      "description": "Cités souterraines titanesques taillées dans le cœur même des montagnes. Les Nains ont passé trois millénaires à creuser la Forge Éternelle, un complexe de halls aussi vaste qu'une ville de surface. Ici, l'artisanat n'est pas un métier mais une religion. Chaque marteau qui frappe l'enclume est une prière, chaque arme forgée un chef-d'œuvre. Les non-Nains sont rarement admis dans les niveaux les plus profonds, où reposent les secrets ancestraux.",
+      "lore_quote": "« La pierre ne ment pas, et le fer ne trahit pas. Seuls les Nains comprennent cette vérité. »",
+      "factions": [
+        {
+          "name": "Forge Éternelle (guilde suprême)",
+          "alignment": "Lawful Neutral",
+          "power": 90,
+          "attitude": "Traditionnalistes, méfiants des étrangers"
+        },
+        {
+          "name": "Clan Enclume-Noire",
+          "alignment": "Lawful Good",
+          "power": 70,
+          "attitude": "Alliés loyaux, marchands honnêtes"
+        },
+        {
+          "name": "Ingénieurs de Runevault",
+          "alignment": "True Neutral",
+          "power": 65,
+          "attitude": "Obsédés par l'innovation"
+        }
+      ],
+      "coordinates": {
+        "lat": 48.0,
+        "lon": 35.0
+      },
+      "color": "#8b7355"
+    },
+
+    {
+      "id": "sylve_emeraude",
+      "name": "Sylve d'Émeraude",
+      "icon": "🌳",
+      "type": "ancient_forest",
+      "climate": "Tempéré océanique - Pluies fréquentes, brouillards mystiques",
+      "terrain": "Forêt primordiale impénétrable, clairières enchantées, rivières cristallines",
+      "population": "~200,000 (85% Elfes, 10% Demi-Elfes, 5% créatures féeriques)",
+      "government": "Conseil Druidique (Cercle des Chênes Anciens)",
+      "culture": "Elfique - Harmonie avec la nature, arts subtils, mémoire longue",
+      "religion": "Druidisme (Cercle de la Lune et du Soleil), déités sylvestres (Ehlonna, Silvanus)",
+      "economy": "Herboristerie magique, archerie de maître, textiles enchantés, miel féérique",
+      "military": "Archers d'élite (portée 500m+), druides métamorphes, gardes forestiers furtifs",
+      "threats": "Bûcherons impériaux, corruption féérique, portails planaires instables",
+      "description": "Forêt millénaire où les arbres atteignent 100 mètres de hauteur et où la magie imprègne l'air même. Les Elfes y vivent en symbiose totale, leurs cités étant sculptées dans les troncs vivants sans blesser le moindre arbre. Le temps s'écoule différemment sous la canopée éternelle : un voyageur peut y entrer pour quelques heures et ressortir des semaines plus tard. Les non-Elfes s'y perdent invariablement sans guide.",
+      "lore_quote": "« Les arbres se souviennent de tout. Même ce que les mortels ont oublié. »",
+      "factions": [
+        {
+          "name": "Cercle des Chênes Anciens",
+          "alignment": "Neutral Good",
+          "power": 85,
+          "attitude": "Protecteurs, isolationnistes"
+        },
+        {
+          "name": "Gardes de Sylmanir",
+          "alignment": "Lawful Neutral",
+          "power": 75,
+          "attitude": "Vigilants, méfiants des étrangers"
+        },
+        {
+          "name": "Cour Féérique",
+          "alignment": "Chaotic Neutral",
+          "power": 70,
+          "attitude": "Imprévisibles, capricieux"
+        }
+      ],
+      "coordinates": {
+        "lat": 50.0,
+        "lon": 5.0
+      },
+      "color": "#6b9b6e"
+    },
+
+    {
+      "id": "terres_brulees",
+      "name": "Terres Brûlées",
+      "icon": "🔥",
+      "type": "wasteland",
+      "climate": "Désertique/Volcanique - Chaleur extrême, pluies acides",
+      "terrain": "Plaines cendreuses, cratères fumants, lacs de lave, ruines carbonisées",
+      "population": "~50,000 (surviv.) - Tieffelins, humains mutants, cultistes, bandits",
+      "government": "Aucun (anarchie) - Chefs de guerre locaux, cultes du Dragon",
+      "culture": "Survivale - Loi du plus fort, cannibalisme occasionnel, culte du feu",
+      "religion": "Pyroxis le Dragon Rouge (culte interdit), démons du feu, nihilisme",
+      "economy": "Pillage des ruines, trafic d'artefacts maudits, esclavage, mercenariat suicide",
+      "military": "Pillards montés sur lézards géants, pyromanciens fous, gladiateurs mutants",
+      "threats": "Dragons rouges, éruptions volcaniques, radiation draconique, bandits désespérés",
+      "description": "Cicatrice béante sur le visage d'Aethelgard, résultat de la Colère de Pyroxis il y a 200 ans. Le Dragon Rouge a dévasté trois royaumes en une nuit, transformant des cités prospères en champs de cendres. Aujourd'hui, seuls les désespérés, les fous et les chasseurs de trésors maudits osent s'y aventurer. La terre elle-même est empoisonnée : rien ne pousse, l'eau est toxique, et les survivants mutent lentement en créatures difformes.",
+      "lore_quote": "« Ici, même l'espoir a brûlé. Seule la cendre demeure. »",
+      "factions": [
+        {
+          "name": "Culte de la Flamme Éternelle",
+          "alignment": "Chaotic Evil",
+          "power": 60,
+          "attitude": "Fanatiques, adorateurs du dragon"
+        },
+        {
+          "name": "Seigneurs Cendres (chefs de guerre)",
+          "alignment": "Neutral Evil",
+          "power": 55,
+          "attitude": "Brutaux, opportunistes"
+        },
+        {
+          "name": "Survivants de Pyroth",
+          "alignment": "Chaotic Neutral",
+          "power": 40,
+          "attitude": "Désespérés, hostiles aux étrangers"
+        }
+      ],
+      "coordinates": {
+        "lat": 30.0,
+        "lon": 20.0
+      },
+      "color": "#8b4513"
+    }
+  ],
+
+  "locations": [
+    {
+      "id": "sol_aureus",
+      "name": "Sol-Aureus",
+      "region": "val_dore",
+      "type": "imperial_capital",
+      "importance": "critical",
+      "population": 350000,
+      "coordinates": { "lat": 45.0, "lon": 20.0 },
+      "description": "Cité d'Or, capitale de l'Empire. Palais impérial avec 1000 salles, Académie Arcanique, cathédrale de la Lumière, quartiers marchands opulents. Centre politique, culturel et magique du continent.",
+      "districts": [
+        "Quartier Impérial (palais, nobles)",
+        "Quartier des Mages (tours, académie)",
+        "Quartier Marchand (marchés, guildes)",
+        "Bas-Quartiers (artisans, ouvriers)",
+        "Port Fluvial (commerce maritime)"
+      ],
+      "notable_npcs": [
+        "Empereur Aurelian IV le Sage (Humain, LN, Roi Niveau 15)",
+        "Archimage Thalwyn Sombreétoile (Elfe, N, Sorcier 18)",
+        "Cardinal Gregorius (Humain, LG, Clerc 16)",
+        "Maître-Guilde Marcus l'Habile (Humain, NE, Roublard 12)"
+      ],
+      "quests": [
+        "Enquête : Complot contre l'Empereur",
+        "Vol : Artefact disparu de l'Académie",
+        "Politique : Médiation entre factions nobles"
+      ],
+      "rumors": [
+        "Des cultistes draconiques infiltrent la cour",
+        "Un portail vers les Enfers s'est ouvert sous la ville",
+        "L'Empereur est mourant et cache sa maladie"
+      ],
+      "shops": {
+        "armurier": "Forge d'Acier Pur (équipement +2/+3, prix x3)",
+        "alchimiste": "Élixirs de Lumière (potions rares, poisons)",
+        "mage": "Tour des Arcanes (parchemins Niv 1-7, composants)",
+        "marche_noir": "L'Ombre Dorée (objets illégaux, informations)"
+      },
+      "defenses": "Murailles 15m, 5000 gardes, 200 mages de guerre, balistes enchantées",
+      "atmosphere": "Opulence ostentatoire contrastant avec la misère des bas quartiers. Intrigues constantes."
+    },
+
+    {
+      "id": "kuldahar",
+      "name": "Kuldahar",
+      "region": "cote_orages",
+      "type": "capital_city",
+      "importance": "major",
+      "population": 85000,
+      "coordinates": { "lat": 62.5, "lon": 15.0 },
+      "description": "Capitale nordique taillée dans le permafrost. Grand Hall du Jarl (100m de long), port de guerre, Forge de Givre (armes légendaires). Architecture viking massive en bois et pierre.",
+      "districts": [
+        "Grand Hall (trône du Jarl)",
+        "Port de Guerre (drakkars)",
+        "Forge de Givre (forgerons légendaires)",
+        "Quartier des Clans (halls familiaux)",
+        "Marché aux Fourrures"
+      ],
+      "notable_npcs": [
+        "Jarl Bjorn Brise-Crâne (Humain, CN, Barbare 14)",
+        "Maître-Forgeron Grimnar Enclume-Glacée (Nain, LN, Artisan 12)",
+        "Völva Astrid (Humaine, N, Druide 10)",
+        "Chef Mercenaire Haakon Loup-Gris (Humain, TN, Guerrier 13)"
+      ],
+      "quests": [
+        "Chasse : Tuer le Géant des Glaces terrorisant le fjord",
+        "Duel : Défier un Berserker pour prouver sa valeur",
+        "Expédition : Récupérer un artefact dans une tombe ancestrale"
+      ],
+      "rumors": [
+        "Un navire fantôme hante les côtes depuis trois nuits",
+        "Le fils du Jarl a disparu lors d'un raid",
+        "Les Esprits de la Tempête exigent un sacrifice"
+      ],
+      "shops": {
+        "armurier": "Forge de Givre (haches +2, armures nordiques)",
+        "fourreur": "Pelleteries Polaires (fourrures d'ours, peaux de loup)",
+        "taverne": "Corne du Kraken (hydromel, informations locales)"
+      },
+      "defenses": "Palissade en bois renforcé 8m, 2000 guerriers, 100 Berserkers, catapultes",
+      "atmosphere": "Brutal mais honorable. La force est respectée, la lâcheté punie de mort."
+    },
+
+    {
+      "id": "forge_eternelle",
+      "name": "Forge Éternelle",
+      "region": "monts_coeur_fer",
+      "type": "underground_city",
+      "importance": "major",
+      "population": 120000,
+      "coordinates": { "lat": 48.0, "lon": 35.0 },
+      "description": "Cité-forteresse souterraine s'étendant sur 20 niveaux sous la montagne. Halls aux colonnes titanesques, forges alimentées par lave naturelle, bibliothèques runiques millénaires. Chef-d'œuvre d'ingénierie naine.",
+      "levels": [
+        "Niv 1-3 : Commerce, accueil visiteurs",
+        "Niv 4-7 : Résidences, temples",
+        "Niv 8-12 : Forges, ateliers",
+        "Niv 13-15 : Mines, carrières",
+        "Niv 16-20 : Coffres, archives secrètes (accès interdit)"
+      ],
+      "notable_npcs": [
+        "Grand Forgeron Thrain Enclume-Runique (Nain, LN, Clerc/Artisan 16)",
+        "Ingénieur-Chef Borin Rouage-d'Or (Nain, N, Artificier 14)",
+        "Gardien des Archives Durgar Pierreécrite (Nain, LG, Moine 12)",
+        "Marchande Brunhilde Gemme-Éclatante (Naine, TN, Noble 8)"
+      ],
+      "quests": [
+        "Artisanat : Forger une arme légendaire sous supervision",
+        "Exploration : Nettoyer un niveau infesté de monstres des profondeurs",
+        "Diplomatie : Négocier un traité commercial avec l'Empire"
+      ],
+      "rumors": [
+        "Un dragon rouge dort dans les niveaux les plus profonds",
+        "Les anciens Nains ont laissé des golems actifs quelque part",
+        "Une veine de mithril a été découverte mais est maudite"
+      ],
+      "shops": {
+        "armurier": "Enclume Sacrée (armes +3, armures runiques)",
+        "joaillier": "Gemmes des Profondeurs (bijoux enchantés)",
+        "ingénieur": "Rouages & Merveilles (gadgets mécaniques)",
+        "brasserie": "Tonneau Éternel (bière naine légendaire)"
+      },
+      "defenses": "Porte de fer de 5 tonnes, 10 niveaux de pièges, 5000 guerriers nains, 50 golems de guerre",
+      "atmosphere": "Discipline militaire, fierté artisanale. Les non-Nains sont tolérés mais surveillés."
+    },
+
+    {
+      "id": "sylmanir",
+      "name": "Sylmanir",
+      "region": "sylve_emeraude",
+      "type": "forest_city",
+      "importance": "major",
+      "population": 65000,
+      "coordinates": { "lat": 50.0, "lon": 5.0 },
+      "description": "Cité elfique sculptée dans des arbres millénaires vivants. Passerelles suspendues, jardins flottants, bibliothèques arboricoles. Invisible depuis le sol, accessible uniquement aux invités du Cercle.",
+      "districts": [
+        "Canopée Haute (nobles, Cercle Druidique)",
+        "Branches Médianes (artisans, marchands)",
+        "Racines Profondes (archives, temples)",
+        "Clairière du Conseil (lieu de rassemblement)",
+        "Jardins Enchantés (alchimie, herbologie)"
+      ],
+      "notable_npcs": [
+        "Grand Druide Elarian Feuille-de-Lune (Elfe, NG, Druide 17)",
+        "Archère Legendaire Lyria Flèche-Vive (Elfe, N, Rôdeur 15)",
+        "Herboriste Sylvara Racine-Sage (Demi-Elfe, CG, Druide 11)",
+        "Seigneur Féérique Oberon le Capricieux (Fée, CN, Ensorceleur 13)"
+      ],
+      "quests": [
+        "Protection : Stopper les bûcherons impériaux",
+        "Purification : Nettoyer une corruption féérique",
+        "Diplomatie : Apaiser les esprits de la forêt en colère"
+      ],
+      "rumors": [
+        "Un portail vers le Feywild s'est ouvert sans contrôle",
+        "Les arbres parlent d'une menace ancienne qui se réveille",
+        "Des chasseurs ont disparu dans la Forêt Interdite"
+      ],
+      "shops": {
+        "herboriste": "Racines Éternelles (potions rares, antidotes)",
+        "archer": "Arc de l'Aube (arcs longs +2, flèches enchantées)",
+        "enchanteur": "Chants Sylvestres (textiles magiques, capes d'invisibilité)"
+      },
+      "defenses": "Forêt animée (attaque intrus), 3000 archers, druides métamorphes, illusions permanentes",
+      "atmosphere": "Sérénité trompeuse. Beauté enchanteresse mais danger mortel pour les imprudents."
+    },
+
+    {
+      "id": "cite_cendre",
+      "name": "Cité-Cendre (Ruine)",
+      "region": "terres_brulees",
+      "type": "ruins",
+      "importance": "minor",
+      "population": 5000,
+      "coordinates": { "lat": 30.0, "lon": 18.0 },
+      "description": "Ancienne capitale détruite par Pyroxis. Ruines carbonisées fumantes, squelettes vitrifiés, trésors maudits. Repaire de cultistes et de monstres mutants. Exploration extrêmement dangereuse.",
+      "hazards": [
+        "Radiation draconique (CON DC 15 ou 2d6 poison/heure)",
+        "Effondrements aléatoires",
+        "Cultistes du Dragon (hostiles à vue)",
+        "Monstres mutants (aberrations, fiélons)",
+        "Pièges magiques instables"
+      ],
+      "notable_npcs": [
+        "Prophète Malachar (Tieffelin, CE, Sorcier 12) - Chef cultiste",
+        "Roi-Bandit Kragg le Brûlé (Humain mutant, NE, Barbare 10)",
+        "Esprit Vengeur de l'Ancien Roi (Fantôme, LG, Guerrier 14)"
+      ],
+      "quests": [
+        "Récupération : Récupérer un artefact royal dans les ruines",
+        "Sauvetage : Retrouver un explorateur disparu",
+        "Extermination : Détruire le Culte de la Flamme Éternelle"
+      ],
+      "rumors": [
+        "Un dragon jeune rouge a élu domicile dans le palais en ruines",
+        "Des trésors royaux dorment sous les décombres",
+        "Les morts ne reposent pas en paix ici"
+      ],
+      "loot": "Artefacts maudits, armes +2 endommagées, gemmes contaminées, tomes interdits",
+      "defenses": "Aucune. Zone anarchique contrôlée par factions rivales.",
+      "atmosphere": "Désespoir absolu. Chaleur étouffante, air toxique, mort omniprésente."
+    },
+
+    {
+      "id": "aurivelle",
+      "name": "Aurivelle",
+      "region": "val_dore",
+      "type": "trade_city",
+      "importance": "moderate",
+      "population": 75000,
+      "coordinates": { "lat": 43.0, "lon": 17.0 },
+      "description": "Carrefour commercial entre Nord et Sud. Marché international, auberges luxueuses, guildes marchandes puissantes. Architecture mélangée : pierre dorée + bois nordique.",
+      "notable_npcs": [
+        "Seigneur-Marchand Gérald Bourse-Pleine (Humain, LN, Expert 10)",
+        "Maîtresse-Guilde Sylvia la Rusée (Humaine, NE, Roublard 11)",
+        "Capitaine de Garde Viktor Lame-Juste (Humain, LG, Paladin 9)"
+      ],
+      "quests": [
+        "Escorte : Protéger une caravane vers Kuldahar",
+        "Enquête : Découvrir qui sabote les entrepôts",
+        "Commerce : Établir une nouvelle route commerciale"
+      ],
+      "shops": {
+        "bazar": "Merveilles d'Orient (objets exotiques, épices)",
+        "armurier": "Acier et Or (équipement +1/+2)",
+        "auberge": "Le Cerf Doré (luxueuse, informations)"
+      },
+      "atmosphere": "Cosmopolite, animée. Commerce prospère mais criminalité organisée active."
+    },
+
+    {
+      "id": "port_tempete",
+      "name": "Port-Tempête",
+      "region": "cote_orages",
+      "type": "port_city",
+      "importance": "moderate",
+      "population": 45000,
+      "coordinates": { "lat": 61.0, "lon": 18.0 },
+      "description": "Port militaire et base des Loups d'Hiver. Chantiers navals construisant drakkars, tavernes louches, marché noir florissant. Architecture fortifiée résistant aux tempêtes.",
+      "notable_npcs": [
+        "Amiral Ingvar Requin-Gris (Humain, LN, Guerrier 13)",
+        "Contrebandière Freya Ombre-Marine (Humaine, CN, Roublard 10)",
+        "Prêtresse de la Mer Sigrid (Humaine, NG, Clerc 9)"
+      ],
+      "quests": [
+        "Naval : Repousser des pirates goblinoïdes",
+        "Contrebande : Transporter des marchandises illégales",
+        "Exploration : Cartographier des îles inconnues"
+      ],
+      "shops": {
+        "armurerie_navale": "Ancre & Harpons (armes maritimes)",
+        "marche_noir": "Cale Sombre (tout ce qui est interdit ailleurs)",
+        "taverne": "Noyé Joyeux (repaire de marins et mercenaires)"
+      },
+      "atmosphere": "Dangereuse mais vivante. Liberté totale, loi du plus fort."
+    },
+
+    {
+      "id": "enclume_noire",
+      "name": "Enclume-Noire",
+      "region": "monts_coeur_fer",
+      "type": "mining_city",
+      "importance": "moderate",
+      "population": 55000,
+      "coordinates": { "lat": 50.0, "lon": 37.0 },
+      "description": "Cité minière naine spécialisée dans l'extraction de fer et charbon. Forges industrielles, ouvriers endurcis, syndicats puissants. Plus accessible aux étrangers que Forge Éternelle.",
+      "notable_npcs": [
+        "Chef-Mineur Thorin Pierre-Noire (Nain, LN, Guerrier 11)",
+        "Ingénieur Balin Méca-Vapeur (Nain, N, Artificier 10)",
+        "Syndicale Hilda Poing-d'Acier (Naine, CG, Barbare 8)"
+      ],
+      "quests": [
+        "Sauvetage : Secourir des mineurs piégés",
+        "Combat : Exterminer des monstres des tunnels",
+        "Grève : Médier conflit ouvriers vs. contremaîtres"
+      ],
+      "shops": {
+        "armurier": "Fer Pur (armes lourdes +1)",
+        "ingénieur": "Vapeur & Engrenages (explosifs, outils)",
+        "taverne": "Pioche Rouillée (bière forte, ambiance ouvrière)"
+      },
+      "atmosphere": "Industrielle, laborieuse. Solidarité ouvrière forte mais tensions sociales."
+    },
+
+    {
+      "id": "chene_dor",
+      "name": "Chêne-d'Or",
+      "region": "sylve_emeraude",
+      "type": "trading_post",
+      "importance": "minor",
+      "population": 12000,
+      "coordinates": { "lat": 48.0, "lon": 7.0 },
+      "description": "Poste commercial à la lisière de la Sylve, point de contact entre Elfes et autres races. Marché d'herbes rares, artisanat elfique accessible, auberge pour voyageurs.",
+      "notable_npcs": [
+        "Marchande Elven Miriel Feuille-Verte (Elfe, NG, Expert 7)",
+        "Aubergiste Humain Thomas Bosquet (Humain, TN, Roturier 4)",
+        "Rôdeur Arannis (Demi-Elfe, N, Rôdeur 9)"
+      ],
+      "quests": [
+        "Cueillette : Récolter des herbes rares dans la forêt",
+        "Escorte : Guider un noble impérial jusqu'à Sylmanir",
+        "Protection : Défendre le poste contre des bandits"
+      ],
+      "shops": {
+        "herboriste": "Racines et Feuilles (potions communes, composants)",
+        "artisan": "Bois Enchant (arcs, flèches elfiques)",
+        "auberge": "Repos du Voyageur (seule auberge humaine de la région)"
+      },
+      "atmosphere": "Paisible mais vigilante. Elfes méfiants surveillent tous les étrangers."
+    },
+
+    {
+      "id": "pyroth",
+      "name": "Pyroth (Ruine)",
+      "region": "terres_brulees",
+      "type": "ruins",
+      "importance": "minor",
+      "population": 2000,
+      "coordinates": { "lat": 28.0, "lon": 22.0 },
+      "description": "Ancienne cité minière détruite. Moins touchée que Cité-Cendre mais toujours hostile. Repaire de bandits et de trafiquants d'artefacts maudits.",
+      "notable_npcs": [
+        "Seigneur Bandit Varak le Brûlé (Humain, NE, Guerrier 9)",
+        "Trafiquant Morten Cendres (Humain, CE, Roublard 8)"
+      ],
+      "quests": [
+        "Infiltration : Pénétrer le repaire de bandits",
+        "Récupération : Voler un artefact au chef bandit",
+        "Extermination : Éliminer la bande de Varak"
+      ],
+      "hazards": [
+        "Tempêtes de cendres (visibilité 0)",
+        "Lézards géants venimeux",
+        "Bandits armés (arbalètes)"
+      ],
+      "atmosphere": "Lawless, brutal. Survie du plus impitoyable."
+    },
+
+    {
+      "id": "porte_lumiere",
+      "name": "Porte-Lumière",
+      "region": "val_dore",
+      "type": "fortress_city",
+      "importance": "moderate",
+      "population": 60000,
+      "coordinates": { "lat": 46.0, "lon": 23.0 },
+      "description": "Forteresse-frontière protégeant le Val Doré des incursions depuis les Terres Brûlées. Garnison permanente de 5000 soldats, ordre de chevaliers, murs triple épaisseur.",
+      "notable_npcs": [
+        "Général-Commandant Marcus Rempart-de-Fer (Humain, LG, Paladin 14)",
+        "Maître-d'Armes Lucia Lame-Vraie (Humaine, LN, Guerrier 12)",
+        "Clerc Militaire Père Augustin (Humain, LG, Clerc 10)"
+      ],
+      "quests": [
+        "Défense : Repousser un raid depuis les Terres Brûlées",
+        "Patrouille : Escorter une reconnaissance en territoire hostile",
+        "Entraînement : Rejoindre l'ordre des chevaliers"
+      ],
+      "shops": {
+        "armurier_militaire": "Arsenal Impérial (équipement militaire +1)",
+        "clerc": "Bénédictions de Lumière (soins, bénédictions)",
+        "quartier_master": "Réquisitions (rations, équipement standard)"
+      },
+      "defenses": "Triple muraille 20m, 5000 soldats, 300 chevaliers, catapultes, mages de guerre",
+      "atmosphere": "Disciplinée, martiale. Tension constante face à la menace draconique."
+    }
+  ],
+
+  "routes": [
+    {
+      "id": "route_imperiale_nord",
+      "name": "Route Impériale du Nord",
+      "type": "major_road",
+      "start": "sol_aureus",
+      "end": "kuldahar",
+      "waypoints": ["aurivelle", "port_tempete"],
+      "length_km": 850,
+      "travel_time_days": 25,
+      "safety": "moderate",
+      "description": "Route commerciale majeure pavée, patrouillée mais dangers subsistent (bandits, loups).",
+      "hazards": ["Brigands (DC 12)", "Tempêtes d'hiver (Nord)", "Trolls (forêts)"]
+    },
+
+    {
+      "id": "route_montagnes",
+      "name": "Route des Montagnes",
+      "type": "mountain_pass",
+      "start": "sol_aureus",
+      "end": "forge_eternelle",
+      "waypoints": ["enclume_noire"],
+      "length_km": 450,
+      "travel_time_days": 18,
+      "safety": "dangerous",
+      "description": "Col de montagne périlleux, étroit, exposé. Guides nains recommandés.",
+      "hazards": ["Avalanches (DC 15)", "Dragons (rare)", "Orques (DC 13)", "Altitude"]
+    },
+
+    {
+      "id": "route_sylve",
+      "name": "Sentier de la Sylve",
+      "type": "forest_trail",
+      "start": "aurivelle",
+      "end": "sylmanir",
+      "waypoints": ["chene_dor"],
+      "length_km": 320,
+      "travel_time_days": 15,
+      "safety": "very_dangerous",
+      "description": "Sentier forestier labyrinthique. Guide elfique OBLIGATOIRE sous peine de mort.",
+      "hazards": ["Se perdre (DC 18 Survie)", "Créatures féeriques hostiles", "Pièges elfiques mortels"]
+    },
+
+    {
+      "id": "route_cendres",
+      "name": "Chemin des Cendres",
+      "type": "wasteland_trail",
+      "start": "porte_lumiere",
+      "end": "cite_cendre",
+      "waypoints": ["pyroth"],
+      "length_km": 280,
+      "travel_time_days": 12,
+      "safety": "lethal",
+      "description": "Traversée des Terres Brûlées. EXTRÊMEMENT DANGEREUX. Équipement de survie obligatoire.",
+      "hazards": ["Radiation draconique (DC 15/heure)", "Chaleur extrême", "Bandits", "Dragons jeunes"]
+    },
+
+    {
+      "id": "route_cotiere",
+      "name": "Route Côtière",
+      "type": "coastal_road",
+      "start": "kuldahar",
+      "end": "port_tempete",
+      "length_km": 180,
+      "travel_time_days": 7,
+      "safety": "moderate",
+      "description": "Route longeant les fjords. Vue spectaculaire mais exposée aux tempêtes.",
+      "hazards": ["Tempêtes marines", "Pirates", "Géants des falaises (rare)"]
+    }
+  ],
+
+  "factions": [
+    {
+      "id": "empire_sol_aureus",
+      "name": "Empire de Sol-Aureus",
+      "type": "government",
+      "alignment": "Lawful Neutral",
+      "power_level": 95,
+      "headquarters": "sol_aureus",
+      "leader": "Empereur Aurelian IV",
+      "goals": ["Unifier Aethelgard", "Maintenir l'ordre", "Contenir menace draconique"],
+      "methods": ["Diplomatie", "Force militaire", "Espionnage"],
+      "reputation": {
+        "val_dore": 80,
+        "cote_orages": 40,
+        "monts_coeur_fer": 60,
+        "sylve_emeraude": 30,
+        "terres_brulees": -50
+      }
+    },
+
+    {
+      "id": "jarls_kuldahar",
+      "name": "Confédération des Jarls",
+      "type": "tribal_alliance",
+      "alignment": "Chaotic Neutral",
+      "power_level": 75,
+      "headquarters": "kuldahar",
+      "leader": "Jarl Bjorn Brise-Crâne",
+      "goals": ["Préserver indépendance", "Raids lucratifs", "Honorer les ancêtres"],
+      "methods": ["Raids", "Duels rituels", "Alliances temporaires"],
+      "reputation": {
+        "cote_orages": 90,
+        "val_dore": 50,
+        "monts_coeur_fer": 70,
+        "sylve_emeraude": 40,
+        "terres_brulees": 30
+      }
+    },
+
+    {
+      "id": "forge_eternelle_guilde",
+      "name": "Guilde de la Forge Éternelle",
+      "type": "craftsmen_guild",
+      "alignment": "Lawful Good",
+      "power_level": 85,
+      "headquarters": "forge_eternelle",
+      "leader": "Grand Forgeron Thrain",
+      "goals": ["Perfection artisanale", "Préserver secrets nains", "Commercer loyalement"],
+      "methods": ["Monopole qualité", "Contrats exclusifs", "Embargo si nécessaire"],
+      "reputation": {
+        "monts_coeur_fer": 95,
+        "val_dore": 80,
+        "cote_orages": 75,
+        "sylve_emeraude": 60,
+        "terres_brulees": 10
+      }
+    },
+
+    {
+      "id": "cercle_chenes",
+      "name": "Cercle des Chênes Anciens",
+      "type": "druidic_circle",
+      "alignment": "Neutral Good",
+      "power_level": 80,
+      "headquarters": "sylmanir",
+      "leader": "Grand Druide Elarian",
+      "goals": ["Protéger la nature", "Isoler la Sylve", "Équilibre planaire"],
+      "methods": ["Magie druidique", "Diplomatie limitée", "Force si menacés"],
+      "reputation": {
+        "sylve_emeraude": 95,
+        "monts_coeur_fer": 65,
+        "cote_orages": 50,
+        "val_dore": 35,
+        "terres_brulees": -20
+      }
+    },
+
+    {
+      "id": "guilde_arcanique",
+      "name": "Guilde Arcanique de Sol-Aureus",
+      "type": "mage_guild",
+      "alignment": "True Neutral",
+      "power_level": 85,
+      "headquarters": "sol_aureus",
+      "leader": "Archimage Thalwyn Sombreétoile",
+      "goals": ["Accumuler connaissances", "Contrôler magie", "Recherche arcanique"],
+      "methods": ["Monopole formation", "Espionnage magique", "Recherches dangereuses"],
+      "reputation": {
+        "val_dore": 70,
+        "sylve_emeraude": 55,
+        "monts_coeur_fer": 50,
+        "cote_orages": 45,
+        "terres_brulees": 30
+      }
+    },
+
+    {
+      "id": "loups_hiver",
+      "name": "Loups d'Hiver",
+      "type": "mercenary_company",
+      "alignment": "True Neutral",
+      "power_level": 70,
+      "headquarters": "port_tempete",
+      "leader": "Capitaine Haakon Loup-Gris",
+      "goals": ["Profit", "Réputation", "Survie des membres"],
+      "methods": ["Contrats mercenaires", "Neutralité payée", "Professionnalisme"],
+      "reputation": {
+        "cote_orages": 80,
+        "val_dore": 60,
+        "monts_coeur_fer": 55,
+        "sylve_emeraude": 40,
+        "terres_brulees": 50
+      }
+    },
+
+    {
+      "id": "syndicat_ombre",
+      "name": "Syndicat de l'Ombre",
+      "type": "thieves_guild",
+      "alignment": "Neutral Evil",
+      "power_level": 65,
+      "headquarters": "sol_aureus (secret)",
+      "leader": "Le Maître (identité inconnue)",
+      "goals": ["Contrôle criminel", "Profit", "Infiltration pouvoir"],
+      "methods": ["Vol", "Chantage", "Assassinats", "Contrebande"],
+      "reputation": {
+        "val_dore": -40,
+        "cote_orages": -20,
+        "monts_coeur_fer": -50,
+        "sylve_emeraude": -60,
+        "terres_brulees": 40
+      }
+    },
+
+    {
+      "id": "culte_flamme",
+      "name": "Culte de la Flamme Éternelle",
+      "type": "dragon_cult",
+      "alignment": "Chaotic Evil",
+      "power_level": 55,
+      "headquarters": "cite_cendre",
+      "leader": "Prophète Malachar",
+      "goals": ["Ressusciter Pyroxis", "Propager destruction", "Transformer humains en draconiens"],
+      "methods": ["Terrorisme", "Sacrifices", "Corruption draconique"],
+      "reputation": {
+        "terres_brulees": 60,
+        "val_dore": -90,
+        "cote_orages": -70,
+        "monts_coeur_fer": -85,
+        "sylve_emeraude": -95
+      }
+    },
+
+    {
+      "id": "ordre_aube",
+      "name": "Ordre des Chevaliers de l'Aube",
+      "type": "knightly_order",
+      "alignment": "Lawful Good",
+      "power_level": 70,
+      "headquarters": "porte_lumiere",
+      "leader": "Grand-Maître Marcus Rempart-de-Fer",
+      "goals": ["Protéger innocents", "Détruire mal", "Servir la Lumière"],
+      "methods": ["Quêtes héroïques", "Protection caravanes", "Combat du mal"],
+      "reputation": {
+        "val_dore": 85,
+        "cote_orages": 60,
+        "monts_coeur_fer": 70,
+        "sylve_emeraude": 55,
+        "terres_brulees": -80
+      }
+    },
+
+    {
+      "id": "inquisition",
+      "name": "Sainte Inquisition",
+      "type": "religious_order",
+      "alignment": "Lawful Neutral (tendance Evil)",
+      "power_level": 65,
+      "headquarters": "sol_aureus",
+      "leader": "Grand Inquisiteur Severus",
+      "goals": ["Éradiquer hérésie", "Purger corruption", "Maintenir orthodoxie"],
+      "methods": ["Torture", "Exécutions publiques", "Espionnage religieux"],
+      "reputation": {
+        "val_dore": 50,
+        "cote_orages": -30,
+        "monts_coeur_fer": -20,
+        "sylve_emeraude": -70,
+        "terres_brulees": -60
+      }
+    }
+  ],
+
+  "threats": [
+    {
+      "id": "pyroxis",
+      "name": "Pyroxis le Dragon Rouge Ancien",
+      "type": "dragon",
+      "threat_level": "apocalyptic",
+      "status": "dormant",
+      "location": "Inconnu (sous Terres Brûlées ?)",
+      "description": "Dragon rouge légendaire responsable de la destruction de trois royaumes il y a 200 ans. Actuellement endormi mais prophéties annoncent son réveil imminent.",
+      "powers": ["Souffle de feu (20d10)", "Magie draconique niveau 18", "Présence terrifiante", "Immunité feu/magie"],
+      "minions": ["Culte de la Flamme Éternelle", "Dragons jeunes rouges", "Dragonnes", "Tieffelins corrompus"],
+      "prophecy": "« Quand trois lunes s'aligneront, le Cœur de Feu battra à nouveau, et les cendres dévoreront l'or. »"
+    },
+
+    {
+      "id": "corruption_draconique",
+      "name": "Corruption Draconique",
+      "type": "magical_plague",
+      "threat_level": "major",
+      "status": "spreading",
+      "location": "Terres Brûlées (épicentre), s'étend lentement",
+      "description": "Radiation magique résiduelle de Pyroxis transformant lentement les êtres vivants en créatures draconiques mutantes. Incurable.",
+      "effects": [
+        "Phase 1 (1 mois) : Fièvre, yeux rouges",
+        "Phase 2 (3 mois) : Écailles apparaissent, agressivité",
+        "Phase 3 (6 mois) : Transformation complète en draconian",
+        "Phase 4 (1 an) : Perte totale d'humanité, serviteur du dragon"
+      ],
+      "cure": "Aucune connue. Rituel de purification (Clerc niveau 15+) peut ralentir."
+    },
+
+    {
+      "id": "guerre_ombre",
+      "name": "Guerre des Ombres",
+      "type": "political_conflict",
+      "threat_level": "moderate",
+      "status": "active",
+      "location": "Sol-Aureus (cour impériale)",
+      "description": "Lutte de pouvoir secrète entre nobles pour le trône impérial. Empereur Aurelian IV est malade et sans héritier clair. Risque de guerre civile.",
+      "factions": [
+        "Duc Valerius (héritier légitime mais faible)",
+        "Duchesse Claudia (populaire mais femme)",
+        "Prince-Mage Aleron (illégitime mais puissant)",
+        "Cardinal Gregorius (Église veut plus de pouvoir)"
+      ],
+      "consequences": "Si non résolu : Guerre civile, Empire s'effondre, invasions étrangères."
+    },
+
+    {
+      "id": "portail_feywild",
+      "name": "Portail Feywild Instable",
+      "type": "planar_breach",
+      "threat_level": "moderate",
+      "status": "unstable",
+      "location": "Sylve d'Émeraude (profondeurs)",
+      "description": "Portail vers le Feywild s'est ouvert sans contrôle, déversant créatures féeriques hostiles et distordant la réalité localement.",
+      "effects": [
+        "Temps distordu (1 heure = 1 jour ou inversement)",
+        "Illusions spontanées",
+        "Créatures féeriques hostiles (redcaps, hags, quicklings)",
+        "Magie sauvage"
+      ],
+      "solution": "Fermer le portail (Rituel arcanique DC 25) ou négocier avec Cour Féérique."
+    },
+
+    {
+      "id": "orques_profondeurs",
+      "name": "Invasion Orque des Profondeurs",
+      "type": "military_invasion",
+      "threat_level": "major",
+      "status": "imminent",
+      "location": "Monts Cœur-de-Fer (tunnels profonds)",
+      "description": "Horde orque massive creuse depuis les Profondeurs vers Forge Éternelle. 10,000+ combattants orques menés par un chef-de-guerre légendaire.",
+      "leader": "Grok Crâne-Briseur (Orque, CE, Barbare 15)",
+      "forces": ["10,000 guerriers orques", "500 ogres", "100 trolls", "20 géants des collines"],
+      "timeline": "Arrivée estimée : 6 mois",
+      "consequences": "Chute de Forge Éternelle = fin du monopole nain sur armes de qualité."
+    },
+
+    {
+      "id": "peste_noire",
+      "name": "Retour de la Peste Noire",
+      "type": "disease",
+      "threat_level": "moderate",
+      "status": "emerging",
+      "location": "Val Doré (villages isolés)",
+      "description": "Maladie magique ressurgit après 50 ans de dormance. Taux mortalité 60%. Se propage rapidement.",
+      "symptoms": [
+        "Jour 1-3 : Fièvre, toux",
+        "Jour 4-7 : Pustules noires, délire",
+        "Jour 8+ : Mort ou guérison (40% survivent avec séquelles)"
+      ],
+      "transmission": "Contact physique, air",
+      "cure": "Potion de Guérison Supérieure + sorts Restauration Supérieure",
+      "consequences": "Pandémie = effondrement économique, chaos social."
+    }
+  ],
+
+  "artifacts": [
+    {
+      "id": "couronne_aureus",
+      "name": "Couronne d'Aureus le Fondateur",
+      "type": "legendary_artifact",
+      "location": "Sol-Aureus (trésor impérial)",
+      "description": "Couronne d'or pur incrustée de gemmes solaires. Confère légitimité impériale. Porté uniquement lors du couronnement.",
+      "powers": [
+        "+5 Charisme (porté)",
+        "Commandement (Suggestion de Groupe illimité)",
+        "Immunité charme/peur",
+        "Détection mensonge (permanente)"
+      ],
+      "curse": "Si porté par un usurpateur illégitime : mort instantanée",
+      "attunement": "Oui (sang royal uniquement)"
+    },
+
+    {
+      "id": "marteau_torvald",
+      "name": "Mjolnir du Nord (Marteau de Torvald)",
+      "type": "legendary_weapon",
+      "location": "Kuldahar (trésor du Jarl)",
+      "description": "Marteau de guerre titanesque forgé par les dieux nordiques. Retour automatique après lancer. Seul un guerrier digne peut le soulever.",
+      "stats": "Marteau de guerre +3, 3d10 dégâts, lancer 60/180, retour automatique",
+      "powers": [
+        "Foudre : 6d6 électricité (recharge 5-6)",
+        "Vol : 60 pieds (se tenir au marteau)",
+        "Invocation : Convocation d'un esprit de tempête 1/jour"
+      ],
+      "attunement": "Oui (Force 19+, Honorable uniquement)"
+    },
+
+    {
+      "id": "enclume_sacree",
+      "name": "Enclume Sacrée de Moradin",
+      "type": "legendary_tool",
+      "location": "Forge Éternelle (sanctuaire)",
+      "description": "Enclume divine utilisée par Moradin lui-même. Armes forgées dessus deviennent légendaires.",
+      "power": "Forger un objet magique +3 avec propriétés uniques (rituel 1 mois, DC 25 Artisanat)",
+      "restriction": "Seuls Nains maîtres-forgerons peuvent l'utiliser",
+      "legend": "A servi à forger l'Épée qui Tua le Titan Primordial."
+    },
+
+    {
+      "id": "grimoire_pyroxis",
+      "name": "Grimoire du Souffle de Feu",
+      "type": "forbidden_artifact",
+      "location": "Cité-Cendre (cachette secrète)",
+      "description": "Tome écrit en écailles de dragon rouge. Contient secrets de pyromancy draconique. Corrompt lentement le lecteur.",
+      "spells": [
+        "Souffle de Dragon (9e niveau)",
+        "Métamorphose Draconique (8e niveau)",
+        "Appel du Dragon Rouge (rituel, Pyroxis)"
+      ],
+      "curse": "Chaque sort lancé : CON DC 18 ou corruption draconique +10%",
+      "attunement": "Oui (Sorcier/Magicien niveau 15+)",
+      "danger": "Lecture complète = transformation permanente en demi-dragon rouge"
+    },
+
+    {
+      "id": "racine_monde",
+      "name": "Racine du Premier Arbre",
+      "type": "artifact_druidique",
+      "location": "Sylmanir (temple secret)",
+      "description": "Fragment du Premier Arbre qui poussa au centre du monde. Pouvoirs druidiques ultimes.",
+      "powers": [
+        "Guérison de Masse Suprême illimitée (plantes/animaux)",
+        "Communication végétale globale",
+        "Réveil des Ents anciens (1/siècle)",
+        "Purification corruption (10 km rayon)"
+      ],
+      "restriction": "Grand Druide uniquement",
+      "legend": "Si détruite : toute la Sylve meurt en 24h."
+    },
+
+    {
+      "id": "sceptre_cendres",
+      "name": "Sceptre du Roi-Cendre",
+      "type": "cursed_artifact",
+      "location": "Cité-Cendre (ruines du palais)",
+      "description": "Sceptre royal du dernier roi avant destruction par Pyroxis. Imprégné de rage et désespoir.",
+      "powers": [
+        "Contrôle non-morts (illimité)",
+        "Malédiction de Cendre (6d10 nécrotique, DC 18)",
+        "Vision des morts (parler avec tout mort dans 100m)"
+      ],
+      "curse": [
+        "Alignement devient Chaotic Evil",
+        "Obsession vengeance contre Pyroxis",
+        "Drain 1 PV/jour (permanent)"
+      ],
+      "attunement": "Oui (automatique au toucher)",
+      "danger": "Impossible de s'en débarrasser (lié jusqu'à destruction ou mort porteur)"
+    }
+  ],
+
+  "legends": [
+    {
+      "id": "colere_pyroxis",
+      "name": "La Colère de Pyroxis",
+      "type": "historical_event",
+      "date": "An 1047 (il y a 200 ans)",
+      "description": "Pyroxis le Dragon Rouge Ancien s'est réveillé et a détruit trois royaumes en une seule nuit de rage. Cause inconnue (insulte ? Vol trésor ? Prophétie ?). A créé les Terres Brûlées actuelles.",
+      "casualties": "2 millions de morts, 3 royaumes annihilés",
+      "aftermath": "Formation de l'Empire actuel pour se défendre contre dragons",
+      "prophecy": "« Le Cœur de Feu dormira deux siècles, puis le monde brûlera à nouveau. »"
+    },
+
+    {
+      "id": "fondation_empire",
+      "name": "Fondation de l'Empire",
+      "type": "historical_event",
+      "date": "An 1 de l'Ère Impériale",
+      "description": "Aureus le Grand unifie les royaumes humains face à la menace draconique. Bâtit Sol-Aureus sur les ruines d'une ancienne cité elfique.",
+      "hero": "Empereur Aureus I (Humain, LG, Paladin 20)",
+      "achievement": "Tua 3 dragons adultes en combat singulier",
+      "legacy": "Dynastie Sol-Aureus règne depuis 1247 ans sans interruption"
+    },
+
+    {
+      "id": "pacte_foret",
+      "name": "Le Pacte de la Forêt Éternelle",
+      "type": "treaty",
+      "date": "An 523",
+      "description": "Traité entre Elfes et Empire garantissant l'autonomie de la Sylve en échange de neutralité dans les guerres humaines.",
+      "terms": [
+        "Sylve d'Émeraude = territoire souverain",
+        "Empire ne peut pas couper arbres",
+        "Elfes restent neutres sauf invasion directe",
+        "Commerce limité autorisé"
+      ],
+      "status": "Toujours en vigueur mais tensions croissantes"
+    },
+
+    {
+      "id": "grande_forge",
+      "name": "La Grande Forge",
+      "type": "legendary_place",
+      "location": "Forge Éternelle (niveau -20)",
+      "description": "Salle cachée où les plus grands artefacts nains ont été forgés. Protégée par énigmes et gardiens golems.",
+      "legends": [
+        "Contient l'Épée qui Tua le Titan",
+        "10 portes, 10 épreuves",
+        "Dernier à atteindre : nain légendaire il y a 500 ans",
+        "Quiconque réussit devient Maître-Forgeron Suprême"
+      ],
+      "access": "Interdit sauf permission Grand Forgeron"
+    },
+
+    {
+      "id": "bataille_givre",
+      "name": "Bataille de Givre-Sanglant",
+      "type": "historical_battle",
+      "date": "An 892",
+      "description": "Alliance Nordiques + Nains vs. Invasion Géants du Givre. Victoire après 3 jours de combat. 20,000 morts.",
+      "heroes": [
+        "Jarl Ragnar Main-de-Fer",
+        "Roi Nain Durin Enclume-d'Acier",
+        "Berserker Légendaire Ulf le Sanglant"
+      ],
+      "result": "Géants repoussés dans Terres Gelées du Nord, traité paix 200 ans",
+      "memorial": "Monument à Kuldahar : 20,000 noms gravés dans glace éternelle"
+    }
+  ],
+
+  "timeline": [
+    { "year": -3000, "event": "Fondation de Forge Éternelle par Nains" },
+    { "year": -1500, "event": "Sylve d'Émeraude devient territoire elfique" },
+    { "year": -200, "event": "Première Guerre Draconique (dragons vs. mortels)" },
+    { "year": 1, "event": "Aureus I fonde l'Empire, début Ère Impériale" },
+    { "year": 523, "event": "Pacte de la Forêt Éternelle signé" },
+    { "year": 892, "event": "Bataille de Givre-Sanglant" },
+    { "year": 1047, "event": "Colère de Pyroxis - Destruction de 3 royaumes" },
+    { "year": 1200, "event": "Peste Noire ravage Val Doré (500k morts)" },
+    { "year": 1245, "event": "Empereur Aurelian IV couronné" },
+    { "year": 1247, "event": "PRÉSENT - Tensions montantes, prophéties inquiétantes" }
+  ],
+
+  "notes": {
+    "for_gm": [
+      "Utilisez tensions entre factions pour créer conflits moraux",
+      "Corruption draconique = menace planante permanente",
+      "Chaque région a culture unique - exploitez différences",
+      "Artefacts légendaires = quêtes épiques multi-sessions",
+      "Prophétie Pyroxis = arc narratif principal recommandé"
+    ],
+    "atmosphere": "High fantasy épique, sombre mais héroïque. Menace draconique omniprésente. Intrigues politiques complexes. Cinq cultures distinctes avec valeurs contradictoires.",
+    "themes": [
+      "Sacrifice pour le bien commun",
+      "Pouvoir corrompt",
+      "Unité face au danger",
+      "Traditions vs. Progrès",
+      "Rédemption possible même après chute"
+    ]
+  }
+}
