@@ -397,9 +397,9 @@ export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImag
                                         className={`selection-card ${selectedBackstory === story.id ? 'selected' : ''}`}
                                         onClick={() => setSelectedBackstory(story.id)}
                                     >
-                                        <div className="card-title">{story.name}</div>
+                                        <div className="card-title">{story.label}</div>
                                         <div className="card-description">
-                                            {story.personal_secret?.substring(0, 100)}...
+                                            {story.desc?.substring(0, 120) || story.personal_secrets?.[0]?.substring(0, 100) || 'Histoire mystérieuse...'}
                                         </div>
                                     </div>
                                 ))}
