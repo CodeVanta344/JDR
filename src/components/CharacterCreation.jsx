@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CLASSES, CLASS_CATEGORIES, ENRICHED_BACKSTORIES, getBackstoriesForClass, formatBackstoryForGM } from '../lore';
+import { MagicBackground } from './MagicBackground';
+import './CharacterCreation.css';
 
 // Utility: Roll 4d6 drop lowest
 const rollAttribute = () => {
