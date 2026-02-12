@@ -273,7 +273,7 @@ export const EXPANDED_BESTIARY_BATCH_2 = [
       { name: 'Extraction cerveau', description: 'Cible agrippée : Tue instantanément (DC Con 15)' },
       { name: 'Lumière du soleil', description: 'Désavantage attaques/perception en lumière solaire' },
       { name: 'Télépathie', description: '120 cases' }
-    },
+    ],
     attacks: [
       { name: 'Tentacules (x4)', damage: '1d4+1 + Agrippé', toHit: '+7', reach: '5 cases' },
       { name: 'Extraction cerveau', damage: 'Mort instantanée', special: 'Cible agrippée DC Con 15' },
@@ -428,7 +428,7 @@ export const EXPANDED_BESTIARY_BATCH_2 = [
       { name: 'Régénération', description: '10 HP/tour sauf radiant/eau bénite' },
       { name: 'Sensibilité soleil', description: 'Désavantage + 20 radiant/tour en lumière soleil' },
       { name: 'Asservi', description: 'Obéit aveuglément maître vampire' }
-    },
+    ],
     attacks: [
       { name: 'Griffes', damage: '2d4+3 tranchant + Agrippé', toHit: '+6' },
       { name: 'Morsure', damage: '1d6+3 perforant + 2d6 nécrotique + HP Max réduit', toHit: '+6', special: 'Cible agrippée' }
@@ -531,7 +531,7 @@ export const EXPANDED_BESTIARY_BATCH_2 = [
       { name: 'Corne empoisonnée', damage: '1d8+4 perforant + 3d8 poison + Empoisonné', toHit: '+7', DC: 'Con 15' },
       { name: 'Sabots (x2)', damage: '2d6+4 contondant', toHit: '+7' },
       { name: 'Souffle de corruption', damage: '6d8 nécrotique + Malédiction', DC: 'Con 16', AOE: 'Cône 30 cases' }
-    },
+    ],
     behavior: {
       combat: 'Charge brutale, corne empoisonnée, souffle corruption groupes',
       nonCombat: 'Corrompt forêts, tue licornes normales, sert maîtres sombres',
