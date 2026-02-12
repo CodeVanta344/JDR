@@ -775,6 +775,9 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
         });
 
         if (onSFX) onSFX('magic');
+        
+        // CRITICAL FIX: Finish turn after using item
+        setTimeout(() => finishTurn(), 800);
     };
 
     const handleRollComplete = (rollData) => {
@@ -839,7 +842,8 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                     addLog({ role: 'system', content: `🎲 **${roll}**(+${modifier}) vs **${threshold}** AC | 💥 **${currentActor.name}** touche **${target.name}** pour ${damage} dégâts !` });
                     setTimeout(() => {
                         setAnimatingId(null); setShakingId(null);
-                        if (currentActor?.isEnemy) finishTurn();
+                        // CRITICAL FIX: Finish turn for ALL actors after attack, not just enemies
+                        finishTurn();
                     }, 600);
                 }, 250);
             } else {
@@ -874,7 +878,8 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                     lastAction: actionEvent
                 });
 
-                setTimeout(() => { if (currentActor?.isEnemy) finishTurn(); }, 1000);
+                // CRITICAL FIX: Finish turn for ALL actors after attack, not just enemies
+                setTimeout(() => { finishTurn(); }, 1000);
             }
         }, 1000);
     };
