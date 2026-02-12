@@ -230,39 +230,39 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
 
                         <div className="history-item">
                             <span className="history-label">Voie</span>
-                            <span className="history-value">{selectedClass} {selectedSubclass ? `(${classData.subclasses[selectedSubclass].label})` : ''}</span>
+                            <span className="history-value">{selectedClass} {selectedSubclass && classData?.subclasses?.[selectedSubclass] ? `(${classData.subclasses[selectedSubclass]?.label || '...'})` : ''}</span>
                         </div>
 
-                        {step > 4 && (
+                        {step > 4 && selectedBirthOrigin && (
                             <div className="history-item">
                                 <span className="history-label">Naissance</span>
                                 <span className="history-value">{selectedBirthOrigin.label}</span>
                                 <div className="history-traits">
-                                    {selectedBirthOrigin.mechanical_traits.map((t, i) => (
+                                    {selectedBirthOrigin.mechanical_traits?.map((t, i) => (
                                         <span key={i} className={`trait-tag ${t.type}`}>{t.name}</span>
                                     ))}
                                 </div>
                             </div>
                         )}
 
-                        {step > 5 && (
+                        {step > 5 && selectedChildhoodEvent && (
                             <div className="history-item">
                                 <span className="history-label">Enfance</span>
                                 <span className="history-value">{selectedChildhoodEvent.label}</span>
                                 <div className="history-traits">
-                                    {selectedChildhoodEvent.mechanical_traits.map((t, i) => (
+                                    {selectedChildhoodEvent.mechanical_traits?.map((t, i) => (
                                         <span key={i} className={`trait-tag ${t.type}`}>{t.name}</span>
                                     ))}
                                 </div>
                             </div>
                         )}
 
-                        {step > 6 && (
+                        {step > 6 && selectedAdolescencePath && (
                             <div className="history-item">
                                 <span className="history-label">Adolescence</span>
                                 <span className="history-value">{selectedAdolescencePath.label}</span>
                                 <div className="history-traits">
-                                    {selectedAdolescencePath.mechanical_traits.map((t, i) => (
+                                    {selectedAdolescencePath.mechanical_traits?.map((t, i) => (
                                         <span key={i} className={`trait-tag ${t.type}`}>{t.name}</span>
                                     ))}
                                 </div>
