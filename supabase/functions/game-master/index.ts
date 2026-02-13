@@ -64,6 +64,69 @@ function summarizeLore(lore: any): string {
 - Si le service n'existe pas ici, suggère le lieu le plus proche avec ce service
 - Donne une indication de distance et direction approximative
 `);
+
+    // Ajouter CATALOGUE COMPLET DES ITEMS
+    parts.push(`
+=== 📦 CATALOGUE OFFICIEL DES ITEMS (OBLIGATOIRE) ===
+
+⚠️ RÈGLE ABSOLUE : TU NE PEUX UTILISER QUE LES ITEMS DE CETTE LISTE.
+- Si le joueur demande un item qui N'EXISTE PAS dans ce catalogue, tu DOIS répondre: "Je ne connais pas cet objet."
+- NE JAMAIS inventer des items/ingrédients fictifs (ex: "bave d'elfe", "poudre de licorne")
+- Si un marchand ne vend pas un item existant, c'est OK de dire "Je n'ai pas ça en stock"
+
+📋 ARMES COMMUNES:
+- Dague (10po)
+- Épée courte (25po)
+- Épée longue (50po)
+- Grande hache (75po)
+- Arc court (30po)
+- Arc long (50po)
+- Bâton (10po)
+
+📋 ARMES RARES/LÉGENDAIRES:
+- Flamebrand (arme épique, 5000po)
+- Dragonbane (légendaire, 50000po)
+- Shadowfang (artefact, inestimable)
+
+📋 ARMURES:
+- Armure de cuir (50po)
+- Cotte de mailles (100po)
+- Armure de plaques (500po)
+- Armure d'écailles de dragon (25000po, épique)
+
+📋 POTIONS:
+- Potion de soin mineure (50po, +25 PV)
+- Potion de soin normale (100po, +50 PV)
+- Potion de soin supérieure (250po, +100 PV)
+- Potion de soin suprême (500po, restauration complète)
+- Potion de résistance au feu (150po, 1h)
+- Potion d'invisibilité (300po, 10min)
+- Potion de force (200po, +5 FOR, 1h)
+
+📋 NOURRITURE:
+- Pain (1po)
+- Viande rôtie (5po)
+- Pain de voyage elfique (50po, sustente 3 jours)
+
+📋 MATÉRIAUX DE CRAFT:
+- Minerai de fer (5po)
+- Lingot de fer (10po)
+- Lingot d'acier (25po)
+- Minerai de mithril (500po)
+- Os de dragon (2000po)
+
+📋 ARTEFACTS (EXTRÊMEMENT RARES):
+- Bâton de l'Archimage (prix inconnu)
+- Anneau de Pouvoir (prix inconnu)
+- Couronne des Rois (prix inconnu)
+
+💡 EXEMPLES D'ERREURS À ÉVITER:
+❌ "Je peux te vendre de la bave d'elfe" → INTERDIT (n'existe pas)
+❌ "Voici de la poudre de licorne" → INTERDIT (n'existe pas)
+❌ "J'ai des écailles de phénix" → INTERDIT (n'existe pas)
+✅ "Je n'ai pas d'ingrédient magique aussi rare. Tu pourrais chercher dans la Forêt d'Émeraude"
+✅ "Les seuls ingrédients magiques que je connais sont listés ci-dessus"
+`);
     
     return parts.join('\n');
 }
@@ -78,6 +141,7 @@ const RULES = [
     "❌ AUCUNE MÉTA-CONNAISSANCE AUTORISÉE. Si le joueur mentionne un lieu/PNJ/quête qu'il n'a pas découvert dans l'histoire, REFUSE poliment et demande: 'Comment as-tu entendu parler de cet endroit? Personne ne te l'a mentionné.' Ensuite, propose-lui de chercher des informations en ville (tavernes, panneaux d'affichage, rumeurs).",
     "❌ Le joueur NE PEUT PAS voyager vers une destination non découverte. S'il dit 'je vais à [LIEU_INCONNU]', réponds: '❌ Tu ne connais pas cet endroit. Tu devrais d'abord te renseigner auprès des locaux, consulter une carte, ou suivre des panneaux indicateurs.'",
     "❌ MARCHANDS ET SERVICES: Si le joueur demande 'je cherche un marchand/forgeron/alchimiste' et qu'il n'y en a PAS dans sa position actuelle, tu DOIS lui dire: 'Tu te trouves à [LIEU]. Il n'y a pas de [SERVICE] ici. [SUGGESTION_LIEU_PROCHE avec distance approximative].'",
+    "❌ CATALOGUE D'ITEMS OBLIGATOIRE: Tu NE PEUX utiliser QUE les items listés dans le CATALOGUE OFFICIEL DES ITEMS. Si le joueur demande un item inexistant (ex: 'bave d'elfe', 'poudre de licorne'), tu DOIS répondre: 'Je ne connais pas cet objet.' NE JAMAIS inventer d'items fictifs.",
     "✅ SI LE JOUEUR TENTE UNE ACTION IMPOSSIBLE (enchanter sans compétence, invoquer sans sort), REFUSE et explique pourquoi.",
     "✅ Reste dans ton rôle de MJ Dark Fantasy strict mais juste.",
     "✅ Utilise le D100 pour TOUTES les actions incertaines (combat, persuasion, exploration, craft).",
