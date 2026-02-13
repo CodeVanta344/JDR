@@ -24,8 +24,8 @@ def process_image(input_path, output_path):
     print(f"Saved to {output_path}")
 
 if __name__ == "__main__":
-    input_file = r"C:\Users\loicr\.gemini\antigravity\brain\4220d9b8-edb6-450a-bfe1-d69a78f1d174\hammerdeep_forge_white_bg_1771012549658.png"
-    output_file = r"C:\Users\loicr\.gemini\antigravity\brain\4220d9b8-edb6-450a-bfe1-d69a78f1d174\hammerdeep_forge_final_transparent.png"
+    input_file = r"C:\Users\loicr\.gemini\antigravity\brain\4220d9b8-edb6-450a-bfe1-d69a78f1d174\yggdrasil_iso_white_bg_1771017412358.png"
+    output_file = r"C:\Users\loicr\.gemini\antigravity\brain\4220d9b8-edb6-450a-bfe1-d69a78f1d174\yggdrasil_iso_final.png"
     
     if os.path.exists(input_file):
         process_image(input_file, output_file)

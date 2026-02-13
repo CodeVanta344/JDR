@@ -110,14 +110,26 @@
   background: rgba(0, 0, 0, 0.4);
   border-bottom: 1px solid var(--codex-border);
   overflow-x: auto;
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--codex-gold-dim) rgba(0, 0, 0, 0.3);
 }
 
 .codex-tabs::-webkit-scrollbar {
-  display: none;
+  height: 4px;
+  display: block;
+}
+
+.codex-tabs::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.codex-tabs::-webkit-scrollbar-thumb {
+  background: var(--codex-gold-dim);
+  border-radius: 2px;
 }
 
 .codex-tabs button {
+  flex-shrink: 0;
   background: transparent;
   border: none;
   border-bottom: 3px solid transparent;
@@ -401,13 +413,14 @@
 .stat-value {
   color: var(--codex-gold-bright);
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-family: var(--font-decorative);
   text-transform: uppercase;
-  letter-spacing: 1px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  letter-spacing: 0.5px;
+  overflow: visible;
+  white-space: normal;
+  word-wrap: break-word;
+  line-height: 1.2;
 }
 
 /* Ranks & Timeline */
