@@ -62,6 +62,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
       languages: ['Commun', 'Langue du Conseil (diplomatique)', 'Latin Académique'],  // +2 langues
       tags: ['urban', 'civilized', 'political', 'cosmopolitan', 'educated', 'capital']
     },
+    subCategory: 'Cités Majeures',
     social_impacts: {
       npc_reactions: {
         'nobles': 'Respect modéré, attentes compétence (+5 disposition)',
@@ -85,7 +86,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     desc: 'Né dans la brume salée du plus grand port marchand de la Côte des Tempêtes. Carrefour commercial maritime où fortune et danger s\'entrelacent.',
     detailed_lore: {
       backstory: 'Port-Azure vit au rythme hypnotique des marées et des navires marchands. Ses entrepôts massifs regorgent d\'épices exotiques îles lointaines, soieries rares continents inconnus, artefacts mystérieux profondeurs océaniques. La cité portuaire prospère grâce commerce triangulaire lucratif mais connaît aussi son lot sombre : pirates sanguinaires Côte des Tempêtes, contrebandiers audacieux, cultes marins interdits adorant entités abyssales. Le phare Azur guide navires depuis cinq siècles, mais quartiers portuaires abritent assassins, espions marchands rivaux et créatures marines échouées bizarres.',
-      defining_moment: 'À cinq ans impressionnables, vous avez vu un navire fantôme spectral accoster silencieusement au quai maudit désert de la Baie des Naufragés, ses voiles en lambeaux fantomatiques et son équipage introuvable, disparu. Le capitaine du port a ordonné brûler épave immédiatement—mais vous avez aperçu symboles étranges gravés coque avant flammes.',
+      defining_moment: 'Vous êtes né lors d\'une grande tempête qui a failli détruire le port. Les marins superstitieux disent que les enfants nés sous l\'orage sont destinés à naviguer.',
       worldview_shaped: 'La mer capricieuse donne et reprend sans pitié ni justice. Aucune fortune marchande n\'est garantie éternellement, aucun destin marin n\'est écrit d\'avance. Adaptabilité et audace priment sur planification rigide. Les vagues emportent les faibles, seuls nageurs agiles survivent tempêtes.'
     },
     effects: {
@@ -133,6 +134,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
       languages: ['Commun', 'Argot des Docks', 'Pidgin Maritime (commercial)'],  // +2 langues
       tags: ['coastal', 'maritime', 'trade', 'adventure', 'smuggler', 'sailor']
     },
+    subCategory: 'Cités Majeures',
     social_impacts: {
       npc_reactions: {
         'marins': 'Fraternité immédiate, partage récits (+10 disposition)',
@@ -204,6 +206,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
       languages: ['Commun', 'Nordique (Járnmál)', 'Runique Ancien (lecture partielle)'],  // +2 langues
       tags: ['nordic', 'mountain', 'harsh', 'warrior', 'blacksmith', 'cold']
     },
+    subCategory: 'Cités Majeures',
     social_impacts: {
       npc_reactions: {
         'nordiques': 'Respect fraternel absolu, accueil chaleureux (+12 disposition)',
@@ -275,6 +278,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
       languages: ['Commun', 'Elfique (Sylvan High)', 'Druidique (rituel)', 'Sylvan (fey dialect)'],  // +3 langues
       tags: ['elven', 'forest', 'magical', 'timeless', 'nature', 'fey']
     },
+    subCategory: 'Cités Majeures',
     social_impacts: {
       npc_reactions: {
         'elfes': 'Accueil chaleureux familial, hospitalité généreuse (+12 disposition)',
@@ -299,7 +303,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     desc: 'Né dans les galeries infinies labyrinthiques sous montagnes, là où l\'or coule comme eau et gemmes brillent comme étoiles souterraines.',
     detailed_lore: {
       backstory: 'Karak-Dûn (Forteresse-Enclume en nanique ancien) s\'enfonce vertigineusement sur douze niveaux architecturaux sous le Mont Enclume sacré. Les nains méticuleux y extraient métaux précieux (or, argent, platine) et gemmes rares (diamants, rubis, émeraudes) depuis trois millénaires exploitation continue. Leurs forges magistrales produisent meilleures armes/armures continent entier : épées incassables, armures plates impénétrables, bijoux runiques enchantés. Mais galeries profondes dangereuses (niveaux 10-12) abritent aussi créatures anciennes oubliées (aberrations, élémentaires corrompus) et secrets nains interdits (ruines civilisation précurseur, veines mythril maudit).',
-      defining_moment: 'À sept ans initiatiques, vous avez accompagné votre oncle mineur vétéran découvrir veine mythril pur miraculeux niveau 8. Filon argenté brillait lueur surnaturelle pulsante, illuminant caverne entière. Toute citadelle naine a célébré découverte pendant trois jours fériés (fête Marteau Béni), bière coula flots, chants résonnèrent halls.',
+      defining_moment: 'Les tambours de guerre nains ont résonné dans les galeries à l\'annonce de votre naissance, signe traditionnel d\'un futur combattant. Les anciens ont béni votre berceau avec une pierre de mythril.',
       worldview_shaped: 'La roche montagne ne ment jamais, contrairement paroles trompeuses. Travail acharné discipline forge destins durables. Chaque trésor précieux s\'arrache montagne implacable pierre après pierre, sueur après sueur. Raccourcis mènent désastre, patience mène richesse.'
     },
     effects: {
@@ -348,6 +352,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
       languages: ['Commun', 'Nanique (Khazad)', 'Runique Nain (écriture sacrée)'],  // +2 langues
       tags: ['dwarven', 'underground', 'crafting', 'resilient', 'miner', 'smith']
     },
+    subCategory: 'Cités Majeures',
     social_impacts: {
       npc_reactions: {
         'nains': 'Confiance absolue fraternelle, hospitalité légendaire (+15 disposition)',
@@ -419,6 +424,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
       languages: ['Commun', 'Dialecte Régional Rural'],  // +1 langue (limité isolement)
       tags: ['rural', 'frontier', 'humble', 'resilient', 'peasant', 'survivor']
     },
+    subCategory: 'Villages & Campagne',
     social_impacts: {
       npc_reactions: {
         'paysans': 'Solidarité immédiate chaleureuse, entraide naturelle (+12 disposition)',
@@ -442,7 +448,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     desc: 'Né dans sanctuaire ascétique isolé où moines méditent illumination depuis générations séculaires.',
     detailed_lore: {
       backstory: 'Le Monastère du Sommet Silencieux surplombe vallées brumeuses depuis pic inaccessible 3000m altitude. Accessible uniquement via escalier mille marches taillées falaise vertigineuse (pèlerinage 6h montée). Moines ascètes y vivent retrait total monde matériel, pratiquant arts martiaux disciplinés (combat mains nues, maîtrise ki) et méditation transcendante pour atteindre illumination spirituelle. Silence absolu règle principale : paroles autorisées uniquement enseignements maîtres. Température permanente -5°C, nourriture frugale (riz, légumes, thé). Vie austère forge esprit acier, corps arme vivante.',
-      defining_moment: 'À huit ans impressionnables, Grand Maître centenaire vous a murmuré énigme : "Montagne enseigne patience pierre. Silence parle vérités cachées. Écoute vide, comprends plein." Vous avez passé mois entier méditation solitaire profonde dans grotte glacée noire—expérience transforma perception réalité.',
+      defining_moment: 'Votre naissance sous le ciel étoilé du sommet a été accueillie par un silence sacré. Seul le vent de la montagne a chanté votre venue au monde.',
       worldview_shaped: 'L\'équilibre cosmique est fondement tout existence. Corps et esprit doivent être parfaitement un harmonieux. Violence physique n\'est moralement légitime strictement que pour protéger innocents opprimés. Attachements matériels enchaînent âme, détachement libère potentiel infini.'
     },
     effects: {
@@ -489,6 +495,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
       languages: ['Commun', 'Langue Ancienne (textes sacrés)', 'Code Gestuel Monastique'],  // +2 langues
       tags: ['spiritual', 'ascetic', 'disciplined', 'mountain', 'monk', 'martial']
     },
+    subCategory: 'Villages & Campagne',
     social_impacts: {
       npc_reactions: {
         'religieux': 'Respect profond révérenciel, déférence spirituelle (+10 disposition)',
@@ -513,7 +520,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     desc: 'Né dans rare havre verdoyant au cœur désert impitoyable, carrefour caravanes commerciales transcontinentales.',
     detailed_lore: {
       backstory: 'L\'Oasis al-Rashid (Perle des Sables) est miracle survie désertique : source eau pure éternelle alimentée nappe phréatique magique, palmeraies luxuriantes ombragées, jardins suspendus irrigués ingénieusement. Position stratégique Route Épices fait carrefour commercial vital : caravanes chameaux chargées soieries orientales, épices rares, gemmes exotiques s\'y arrêtent obligatoirement ravitailler avant traversée mortelle 20 jours Désert Feu (températures 55°C jour, tempêtes sable aveuglantes). Ville fortifiée murs adobe accueille marchands nomades, contrebandiers, espions diplomates, aventuriers fous cherchant ruines englouties sable. Nuits fraîches résonnent musiques orientales, parfums jasmin, négociations âpres.',
-      defining_moment: 'À neuf ans, vous avez vu caravane perdue 40 jours désert arriver mourante : 3 survivants sur 50, délirants soif, racontant créature sable titanesque dévorant chameaux. Vous avez compris ce jour-là : désert ne pardonne jamais faiblesse, seuls préparés survivent implacable.',
+      defining_moment: 'Votre naissance a coïncidé avec l\'arrivée d\'une caravane miraculeusement sauvée après 30 jours de désert. Les marchands ont béni votre venue comme signe de chance.',
       worldview_shaped: 'Eau vaut plus or—vie dépend ressources rares précieuses. Adaptabilité climat extrême prime force brute. Hospitalité sacrée loi absolue désert : refuser eau voyageur = meurtre. Marchands honorables respectent parole donnée plus serments écrits.'
     },
     effects: {
@@ -560,6 +567,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
       languages: ['Commun', 'Langue Désertique (al-Sahra)', 'Argot Marchands Caravanes'],
       tags: ['desert', 'trade', 'nomadic', 'harsh', 'mercantile', 'survivor']
     },
+    subCategory: 'Déserts',
     social_impacts: {
       npc_reactions: {
         'marchands': 'Respect mutuel, affaires facilitées (+8 disposition)',
@@ -582,7 +590,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     desc: 'Né dans mystérieuses ruines civilisation disparue, redécouvertes archéologues aventuriers trois générations passées.',
     detailed_lore: {
       backstory: 'Zhar-Kareem (Joyau Enseveli) fut capitale empire millénaire disparu il y a 2000 ans cataclysme magique inconnu. Redécouverte récente révéla architecture titanesque : pyramides échelonnées 100m hauteur, obélisques gravés glyphes indéchiffrables, palais cristal rose intact mystérieusement. Colonie archéologues, chercheurs trésors, mages étudiant artefacts anciens établit campement permanent exploiter site. Vous êtes né ce lieu étrange où passé côtoie présent : parents archéologues obsédés déchiffrer secrets, vous jouiez enfant tombeaux royaux, dormiez ombre statues colossales divinités oubliées. Nuits, lueurs fantomatiques dansent ruines, murmures langues mortes résonnent couloirs.',
-      defining_moment: 'À dix ans, vous avez découvert chambre funéraire intacte contenant sarcophage pharaon. Ouvrir couvercle révéla momie parfaitement conservée tenant orbe cristal pulsant. Vous avez touché—vision fulgurante montra chute empire : ciel déchiré, magie déchaînée, millions âmes hurlantes. Vous avez lâché orbe terrorisé, mais vision hante encore.',
+      defining_moment: 'La nuit de votre naissance, les glyphes anciens sur les obélisques ont brièvement brillé d\'une lueur dorée inexplicable. Les archéologues ont débattu pendant des mois sur la signification de ce phénomène.',
       worldview_shaped: 'Toutes civilisations finissent poussière sable. Gloire, puissance, magie—rien n\'est éternel. Passé recèle secrets dangereux autant que trésors. Curiosité intellectuelle prime superstition, mais prudence conserve vie face inconnu ancien.'
     },
     effects: {
@@ -630,6 +638,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
       languages: ['Commun', 'Langue Ancienne (Zhar-Kareem, partiel)', 'Glyphes Funéraires (lecture basique)'],
       tags: ['ancient', 'ruins', 'scholarly', 'cursed', 'archaeological', 'mysterious']
     },
+    subCategory: 'Déserts',
     social_impacts: {
       npc_reactions: {
         'archeologues': 'Accueil enthousiaste, collaboration recherche (+12 disposition)',
@@ -702,6 +711,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
       languages: ['Commun (basique)', 'Tribal Yax-Balam', 'Langage Bestial (félins, rudimentaire)'],
       tags: ['tribal', 'jungle', 'primitive', 'hunter', 'spiritual', 'wild']
     },
+    subCategory: 'Jungle',
     social_impacts: {
       npc_reactions: {
         'tribus_jungle': 'Fraternité immédiate, hospitalité chaleureuse (+15 disposition)',
@@ -774,6 +784,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
       languages: ['Commun', 'Argot Pirates (Cant Libertalia)', 'Langue Mers du Sud (commercial)'],
       tags: ['pirate', 'outlaw', 'maritime', 'free', 'dangerous', 'wanted']
     },
+    subCategory: 'Îles',
     social_impacts: {
       npc_reactions: {
         'pirates': 'Fraternité immédiate, partage rhum (+15 disposition)',
@@ -793,6 +804,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_ile_volcanique',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Terres Sauvages',
     label: 'Île Volcanique de Pyroclast',
     desc: 'Né île active perpétuelle éruption où lave coule quotidien et forges naturelles façonnent obsidienne magique.',
     detailed_lore: {
@@ -865,6 +877,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_terre_brulee',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Zones Maudites',
     label: 'Terre Brûlée de Cinder (Désolation Magique)',
     desc: 'Né zone apocalyptique désolée où bataille mages anciens vitrifiа terre et corrompit magie ambiante à jamais.',
     detailed_lore: {
@@ -937,6 +950,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_tour_mage',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Lieux Magiques',
     label: 'Tour du Mage Solitaire Étoilé',
     desc: 'Né tour arcane isolée où mage ermite étudie cosmos, élevé parmi grimoires anciens et expériences magiques quotidiennes.',
     detailed_lore: {
@@ -1009,6 +1023,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_avant_poste',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Frontières',
     label: 'Avant-Poste Militaire Frontière Nord',
     desc: 'Né forteresse militaire tendue première ligne défense contre invasions barbares nordiques récurrentes.',
     detailed_lore: {
@@ -1081,6 +1096,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_port_fluvial',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Cités Secondaires',
     label: 'Port Fluvial de Pont-de-Pierre',
     desc: 'Né cité commerciale prospère contrôlant fleuve navigable majeur, carrefour marchandises continentales.',
     detailed_lore: {
@@ -1153,6 +1169,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_camp_nomade',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Terres Sauvages',
     label: 'Camp Nomade Itinérant du Désert',
     desc: 'Né caravane nomade perpétuelle mouvement, vivant selon rythmes ancestraux transhumance désertique millénaire.',
     detailed_lore: {
@@ -1223,6 +1240,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_ruines_jungle',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Terres Sauvages',
     label: 'Ruines Englouties Civilisation Jungle',
     desc: 'Né cité temple millénaire engloutie jungle, redécouverte explorateurs générations passées, abritant secrets perdus.',
     detailed_lore: {
@@ -1295,6 +1313,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_atoll_tropical',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Terres Sauvages',
     label: 'Atoll Tropical Paradisiaque',
     desc: 'Né île corallienne isolée océan turquoise, paradis naturel préservé civilisation moderne.',
     detailed_lore: {
@@ -1366,6 +1385,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_marais_hantes',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Zones Maudites',
     label: 'Marais Hantés des Âmes Perdues',
     desc: 'Né marécages maudits où morts-vivants errent éternellement, frontière fragile entre vivants et défunts.',
     detailed_lore: {
@@ -1437,6 +1457,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_champ_bataille',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Zones Maudites',
     label: 'Champ de Bataille Éternel Maudit',
     desc: 'Né terre maudite où armées fantômes rejouent bataille perdue éternellement chaque nuit.',
     detailed_lore: {
@@ -1509,6 +1530,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_nexus_elementaire',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Lieux Magiques',
     label: 'Nexus Élémentaire Chaotique',
     desc: 'Né convergence plans élémentaires où feu eau air terre fusionnent chaos magique permanent.',
     detailed_lore: {
@@ -1580,6 +1602,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_bosquet_feerique',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Lieux Magiques',
     label: 'Bosquet Féérique Enchanté',
     desc: 'Né clairière magique frontière monde mortel et royaume féérique, baigné enchantements millénaires.',
     detailed_lore: {
@@ -1652,6 +1675,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_colonie_pionniers',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Frontières',
     label: 'Colonie Récente Pionniers Frontière',
     desc: 'Né établissement pionnier 10 ans âge, première génération coloniser terres sauvages inexplorées.',
     detailed_lore: {
@@ -1724,6 +1748,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_bourg_fortifie',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Cités Secondaires',
     label: 'Bourg Fortifié Médiéval',
     desc: 'Né ville fortifiée 5000 habitants, centre régional commerce artisanat protégé murailles imposantes.',
     detailed_lore: {
@@ -1795,6 +1820,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_ville_miniere',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Cités Secondaires',
     label: 'Ville Minière des Montagnes',
     desc: 'Né cité minière 3000 habitants exploitant filon or/argent, richesse rapide vie dangereuse.',
     detailed_lore: {
@@ -1867,6 +1893,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_passage_montagne',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Frontières',
     label: 'Passage Montagneux Stratégique',
     desc: 'Né forteresse col montagne contrôlant seule route commerciale traversant chaîne titanesque.',
     detailed_lore: {
@@ -1939,6 +1966,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_prison_ile',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Lieux Interdits',
     label: 'Prison-Île Maximum Sécurité',
     desc: 'Né île pénitentiaire isolée océan où royaume exile criminels dangereux, gardiens naissent prison.',
     detailed_lore: {
@@ -2010,6 +2038,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_catacombes',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Lieux Interdits',
     label: 'Catacombes Oubliées Millénaires',
     desc: 'Né réseau souterrain 200km tunnels ossements où communauté isolée vit ténèbres permanentes générations.',
     detailed_lore: {
@@ -2081,6 +2110,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_temple_profane',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Lieux Interdits',
     label: 'Temple Profané Déchu',
     desc: 'Né sanctuaire sacré corrompu culte démoniaque générations passées, ruines maudites abritant hérétiques.',
     detailed_lore: {
@@ -2153,6 +2183,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_cascade_eternelle',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Merveilles Naturelles',
     label: 'Cascade Éternelle Arc-en-Ciel',
     desc: 'Né merveille naturelle cascade 500m hauteur générant arc-en-ciel permanent, site sacré pèlerinage.',
     detailed_lore: {
@@ -2224,6 +2255,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_canyon_echos',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Merveilles Naturelles',
     label: 'Canyon Échos Magiques',
     desc: 'Né gorge profonde où sons résonnent éternellement, créant symphonie naturelle perpétuelle.',
     detailed_lore: {
@@ -2295,6 +2327,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_geysers_arcaniques',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Merveilles Naturelles',
     label: 'Champ Geysers Arcaniques',
     desc: 'Né zone géothermique où geysers crachent eau magique saturée énergie arcan brute.',
     detailed_lore: {
@@ -2367,6 +2400,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_capitale_regionale',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Cités Secondaires',
     label: 'Capitale Régionale Politique',
     desc: 'Né grande cité 80.000 habitants siège pouvoir politique régional, intrigue noblesse concentrée.',
     detailed_lore: {
@@ -2438,6 +2472,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_centre_pelerinage',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Cités Secondaires',
     label: 'Centre Pèlerinage Sacré',
     desc: 'Né cité sainte 30.000 habitants destination pèlerinage 500.000 fidèles/an, piété concentrée.',
     detailed_lore: {
@@ -2510,6 +2545,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_ville_universitaire',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Cités Secondaires',
     label: 'Ville Universitaire Académique',
     desc: 'Né cité 40.000 habitants dominée université millénaire, savoir concentré bibliothèques infinies.',
     detailed_lore: {
@@ -2581,6 +2617,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_port_peche',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Cités Secondaires',
     label: 'Port de Pêche Côtier',
     desc: 'Né ville portuaire 12.000 habitants vivant pêche hauturière océan impitoyable, vie rude fertile.',
     detailed_lore: {
@@ -2652,6 +2689,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_marche_frontiere',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Cités Secondaires',
     label: 'Marché Frontalier Cosmopolite',
     desc: 'Né ville frontière 18.000 habitants carrefour commercial 5 nations, mélange cultures intense.',
     detailed_lore: {
@@ -2723,6 +2761,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_ville_thermale',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Cités Secondaires',
     label: 'Ville Thermale Curative',
     desc: 'Né station thermale 8.000 habitants sources chaudes curatives miraculeuses, tourisme santé prospère.',
     detailed_lore: {
@@ -2794,6 +2833,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     id: 'birth_loc_cite_souterraine',
     stage: 'birth',
     category: 'location',
+    subCategory: 'Cités Secondaires',
     label: 'Cité Souterraine Naine',
     desc: 'Né métropole souterraine 25.000 habitants creusée roche vivante, merveille ingénierie millénaire.',
     detailed_lore: {
