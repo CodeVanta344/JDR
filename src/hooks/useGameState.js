@@ -173,8 +173,6 @@ export const useGameState = (profile) => {
         syncedCombatState, setSyncedCombatState,
         realTimeSync, setRealTimeSync,
         weather, setWeather,
-        resetChronicle,
-        resetGameTime,
 
         fetchSession,
         fetchWorldState,
