@@ -151,7 +151,6 @@ export const generateRandomCharacter = (sessionId, userId) => {
         discovered_locations: [],
         active_quests: [],
         important_events: [],
-        languages: lifepathEffects.languages || ['Commun'],
         is_ready: true,
         level: 1,
         xp: 0
