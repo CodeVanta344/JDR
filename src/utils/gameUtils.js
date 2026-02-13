@@ -135,12 +135,6 @@ export const generateRandomCharacter = (sessionId, userId) => {
         inventory: [...equipment, ...lifepathItems],
         portrait_url: classData.portrait || '',
         backstory: lifepathEffects.narrative_summary,
-        life_path: {
-            birth: lifepathSelection.birth.location.label,
-            childhood: lifepathSelection.childhood.trauma.label,
-            adolescence: lifepathSelection.adolescence.training.label,
-            adult: lifepathSelection.youngAdult.profession.label
-        },
         mechanical_traits: lifepathEffects.all_traits,
         skill_bonuses: lifepathEffects.skills || [],
         backstory_gm_context: lifepathEffects.narrative_summary,
