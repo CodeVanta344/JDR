@@ -8,7 +8,7 @@ import React, { useEffect, useRef, useState } from 'react';
  * - dialogue: "The Old Tower Inn" (Medieval tavern)
  */
 const TRACKS = {
-    exploration: "/audio/exploration.mp3",
+    exploration: ["/audio/Peasants_Courtyard.mp3", "/audio/Ettrefemsju.mp3"],
     combat: "/audio/combat.mp3",
     mystery: "/audio/mystery.ogg",
     dialogue: "/audio/tavern.mp3",
@@ -99,7 +99,13 @@ export function AudioManager({ mood = 'exploration', enabled = false, volume = 0
     // Handle mood changes
     useEffect(() => {
         if (!enabled || !musicRef.current) return;
-        const nextTrack = TRACKS[mood] || TRACKS.exploration;
+
+        let nextTrack = TRACKS[mood] || TRACKS.exploration;
+        // Randomly select if array
+        if (Array.isArray(nextTrack)) {
+            nextTrack = nextTrack[Math.floor(Math.random() * nextTrack.length)];
+        }
+
         if (nextTrack === currentTrack) return;
 
         crossfadeTo(musicRef, musicFade, nextTrack, volume, () => {
@@ -127,11 +133,15 @@ export function AudioManager({ mood = 'exploration', enabled = false, volume = 0
                 musicRef.current.volume = volume;
                 musicRef.current.play().catch(() => { });
             } else if (musicRef.current && TRACKS[mood]) {
-                musicRef.current.src = TRACKS[mood];
+                let track = TRACKS[mood];
+                if (Array.isArray(track)) {
+                    track = track[Math.floor(Math.random() * track.length)];
+                }
+                musicRef.current.src = track;
                 musicRef.current.loop = true;
                 musicRef.current.volume = volume;
                 musicRef.current.play().catch(() => { });
-                setCurrentTrack(TRACKS[mood]);
+                setCurrentTrack(track);
             }
 
             const ambSrc = (hour >= 6 && hour < 18) ? AMBIENTS.day : AMBIENTS.night;

@@ -1,6 +1,16 @@
 /* ============================================================
-   CODEX PANEL - Styles
+   CODEX PANEL - Premium Glass Style
    ============================================================ */
+
+:root {
+  --glass-bg: rgba(15, 20, 30, 0.7);
+  --glass-border: rgba(212, 175, 55, 0.3);
+  --glass-border-glow: rgba(212, 175, 55, 0.15);
+  --gold-primary: #d4af37;
+  --gold-bright: #f4d03f;
+  --text-dim: #a0a0a0;
+  --glass-blur: blur(12px);
+}
 
 .codex-overlay {
   position: fixed;
@@ -8,483 +18,379 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10000;
-  animation: fadeIn 0.3s;
+  animation: fadeIn 0.4s ease-out;
 }
 
 .codex-panel {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  border: 2px solid #d4af37;
-  border-radius: 12px;
-  width: 90%;
-  max-width: 1200px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  width: 92%;
+  max-width: 1300px;
   height: 85vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 60px rgba(212, 175, 55, 0.3);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 20px var(--glass-border-glow);
   overflow: hidden;
+  position: relative;
 }
 
 .codex-header {
-  background: linear-gradient(90deg, #d4af37 0%, #f4d03f 100%);
-  padding: 20px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 24px 30px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 2px solid #b8942a;
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .codex-header h2 {
   margin: 0;
-  color: #1a1a2e;
-  font-size: 1.8rem;
+  color: var(--gold-bright);
+  font-size: 2rem;
   font-family: 'Cinzel', serif;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
 }
 
 .codex-close {
-  background: #8b0000;
+  background: rgba(139, 0, 0, 0.2);
   color: white;
-  border: none;
-  width: 40px;
-  height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .codex-close:hover {
-  background: #ff0000;
-  transform: rotate(90deg);
+  background: #8b0000;
+  transform: rotate(90deg) scale(1.1);
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
 }
 
 .codex-tabs {
   display: flex;
-  background: #0f1419;
-  border-bottom: 2px solid #d4af37;
-  overflow-x: auto;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid var(--glass-border);
+  padding: 0 10px;
+  gap: 5px;
 }
 
 .codex-tabs button {
-  flex: 1;
-  padding: 15px 20px;
+  padding: 18px 25px;
   background: transparent;
-  color: #a0a0a0;
+  color: var(--text-dim);
   border: none;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.95rem;
+  font-weight: 500;
   transition: all 0.3s;
   white-space: nowrap;
-  border-right: 1px solid #333;
+  position: relative;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .codex-tabs button:hover {
-  background: rgba(212, 175, 55, 0.1);
-  color: #d4af37;
+  color: var(--gold-bright);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .codex-tabs button.active {
-  background: linear-gradient(180deg, rgba(212, 175, 55, 0.2), transparent);
-  color: #d4af37;
-  border-bottom: 3px solid #d4af37;
+  color: var(--gold-bright);
+}
+
+.codex-tabs button.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  background: var(--gold-bright);
+  box-shadow: 0 0 10px var(--gold-bright);
 }
 
 .codex-content {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
-  background: #16213e;
+  padding: 30px;
 }
 
 /* ============================================================
-   PROFESSIONS VIEW
+   PROFESSIONS & FACTIONS SHARED
    ============================================================ */
 
-.professions-view {
+.professions-view,
+.factions-view {
   display: grid;
-  grid-template-columns: 350px 1fr;
-  gap: 20px;
+  grid-template-columns: 380px 1fr;
+  gap: 30px;
   height: 100%;
 }
 
-.professions-list {
+.professions-list,
+.factions-list {
   overflow-y: auto;
+  padding-right: 15px;
 }
 
-.professions-list h3 {
-  color: #d4af37;
+.professions-list h3,
+.factions-list h3 {
+  color: var(--gold-primary);
   margin-top: 0;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
   font-family: 'Cinzel', serif;
+  font-size: 1.4rem;
+  opacity: 0.8;
 }
 
-.profession-card {
-  background: linear-gradient(135deg, #1e2a3a 0%, #2a3f5f 100%);
-  border: 2px solid #3a5a7a;
-  border-radius: 8px;
-  padding: 15px;
+.profession-card,
+.faction-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 20px;
   margin-bottom: 15px;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  position: relative;
+  overflow: hidden;
 }
 
-.profession-card:hover {
-  border-color: #d4af37;
-  transform: translateX(5px);
-  box-shadow: 0 5px 20px rgba(212, 175, 55, 0.3);
+.profession-card::before,
+.faction-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--gold-primary);
+  opacity: 0;
+  transition: opacity 0.3s;
 }
 
-.profession-card h4 {
-  margin: 0 0 8px 0;
-  color: #f4d03f;
-  font-size: 1.2rem;
+.profession-card:hover,
+.faction-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--glass-border);
+  transform: translateX(8px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.profession-card:hover::before,
+.faction-card:hover::before {
+  opacity: 1;
+}
+
+.profession-card h4,
+.faction-card h4 {
+  margin: 0 0 10px 0;
+  color: var(--gold-bright);
+  font-size: 1.25rem;
+  letter-spacing: 0.5px;
 }
 
 .profession-category {
   color: #8fadcf;
-  font-size: 0.9rem;
-  margin: 5px 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  display: block;
 }
 
 .profession-desc {
   color: #ccc;
   font-size: 0.95rem;
-  line-height: 1.4;
+  line-height: 1.5;
+  opacity: 0.8;
 }
 
-.profession-details {
-  background: linear-gradient(135deg, #1a1a2e 0%, #2a2a4a 100%);
-  border: 2px solid #d4af37;
-  border-radius: 8px;
-  padding: 25px;
+.profession-details,
+.faction-details {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--glass-border);
+  border-radius: 15px;
+  padding: 35px;
   overflow-y: auto;
-  max-height: calc(85vh - 200px);
+  max-height: calc(85vh - 220px);
+  animation: slideIn 0.4s ease-out;
 }
 
-.profession-details h3 {
-  color: #d4af37;
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.profession-details h3,
+.faction-details h3 {
+  color: var(--gold-bright);
   margin-top: 0;
   font-family: 'Cinzel', serif;
-  font-size: 2rem;
-  border-bottom: 2px solid #d4af37;
-  padding-bottom: 10px;
+  font-size: 2.2rem;
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 15px;
+  margin-bottom: 30px;
 }
 
-.lore-section,
-.stats-section,
-.ranks-section,
-.specializations-section {
-  margin-top: 25px;
+.lore-section h4 {
+  color: var(--gold-primary);
+  font-size: 1.4rem;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.lore-section h4,
-.stats-section h4,
-.ranks-section h4,
-.specializations-section h4 {
-  color: #f4d03f;
-  font-size: 1.3rem;
-  margin-bottom: 10px;
+.details-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px dashed var(--glass-border);
+  border-radius: 15px;
+  padding: 40px;
+  text-align: center;
+  color: var(--text-dim);
+  height: 100%;
 }
 
-.lore-section p {
-  color: #ddd;
+.placeholder-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  opacity: 0.3;
+}
+
+.details-placeholder p {
+  max-width: 300px;
   line-height: 1.6;
-  text-align: justify;
 }
 
 .rank-card {
-  background: linear-gradient(135deg, #2a3f5f 0%, #1e2a3a 100%);
-  border: 1px solid #4a6a8a;
-  border-left: 4px solid #d4af37;
-  border-radius: 6px;
-  padding: 15px;
-  margin-bottom: 15px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-left: 3px solid var(--gold-primary);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+  transition: background 0.3s;
 }
 
-.rank-card h5 {
-  margin: 0 0 10px 0;
-  color: #f4d03f;
-  font-size: 1.1rem;
-}
-
-.xp-required {
-  color: #8fadcf;
-  font-size: 0.9rem;
-  margin-bottom: 10px;
-}
-
-.rank-bonuses ul {
-  margin: 10px 0;
-  padding-left: 20px;
-  color: #ccc;
-}
-
-.rank-bonuses li {
-  margin-bottom: 5px;
-  line-height: 1.4;
-}
-
-.special-ability {
-  background: rgba(212, 175, 55, 0.1);
-  border: 1px dashed #d4af37;
-  padding: 10px;
-  border-radius: 4px;
-  color: #f4d03f;
-  margin-top: 10px;
-}
-
-.spec-card {
-  background: linear-gradient(135deg, #3a2a5f 0%, #2a1a4a 100%);
-  border: 1px solid #6a4a9a;
-  border-left: 4px solid #9d79f4;
-  border-radius: 6px;
-  padding: 15px;
-  margin-bottom: 15px;
-}
-
-.spec-card h5 {
-  margin: 0 0 8px 0;
-  color: #b39ddb;
-}
-
-.spec-card ul {
-  margin: 10px 0 0 0;
-  padding-left: 20px;
-  color: #ddd;
+.rank-card:hover {
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .learn-profession-btn,
 .join-faction-btn {
-  background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
-  color: #1a1a2e;
-  border: none;
-  padding: 15px 30px;
-  border-radius: 6px;
+  background: transparent;
+  color: var(--gold-bright);
+  border: 1px solid var(--gold-primary);
+  padding: 18px 30px;
+  border-radius: 12px;
   font-size: 1.1rem;
-  font-weight: bold;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
   cursor: pointer;
-  margin-top: 20px;
-  transition: all 0.3s;
+  margin-top: 30px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   width: 100%;
 }
 
 .learn-profession-btn:hover,
 .join-faction-btn:hover {
-  background: linear-gradient(135deg, #f4d03f 0%, #d4af37 100%);
+  background: var(--gold-primary);
+  color: #000;
+  box-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
   transform: translateY(-2px);
-  box-shadow: 0 5px 20px rgba(212, 175, 55, 0.5);
 }
 
 /* ============================================================
-   FACTIONS VIEW
-   ============================================================ */
-
-.factions-view {
-  display: grid;
-  grid-template-columns: 350px 1fr;
-  gap: 20px;
-  height: 100%;
-}
-
-.factions-list {
-  overflow-y: auto;
-}
-
-.faction-card {
-  background: linear-gradient(135deg, #1e2a3a 0%, #2a3f5f 100%);
-  border: 2px solid #3a5a7a;
-  border-radius: 8px;
-  padding: 15px;
-  margin-bottom: 15px;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.faction-card:hover {
-  border-color: #d4af37;
-  transform: translateX(5px);
-  box-shadow: 0 5px 20px rgba(212, 175, 55, 0.3);
-}
-
-.faction-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.faction-header h4 {
-  margin: 0;
-  color: #f4d03f;
-  font-size: 1.15rem;
-}
-
-.faction-category {
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  font-weight: bold;
-}
-
-.faction-category.guild {
-  background: #4a6a8a;
-  color: #fff;
-}
-
-.faction-category.religious {
-  background: #f4d03f;
-  color: #1a1a2e;
-}
-
-.faction-motto {
-  color: #8fadcf;
-  font-style: italic;
-  font-size: 0.9rem;
-  margin: 5px 0;
-}
-
-.faction-leader {
-  color: #ccc;
-  font-size: 0.85rem;
-}
-
-.faction-details {
-  background: linear-gradient(135deg, #1a1a2e 0%, #2a2a4a 100%);
-  border: 2px solid #d4af37;
-  border-radius: 8px;
-  padding: 25px;
-  overflow-y: auto;
-  max-height: calc(85vh - 200px);
-}
-
-.faction-info {
-  background: rgba(212, 175, 55, 0.1);
-  padding: 15px;
-  border-radius: 6px;
-  margin-bottom: 20px;
-}
-
-.faction-info p {
-  margin: 5px 0;
-  color: #ddd;
-}
-
-.goals-section ul {
-  padding-left: 20px;
-  color: #ccc;
-}
-
-.goals-section li {
-  margin-bottom: 8px;
-  line-height: 1.4;
-}
-
-.secret-section {
-  background: linear-gradient(135deg, #2a1a2a 0%, #3a2a3a 100%);
-  border: 2px dashed #8b0000;
-  padding: 15px;
-  border-radius: 6px;
-  margin-top: 20px;
-}
-
-.secret-text {
-  color: #ff9999;
-  font-style: italic;
-}
-
-.faction-rank-card {
-  background: linear-gradient(135deg, #2a3f5f 0%, #1e2a3a 100%);
-  border: 1px solid #4a6a8a;
-  border-left: 4px solid #d4af37;
-  border-radius: 6px;
-  padding: 15px;
-  margin-bottom: 15px;
-}
-
-/* ============================================================
-   LEGENDARY ITEMS
+   LEGENDARY ITEMS - Glass Cards
    ============================================================ */
 
 .legendary-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 25px;
+  margin-bottom: 40px;
 }
 
 .legendary-card {
-  background: linear-gradient(135deg, #3a2a1a 0%, #5a4a2a 100%);
-  border: 2px solid #d4af37;
-  border-radius: 8px;
-  padding: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: 15px;
+  padding: 25px;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.4s;
   position: relative;
   overflow: hidden;
 }
 
-.legendary-card::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
-  animation: shimmer 3s infinite;
-}
-
-@keyframes shimmer {
-
-  0%,
-  100% {
-    transform: rotate(0deg);
-  }
-
-  50% {
-    transform: rotate(180deg);
-  }
-}
-
 .legendary-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 30px rgba(212, 175, 55, 0.5);
-  border-color: #f4d03f;
-}
-
-.legendary-card h4 {
-  margin: 0 0 10px 0;
-  color: #f4d03f;
-  font-size: 1.2rem;
-  position: relative;
-  z-index: 1;
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-10px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4),
+    0 0 20px var(--glass-border-glow);
+  border-color: var(--gold-bright);
 }
 
 .rarity-badge {
   display: inline-block;
-  padding: 4px 12px;
-  background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
-  color: white;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  font-weight: bold;
-  margin-bottom: 8px;
-  position: relative;
-  z-index: 1;
+  padding: 5px 15px;
+  background: linear-gradient(135deg, #b8942a 0%, #d4af37 100%);
+  color: #000;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  margin-bottom: 15px;
 }
 
-.item-location {
-  color: #ccc;
-  font-size: 0.9rem;
-  position: relative;
-  z-index: 1;
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+
+.codex-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.codex-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.codex-content::-webkit-scrollbar-thumb {
+  background: var(--glass-border);
+  border-radius: 10px;
+}
+
+.codex-content::-webkit-scrollbar-thumb:hover {
+  background: var(--gold-primary);
 }
 
 @keyframes fadeIn {
@@ -497,209 +403,20 @@
   }
 }
 
-/* Scrollbar */
-.codex-content::-webkit-scrollbar,
-.profession-details::-webkit-scrollbar,
-.faction-details::-webkit-scrollbar {
-  width: 10px;
-}
-
-.codex-content::-webkit-scrollbar-track,
-.profession-details::-webkit-scrollbar-track,
-.faction-details::-webkit-scrollbar-track {
-  background: #0f1419;
-}
-
-.codex-content::-webkit-scrollbar-thumb,
-.profession-details::-webkit-scrollbar-thumb,
-.faction-details::-webkit-scrollbar-thumb {
-  background: #d4af37;
-  border-radius: 5px;
-}
-
-.codex-content::-webkit-scrollbar-thumb:hover,
-.profession-details::-webkit-scrollbar-thumb:hover,
-.faction-details::-webkit-scrollbar-thumb:hover {
-  background: #f4d03f;
-}
-
 /* ============================================================
-   ECONOMY VIEW
+   ECONOMY - Glass Cards
    ============================================================ */
 
-.economy-header {
-  margin-bottom: 2rem;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.3);
-  padding-bottom: 1rem;
-}
-
-.economy-header h3 {
-  color: #d4af37;
-  font-family: 'Cinzel', serif;
-  font-size: 1.8rem;
-  margin-bottom: 0.5rem;
-}
-
-.economy-header p {
-  color: #aaa;
-  font-style: italic;
-}
-
-.markets-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
-  padding-bottom: 2rem;
-}
-
 .market-card {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  border: 1px solid #3a5a7a;
-  border-radius: 8px;
-  overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  display: flex;
-  flex-direction: column;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  transition: all 0.3s;
 }
 
 .market-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--gold-primary);
   transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-  border-color: #d4af37;
-}
-
-.market-card-header {
-  background: rgba(0, 0, 0, 0.3);
-  padding: 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.market-card-header h4 {
-  margin: 0;
-  color: #f4d03f;
-  font-family: 'Cinzel', serif;
-  font-size: 1.1rem;
-}
-
-.prosperity-badge {
-  font-size: 0.75rem;
-  padding: 0.25rem 0.6rem;
-  border-radius: 12px;
-  font-weight: bold;
-  text-transform: uppercase;
-  background: #333;
-  color: #ccc;
-  /* Level-specific colors applied via inline styles or separate classes if dynamic */
-}
-
-/* Dynamic colors for prosperity badges */
-.prosperity-badge.level-1 {
-  background: #3e1a1a;
-  color: #ff6b6b;
-}
-
-.prosperity-badge.level-2 {
-  background: #3e2a1a;
-  color: #ff9f43;
-}
-
-.prosperity-badge.level-3 {
-  background: #3e3e1a;
-  color: #feca57;
-}
-
-.prosperity-badge.level-4 {
-  background: #1a3e1a;
-  color: #1dd1a1;
-}
-
-.prosperity-badge.level-5 {
-  background: #1a3e3e;
-  color: #54a0ff;
-  box-shadow: 0 0 10px rgba(84, 160, 255, 0.4);
-}
-
-
-.market-section {
-  padding: 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.market-section h5 {
-  margin: 0 0 0.5rem 0;
-  color: #8fadcf;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.market-section ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.market-section li {
-  color: #ccc;
-  font-size: 0.9rem;
-  margin-bottom: 0.3rem;
-  padding-left: 0.8rem;
-  position: relative;
-}
-
-.market-section li::before {
-  content: '•';
-  color: #d4af37;
-  position: absolute;
-  left: 0;
-}
-
-.market-events {
-  padding: 1rem;
-  background: rgba(212, 175, 55, 0.05);
-  flex-grow: 1;
-}
-
-.market-events h5 {
-  margin: 0 0 0.8rem 0;
-  color: #eebb4d;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.event-card {
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(212, 175, 55, 0.2);
-  border-radius: 4px;
-  padding: 0.8rem;
-  margin-bottom: 0.8rem;
-}
-
-.event-title {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.4rem;
-  font-size: 0.9rem;
-  color: #fff;
-  align-items: center;
-}
-
-.event-duration {
-  font-size: 0.75rem;
-  color: #aaa;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 0.1rem 0.4rem;
-  border-radius: 4px;
-}
-
-.event-card p {
-  margin: 0;
-  font-size: 0.85rem;
-  color: #ccc;
-  line-height: 1.4;
 }

@@ -161,6 +161,21 @@ export const useGameState = (profile) => {
         }
     };
 
+    const resetGameTime = async () => {
+        const initialTime = { hour: 12, minute: 0, day: 1 };
+        setGameTime(initialTime);
+        if (session?.host_id === profile?.id) {
+            await supabase.from('world_state').upsert({ key: 'game_time', value: initialTime });
+        }
+    };
+
+    const resetChronicle = async () => {
+        setChronicle([]);
+        if (session?.host_id === profile?.id) {
+            await supabase.from('world_state').upsert({ key: 'chronicle', value: [] });
+        }
+    };
+
     return {
         session, setSession,
         character, setCharacter,
@@ -180,25 +195,14 @@ export const useGameState = (profile) => {
         handleHPChange,
         handleResourceChange,
         handleConsumeItem,
+        resetChronicle,
+        resetGameTime,
         chronicle,
         addToChronicle: async (event) => {
             const newChronicle = [...chronicle, { ...event, date: gameTime, id: crypto.randomUUID() }];
             setChronicle(newChronicle);
             if (session?.host_id === profile?.id) {
                 await supabase.from('world_state').upsert({ key: 'chronicle', value: newChronicle });
-            }
-        },
-        resetGameTime: async () => {
-            const initialTime = { hour: 12, minute: 0, day: 1 };
-            setGameTime(initialTime);
-            if (session?.host_id === profile?.id) {
-                await supabase.from('world_state').upsert({ key: 'game_time', value: initialTime });
-            }
-        },
-        resetChronicle: async () => {
-            setChronicle([]);
-            if (session?.host_id === profile?.id) {
-                await supabase.from('world_state').upsert({ key: 'chronicle', value: [] });
             }
         },
         fetchAvailableSessions: async () => {

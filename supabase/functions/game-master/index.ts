@@ -78,7 +78,7 @@ function summarizeLore(lore: any): string {
             const desc = (classData as any).description?.substring(0, 80) || '';
             classLines.push(`• ${className}: ${desc}...`);
         }
-        if (classLines.length) parts.push("\n=== CLASSES DISPONIBLES ===\n" + classLines.join('\n') + "\n[SYSTÈME: d100, Stats ×2 (max 20), Skills ×2.5 (max 100), HP ×5, Critique 95-100, Échec critique 1-5]");
+        if (classLines.length) parts.push("\n=== CLASSES DISPONIBLES ===\n" + classLines.join('\n') + "\n[SYSTÈME D100 PROGRESSIF: Dés évoluent avec niveau (d20→d50→d75→d100), Stats ×2 (max 20), Skills ×2.5 (max 100), HP ×5, DD ajustés dynamiquement selon niveau+complexité]");
     }
 
     // === SECTION 6: PNJ TEMPLATES ===
@@ -255,7 +255,7 @@ const RULES: string[] = [
     `  === PROTOCOLE ACHAT (STRICTEMENT APPLIQUER) ===\n` +
     `  \n` +
     `  ETAPE 1 - VERIFICATION OR:\n` +
-    `  Si joueur niveau ${playerLevel} demande objet X PO:\n` +
+    `  Si joueur niveau \${playerLevel} demande objet X PO:\n` +
     `  - Verifie son OR actuel (INV ou question)\n` +
     `  - Si OR insuffisant: REFUSE vente, propose alternatives moins cheres\n` +
     `  \n` +
@@ -269,8 +269,8 @@ const RULES: string[] = [
     `  ETAPE 3 - NARRATION MARCHAND:\n` +
     `  Le marchand evalue le joueur et reagit en consequence:\n` +
     `  - Niveau 1-2: "Un debutant ? Voici ce que je peux vous offrir..." (montre items communs)\n` +
-    `  - Joueur demande item trop cher: "Ha ! ${itemPrice} PO ? Vous n'avez que ${playerGold} PO. Revenez quand vous serez plus riche."\n` +
-    `  - Joueur demande item niveau trop haut: "Cette lame exige Niveau ${reqLevel} et Force ${reqStr}. Vous etes Niveau ${playerLevel}. Entrainement d'abord !"\n` +
+    `  - Joueur demande item trop cher: "Ha ! \${itemPrice} PO ? Vous n'avez que \${playerGold} PO. Revenez quand vous serez plus riche."\n` +
+    `  - Joueur demande item niveau trop haut: "Cette lame exige Niveau \${reqLevel} et Force \${reqStr}. Vous etes Niveau \${playerLevel}. Entrainement d'abord !"\n` +
     `  - Joueur demande legendaire: "Les armes legendaires NE SE VENDENT PAS. Elles se GAGNENT. Accomplissez des quetes heroiques."\n` +
     `  \n` +
     `  === EXEMPLES CONCRETS ===\n` +
@@ -324,80 +324,8 @@ const RULES: string[] = [
     `  NE DIS PAS juste "Vous ne connaissez pas ce lieu."\n` +
     `  UTILISE narration immersive + PROPOSE sources information concretes.\n` +
     `  \n` +
-    `  === EXEMPLES REFUS + GUIDANCE ===\n` +
-    `  \n` +
-    `  Joueur Niveau 2, ne d'un village cotier: "Je vais a Hammerdeep"\n` +
-    `  MJ: "Hammerdeep... Ce nom resonne vaguement dans votre memoire — la cite naine des montagnes, forgée dans la roche. Mais ou est-elle exactement ? Au nord ? A l'est ? Combien de jours de marche ? Vous ne savez pas.\n` +
-    `  \n` +
-    `  Vous etes actuellement a ${currentLocation}. Autour de vous:\n` +
-    `  - Une TAVERNE ou des voyageurs echangent des histoires de routes\n` +
-    `  - Un PANNEAU en bois indiquant 'Route du Nord - Capitale 3 jours'\n` +
-    `  - Un MARCHAND ambulant chargeant des caisses sur sa carriole\n` +
-    `  \n` +
-    `  Que faites-vous ?\n` +
-    `  A) Entrer dans la taverne, demander directions Hammerdeep\n` +
-    `  B) Examiner le panneau routier pour indices\n` +
-    `  C) Parler au marchand (il voyage souvent)\n` +
-    `  D) Chercher une CARTE dans les boutiques locales (50-200 PO)"\n` +
-    `  \n` +
-    `  Joueur: "Je veux aller dans les Terres Brulees"\n` +
-    `  MJ: "Les Terres Brulees ? Ce nom ne vous dit absolument rien. Vous n'avez jamais entendu parler d'un tel endroit.\n` +
-    `  \n` +
-    `  Vous pourriez:\n` +
-    `  - Interroger un ERUDIT ou BIBLIOTHECAIRE (jet Investigation DD 50 pour trouver references)\n` +
-    `  - Poser des questions dans la TAVERNE locale ('Quelqu'un connait les Terres Brulees ?')\n` +
-    `  - Consulter une CARTE DETAILLEE chez un cartographe (200 PO)\n` +
-    `  - Demander a la GUILDE DES AVENTURIERS s'ils ont des dossiers\n` +
-    `  \n` +
-    `  Quelle approche choisissez-vous ?"\n` +
-    `  \n` +
-    `  Joueur apres rumeur taverne: "Je vais a la Crypte de Sir Valerius"\n` +
-    `  MJ: "Ah ! Le tavernier a mentionne ce lieu tout a l'heure. 'Col de Rougemont, versant est, ruines d'un ancien temple,' a-t-il dit. Mais vous ne savez toujours pas:\n` +
-    `  - Ou se trouve le col de Rougemont (direction/distance)\n` +
-    `  - Quels dangers sur la route\n` +
-    `  - Si vous avez l'equipement necessaire (torches, cordes...)\n` +
-    `  \n` +
-    `  Le tavernier est toujours au comptoir. Voulez-vous:\n` +
-    `  A) Lui demander directions precises (jet Charisme DD 40)\n` +
-    `  B) Acheter une CARTE REGIONALE chez le cartographe (100 PO)\n` +
-    `  C) Chercher un GUIDE local (50 PO/jour + part butin)\n` +
-    `  D) Partir quand meme a l'aveugle (risque se perdre, jets Survie DD 60)"\n` +
-    `  \n` +
-    `  === DECOUVERTE PROGRESSIVE (COMMENT DEBLOQUER LIEUX) ===\n` +
-    `  \n` +
-    `  METHODE 1 - DIALOGUE PNJ:\n` +
-    `  PNJ mentionne lieu avec contexte.\n` +
-    `  Exemple: "Si tu cherches un forgeron maitre, va voir Thorgrim a Hammerdeep. 5 jours au nord, suis la Route des Caravanes."\n` +
-    `  -> Joueur peut maintenant voyager vers Hammerdeep (mais doit suivre indications)\n` +
-    `  \n` +
-    `  METHODE 2 - PANNEAUX ROUTIERS:\n` +
-    `  Decrire panneaux aux croisements.\n` +
-    `  Exemple: "Un panneau en bois sculpte indique: 'Kuldahar 2 jours Nord - Capitale Valoria 4 jours Sud - Foret Sylmanir 3 jours Est'"\n` +
-    `  -> Joueur debloque ces 3 destinations\n` +
-    `  \n` +
-    `  METHODE 3 - CARTES ACHETEES/TROUVEES:\n` +
-    `  Carte regionale (100-200 PO): Debloque 5-10 villes region\n` +
-    `  Carte royaume (500 PO): Debloque toutes villes majeures\n` +
-    `  Carte ancienne (quete): Debloque lieux secrets (donjons, ruines)\n` +
-    `  \n` +
-    `  METHODE 4 - RUMEURS TAVERNE:\n` +
-    `  Jet Charisme/Investigation pour obtenir info.\n` +
-    `  Exemple: "Un marchand ivre raconte: 'J'ai vu des lumieres etranges pres du Gouffre d'Ymir, au nord de Kuldahar. On dit qu'une creature ancienne y reside...'\n` +
-    `  -> Joueur debloque Gouffre d'Ymir (mais avec warning danger)\n` +
-    `  \n` +
-    `  METHODE 5 - GUIDES LOCAUX:\n` +
-    `  Embaucher guide (50-200 PO/jour).\n` +
-    `  Guide connait region, evite dangers, accelere voyage.\n` +
-    `  \n` +
-    `  === VOYAGE VERS LIEU CONNU (AUTORISE) ===\n` +
-    `  Si joueur a deja entendu parler + a directions:\n` +
-    `  - AUTORISE le voyage\n` +
-    `  - DECRIS le trajet (jours, paysages, rencontres aleatoires)\n` +
-    `  - DEMANDE jets Survie si route dangereuse\n` +
-    `  - PROPOSE choix routes (rapide mais dangereuse vs lente mais sure)\n` +
-    `  \n` +
     `  Exemple:\n` +
-    `  "Vous quittez ${currentLocation} direction Hammerdeep (5 jours nord). Deux routes possibles:\n` +
+    `  "Vous quittez \${currentLocation} direction Hammerdeep (5 jours nord). Deux routes possibles:\n` +
     `  A) Route des Caravanes (7 jours, sure, patrouilles gardes)\n` +
     `  B) Sentier Montagnard (4 jours, dangereux, bandits/betes)\n` +
     `  \n` +
@@ -529,6 +457,141 @@ const RULES: string[] = [
     `  EXCEPTION: "Je TENTE de..." / "Je CHERCHE a..." = intention claire (autorise).\n` +
     `  \n` +
     `  PHILOSOPHIE: Le joueur est un AVENTURIER DEBUTANT, pas un demi-dieu. Le monde ne plie pas a sa volonte. Il doit GAGNER son pouvoir par quetes, niveaux, et respect des regles.`,
+
+    // 3b. PROGRESSIVE DICE SYSTEM (CRITICAL - ALWAYS APPLY)
+    `SYSTEME DE DES PROGRESSIFS D100 (REGLE CRITIQUE - OBLIGATOIRE):\n` +
+    `  Les joueurs lancent des des de PLUS EN PLUS PUISSANTS au fur et a mesure qu'ils progressent en niveau.\n` +
+    `  Les Degres de Difficulte (DD) s'ajustent DYNAMIQUEMENT selon le NIVEAU DU JOUEUR et la COMPLEXITE DE LA TACHE.\n` +
+    `  \n` +
+    `  === ECHELLE DE DES PAR NIVEAU ===\n` +
+    `  NIVEAU 1-5 (Novice):\n` +
+    `  - Lance 1d20, PUIS multiplie par 5 pour obtenir un score sur 100\n` +
+    `  - Bonus de competence: Stat ×2 (max 20) + Skill ×2.5 (max 25)\n` +
+    `  - Exemple: Niveau 3 avec DEX 12 et Crochetage 4 -> 1d20 ×5 + 24 + 10 = 1d20 ×5 + 34\n` +
+    `  \n` +
+    `  NIVEAU 6-10 (Experimente):\n` +
+    `  - Lance 1d50 directement (score de 1 a 50)\n` +
+    `  - Bonus de competence: Stat ×2 (max 20) + Skill ×2.5 (max 50)\n` +
+    `  - Exemple: Niveau 8 avec INT 14 et Investigation 8 -> 1d50 + 28 + 20 = 1d50 + 48\n` +
+    `  \n` +
+    `  NIVEAU 11-15 (Veteran):\n` +
+    `  - Lance 1d75 directement (score de 1 a 75)\n` +
+    `  - Bonus de competence: Stat ×2 (max 20) + Skill ×2.5 (max 75)\n` +
+    `  - Exemple: Niveau 13 avec CHA 16 et Persuasion 12 -> 1d75 + 32 + 30 = 1d75 + 62\n` +
+    `  \n` +
+    `  NIVEAU 16-20 (Maitre):\n` +
+    `  - Lance 1d100 directement (score de 1 a 100)\n` +
+    `  - Bonus de competence: Stat ×2 (max 20) + Skill ×2.5 (max 100)\n` +
+    `  - Exemple: Niveau 18 avec FOR 18 et Athletisme 16 -> 1d100 + 36 + 40 = 1d100 + 76\n` +
+    `  \n` +
+    `  === AJUSTEMENT DYNAMIQUE DES DD (FORMULE OBLIGATOIRE) ===\n` +
+    `  DD_BASE = 30 + (COMPLEXITE_TACHE × 10) - (NIVEAU_JOUEUR × 2)\n` +
+    `  \n` +
+    `  COMPLEXITE_TACHE:\n` +
+    `  - 0 = Triviale (ouvrir porte non verrouillee, parler a PNJ amical)\n` +
+    `  - 1 = Facile (serrure simple, convaincre marchand neutre, escalader mur avec prises)\n` +
+    `  - 2 = Moyenne (serrure normale, negocier prix, piste de pistage fraiche)\n` +
+    `  - 3 = Difficile (serrure complexe, convaincre garde hostile, equilibre precaire)\n` +
+    `  - 4 = Tres Difficile (serrure magique, persuader noble mefiant, acrobatie aerienne)\n` +
+    `  - 5 = Heroique (coffre-fort royal, convaincre dragon, defier gravite)\n` +
+    `  - 6 = Legendaire (artefact protege par dieux, negocier avec demon majeur)\n` +
+    `  \n` +
+    `  === EXEMPLES CONCRETS NIVEAU PAR NIVEAU ===\n` +
+    `  \n` +
+    `  NIVEAU 3 (Novice) - CROCHETER SERRURE SIMPLE (Complexite 1):\n` +
+    `  DD = 30 + (1 × 10) - (3 × 2) = 30 + 10 - 6 = DD 34\n` +
+    `  Lance: 1d20 (×5) + bonus DEX + bonus Crochetage\n` +
+    `  Avec DEX 12 et Crochetage 4: 1d20 ×5 + 24 + 10 = 1d20 ×5 + 34\n` +
+    `  -> Besoin de 1 au de (car 1×5=5, 5+34=39 > DD34). Meme 1 naturel reussit grace aux bonus!\n` +
+    `  \n` +
+    `  NIVEAU 3 (Novice) - PERSUADER GARDE HOSTILE (Complexite 3):\n` +
+    `  DD = 30 + (3 × 10) - (3 × 2) = 30 + 30 - 6 = DD 54\n` +
+    `  Lance: 1d20 (×5) + bonus CHA + bonus Persuasion\n` +
+    `  Avec CHA 10 et Persuasion 2: 1d20 ×5 + 20 + 5 = 1d20 ×5 + 25\n` +
+    `  -> Besoin de 6+ au de (car 6×5=30, 30+25=55 > DD54). Difficile mais possible.\n` +
+    `  \n` +
+    `  NIVEAU 8 (Experimente) - CROCHETER SERRURE SIMPLE (Complexite 1):\n` +
+    `  DD = 30 + (1 × 10) - (8 × 2) = 30 + 10 - 16 = DD 24\n` +
+    `  Lance: 1d50 + bonus DEX + bonus Crochetage\n` +
+    `  Avec DEX 14 et Crochetage 8: 1d50 + 28 + 20 = 1d50 + 48\n` +
+    `  -> IMPOSSIBLE D'ECHOUER (meme 1+48=49 > DD24). Tache triviale pour veteran!\n` +
+    `  -> NE DEMANDE PAS de jet sauf si circonstances exceptionnelles (pression temps, distraction)\n` +
+    `  \n` +
+    `  NIVEAU 8 (Experimente) - SERRURE MAGIQUE (Complexite 4):\n` +
+    `  DD = 30 + (4 × 10) - (8 × 2) = 30 + 40 - 16 = DD 54\n` +
+    `  Lance: 1d50 + bonus INT + bonus Arcanes\n` +
+    `  Avec INT 14 et Arcanes 6: 1d50 + 28 + 15 = 1d50 + 43\n` +
+    `  -> Besoin de 12+ au de (car 12+43=55 > DD54). Challenge approprie!\n` +
+    `  \n` +
+    `  NIVEAU 15 (Veteran) - PERSUADER NOBLE MEFIANT (Complexite 4):\n` +
+    `  DD = 30 + (4 × 10) - (15 × 2) = 30 + 40 - 30 = DD 40\n` +
+    `  Lance: 1d75 + bonus CHA + bonus Persuasion\n` +
+    `  Avec CHA 16 et Persuasion 12: 1d75 + 32 + 30 = 1d75 + 62\n` +
+    `  -> IMPOSSIBLE D'ECHOUER (meme 1+62=63 > DD40). Maitre de la diplomatie!\n` +
+    `  \n` +
+    `  NIVEAU 15 (Veteran) - NEGOCIER AVEC DEMON MAJEUR (Complexite 6):\n` +
+    `  DD = 30 + (6 × 10) - (15 × 2) = 30 + 60 - 30 = DD 60\n` +
+    `  Lance: 1d75 + bonus CHA + bonus Persuasion\n` +
+    `  Avec CHA 16 et Persuasion 12: 1d75 + 32 + 30 = 1d75 + 62\n` +
+    `  -> Besoin de 1+ au de (minimum 1+62=63 > DD60). Quasi-reussite garantie pour veteran!\n` +
+    `  \n` +
+    `  NIVEAU 18 (Maitre) - DEFIER GRAVITE / ACROBATIE LEGENDAIRE (Complexite 6):\n` +
+    `  DD = 30 + (6 × 10) - (18 × 2) = 30 + 60 - 36 = DD 54\n` +
+    `  Lance: 1d100 + bonus DEX + bonus Acrobatie\n` +
+    `  Avec DEX 18 et Acrobatie 16: 1d100 + 36 + 40 = 1d100 + 76\n` +
+    `  -> IMPOSSIBLE D'ECHOUER (meme 1+76=77 > DD54). Les lois physiques plient devant le maitre!\n` +
+    `  \n` +
+    `  === CRITIQUES (NOUVEAUX SEUILS) ===\n` +
+    `  REUSSITE CRITIQUE:\n` +
+    `  - Niveau 1-5: 20 naturel au d20 (avant multiplication)\n` +
+    `  - Niveau 6-10: 48-50 au d50\n` +
+    `  - Niveau 11-15: 73-75 au d75\n` +
+    `  - Niveau 16-20: 95-100 au d100\n` +
+    `  Effet: Succes spectaculaire + bonus narratif/mecanique (voir section Critiques)\n` +
+    `  \n` +
+    `  ECHEC CRITIQUE:\n` +
+    `  - Niveau 1-5: 1 naturel au d20 (avant multiplication)\n` +
+    `  - Niveau 6-10: 1-3 au d50\n` +
+    `  - Niveau 11-15: 1-3 au d75\n` +
+    `  - Niveau 16-20: 1-5 au d100\n` +
+    `  Effet: Echec desastreux + consequences narratives graves (voir section Critiques)\n` +
+    `  \n` +
+    `  === REGLES D'APPLICATION (OBLIGATOIRES) ===\n` +
+    `  1. TOUJOURS consulter le NIVEAU du personnage pour determiner le de a lancer\n` +
+    `  2. TOUJOURS calculer le DD avec la formule dynamique (pas de DD fixes 40/50/70)\n` +
+    `  3. SI le joueur ne peut pas echouer (bonus > DD): NE DEMANDE PAS de jet, NARRE la reussite automatique\n` +
+    `  4. SI le joueur ne peut pas reussir meme avec 20/100 naturel + bonus: INDIQUE que c'est impossible, PROPOSE alternative\n` +
+    `  5. AJUSTE la complexite selon le contexte: equipement adapte (-1 complexite), conditions difficiles (+1 complexite)\n` +
+    `  6. DANS LE CHAMP "challenge", SPECIFIE le type de de: "Lance 1d20 (×5) + bonus DEX" ou "Lance 1d50 + bonus INT"\n` +
+    `  \n` +
+    `  === FORMAT DU CHAMP "challenge" (OBLIGATOIRE) ===\n` +
+    `  {\n` +
+    `    "challenge": {\n` +
+    `      "skill": "Dexterite",\n` +
+    `      "dc": 34,\n` +
+    `      "reason": "Crocheter la serrure simple de la porte",\n` +
+    `      "dice_type": "1d20×5",\n` +
+    `      "player_level": 3,\n` +
+    `      "task_complexity": 1,\n` +
+    `      "consequences_failure": "La serrure se bloque, -10 au prochain essai",\n` +
+    `      "consequences_success": "La porte s'ouvre silencieusement"\n` +
+    `    }\n` +
+    `  }\n` +
+    `  \n` +
+    `  EXEMPLES PAR NIVEAU:\n` +
+    `  - Niveau 3: "dice_type": "1d20×5"\n` +
+    `  - Niveau 8: "dice_type": "1d50"\n` +
+    `  - Niveau 13: "dice_type": "1d75"\n` +
+    `  - Niveau 18: "dice_type": "1d100"\n` +
+    `  \n` +
+    `  === PHILOSOPHIE DU SYSTEME ===\n` +
+    `  - NIVEAU 1-5: APPRENTISSAGE. Meme taches simples sont challengeantes. Echecs frequents font partie de la progression.\n` +
+    `  - NIVEAU 6-10: COMPETENCE. Taches courantes deviennent faciles. Focus sur defis intermediaires.\n` +
+    `  - NIVEAU 11-15: MAITRISE. Taches normales sont triviales. Seuls defis majeurs necessitent jets.\n` +
+    `  - NIVEAU 16-20: LEGENDE. Exploits heroiques sont possibles. Seules taches legendaires sont incertaines.\n` +
+    `  \n` +
+    `  Le systeme RECOMPENSE la progression. Un heros niveau 15 NE DOIT PAS galérer sur une serrure simple!\n` +
+    `  A l'inverse, un debutant niveau 2 NE DOIT PAS reussir des taches heroiques sans effort exceptionnel.`,
 
     // 4. Time & dynamism
     `TEMPS & DYNAMISME: Le monde AVANCE. Si les joueurs attendent/dorment, quelque chose DOIT se passer (embuscade, reve, meteo, decouverte). NE BOUCLE PAS SUR LA MEME DESCRIPTION.`,
@@ -1676,7 +1739,7 @@ function buildSystemPrompt(opts: {
 
 Deno.serve(async (req: Request) => {
     if (req.method === 'OPTIONS') {
-        return new Response(null, { status: 204, headers: corsHeaders });
+        return jsonResponse({ message: 'ok' });
     }
 
     try {

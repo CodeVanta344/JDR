@@ -89,21 +89,14 @@ const DiceMesh = ({ type, color }) => {
         );
     }
 
-    // D6 Logic
-    if (type === 'd6') {
+    // D100 Logic
+    if (type === 'd100') {
         return (
             <mesh castShadow receiveShadow>
-                <boxGeometry args={[2, 2, 2]} />
+                <sphereGeometry args={[1.2, 32, 32]} />
                 <GemMaterial color={color} />
-                {D6_FACES.map((f, i) => (
-                    <DiceFaceText
-                        key={i}
-                        value={f.val}
-                        position={f.pos}
-                        rotation={f.rot}
-                        color={f.val === 6 ? '#FFD700' : (f.val === 1 ? '#ff4444' : 'white')}
-                    />
-                ))}
+                <DiceFaceText value="100" position={[0, 0, 1.25]} rotation={[0, 0, 0]} color="#FFD700" scale={0.7} />
+                <DiceFaceText value="1" position={[0, 0, -1.25]} rotation={[0, Math.PI, 0]} color="#ff4444" scale={0.7} />
             </mesh>
         );
     }
@@ -152,6 +145,7 @@ export const Dice3D = ({ type = 'd20', value, onComplete, autoRoll = true }) => 
     const diceColor = useMemo(() => {
         switch (type) {
             case 'd20': return '#FFD700'; // Gold
+            case 'd100': return '#7b2ff7'; // Aether Purple
             case 'd12': return '#a3c2ff'; // Blueish
             case 'd10': return '#ff8da1'; // Reddish
             case 'd8': return '#c4a3ff';  // Purple

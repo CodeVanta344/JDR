@@ -71,7 +71,8 @@ export interface PlotTwistParams {
 const ANTHROPIC_API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY;
 
 if (!ANTHROPIC_API_KEY) {
-  console.warn('⚠️ VITE_ANTHROPIC_API_KEY non configurée - Utilisation du fallback GPT-4o-mini');
+  console.warn('⚠️ VITE_ANTHROPIC_API_KEY non configurée - Les fonctionnalités IA du DMPanel sont désactivées.');
+  console.info('💡 Pour activer Claude Opus, ajoutez VITE_ANTHROPIC_API_KEY dans votre fichier .env.local');
 }
 
 class DMAssistant {
@@ -171,7 +172,7 @@ ${this.loreContext.slice(0, 20000)}
 
     try {
       const message = await this.client.messages.create({
-        model: 'claude-opus-4-20250514',
+        model: 'claude-3-opus-20240229',
         max_tokens: 2000,
         temperature: 0.8,
         messages: [
@@ -279,7 +280,7 @@ ${this.loreContext.slice(15000, 25000)}
 
     try {
       const message = await this.client.messages.create({
-        model: 'claude-opus-4-20250514',
+        model: 'claude-3-opus-20240229',
         max_tokens: 1500,
         temperature: 0.7,
         messages: [{ role: 'user', content: prompt }],
@@ -339,7 +340,7 @@ EXEMPLE : "Le marchand que vous venez de sauver retire discrètement son déguis
 
     try {
       const message = await this.client.messages.create({
-        model: 'claude-opus-4-20250514',
+        model: 'claude-3-opus-20240229',
         max_tokens: 300,
         temperature: 0.9,
         messages: [{ role: 'user', content: prompt }],

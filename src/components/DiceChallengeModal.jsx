@@ -12,7 +12,7 @@ export const DiceChallengeModal = ({
     onClose,
     onRollStart
 }) => {
-    const { stat, label, dc = 10, dice = 'd20' } = challenge;
+    const { stat, label, dc = 50, dice = 'd100' } = challenge;
     const [rolled, setRolled] = useState(false);
     const [isRolling, setIsRolling] = useState(false);
     const [rolls, setRolls] = useState([]); // Array of { type, value, completed }
@@ -24,7 +24,8 @@ export const DiceChallengeModal = ({
     React.useEffect(() => {
         if (playerStats && stat) {
             const val = playerStats[stat.toLowerCase()] || 10;
-            setModifier(Math.floor((val - 10) / 2));
+            // D100 Scaling: Stat * 2
+            setModifier(val * 2);
         }
     }, [playerStats, stat]);
 
@@ -46,7 +47,7 @@ export const DiceChallengeModal = ({
             }
         });
 
-        return diceList.length > 0 ? diceList : [{ type: 'd20', value: null, completed: false }];
+        return diceList.length > 0 ? diceList : [{ type: 'd100', value: null, completed: false }];
     };
 
     const handleRoll = () => {
@@ -86,10 +87,11 @@ export const DiceChallengeModal = ({
 
     const getOutcome = () => {
         const total = totalNatural + modifier;
-        const isSingleD20 = rolls.length === 1 && rolls[0].type === 'd20';
+        const isD100 = rolls.length === 1 && rolls[0].type === 'd100';
 
-        if (isSingleD20 && rolls[0].value === 20) return { status: 'CRITICAL_SUCCESS', label: 'RÉUSSITE CRITIQUE !', color: '#ffd700' };
-        if (isSingleD20 && rolls[0].value === 1) return { status: 'CRITICAL_FAILURE', label: 'ÉCHEC CRITIQUE...', color: '#ff4444' };
+        // D100 Crit Thresholds: 95-100 Success, 1-5 Failure
+        if (isD100 && rolls[0].value >= 95) return { status: 'CRITICAL_SUCCESS', label: 'RÉUSSITE CRITIQUE !', color: '#ffd700' };
+        if (isD100 && rolls[0].value <= 5) return { status: 'CRITICAL_FAILURE', label: 'ÉCHEC CRITIQUE...', color: '#ff4444' };
 
         if (total >= dc) return { status: 'SUCCESS', label: 'SUCCÈS !', color: '#4caf50' };
         return { status: 'FAILURE', label: 'ÉCHEC', color: '#ff8800' };

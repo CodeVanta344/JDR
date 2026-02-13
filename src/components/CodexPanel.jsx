@@ -80,7 +80,12 @@ export function CodexPanel({ isOpen, onClose }) {
                 ))}
               </div>
 
-              {selectedItem && selectedItem.id && (
+              {!selectedItem ? (
+                <div className="details-placeholder">
+                  <div className="placeholder-icon">⚒️</div>
+                  <p>Sélectionnez un métier pour voir les détails, les rangs et les spécialisations.</p>
+                </div>
+              ) : (
                 <div className="profession-details">
                   <h3>{selectedItem.name}</h3>
 
@@ -171,7 +176,12 @@ export function CodexPanel({ isOpen, onClose }) {
                 ))}
               </div>
 
-              {selectedItem && selectedItem.lore && (
+              {!selectedItem ? (
+                <div className="details-placeholder">
+                  <div className="placeholder-icon">🛡️</div>
+                  <p>Sélectionnez une faction pour découvrir son histoire, ses objectifs et sa hiérarchie.</p>
+                </div>
+              ) : (
                 <div className="faction-details">
                   <h3>{selectedItem.symbol} {selectedItem.name}</h3>
 
