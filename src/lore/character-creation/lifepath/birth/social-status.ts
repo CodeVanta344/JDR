@@ -343,53 +343,71 @@ export const SOCIAL_STATUSES: LifeChoice[] = [
     id: 'birth_status_esclave',
     stage: 'birth',
     category: 'status',
-    label: 'Né en Esclavage (Libéré)',
-    desc: 'Esclave de naissance, vous avez connu les chaînes avant de goûter la liberté.',
+    label: 'Esclave Affranchi',
+    desc: 'Né dans les chaînes puis libéré par révolte, maître clément ou fuite héroïque. Les cicatrices demeurent mais forgent une volonté d\'acier.',
     detailed_lore: {
-      backstory: 'Vous êtes né dans les chaînes, propriété légale d\'un maître. Fouets, travaux forcés et humiliations rythmaient vos jours. Un événement (révolte, maître clément mourant, fuite) vous a libéré, mais les cicatrices demeurent.',
-      defining_moment: 'Le jour où vos chaînes ont été brisées, vous avez juré : "Plus jamais je ne m\'agenouillerai devant personne."',
-      worldview_shaped: 'La liberté est le plus précieux des trésors. Aucune vie n\'appartient à une autre. Les puissants méritent la défiance.'
+      backstory: 'Vous êtes né propriété légale d\'un maître. Fouets, travaux forcés et humiliations rythmaient vos jours. Peut-être étiez-vous esclave dans les mines de fer de Karag-Mor, domestique dans une villa marchande d\'Astralyss, ou gladiateur dans les arènes de Tyr-Valdor. Un événement pivot (révolte, testament d\'affranchissement, fuite audacieuse) vous a libéré. Mais les marques des chaînes (physiques et mentales) restent visibles.',
+      defining_moment: 'Le jour où vos chaînes ont été brisées, vous avez vu le ciel libre pour la première fois depuis des années. Vous avez juré sur votre sang : "Plus jamais je ne m\'agenouillerai devant personne. Ma vie m\'appartient désormais."',
+      worldview_shaped: 'La liberté est le plus précieux des trésors, valant plus que tout l\'or du monde. Aucune vie n\'appartient à une autre. Les puissants qui exploitent les faibles méritent défiance éternelle. Vous portez la cause abolitionniste comme bannière sacrée.'
     },
     effects: {
-      stats: { willpower: 2, constitution: 1 },
-      stats_penalty: { charisma: 1 },
+      // ========== STATS D100 (×2) ==========
+      stats: { wisdom: 4, constitution: 2 },  // Ancien: WIL+2 CON+1 → WIS+4 CON+2
+      stats_penalty: { charisma: 2 },  // Ancien: CHA-1 → CHA-2 (cicatrices stigmatisantes)
       mechanical_traits: [
         {
           name: 'Volonté Indomptable',
-          desc: 'Avantage contre charme/terreur, +2 Athlétisme',
-          game_effect: 'Résistance mentale'
+          desc: '+5 Athlétisme, avantage jets sauvegarde contre charme/terreur/domination mentale, ignore 1 niveau épuisement',
+          effect: '+5 Athletics',  // ×2.5
+          game_effect: 'Résistance mentale légendaire + endurance exceptionnelle travaux forcés'
         },
         {
           name: 'Marqué par les Chaînes',
-          desc: 'Cicatrices visibles, -2 interactions nobles',
-          game_effect: 'Malus social aristocratie'
+          desc: 'Cicatrices visibles (poignets, dos, chevilles), -5 Persuasion avec nobles/autorités, +5 Intimidation (regard hanté)',
+          effect: '-5 Persuasion (nobles), +5 Intimidation',
+          game_effect: 'Malus social aristocratie compensé rage visible'
+        },
+        {
+          name: 'Libérateur Né',
+          desc: '+1d20 aux jets pour libérer prisonniers/esclaves ou affronter esclavagistes, avantage détecter pièges/chaînes',
+          effect: '+1d20 Libération',
+          game_effect: 'Bonus d100 missions abolitionnistes + instinct sécurité'
         }
       ],
       reputation: [
-        { factionId: 'abolitionnistes', delta: 7, reason: 'Ancien esclave' },
-        { factionId: 'esclavagistes', delta: -10, reason: 'Fugitif/Libéré' }
+        { factionId: 'abolitionnistes', delta: 10, reason: 'Ancien esclave devenu symbole vivant' },
+        { factionId: 'esclavagistes', delta: -15, reason: 'Fugitif recherché, récompense possible' },
+        { factionId: 'gladiateurs', delta: 5, reason: 'Respect frères d\'armes arènes (si applicable)' },
+        { factionId: 'esclaves_actuels', delta: 8, reason: 'Héros inspirant espoir de liberté' }
       ],
       items: [
-        { itemId: 'broken_shackle', quantity: 1, reason: 'Trophée de liberté' }
+        { itemId: 'broken_shackle_iron', quantity: 1, reason: 'Chaîne brisée portée en collier (symbole liberté conquise)' },
+        { itemId: 'whip_scars_map', quantity: 1, reason: 'Carte corporelle cicatrices (récit visuel souffrance)' },
+        { itemId: 'freedom_token', quantity: 1, reason: 'Papiers d\'affranchissement (précieux, falsifiés ou légitimes)' }
       ],
       skills: [
-        { skillId: 'athletics', bonus: 2, reason: 'Travaux forcés' },
-        { skillId: 'intimidation', bonus: 1, reason: 'Rage contenue' }
+        { skillId: 'athletics', bonus: 5, reason: 'Travaux forcés quotidiens développent force brute' },  // ×2.5
+        { skillId: 'intimidation', bonus: 5, reason: 'Rage contenue + regard ayant vu l\'enfer' },  // ×2.5
+        { skillId: 'survival', bonus: 3, reason: 'Survivre rations minimales, environnements hostiles' }
       ],
-      languages: ['Commun'],
-      tags: ['former_slave', 'survivor', 'vengeful', 'scarred']
+      gold: 0,  // Commence sans ressources (ancien: implicite 0)
+      languages: ['Commun', 'Langue Esclavagiste (ancien maître)', 'Code Gladiateurs (si arènes)'],  // +2 langues
+      tags: ['former_slave', 'survivor', 'vengeful', 'scarred', 'abolitionist', 'free']
     },
     social_impacts: {
       npc_reactions: {
-        'abolitionnistes': 'Compassion',
-        'nobles': 'Mépris ou gêne',
-        'esclaves': 'Espoir',
-        'esclavagistes': 'Hostilité'
+        'abolitionnistes': 'Compassion profonde (+10 disposition)',
+        'nobles': 'Mépris ou gêne malaise (-8 disposition)',
+        'esclaves_actuels': 'Espoir vibrant, vénération (+12 disposition)',
+        'esclavagistes': 'Hostilité meurtrière, arrestation immédiate (-20 disposition)',
+        'citoyens_libres': 'Pitié mêlée peur stigmates (-3 disposition)',
+        'gladiateurs': 'Solidarité fraternelle arènes (+7 disposition)'
       },
-      first_impression: '« Ces marques... Tu étais esclave ? Les dieux te protègent maintenant. »'
+      first_impression: '« Ces marques aux poignets... Tu étais esclave ? Les dieux te protègent maintenant. Ne retourne jamais là-bas. »',
+      long_term_perception: 'Symbole vivant de résilience humaine. Certains te voient héros abolitionniste, d\'autres fugitif dangereux. Rares sont ceux indifférents.'
     },
-    tags: ['former_slave', 'survivor', 'vengeful'],
-    incompatible_with: ['birth_status_nobility', 'birth_status_merchant']
+    tags: ['former_slave', 'survivor', 'vengeful', 'abolitionist'],
+    incompatible_with: ['birth_status_nobility', 'birth_status_merchant', 'birth_status_clerc']
   },
 
   {
@@ -397,45 +415,69 @@ export const SOCIAL_STATUSES: LifeChoice[] = [
     stage: 'birth',
     category: 'status',
     label: 'Bâtard Noble (Non Reconnu)',
-    desc: 'Fruit d\'une union illégitime, vous portez le sang noble mais pas le nom.',
+    desc: 'Sang noble mais nom refusé. Fruit d\'une liaison illégitime, vous portez l\'héritage aristocratique dans vos veines mais vivez dans l\'ombre du château.',
     detailed_lore: {
-      backstory: 'Votre mère/père était noble, mais vous êtes né hors mariage. Vous avez grandi dans l\'ombre d\'un château, sachant qui vous êtes vraiment, mais jamais reconnu. Peut-être votre parent noble vous a-t-il aidé discrètement, ou au contraire nié votre existence.',
-      defining_moment: 'Lors d\'un banquet, vous avez vu votre parent géniteur noble vous regarder... puis détourner les yeux et rire avec ses enfants légitimes.',
-      worldview_shaped: 'Le sang ne suffit pas, le nom fait tout. Je dois prouver ma valeur par mes actes, pas par ma lignée.'
+      backstory: 'Votre mère (servante, courtisane, fille d\'aubergiste) ou votre père était noble, mais vous êtes né hors mariage sacré. Vous avez grandi dans l\'ombre d\'un château, sachant qui vous êtes vraiment, mais jamais reconnu officiellement. Peut-être votre parent noble vous a-t-il aidé discrètement (éducation secrète, argent anonyme), ou au contraire nié farouchement votre existence par peur du scandale. Vous voyiez vos demi-frères légitimes recevoir titres et terres tandis que vous restiez invisible.',
+      defining_moment: 'Lors d\'un banquet royal, vous avez servi vin à votre parent géniteur noble. Vos yeux se sont croisés un instant—il/elle vous a reconnu(e), vous avez vu la gêne traverser son visage... puis il/elle a détourné les yeux et ri bruyamment avec ses enfants légitimes comme si vous n\'existiez pas.',
+      worldview_shaped: 'Le sang ne suffit pas, seul le nom compte dans ce monde hypocrite. Je dois prouver ma valeur par mes actes héroïques, pas par ma lignée contestée. Peut-être qu\'un jour, mon parent me reconnaîtra... ou je surpasserai sa gloire et rendrai son rejet pathétique.'
     },
     effects: {
-      stats: { charisma: 1, willpower: 1 },
+      // ========== STATS D100 (×2) ==========
+      stats: { charisma: 2, wisdom: 2 },  // Ancien: CHA+1 WIL+1 → CHA+2 WIS+2 (charme naturel + clairvoyance douloureuse)
       mechanical_traits: [
         {
           name: 'Héritage Contesté',
-          desc: '+1 Persuasion/Intimidation avec nobles, mais désavantage héritages',
-          game_effect: 'Ambiguïté sociale'
+          desc: '+3 Persuasion/Intimidation avec nobles (ambiguïté intrigante), +5 Insight détecter hypocrisie, mais désavantage héritages/testaments',
+          effect: '+3 Persuasion, +5 Insight',  // ×2.5
+          game_effect: 'Ambiguïté sociale fascinante mais juridiquement fragile'
+        },
+        {
+          name: 'Fierté Blessée',
+          desc: 'Avantage jets pour prouver sa valeur (concours, duels d\'honneur, exploits publics), +1d20 impressionner nobles',
+          effect: '+1d20 Prouver Valeur',
+          game_effect: 'Bonus d100 quêtes reconnaissance publique'
+        },
+        {
+          name: 'Éducation Secrète',
+          desc: '+3 Knowledge (Histoire/Étiquette Noble), lecture/écriture, manières aristocratiques (accès discret bibliothèques)',
+          effect: '+3 Knowledge (Noblesse)',
+          game_effect: 'Culture noble sans privilèges officiels'
         }
       ],
       reputation: [
-        { factionId: 'noblesse', delta: -3, reason: 'Bâtard connu' },
-        { factionId: 'peuple', delta: 2, reason: 'Perçu comme victime injustice' }
+        { factionId: 'noblesse', delta: -5, reason: 'Bâtard connu, scandale ambulant' },
+        { factionId: 'peuple', delta: 4, reason: 'Perçu victime injustice aristocratique' },
+        { factionId: 'batards_nobles', delta: 7, reason: 'Solidarité fraternelle avec autres non-reconnus' },
+        { factionId: 'herauts', delta: -3, reason: 'Problème généalogique embarrassant' }
       ],
       items: [
-        { itemId: 'mothers_locket', quantity: 1, reason: 'Seul lien avec parent' }
+        { itemId: 'mothers_locket_noble', quantity: 1, reason: 'Médaillon maternel contenant portrait miniature parent noble (seul lien tangible)' },
+        { itemId: 'unsigned_letter', quantity: 1, reason: 'Lettre non signée d\'un parent anonyme (reconnaissance implicite, jamais avouée)' },
+        { itemId: 'bastard_sigil', quantity: 1, reason: 'Blason familial avec barre sinistre (héraldique bâtarde)' }
       ],
       skills: [
-        { skillId: 'persuasion', bonus: 1, reason: 'Besoin constant de prouver sa valeur' },
-        { skillId: 'insight', bonus: 2, reason: 'Détecter mensonges et hypocrisie' }
+        { skillId: 'persuasion', bonus: 3, reason: 'Besoin constant prouver sa valeur, charme compensatoire' },  // ×2.5
+        { skillId: 'insight', bonus: 5, reason: 'Détecter mensonges, hypocrisie courtisane, faux-semblants nobles' },  // ×2.5
+        { skillId: 'deception', bonus: 3, reason: 'Cacher honte, feindre indifférence aux rejets répétés' }
       ],
-      languages: ['Commun', 'Langue Noble (partiel)'],
-      tags: ['bastard', 'noble_blood', 'outcast', 'ambitious']
+      gold: 500,  // Ancien: implicite moyen → +500 PO (héritage secret modeste)
+      languages: ['Commun', 'Langue Noble (dialecte courtisan)', 'Latin Héraldique (partiel)'],  // +2 langues
+      tags: ['bastard', 'noble_blood', 'outcast', 'ambitious', 'wounded_pride', 'unrecognized']
     },
     social_impacts: {
       npc_reactions: {
-        'nobles': 'Gêne ou mépris',
-        'roturiers': 'Sympathie',
-        'bâtards': 'Solidarité'
+        'nobles': 'Gêne palpable ou mépris ouvert (-6 disposition)',
+        'roturiers': 'Sympathie pour victime système (-4 disposition)',
+        'autres_batards': 'Solidarité immédiate fraternelle (+10 disposition)',
+        'herauts': 'Irritation professionnelle problème lignée (-4 disposition)',
+        'courtisans': 'Curiosité malsaine, potentiel scandale (+2 disposition)',
+        'parent_noble': 'Malaise écrasant, fuite conversation (variable)'
       },
-      first_impression: '« Un bâtard noble ? Le sang pur, mais pas le nom. Dommage. »'
+      first_impression: '« Un bâtard noble ? Le sang pur coule en toi, mais pas le nom qui compte. Quel dommage... ou quelle opportunité. »',
+      long_term_perception: 'Énigme sociale vivante. Certains admirent ta résilience, d\'autres jubilent de ton humiliation permanente. Ton existence même interroge fondements aristocratiques.'
     },
-    tags: ['bastard', 'noble_blood', 'outcast'],
-    incompatible_with: ['birth_status_nobility']
+    tags: ['bastard', 'noble_blood', 'outcast', 'ambitious'],
+    incompatible_with: ['birth_status_nobility', 'birth_status_peasant']
   },
 
   {
@@ -443,46 +485,72 @@ export const SOCIAL_STATUSES: LifeChoice[] = [
     stage: 'birth',
     category: 'status',
     label: 'Famille Criminelle Notoire',
-    desc: 'Né dans une famille de hors-la-loi célèbres : bandits, contrebandiers ou assassins.',
+    desc: 'Né dans une lignée de hors-la-loi célèbres : bandits de grand chemin, contrebandiers, empoisonneurs ou assassins. La loi te traque par ton nom de famille.',
     detailed_lore: {
-      backstory: 'Votre famille n\'est pas de celles qu\'on présente. Père voleur de grand chemin, mère empoisonneuse, oncle contrebandier... Vous avez grandi dans des cach Vous avez grandi entre coups fourrés, marchandages avec la pègre et fuites nocturnes devant les milices.',
-      defining_moment: 'À douze ans, vous avez participé à votre premier "coup". Votre père a dit : "Tu es des nôtres maintenant. Bienvenue dans la famille."',
-      worldview_shaped: 'Les lois protègent les riches, pas nous. La loyauté familiale prime sur tout. L\'honneur des voleurs existe.'
+      backstory: 'Votre famille n\'est pas de celles qu\'on présente aux autorités. Père voleur de grand chemin légendaire, mère empoisonneuse réputée, oncle contrebandier contrôlant ports clandestins, tante maîtresse-assassin de la Guilde des Ombres... Vous avez grandi entre coups fourrés, marchandages nocturnes avec la pègre et fuites précipitées devant milices. Vos premières leçons furent crocheter serrures, détecter pièges et mentir avec conviction. Le nom de votre famille ouvre portes souterraines mais attire regards suspects gardes.',
+      defining_moment: 'À douze ans, vous avez participé à votre premier "coup" (cambriolage manoir noble, contrebande armes, ou élimination témoin gênant). Après succès, votre père/mère vous a remis dague familiale gravée et dit : "Tu es des nôtres maintenant. Bienvenue dans la famille. Que la loi tremble à notre nom."',
+      worldview_shaped: 'Les lois protègent riches et puissants, pas nous. Survivre nécessite enfreindre règles arbitraires. La loyauté familiale prime sur morale hypocrite société. L\'honneur des voleurs existe vraiment—parole donnée entre criminels vaut plus que serments nobles.'
     },
     effects: {
-      stats: { dexterity: 1, intelligence: 1 },
+      // ========== STATS D100 (×2) ==========
+      stats: { dexterity: 2, intelligence: 2 },  // Ancien: DEX+1 INT+1 → DEX+2 INT+2 (agilité + ruse stratégique)
       mechanical_traits: [
         {
           name: 'Contacts Obscurs',
-          desc: 'Accès réseau criminel, +2 Investigation (monde souterrain)',
-          game_effect: 'Avantage informations illicites'
+          desc: 'Accès réseau criminel (guildes voleurs, contrebandiers, receleurs), +5 Investigation (monde souterrain), réduction 25% prix marché noir',
+          effect: '+5 Investigation (criminel)',  // ×2.5
+          game_effect: 'Avantage informations illicites + commerce clandestin'
+        },
+        {
+          name: 'Entraînement Familial Précoce',
+          desc: '+5 Stealth, +5 Deception, maîtrise outils voleur (lockpicks, disguise kit), connaissance codes pègre',
+          effect: '+5 Stealth, +5 Deception',  // ×2.5
+          game_effect: 'Compétences criminelles héritées depuis enfance'
+        },
+        {
+          name: 'Nom Maudit',
+          desc: '-8 disposition autorités/gardes (arrestation préventive possible), +1d20 échapper poursuites si préparation',
+          effect: '+1d20 Évasion',
+          game_effect: 'Malus légal compensé expertise fuite'
         }
       ],
       reputation: [
-        { factionId: 'guilde_voleurs', delta: 5, reason: 'Nom connu' },
-        { factionId: 'autorites', delta: -8, reason: 'Famille recherchée' }
+        { factionId: 'guilde_voleurs', delta: 8, reason: 'Nom familial respecté/redouté pègre' },
+        { factionId: 'autorites', delta: -12, reason: 'Famille recherchée, récompenses actives' },
+        { factionId: 'contrebandiers', delta: 6, reason: 'Connexions commerciales établies' },
+        { factionId: 'assassins', delta: 5, reason: 'Liens professionnels Guilde Ombres (si applicable)' },
+        { factionId: 'citoyens_honnetes', delta: -5, reason: 'Peur rumeurs familiales violentes' }
       ],
       items: [
-        { itemId: 'fathers_dagger', quantity: 1, reason: 'Héritage paternel' }
+        { itemId: 'fathers_dagger_notched', quantity: 1, reason: 'Dague paternelle gravée symbole familial, 7 encoches (victimes)' },
+        { itemId: 'thieves_tools_heirloom', quantity: 1, reason: 'Outils voleur qualité supérieure (héritage maternel)' },
+        { itemId: 'fence_contact_list', quantity: 1, reason: 'Liste codée receleurs fiables 5 villes majeures' },
+        { itemId: 'poison_vial_sample', quantity: 1, reason: 'Fiole poison paralysant (recette familiale secrète)' }
       ],
       skills: [
-        { skillId: 'stealth', bonus: 2, reason: 'Éviter les patrouilles' },
-        { skillId: 'deception', bonus: 2, reason: 'Mensonge vital' }
+        { skillId: 'stealth', bonus: 5, reason: 'Éviter patrouilles depuis adolescence' },  // ×2.5
+        { skillId: 'deception', bonus: 5, reason: 'Mensonge vital survie quotidienne' },  // ×2.5
+        { skillId: 'sleight_of_hand', bonus: 3, reason: 'Pickpocket, escamotage preuves' },
+        { skillId: 'investigation', bonus: 5, reason: 'Repérer cibles, faiblesses sécurité' }
       ],
-      languages: ['Commun', 'Cant des Voleurs'],
-      tags: ['criminal', 'outlaw', 'connections', 'hunted']
+      gold: 750,  // Ancien: implicite moyen → +750 PO (butin familial partagé)
+      languages: ['Commun', 'Cant des Voleurs', 'Code Contrebandiers'],  // +2 langues
+      tags: ['criminal', 'outlaw', 'connections', 'hunted', 'family_legacy', 'notorious']
     },
     social_impacts: {
       npc_reactions: {
-        'gardes': 'Arrestation immédiate',
-        'voleurs': 'Respect ou rivalité',
-        'citoyens': 'Peur',
-        'nobles': 'Dégoût'
+        'gardes': 'Arrestation préventive ou surveillance constante (-15 disposition)',
+        'voleurs': 'Respect craintif ou rivalité jalouse (+8 disposition)',
+        'citoyens_honnetes': 'Peur palpable, évitement physique (-7 disposition)',
+        'nobles': 'Dégoût absolu, demande expulsion (-10 disposition)',
+        'receleurs': 'Affaires privilégiées, crédit commercial (+12 disposition)',
+        'assassins': 'Reconnaissance professionnelle (si lignée assassins, +9 disposition)'
       },
-      first_impression: '« Ton nom... J\'ai entendu parler de ta famille. Fais attention à toi. »'
+      first_impression: '« Ton nom... J\'ai entendu parler de ta famille. Les gardes te recherchent. Fais attention à toi... ou aux autres. »',
+      long_term_perception: 'Héritage criminel double tranchant. Portes pègre ouvertes, mais vie légale presque impossible. Certains admirent audace familiale, plupart te craignent.'
     },
-    tags: ['criminal', 'outlaw', 'connections'],
-    incompatible_with: ['birth_status_nobility', 'birth_status_clerc']
+    tags: ['criminal', 'outlaw', 'connections', 'hunted'],
+    incompatible_with: ['birth_status_nobility', 'birth_status_clerc', 'birth_status_guard']
   },
 
   {
@@ -490,48 +558,73 @@ export const SOCIAL_STATUSES: LifeChoice[] = [
     stage: 'birth',
     category: 'status',
     label: 'Paria Maudit',
-    desc: 'Né sous une malédiction ou dans une famille rejetée, vous êtes un intouchable social.',
+    desc: 'Né sous malédiction ancestrale ou mauvais présage céleste. Intouchable social rejeté universellement, survivant aux marges civilisation par volonté indomptable.',
     detailed_lore: {
-      backstory: 'Votre famille porte une malédiction ancestrale, ou votre naissance fut marquée par un mauvais présage. Villages entiers vous chassent. Même les mendiants vous évitent. Vous survivez aux marges de la civilisation.',
-      defining_moment: 'Enfant, vous avez tenté de jouer avec d\'autres enfants. Leurs parents les ont rappelés en criant : "Ne touche pas le maudit !"',
-      worldview_shaped: 'Le monde me rejette. Je ne lui dois rien. Ma seule allégeance va à ceux qui me voient comme humain.'
+      backstory: 'Votre famille porte malédiction ancestrale (génocide oublié, pacte démoniaque ancien, trahison divine) ou votre naissance fut marquée mauvais présage (éclipse totale, comète rouge, cri corbeaux). Villages entiers vous chassent à coups pierres. Même mendiants vous évitent comme pestiférés. Prêtres refusent vous bénir. Guildes rejettent candidature. Vous survivez aux marges civilisation : forêts maudites, ruines hantées, cimetières abandonnés. Votre seule compagnie : animaux sauvages, esprits errands, ou rares parias similaires.',
+      defining_moment: 'Enfant affamé, vous avez tenté jouer avec autres enfants village. Parents horrifiés les ont rappelés violemment criant : "Ne touche JAMAIS le maudit ! Son ombre porte mort !" Vous avez compris ce jour-là que monde ne vous verrait jamais comme humain.',
+      worldview_shaped: 'Le monde me rejette comme déchet. Je ne lui dois rien—ni obéissance, ni pitié, ni allégeance. Ma seule loyauté va aux rares âmes assez courageuses (ou désespérées) pour me voir comme personne, pas symbole malheur. Si société veut monstre, peut-être deviendrai-je celui qu\'ils craignent.'
     },
     effects: {
-      stats: { willpower: 2 },
-      stats_penalty: { charisma: 2 },
+      // ========== STATS D100 (×2) ==========
+      stats: { wisdom: 4 },  // Ancien: WIL+2 → WIS+4 (résilience mentale extrême solitude)
+      stats_penalty: { charisma: 4 },  // Ancien: CHA-2 → CHA-4 (aura maudite repoussante)
       mechanical_traits: [
         {
-          name: 'Esprit Endurci',
-          desc: 'Immunité effets psychologiques sociaux, +3 Volonté, +2 Survie',
-          effect: '+3 WIL, +2 Survie',
-          game_effect: 'Résistance mentale extrême'
+          name: 'Esprit Endurci par Rejet',
+          desc: 'Immunité effets psychologiques sociaux (charme, terreur sociale, manipulation émotionnelle), +8 Perception détecter mensonges/pièges sociaux, avantage jets Volonté',
+          effect: '+8 Perception',  // ×2.5
+          game_effect: 'Résistance mentale légendaire forgée souffrance'
         },
         {
-          name: 'Aura de Malédiction',
-          desc: '-2 jets sociaux (sauf Intimidation), mais +3 Intimidation/Survie',
-          effect: '-2 Social, +3 Intimidation',
-          game_effect: 'Pénalité sociale compensée'
+          name: 'Aura de Malédiction Palpable',
+          desc: '-10 jets sociaux (Persuasion/Deception/Performance), mais +5 Intimidation (peur instinctive), +5 Survival (vie marginale), animaux tolèrent présence',
+          effect: '-10 Social, +5 Intimidation, +5 Survival',  // ×2.5
+          game_effect: 'Pénalité sociale massive compensée survie + terreur inspirée'
+        },
+        {
+          name: 'Résilience du Paria',
+          desc: '+1d20 résister maladies/poisons (système immunitaire renforcé vie insalubre), ignore 1 niveau épuisement, régénération HP +2 repos courts',
+          effect: '+1d20 Résistance Afflictions',
+          game_effect: 'Bonus d100 endurance extrême conditions hostiles'
         }
       ],
       reputation: [
-        { factionId: 'tous', delta: -5, reason: 'Paria universel' }
+        { factionId: 'tous_npcs', delta: -10, reason: 'Paria universel, superstition malédiction' },
+        { factionId: 'autres_parias', delta: 12, reason: 'Solidarité fraternelle rares marginaux' },
+        { factionId: 'cultistes_malediction', delta: 8, reason: 'Intérêt rituel malédiction ancienne (dangereux)' },
+        { factionId: 'druides_sauvages', delta: 3, reason: 'Respect survie nature hostile' },
+        { factionId: 'inquisition', delta: -8, reason: 'Suspicion hérésie/pacte démoniaque' }
       ],
-      items: [],
+      items: [
+        { itemId: 'cursed_amulet_fragment', quantity: 1, reason: 'Fragment amulette familiale maudite (origine malédiction)' },
+        { itemId: 'hermit_rags', quantity: 1, reason: 'Haillons ermite rapiécés (seuls vêtements possédés)' },
+        { itemId: 'wild_animal_companion', quantity: 1, reason: 'Corbeau/loup solitaire compagnon (seul être tolérant présence)' }
+      ],
       skills: [
-        { skillId: 'intimidation', bonus: 3, reason: 'Seul moyen d\'interaction' },
-        { skillId: 'survival', bonus: 2, reason: 'Vie aux marges' }
+        { skillId: 'intimidation', bonus: 5, reason: 'Seul moyen interaction : inspirer peur primal' },  // ×2.5
+        { skillId: 'survival', bonus: 5, reason: 'Vie marginale forêts/ruines depuis enfance' },  // ×2.5
+        { skillId: 'perception', bonus: 8, reason: 'Vigilance permanente hostilité environnante' },  // ×2.5
+        { skillId: 'animal_handling', bonus: 3, reason: 'Seuls alliés possibles : créatures sauvages' }
       ],
-      languages: ['Commun'],
-      tags: ['outcast', 'cursed', 'isolated', 'feared']
+      gold: 0,  // Commence sans ressources (rejet commercial total)
+      languages: ['Commun', 'Langage Bestial (rudimentaire)', 'Dialecte Parias (signes silencieux)'],  // +2 langues
+      tags: ['outcast', 'cursed', 'isolated', 'feared', 'pariah', 'survivor_extreme', 'untouchable']
     },
     social_impacts: {
       npc_reactions: {
-        'tous': 'Peur, rejet, hostilité',
-        'autres_parias': 'Solidarité rare'
+        'tous_citoyens': 'Peur viscérale, rejet immédiat, évitement physique (-12 disposition)',
+        'gardes': 'Ordre expulsion ville sous 24h (-10 disposition)',
+        'nobles': 'Dégoût absolu, refus contact visuel (-15 disposition)',
+        'prêtres': 'Refus sacrements, exorcisme tenté (variable -8 à -12)',
+        'autres_parias': 'Solidarité rare mais profonde (+15 disposition)',
+        'cultistes': 'Fascination morbide pouvoir malédiction (+8 disposition)',
+        'druides': 'Respect étrange résilience surnaturelle (+5 disposition)',
+        'animaux_sauvages': 'Tolérance inhabituelle, pas fuite instinctive (+7 disposition)'
       },
-      first_impression: '« Recule ! Ne le touche pas, il porte malheur ! »'
+      first_impression: '« Recule ! Ne le touche JAMAIS, il porte malheur incarné ! Éloigne-toi ou sa malédiction te consumera aussi ! »',
+      long_term_perception: 'Symbole vivant peur superstitieuse. Certains te voient victime tragique, plupart symbole malheur à fuir. Rares âmes courageuses découvrent humanité sous aura maudite.'
     },
-    tags: ['outcast', 'cursed', 'isolated'],
-    incompatible_with: ['birth_status_nobility', 'birth_status_clerc', 'birth_status_merchant']
+    tags: ['outcast', 'cursed', 'isolated', 'feared'],
+    incompatible_with: ['birth_status_nobility', 'birth_status_clerc', 'birth_status_merchant', 'birth_status_guard']
   }
 ];
