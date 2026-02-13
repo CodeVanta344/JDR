@@ -69,7 +69,34 @@ export function useCombatSync(sessionId, initialCombatants = []) {
                         
                         // Use requestAnimationFrame to batch updates
                         requestAnimationFrame(() => {
-                            setCombatants(newState.combatants || []);
+                            // Merge with local state to preserve animations
+                            setCombatants(prevCombatants => {
+                                const newCombatants = newState.combatants || [];
+                                
+                                // If we have local state, preserve it for units that haven't changed significantly
+                                if (prevCombatants.length > 0) {
+                                    return newCombatants.map(newUnit => {
+                                        const prevUnit = prevCombatants.find(u => u.id === newUnit.id);
+                                        
+                                        // If unit exists locally and positions match exactly, keep local (animation might be running)
+                                        if (prevUnit && 
+                                            prevUnit.posX === newUnit.posX && 
+                                            prevUnit.posY === newUnit.posY) {
+                                            // Merge: keep local positions, update other fields
+                                            return {
+                                                ...newUnit,
+                                                // Preserve animation-related local state
+                                                animating: prevUnit.animating
+                                            };
+                                        }
+                                        
+                                        return newUnit;
+                                    });
+                                }
+                                
+                                return newCombatants;
+                            });
+                            
                             setRound(newState.round || 1);
                             setCurrentTurnIndex(newState.turnIndex || 0);
                             setVersion(newVersion);
