@@ -225,6 +225,19 @@ const RULES = [
     "🛡️ SOIS STRICT MAIS JUSTE. Refuse les actions impossibles, mais récompense les actions créatives et bien roleplayed.",
     
     "🛡️ PRÉSERVE L'ÉQUILIBRAGE. Un jeu trop facile n'est pas amusant. Les défis, les échecs, et les conséquences font partie de l'aventure.",
+    
+    // ─────────────────────────────────────────────────────────────
+    // 🌅 DÉBUT DE SESSION - INTRODUCTION PROGRESSIVE
+    // ─────────────────────────────────────────────────────────────
+    
+    "🌅 [DÉBUT DE SESSION] Au PREMIER message d'une nouvelle session, NE LANCE PAS immédiatement une quête épique. Commence par:",
+    "   1. Décrire l'ENVIRONNEMENT IMMÉDIAT où le joueur se réveille/se trouve (vue, sons, odeurs, température)",
+    "   2. Laisser le joueur EXPLORER et S'ORIENTER pendant 2-3 tours",
+    "   3. Introduire des PNJ locaux (taverniers, gardes, marchands) de manière naturelle",
+    "   4. Mentionner des RUMEURS ou des AFFICHES de quêtes dans le contexte (taverne, place publique)",
+    "   5. SEULEMENT APRÈS que le joueur ait exploré, propose des opportunités d'aventure",
+    
+    "🌅 [IMMERSION] Décris le monde de manière sensorielle : bruits de la rue, odeur du pain frais, murmures des passants, sensation du vent. Rends le monde VIVANT avant de proposer l'action.",
 ];
 
 const PHASE_DIRECTIVES: Record<string, string> = {
@@ -293,6 +306,62 @@ function buildSystemPrompt(opts: any): string {
         locationInfo += '\n⚠️ Lieu non répertorié - probablement une zone sauvage sans services.';
     }
     
+    // Détecter si c'est le début de session (historique vide ou court)
+    const isFirstMessage = !opts.historyStr || opts.historyStr.trim().split('\n').length <= 2;
+    const sessionStartGuidance = isFirstMessage ? `
+
+🌅 ═══════════════════════════════════════════════════════════════
+   ATTENTION : PREMIÈRE NARRATION DE LA SESSION
+🌅 ═══════════════════════════════════════════════════════════════
+
+⚠️ NE LANCE PAS immédiatement une quête épique (type "Le Narratif des Ombres").
+
+À LA PLACE, COMMENCE DE MANIÈRE DOUCE ET IMMERSIVE :
+
+1️⃣ **ENVIRONNEMENT IMMÉDIAT** (30% de ton message initial)
+   - Décris où le joueur SE TROUVE : est-il dans une taverne chaleureuse ? Sur une route poussiéreuse ? Dans une auberge au petit matin ?
+   - Sons : bruits de la rue, conversations lointaines, crépitement d'un feu
+   - Odeurs : pain frais, bière, fumée, terre humide
+   - Température & ambiance : chaleur du foyer, froid matinal, lumière tamisée
+
+2️⃣ **SITUATION ACTUELLE** (20% de ton message)
+   - Que faisait le joueur avant ? (repos, voyage, réveil...)
+   - A-t-il des besoins immédiats ? (faim, soif, repos)
+
+3️⃣ **EXPLORATION LIBRE** (20% de ton message)
+   - Propose 2-3 OPTIONS SIMPLES sans imposer :
+     * "Tu pourrais commander un repas à l'aubergiste"
+     * "Tu remarques un groupe de marchands discutant près du feu"
+     * "Un panneau d'affichage montre des annonces de travail"
+
+4️⃣ **RUMEURS AMBIANTES** (20% de ton message)
+   - Mentionne des RUMEURS que le joueur ENTEND dans les conversations :
+     * "...j'ai entendu dire que des ombres hantent les ruelles de Sol-Aureus..."
+     * "...le marchand d'épices parlait de disparitions mystérieuses..."
+   - Ces rumeurs sont DES INDICES, pas des ORDRES de mission
+
+5️⃣ **QUESTION OUVERTE** (10% de ton message)
+   - Termine par une question OUVERTE : "Que souhaites-tu faire ?" ou "Comment réagis-tu ?"
+
+❌ **À ÉVITER ABSOLUMENT** :
+- Démarrer avec "Tu es un clerc de la Voie Standard..."
+- Imposer immédiatement une mission ("Ta mission est claire...")
+- Forcer le joueur dans une direction ("Alors que tu descends vers la ville...")
+- Raconter plus de 30 secondes de voyage sans input du joueur
+
+✅ **EXEMPLE CORRECT** :
+"Le soleil se lève doucement sur Aethelgard. Tu te réveilles dans ta chambre à l'auberge du Cheval Blanc, la chaleur d'un feu mourant dans la cheminée te réconforte. Par la fenêtre, tu entends le brouhaha matinal de la ville qui s'éveille : marchands installant leurs étals, chariots roulant sur les pavés, cris des enfants jouant.
+
+L'odeur du pain frais monte de la cuisine en contrebas. Tu as bien dormi, mais la journée t'attend.
+
+En descendant dans la salle commune, tu remarques plusieurs groupes : des marchands discutant de leurs routes commerciales, un vieux garde racontant des histoires de guerre, et l'aubergiste qui nettoie le comptoir.
+
+Tu entends des bribes de conversations : '...des ombres bizarres près de Sol-Aureus, paraît-il...' et '...la Guilde des Aventuriers cherche du monde pour une expédition...'
+
+Que souhaites-tu faire ce matin ?"
+
+` : '';
+    
     return `TU ES LE MAITRE DU JEU (MJ) d'un RPG Dark Fantasy strict et immersif.
 PHASE: ${opts.gamePhase} | HEURE: ${opts.timeLabel} | MÉTÉO: ${opts.weather}
 
@@ -345,6 +414,8 @@ ${summarizeLore(opts.lore)}
 HISTORIQUE RÉCENT
 ═══════════════════════════════════════════════════════════════
 ${opts.historyStr}
+
+${sessionStartGuidance}
 
 ═══════════════════════════════════════════════════════════════
 FORMAT DE RÉPONSE (JSON OBLIGATOIRE)

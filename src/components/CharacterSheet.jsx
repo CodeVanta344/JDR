@@ -284,11 +284,7 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                                                     </span>
                                                 )}
                                             </div>
-                                            {trait.desc && (
-                                                <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.95)', margin: 0, lineHeight: '1.6', letterSpacing: '0.2px' }}>
-                                                    {trait.desc}
-                                                </p>
-                                            )}
+                                            {/* Description removed as requested */}
                                         </div>
                                     ))}
                                 </div>
@@ -478,7 +474,7 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                                             </div>
                                         )}
                                     </div>
-                                    <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.9)', margin: 0, lineHeight: '1.6', fontStyle: 'italic', letterSpacing: '0.2px' }}>"{ability.desc}"</p>
+                                    {/* Description removed as requested */}
                                     {(ability.heal || ability.resource || ability.range || ability.dice || ability.scaling) && (
                                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
                                             {ability.dice && (
