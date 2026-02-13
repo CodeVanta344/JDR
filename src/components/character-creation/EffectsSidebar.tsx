@@ -49,17 +49,23 @@ export const EffectsSidebar: React.FC<Props> = ({ selection }) => {
 
       {/* Stats */}
       <section className="sidebar-section">
-        <h4>Statistiques</h4>
+        <div className="sidebar-label">Statistiques</div>
         <div className="stats-grid">
-          {(Object.keys(effects.final_stats) as StatKey[]).map(statKey => {
-            const value = effects.final_stats[statKey];
-            if (value === 0) return null;
+          {(Object.keys(STAT_LABELS) as StatKey[]).map(statKey => {
+            const bonus = effects.final_stats[statKey] || 0;
+            const baseValue = 0; // Base de référence
+            const finalValue = baseValue + bonus;
 
             return (
-              <div key={statKey} className={`stat-item ${value > 0 ? 'positive' : 'negative'}`}>
+              <div key={statKey} className="stat-item">
                 <span className="stat-label">{STAT_LABELS[statKey]}</span>
-                <span className="stat-value">
-                  {value > 0 ? '+' : ''}{value}
+                <span className="stat-value-display">
+                  <span className="final-value">{finalValue}</span>
+                  {bonus !== 0 && (
+                    <span className={`bonus-indicator ${bonus > 0 ? 'positive' : 'negative'}`}>
+                      {bonus > 0 ? '+' : ''}{bonus}
+                    </span>
+                  )}
                 </span>
               </div>
             );
@@ -70,7 +76,7 @@ export const EffectsSidebar: React.FC<Props> = ({ selection }) => {
       {/* Traits Mécaniques */}
       {effects.all_traits.length > 0 && (
         <section className="sidebar-section">
-          <h4>Capacités Spéciales ({effects.all_traits.length})</h4>
+          <div className="sidebar-label">Capacités Spéciales ({effects.all_traits.length})</div>
           <div className="traits-list">
             {effects.all_traits.map((trait, idx) => (
               <div key={idx} className="trait-item">
@@ -88,7 +94,7 @@ export const EffectsSidebar: React.FC<Props> = ({ selection }) => {
       {/* Réputation */}
       {effects.reputation_map.size > 0 && (
         <section className="sidebar-section">
-          <h4>Réputation</h4>
+          <div className="sidebar-label">Réputation</div>
           <div className="reputation-list">
             {Array.from(effects.reputation_map.entries()).map(([factionId, value]) => (
               <div key={factionId} className={`rep-item ${value > 0 ? 'positive' : 'negative'}`}>
@@ -105,7 +111,7 @@ export const EffectsSidebar: React.FC<Props> = ({ selection }) => {
       {/* Compétences */}
       {effects.skills.length > 0 && (
         <section className="sidebar-section">
-          <h4>Bonus Compétences</h4>
+          <div className="sidebar-label">Bonus Compétences</div>
           <div className="skills-list">
             {effects.skills.map((skill, idx) => (
               <div key={idx} className="skill-item">
@@ -120,7 +126,7 @@ export const EffectsSidebar: React.FC<Props> = ({ selection }) => {
       {/* Items */}
       {effects.items.length > 0 && (
         <section className="sidebar-section">
-          <h4>Équipement de Départ</h4>
+          <div className="sidebar-label">Équipement de Départ</div>
           <ul className="items-list">
             {effects.items.map((item, idx) => (
               <li key={idx}>
@@ -135,7 +141,7 @@ export const EffectsSidebar: React.FC<Props> = ({ selection }) => {
       {/* Langues */}
       {effects.languages.length > 0 && (
         <section className="sidebar-section">
-          <h4>Langues</h4>
+          <div className="sidebar-label">Langues</div>
           <div className="languages-tags">
             {effects.languages.map(lang => (
               <span key={lang} className="language-tag">{lang}</span>
@@ -147,7 +153,7 @@ export const EffectsSidebar: React.FC<Props> = ({ selection }) => {
       {/* Résumé Narratif */}
       {effects.narrative_summary && (
         <section className="sidebar-section narrative">
-          <h4>Votre Histoire</h4>
+          <div className="sidebar-label">Votre Histoire</div>
           <div className="narrative-text">
             {effects.narrative_summary}
           </div>

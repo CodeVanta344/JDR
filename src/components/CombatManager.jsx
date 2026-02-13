@@ -4,14 +4,15 @@ import { CombatLogger } from '../utils/logger';
 import { supabase } from '../supabaseClient';
 import { DieVisual } from './DieVisual';
 import { DiceRollScene } from './Dice3D';
-import { 
-    rollAttackD100, 
-    calculateDamageD100, 
-    calculateCombatantAC, 
+import {
+    rollAttackD100,
+    calculateDamageD100,
+    calculateCombatantAC,
     convertACtoD100,
-    formatCombatLogD100 
+    formatCombatLogD100
 } from '../utils/combat-d100';
 import { getModifier, getProficiencyBonus } from '../lore/rules';
+import './CombatManager.css';
 
 const DamagePopup = ({ amount, onDone }) => {
     useEffect(() => {
@@ -46,55 +47,26 @@ const TurnTracker = ({ combatants, currentTurnIndex }) => {
     }
 
     return (
-        <div style={{
-            display: 'flex', gap: '12px', padding: '12px 20px',
-            background: 'linear-gradient(135deg, rgba(0,0,0,0.8) 0%, rgba(20,20,30,0.6) 100%)',
-            borderRadius: '0 0 20px 20px',
-            border: '1px solid rgba(212, 175, 55, 0.3)',
-            borderTop: 'none',
-            backdropFilter: 'blur(12px)',
-            marginBottom: '20px',
-            width: 'fit-content',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-            position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
-            zIndex: 1000
-        }}>
-            {sequence.map((u, i) => (
-                <div key={`${u.id}-${i}`} style={{
-                    width: i === 0 ? '70px' : '50px',
-                    height: i === 0 ? '70px' : '50px',
-                    borderRadius: '50%',
-                    border: i === 0 ? '3px solid var(--gold-primary)' : '2px solid rgba(255,255,255,0.2)',
-                    position: 'relative',
-                    transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                    opacity: 1 - (i * 0.12),
-                    transform: i === 0 ? 'scale(1.15) translateY(5px)' : 'scale(1)',
-                    boxShadow: i === 0 ? '0 0 25px rgba(212, 175, 55, 0.6)' : 'none',
-                    background: 'rgba(0,0,0,0.4)',
-                    overflow: 'visible'
-                }}>
-                    <img src={u.portrait_url} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} alt="" />
-                    {i === 0 && (
-                        <div style={{
-                            position: 'absolute', bottom: '-10px', left: '50%', transform: 'translateX(-50%)',
-                            background: 'var(--gold-primary)', color: 'black', fontSize: '0.65rem',
-                            fontWeight: '900', padding: '2px 8px', borderRadius: '10px',
-                            boxShadow: '0 2px 5px rgba(0,0,0,0.5)', letterSpacing: '1px',
-                            textTransform: 'uppercase'
-                        }}>
-                            TOUR
-                        </div>
-                    )}
-                    {u.isEnemy && (
-                        <div style={{
-                            position: 'absolute', top: '-5px', right: '-5px',
-                            width: '15px', height: '15px', background: '#ff4444',
-                            borderRadius: '50%', border: '2px solid white',
-                            boxShadow: '0 0 5px rgba(255,0,0,0.5)'
-                        }} />
-                    )}
-                </div>
-            ))}
+        <div className="turn-tracker">
+            {sequence.map((u, i) => {
+                const isCurrent = i === 0;
+                return (
+                    <div
+                        key={`${u.id}-${i}`}
+                        className={`turn-actor-card ${isCurrent ? 'current' : ''} ${u.isEnemy ? 'enemy' : ''}`}
+                    >
+                        <img src={u.portrait_url} className="turn-actor-portrait" alt="" />
+                        {isCurrent && (
+                            <div className="turn-focus-badge">
+                                TOUR
+                            </div>
+                        )}
+                        {u.isEnemy && !isCurrent && (
+                            <div className="turn-enemy-pip" />
+                        )}
+                    </div>
+                );
+            })}
         </div>
     );
 };
@@ -282,14 +254,14 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
 
     // SYNC: Update local state from Shared State
     useEffect(() => {
-        console.log('[SYNC] useEffect triggered', { 
-            updatedAt: syncedCombatState?.updatedAt, 
-            lastSync: lastSyncRef.current, 
+        console.log('[SYNC] useEffect triggered', {
+            updatedAt: syncedCombatState?.updatedAt,
+            lastSync: lastSyncRef.current,
             shouldSkip: syncedCombatState?.updatedAt && syncedCombatState?.updatedAt <= lastSyncRef.current,
             active: syncedCombatState?.active,
             movingUnit: movingUnit // Log if animation is active
         });
-        
+
         if (syncedCombatState && syncedCombatState.active) {
             // CRITICAL FIX: Only apply if this is a newer update than what we already have
             if (syncedCombatState.updatedAt && syncedCombatState.updatedAt <= lastSyncRef.current) {
@@ -302,13 +274,13 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                 console.log('[SYNC] BLOCKED - Animation in progress, will sync after completion');
                 return; // Skip sync while unit is animating to avoid overwriting intermediate positions
             }
-            
+
             console.log(`[Combat Sync] ====== RECEIVING SYNCED STATE ======`);
             console.log(`[Combat Sync] Combatants count: ${syncedCombatState.combatants?.length}`);
             syncedCombatState.combatants?.forEach((c, i) => {
                 console.log(`[Combat Sync] [${i}] name: ${c.name}, isEnemy: ${c.isEnemy}, user_id: ${c.user_id}`);
             });
-            
+
             lastSyncRef.current = syncedCombatState.updatedAt || Date.now();
             setCombatants(syncedCombatState.combatants || []);
             setRound(syncedCombatState.round || 1);
@@ -344,7 +316,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                 }
             }
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [syncedCombatState?.updatedAt, currentUserId, movingUnit]); // Re-check sync when animation completes
 
     const getPosPercent = (pos, isY = false) => {
@@ -438,7 +410,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                 // Appliquer les bonus de traits LifePath
                 const mechanicalTraits = p.mechanical_traits || [];
                 const skillBonuses = p.skill_bonuses || [];
-                
+
                 // Calculer les bonus passifs des traits
                 let bonusAC = 0;
                 let bonusAtk = 0;
@@ -446,7 +418,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                 let bonusDiceDamage = ''; // Format: "1d6" ou "2d6"
                 let resistances = {}; // Ex: { fire: 5, cold: 10 }
                 let passiveTraits = [];
-                
+
                 mechanicalTraits.forEach(trait => {
                     if (trait.name) {
                         passiveTraits.push(trait);
@@ -455,17 +427,17 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                         const atkMatch = trait.effect?.match(/\+(\d+)\s*(ATK|Attaque)/i);
                         const dmgMatch = trait.effect?.match(/\+(\d+)\s*(DMG|dégâts)/i);
                         const diceMatch = trait.effect?.match(/\+(\d+)d(\d+)/i); // +1d6, +2d8, etc.
-                        
+
                         // Parser résistances (ex: "Fire 5", "Résistance Feu 10")
                         const fireResist = trait.effect?.match(/(?:Fire|Feu)\s+(\d+)/i);
                         const coldResist = trait.effect?.match(/(?:Cold|Froid)\s+(\d+)/i);
                         const poisonResist = trait.effect?.match(/(?:Poison)\s+(\d+)/i);
-                        
+
                         if (acMatch) bonusAC += parseInt(acMatch[1]);
                         if (atkMatch) bonusAtk += parseInt(atkMatch[1]);
                         if (dmgMatch) bonusDamage += parseInt(dmgMatch[1]);
                         if (diceMatch) bonusDiceDamage = `${diceMatch[1]}d${diceMatch[2]}`;
-                        
+
                         if (fireResist) resistances.fire = parseInt(fireResist[1]);
                         if (coldResist) resistances.cold = parseInt(coldResist[1]);
                         if (poisonResist) resistances.poison = parseInt(poisonResist[1]);
@@ -475,7 +447,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                 // ========== STATS D100 ==========
                 // STR, DEX, CON etc. restent 1-30 (déjà dans p.stats)
                 const level = p.level || 1;
-                
+
                 // CA d100 : calculer depuis armure + DEX
                 const armorAC = p.equipment?.reduce((acc, item) => acc + (item.stats?.ac || 0), 0) || 0;
                 const combatantData = {
@@ -486,7 +458,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                     level
                 };
                 const calculatedAC = calculateCombatantAC(combatantData) + (bonusAC * 3); // bonusAC traits × 3 pour d100
-                
+
                 // ATK d100 : mod attribut + bonus maîtrise + bonus traits
                 const strMod = getModifier(stats.str || 15);
                 const profBonus = getProficiencyBonus(level);
@@ -537,26 +509,26 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
             const enemiesToUse = (initialEnemies && initialEnemies.length > 0) ? initialEnemies.map((e, idx) => {
                 const pos = getUniquePos(true);
                 const baseEnemy = BESTIARY[e.name.split(' ')[0]] || BESTIARY[e.class] || {};
-                
+
                 // ========== CONVERSION D100 ENNEMIS ==========
                 // Si AC ancien (10-22), convertir en d100 (20-60)
                 let enemyAC = e.ac || baseEnemy.stats?.ac || 12;
                 if (enemyAC < 20) {
                     enemyAC = convertACtoD100(enemyAC);
                 }
-                
+
                 // ATK : si ancien (+2-6), multiplier ×2.5
                 let enemyATK = e.atk || baseEnemy.stats?.atk || 5;
                 if (enemyATK < 10) {
                     enemyATK = Math.round(enemyATK * 2.5);
                 }
-                
+
                 // HP : si ancien (10-50), multiplier ×5
                 let enemyHP = e.hp || baseEnemy.stats?.hp || 20;
                 if (enemyHP < 100) {
                     enemyHP = enemyHP * 5;
                 }
-                
+
                 return {
                     id: e.id || `ai-enemy-${idx}`,
                     name: e.name || "Ennemi Inconnu",
@@ -592,33 +564,33 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                 };
             }) : [
                 // Ennemis par défaut (DÉJÀ CONVERTIS D100)
-                { 
-                    id: 'e1', 
-                    name: "Scouteur Gobelin", 
-                    class: "Guerrier", 
+                {
+                    id: 'e1',
+                    name: "Scouteur Gobelin",
+                    class: "Guerrier",
                     hp: 75,          // Ancien 15 × 5
-                    maxHp: 75, 
+                    maxHp: 75,
                     atk: 8,          // Ancien 3 × 2.5 arrondi
                     ac: 33,          // Ancien 13 converti
                     str: 10, dex: 16, con: 12, int: 8, wis: 10, cha: 6,
                     level: 1,
-                    resource: 20, 
-                    maxResource: 20, 
-                    resourceName: "Rage", 
-                    initiative: 12, 
-                    isEnemy: true, 
-                    posX: 5, 
-                    posY: 0, 
-                    hasMoved: false, 
-                    hasActed: false, 
-                    portrait_url: "https://images.squarespace-cdn.com/content/v1/55ef483ce4b08053a4798e69/1472502693766-U9JOPM87W9PDKMOK99E6/goblinknight.jpg", 
-                    maxPM: 5, 
-                    currentPM: 5, 
-                    behavior_type: "RANGED", 
+                    resource: 20,
+                    maxResource: 20,
+                    resourceName: "Rage",
+                    initiative: 12,
+                    isEnemy: true,
+                    posX: 5,
+                    posY: 0,
+                    hasMoved: false,
+                    hasActed: false,
+                    portrait_url: "https://images.squarespace-cdn.com/content/v1/55ef483ce4b08053a4798e69/1472502693766-U9JOPM87W9PDKMOK99E6/goblinknight.jpg",
+                    maxPM: 5,
+                    currentPM: 5,
+                    behavior_type: "RANGED",
                     actions: [
-                        { name: 'Arc court', range: 12, damage_dice: '1d30' }, 
+                        { name: 'Arc court', range: 12, damage_dice: '1d30' },
                         { name: 'Cimeterre', range: 1.5, damage_dice: '1d30' }
-                    ] 
+                    ]
                 }
             ];
 
@@ -671,7 +643,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
             onLogAction({ role: 'system', content: `⚔️ **LE COMBAT COMMENCE !** L'échiquier du destin est en place.` });
             addLog({ role: 'system', content: `⚔️ **LE COMBAT COMMENCE !** L'échiquier du destin est en place.` });
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [combatState, players?.length, initialEnemies?.length, syncedCombatState]); // Use lengths instead of arrays to avoid unnecessary re-inits
 
     // CHECK VICTORY / DEFEAT
@@ -837,16 +809,16 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
             const latestCombatants = combatantsRef.current;
             const newCombatants = latestCombatants.map(u => u.id === freshActor.id ? { ...u, posX: newX, posY: newY, currentPM: u.currentPM - 1, facing: newFacing, hasMoved: true } : u);
             setCombatants(newCombatants);
-            
+
             // Sync immediately to all clients
             if (onUpdateCombatState) {
-                onUpdateCombatState({ 
-                    combatants: newCombatants, 
-                    turnIndex: currentTurnIndex, 
-                    round, 
-                    active: true, 
-                    logs, 
-                    updatedAt: Date.now() 
+                onUpdateCombatState({
+                    combatants: newCombatants,
+                    turnIndex: currentTurnIndex,
+                    round,
+                    active: true,
+                    logs,
+                    updatedAt: Date.now()
                 });
             }
 
@@ -854,7 +826,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
             animateMovement(freshActor.id, freshActor.posX, freshActor.posY, newX, newY, () => {
                 console.log(`[executeMove] Animation complete for ${freshActor.name} at (${newX}, ${newY})`);
             });
-            
+
             if (onSFX) onSFX('footstep');
         }
     };
@@ -932,22 +904,22 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
         // ========== SYSTÈME D100 - JET D'ATTAQUE ==========
         const actorLevel = freshActor.level || 1;
         const { bonus: tacticalBonus, reason: tacticalReason } = getTacticalModifier(freshActor, target);
-        
+
         // Jet d'attaque d100
         const rollData = rollAttackD100(freshActor, target, actorLevel, tacticalBonus);
         const { roll, modifier, total, success, isCritical } = rollData;
-        
+
         // Afficher overlay avec résultat
-        setRollOverlay({ 
-            roll, 
-            modifier, 
-            tacticalReason, 
-            threshold: target.ac, 
-            success, 
+        setRollOverlay({
+            roll,
+            modifier,
+            tacticalReason,
+            threshold: target.ac,
+            success,
             isCritical,
-            type: 'hit', 
-            targetId: target.id, 
-            action 
+            type: 'hit',
+            targetId: target.id,
+            action
         });
         if (onSFX) onSFX('dice');
     };
@@ -1004,7 +976,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
         });
 
         if (onSFX) onSFX('magic');
-        
+
         // CRITICAL FIX: Finish turn after using item
         setTimeout(() => finishTurn(), 800);
     };
@@ -1023,11 +995,11 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                 // ========== SYSTÈME D100 - CALCUL DÉGÂTS ==========
                 const damageData = calculateDamageD100(currentActor, action, rollData.isCritical);
                 const damage = damageData.damage;
-                
+
                 // Log formaté d100
                 const combatLog = formatCombatLogD100(currentActor, target, rollData, damageData);
                 addLog({ role: 'system', content: combatLog });
-                
+
                 setAnimatingId(currentActor.id);
                 if (onVFX) onVFX(action.name === 'Attaque' ? 'blood' : 'magic', cx, cy, action.name === 'Attaque' ? '#ff0000' : 'var(--aether-blue)');
 
@@ -1122,13 +1094,13 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
 
     const finishTurn = () => {
         setAnimatingId(null); setShakingId(null);
-        
+
         // CRITICAL FIX: Mark current actor as having acted to prevent infinite replay
-        const updatedCombatants = combatants.map(u => 
+        const updatedCombatants = combatants.map(u =>
             u.id === currentActor?.id ? { ...u, hasActed: true } : u
         );
         setCombatants(updatedCombatants);
-        
+
         const playersAlive = updatedCombatants.some(u => !u.isEnemy && u.hp > 0);
         const enemiesAlive = updatedCombatants.some(u => u.isEnemy && u.hp > 0);
 
@@ -1142,31 +1114,31 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
             addLog({ role: 'system', content: `💀 **DÉFAITE...** La compagnie a succombé.` });
             return;
         }
-        
+
         // Slight delay before next turn to ensure state propagation
         setTimeout(nextTurn, 100);
     };
 
     const nextTurn = () => {
         if (combatState === 'finished') return;
-        
+
         // CRITICAL FIX: Use combatantsRef to get latest state (not stale closure)
         const currentCombatants = combatantsRef.current;
-        
+
         let nextIndex = (currentTurnIndex + 1) % currentCombatants.length;
         let loops = 0;
         while (currentCombatants[nextIndex].hp <= 0 && loops < currentCombatants.length) {
             nextIndex = (nextIndex + 1) % currentCombatants.length;
             loops++;
         }
-        
+
         // Check if we completed a full round (wrapped back to start)
         const newRound = nextIndex < currentTurnIndex ? round + 1 : round;
         if (nextIndex < currentTurnIndex) {
             setRound(newRound);
             addLog({ role: 'system', content: `🕒 --- **DEBUT DU ROUND ${newRound}** ---` });
         }
-        
+
         setCurrentTurnIndex(nextIndex);
         setSelectedAction(null);
 
@@ -1282,7 +1254,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                     // Move ONE step towards target (not full path)
                     const dx = Math.sign(targetX - freshActor.posX);
                     const dy = Math.sign(targetY - freshActor.posY);
-                    
+
                     if (dx !== 0 || dy !== 0) {
                         // Prioritize primary axis (horizontal or vertical)
                         let moveX = 0, moveY = 0;
@@ -1347,176 +1319,73 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
     const UnitCard = ({ unit, style = {} }) => {
         const isCurrent = unit.id === currentActor?.id;
         const isTargetable = selectedAction && (unit.isEnemy !== currentActor?.isEnemy) && unit.hp > 0;
-        const isDamaged = shakingId === unit.id;
         const isJumping = animatingId === unit.id;
 
         return (
             <div id={`unit-${unit.id}`}
                 onClick={() => isTargetable && isLocalPlayerTurn && executeAttack(unit, selectedAction)}
+                className={`unit-card ${isCurrent ? 'active-turn' : ''} ${isTargetable ? 'targetable' : ''}`}
                 style={{
-                    width: '100px', height: '100px', borderRadius: '50%', background: '#0a0a0a',
-                    border: isCurrent ? '4px solid var(--gold-primary)' : (isTargetable ? '4px solid #ff4444' : '2px solid rgba(255,255,255,0.15)'),
-                    boxShadow: isCurrent ? '0 0 30px rgba(212, 175, 55, 0.4), inset 0 0 20px rgba(212, 175, 55, 0.2)' : '0 10px 30px rgba(0,0,0,0.8)',
-                    position: 'absolute', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    cursor: isTargetable ? 'crosshair' : (isCurrent ? 'pointer' : 'default'),
-                    transition: 'left 0.8s cubic-bezier(0.4, 0, 0.2, 1), top 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                    zIndex: isCurrent ? 100 : (isJumping ? 200 : 10), opacity: unit.hp <= 0 ? 0 : 1,
+                    left: style.left,
+                    top: style.top,
+                    opacity: unit.hp <= 0 ? 0 : 1,
                     pointerEvents: unit.hp <= 0 ? 'none' : 'auto',
-                    transform: `translate(-50%, -50%) ${isCurrent ? 'scale(1.1)' : 'scale(1)'}`,
-                    ...style
+                    zIndex: isCurrent ? 100 : (isJumping ? 200 : 10),
                 }}>
-                {/* Tactical Selection Ring (pulsing) */}
-                {isCurrent && (
-                    <div style={{
-                        position: 'absolute', inset: '-12px',
-                        border: '2px dashed var(--gold-primary)', borderRadius: '50%',
-                        animation: 'rotate 10s linear infinite, pulse 2s ease-in-out infinite',
-                        opacity: 0.6, pointerEvents: 'none'
-                    }} />
-                )}
 
-                {/* Facing Indicator (Orbital V-Shape) */}
-                <div style={{
-                    position: 'absolute',
-                    top: '50%', left: '50%',
-                    width: '30px', height: '30px',
+                {/* Tactical Selection Ring (pulsing) */}
+                {isCurrent && <div className="unit-selection-ring" />}
+
+                {/* Facing Indicator */}
+                <div className="unit-facing-indicator" style={{
                     transform: `translate(-50%, -50%) rotate(${unit.facing === 'NORTH' ? 0 : (unit.facing === 'EAST' ? 90 : (unit.facing === 'SOUTH' ? 180 : 270))}deg) translateY(-65px)`,
-                    zIndex: 30,
-                    pointerEvents: 'none',
-                    transition: 'transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                    display: 'flex', justifyContent: 'center'
                 }}>
-                    <div style={{
-                        width: '0', height: '0',
-                        borderLeft: '12px solid transparent',
-                        borderRight: '12px solid transparent',
-                        borderBottom: '22px solid var(--gold-primary)',
-                        filter: 'drop-shadow(0 0 15px var(--gold-primary))'
-                    }} />
+                    <div className="facing-arrow" />
                 </div>
 
-                <div style={{
-                    width: '90%', height: '90%', borderRadius: '50%',
-                    overflow: 'hidden', position: 'relative',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    background: 'rgba(0,0,0,0.5)'
-                }}>
+                <div className="unit-portrait-wrapper">
                     <img src={unit.portrait_url || 'https://placehold.co/150'}
-                        style={{
-                            width: '100%', height: '100%', objectFit: 'cover',
-                            filter: unit.hp <= (unit.maxHp * 0.3) ? 'grayscale(0.5) contrast(1.2)' : 'none',
-                            transition: 'filter 0.5s'
-                        }}
+                        className="unit-portrait"
+                        style={{ filter: unit.hp <= (unit.maxHp * 0.3) ? 'grayscale(0.5) contrast(1.2)' : 'none' }}
                         alt={unit.name}
                     />
 
-                    {/* Ring bars (Modernized) */}
-                    <svg style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }} viewBox="0 0 100 100">
-                        {/* HP Bar */}
-                        <circle cx="50" cy="50" r="47" fill="transparent" stroke="rgba(0,0,0,0.4)" strokeWidth="6" />
-                        <circle cx="50" cy="50" r="47" fill="transparent"
-                            stroke={unit.isEnemy ? "#f44" : "#4f4"}
-                            strokeWidth="6"
-                            strokeDasharray="295"
-                            strokeDashoffset={295 - (295 * (unit.hp / unit.maxHp))}
-                            strokeLinecap="round"
-                            style={{ transition: 'stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1)', filter: `drop-shadow(0 0 3px ${unit.isEnemy ? "#f44" : "#4f4"})` }}
-                        />
+                    {/* Orbital bars (Modernized) */}
+                    <div className="orbital-bars">
+                        <svg className="bar-svg" viewBox="0 0 100 100">
+                            {/* HP Bar */}
+                            <circle cx="50" cy="50" r="47" className="bar-circle-bg" />
+                            <circle cx="50" cy="50" r="47"
+                                className={`bar-circle hp-bar ${unit.isEnemy ? 'enemy' : ''}`}
+                                strokeDasharray="295"
+                                strokeDashoffset={295 - (295 * (unit.hp / unit.maxHp))}
+                            />
 
-                        {/* Resource Bar */}
-                        <circle cx="50" cy="50" r="41" fill="transparent" stroke="rgba(0,0,0,0.3)" strokeWidth="3" />
-                        <circle cx="50" cy="50" r="41" fill="transparent"
-                            stroke="var(--aether-blue)"
-                            strokeWidth="3"
-                            strokeDasharray="257"
-                            strokeDashoffset={257 - (257 * (unit.resource / unit.maxResource))}
-                            strokeLinecap="round"
-                            style={{ transition: 'stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1)', filter: 'drop-shadow(0 0 3px var(--aether-blue))' }}
-                        />
-                    </svg>
-                </div>
-
-                {/* Nameplate & Quick HUD */}
-                <div style={{
-                    position: 'absolute', bottom: '-55px',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
-                    animation: isCurrent ? 'flyUp 0.3s ease-out' : 'none'
-                }}>
-                    <div style={{
-                        background: 'linear-gradient(to bottom, rgba(30,30,40,0.95), rgba(10,10,15,0.95))',
-                        padding: '4px 12px', borderRadius: '20px', fontSize: '0.85rem',
-                        color: 'white', whiteSpace: 'nowrap',
-                        border: isCurrent ? '1px solid var(--gold-primary)' : '1px solid rgba(255,255,255,0.2)',
-                        fontWeight: '900',
-                        boxShadow: '0 4px 10px rgba(0,0,0,0.5)',
-                        textShadow: '0 2px 4px rgba(0,0,0,0.5)',
-                        letterSpacing: '0.5px'
-                    }}>
-                        {unit.name.toUpperCase()}
+                            {/* Resource Bar */}
+                            <circle cx="50" cy="50" r="41" className="bar-circle-bg" />
+                            <circle cx="50" cy="50" r="41"
+                                className="bar-circle resource-bar"
+                                strokeDasharray="257"
+                                strokeDashoffset={257 - (257 * (unit.resource / unit.maxResource))}
+                            />
+                        </svg>
                     </div>
                 </div>
 
+                {/* Nameplate */}
+                <div className="unit-name-plate">
+                    {unit.name.toUpperCase()}
+                </div>
+
                 {/* Stats Orbs */}
-                {/* Initiative (Right Top) */}
-                <div style={{
-                    position: 'absolute', top: '-12px', right: '-12px',
-                    width: '32px', height: '32px',
-                    background: 'linear-gradient(135deg, #333, #111)',
-                    color: 'var(--gold-light)', borderRadius: '50%',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontWeight: '900', fontSize: '0.8rem',
-                    border: '2px solid var(--gold-dim)',
-                    boxShadow: '0 4px 8px rgba(0,0,0,0.4)',
-                    zIndex: 30
-                }}>
-                    {unit.initiative}
-                </div>
+                <div className="stat-orb initiative">{unit.initiative}</div>
+                <div className="stat-orb pm">{unit.currentPM}</div>
 
-                {/* Move Points (Left Top) */}
-                <div style={{
-                    position: 'absolute', top: '-12px', left: '-12px',
-                    width: '32px', height: '32px',
-                    background: 'linear-gradient(135deg, var(--aether-blue), #005577)',
-                    color: 'white', borderRadius: '50%',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontWeight: '900', fontSize: '0.8rem',
-                    border: '2px solid white',
-                    boxShadow: '0 4px 12px rgba(0,180,255,0.4)',
-                    zIndex: 30
-                }}>
-                    {unit.currentPM}
-                </div>
-
-                {/* Side Badges (Vertical Stack) */}
-                <div style={{
-                    position: 'absolute', right: '-45px', top: '25px',
-                    display: 'flex', flexDirection: 'column', gap: '6px',
-                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))'
-                }}>
-                    {unit.hasMoved && (
-                        <div style={{
-                            width: '24px', height: '24px',
-                            background: 'rgba(60,60,70,0.9)', borderRadius: '6px',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '0.8rem', border: '1px solid rgba(255,255,255,0.2)'
-                        }} title="A déjà bougé">👟</div>
-                    )}
-                    {unit.hasActed && (
-                        <div style={{
-                            width: '24px', height: '24px',
-                            background: 'rgba(60,60,70,0.9)', borderRadius: '6px',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '0.8rem', border: '1px solid rgba(255,255,255,0.2)'
-                        }} title="A déjà agi">⚔️</div>
-                    )}
-                    {unit.behavior_type === 'RANGED' && unit.isEnemy && (
-                        <div style={{
-                            width: '24px', height: '24px',
-                            background: 'rgba(30,20,10,0.9)', borderRadius: '6px',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '0.8rem', border: '1px solid var(--gold-dark)'
-                        }} title="Archer">🏹</div>
-                    )}
+                {/* Side Badges */}
+                <div className="unit-badges-container">
+                    {unit.hasMoved && <div className="unit-badge" title="A déjà bougé">👟</div>}
+                    {unit.hasActed && <div className="unit-badge" title="A déjà agi">⚔️</div>}
+                    {unit.behavior_type === 'RANGED' && unit.isEnemy && <div className="unit-badge" title="Archer">🏹</div>}
                 </div>
 
                 {damagePopups.filter(p => p.targetId === unit.id).map(p => (
@@ -1524,7 +1393,6 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                 ))}
             </div>
         );
-
     };
 
     const AbilityCard = ({ ability }) => {
@@ -1535,89 +1403,34 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
         const isSelected = selectedAction?.name === ability.name;
 
         return (
-            <div onClick={() => canAfford && isLocalPlayerTurn && setSelectedAction(ability)}
-                style={{
-                    width: '130px', height: '180px',
-                    background: isSelected
-                        ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.45) 0%, rgba(10,10,15,0.95) 100%)'
-                        : (canAfford ? 'rgba(30,30,45,0.85)' : 'rgba(50,20,20,0.4)'),
-                    border: isSelected ? '2px solid var(--gold-primary)' : '1px solid rgba(212, 175, 55, 0.25)',
-                    borderRadius: '12px', padding: '14px',
-                    cursor: canAfford ? 'pointer' : 'not-allowed',
-                    transform: isSelected ? 'translateY(-25px) scale(1.05)' : 'none',
-                    transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                    opacity: canAfford ? 1 : 0.6,
-                    display: 'flex', flexDirection: 'column',
-                    position: 'relative',
-                    backdropFilter: 'blur(10px)',
-                    boxShadow: isSelected ? '0 15px 35px rgba(212, 175, 55, 0.3)' : '0 8px 20px rgba(0,0,0,0.5)',
-                    overflow: 'hidden'
-                }}>
-
+            <div
+                onClick={() => canAfford && isLocalPlayerTurn && setSelectedAction(ability)}
+                className={`ability-card-premium ${isSelected ? 'selected' : ''} ${!canAfford ? 'disabled' : ''}`}
+            >
                 {/* Visual Accent */}
-                <div style={{
-                    position: 'absolute', top: '-10px', left: '-10px',
-                    width: '50px', height: '50px',
-                    background: isSelected ? 'var(--gold-primary)' : 'rgba(255,255,255,0.05)',
-                    borderRadius: '50%', filter: 'blur(20px)', opacity: 0.3
-                }} />
+                <div className="ability-accent" />
 
                 {onCooldown && (
-                    <div style={{
-                        position: 'absolute', inset: 0,
-                        background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(2px)',
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '2rem', color: 'white', fontWeight: '900', zIndex: 10
-                    }}>
-                        {currentCooldown}
-                        <span style={{ fontSize: '0.6rem', color: '#888', textTransform: 'uppercase', letterSpacing: '1px' }}>Tours</span>
+                    <div className="ability-cooldown-overlay">
+                        <span className="cooldown-value">{currentCooldown}</span>
+                        <span className="cooldown-label">Tours</span>
                     </div>
                 )}
 
-                <div style={{
-                    fontSize: '0.75rem', fontWeight: '900',
-                    color: isSelected ? 'white' : 'var(--gold-light)',
-                    textTransform: 'uppercase', marginBottom: '8px',
-                    letterSpacing: '0.5px',
-                    borderBottom: '1px solid rgba(212, 175, 55, 0.2)',
-                    paddingBottom: '4px'
-                }}>
+                <div className="ability-title">
                     {ability.name}
                 </div>
 
-                <div style={{
-                    flex: 1, fontSize: '0.7rem',
-                    color: isSelected ? '#eee' : '#bbb',
-                    lineHeight: '1.3',
-                    fontStyle: 'italic'
-                }}>
+                <div className="ability-desc">
                     {ability.desc}
                 </div>
 
-                <div style={{
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    marginTop: '8px', background: 'rgba(0,0,0,0.3)', padding: '6px 8px', borderRadius: '8px'
-                }}>
-                    <span style={{ fontSize: '0.75rem', color: '#aaa', fontWeight: 'bold' }}>{ability.range}m</span>
-                    <div style={{
-                        width: '26px', height: '26px',
-                        background: 'linear-gradient(135deg, var(--aether-blue), #004466)',
-                        borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '0.75rem', color: 'white', fontWeight: 'bold',
-                        boxShadow: '0 0 10px rgba(0,180,255,0.3)',
-                        border: '1px solid rgba(255,255,255,0.2)'
-                    }}>
+                <div className="ability-footer">
+                    <span className="ability-range">{ability.range}m</span>
+                    <div className="ability-cost-orb">
                         {cost}
                     </div>
                 </div>
-
-                {isSelected && (
-                    <div style={{
-                        position: 'absolute', bottom: '0', left: 0, right: 0,
-                        height: '3px', background: 'var(--gold-primary)',
-                        boxShadow: '0 0 10px var(--gold-primary)'
-                    }} />
-                )}
             </div>
         );
     };
@@ -1626,23 +1439,23 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
         <div style={{ position: 'absolute', inset: 0, zIndex: 2000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}>
             {/* 3D Dice Animation */}
             <div style={{ marginBottom: '2rem' }}>
-                <DiceRollScene 
-                    diceType="d20" 
-                    value={roll} 
-                    onComplete={() => handleRollComplete({ roll, modifier, threshold, success, targetId: rollOverlay.targetId, action })} 
+                <DiceRollScene
+                    diceType="d20"
+                    value={roll}
+                    onComplete={() => handleRollComplete({ roll, modifier, threshold, success, targetId: rollOverlay.targetId, action })}
                 />
             </div>
             {/* Result Display */}
-            <div style={{ 
-                textAlign: 'center', 
-                padding: '2rem', 
-                background: 'rgba(10, 10, 20, 0.9)', 
+            <div style={{
+                textAlign: 'center',
+                padding: '2rem',
+                background: 'rgba(10, 10, 20, 0.9)',
                 borderRadius: '16px',
                 border: '2px solid var(--gold-dim)',
                 animation: 'slideUpFade 0.5s ease-out'
             }}>
                 <div style={{ fontSize: '2rem', color: 'white', marginBottom: '1rem', fontWeight: 'bold' }}>
-                    {roll} <span style={{ color: 'var(--gold-primary)', fontSize: '1.5rem' }}>+{modifier}</span> 
+                    {roll} <span style={{ color: 'var(--gold-primary)', fontSize: '1.5rem' }}>+{modifier}</span>
                     {tacticalReason && <span style={{ display: 'block', color: 'var(--gold-primary)', fontSize: '1rem', marginTop: '0.5rem' }}>({tacticalReason})</span>}
                     <span style={{ display: 'block', fontSize: '2.5rem', marginTop: '0.5rem', color: success ? '#00ff00' : '#ff4444', textShadow: success ? '0 0 20px #00ff00' : '0 0 20px #ff4444' }}>
                         = {roll + modifier}
@@ -1652,10 +1465,10 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                     Seuil de réussite: <span style={{ color: 'white', fontWeight: 'bold' }}>{threshold} AC</span>
                 </div>
                 {success && (
-                    <div style={{ 
-                        marginTop: '1rem', 
-                        fontSize: '2rem', 
-                        color: '#ff4444', 
+                    <div style={{
+                        marginTop: '1rem',
+                        fontSize: '2rem',
+                        color: '#ff4444',
                         fontWeight: '900',
                         textShadow: '0 0 20px rgba(255,0,0,0.8)',
                         animation: 'shockwave 0.5s ease-out'
@@ -1675,249 +1488,202 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
     );
 
 
-return (
-    <div className={`modal-overlay ${shake ? 'shake' : ''} ${flash ? 'flash-red' : ''}`} style={{ position: 'fixed', inset: 0, zIndex: 1200, background: 'black', display: 'flex', flexDirection: 'column' }}>
-        {combatState === 'finished' && !combatants.some(u => !u.isEnemy && u.hp > 0) && <GameOverScreen />}
-        <div style={{ height: '80px', padding: '0 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.7)', borderBottom: '1px solid var(--gold-dim)' }}>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ color: 'var(--gold-primary)', letterSpacing: '2px', fontSize: '1.1rem', fontWeight: 'bold' }}>COMBAT : ROUND {round}</span>
-                <span style={{ fontSize: '0.8rem', color: '#888' }}>{combatants.filter(u => u.hp > 0).length} combattants en lice</span>
+    return (
+        <div className={`modal-overlay ${shake ? 'shake' : ''} ${flash ? 'flash-red' : ''}`} style={{ position: 'fixed', inset: 0, zIndex: 1200, background: 'black', display: 'flex', flexDirection: 'column' }}>
+            {combatState === 'finished' && !combatants.some(u => !u.isEnemy && u.hp > 0) && <GameOverScreen />}
+            <div style={{ height: '80px', padding: '0 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.7)', borderBottom: '1px solid var(--gold-dim)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ color: 'var(--gold-primary)', letterSpacing: '2px', fontSize: '1.1rem', fontWeight: 'bold' }}>COMBAT : ROUND {round}</span>
+                    <span style={{ fontSize: '0.8rem', color: '#888' }}>{combatants.filter(u => u.hp > 0).length} combattants en lice</span>
+                </div>
+                {combatants.length > 0 && <TurnTracker combatants={combatants} currentTurnIndex={currentTurnIndex} />}
+                <button onClick={() => onCombatEnd({ victory: false, flight: true })} style={{ color: '#ff4444', background: 'transparent', border: '1px solid #ff4444', padding: '6px 16px', borderRadius: '4px', cursor: 'pointer' }}>FUIR</button>
             </div>
-            {combatants.length > 0 && <TurnTracker combatants={combatants} currentTurnIndex={currentTurnIndex} />}
-            <button onClick={() => onCombatEnd({ victory: false, flight: true })} style={{ color: '#ff4444', background: 'transparent', border: '1px solid #ff4444', padding: '6px 16px', borderRadius: '4px', cursor: 'pointer' }}>FUIR</button>
-        </div>
-        <div style={{ flex: 1, display: 'flex', position: 'relative', overflow: 'hidden', background: '#0a0a0a' }}>
-            <div style={{
-                flex: 1,
-                overflow: 'auto',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '80px'
-            }}>
+            <div style={{ flex: 1, display: 'flex', position: 'relative', overflow: 'hidden', background: '#0a0a0a' }}>
                 <div style={{
-                    position: 'relative',
-                    width: `${arenaConfig.blocksX * 100}px`,
-                    height: `${arenaConfig.blocksY * 100}px`,
-                    background: 'radial-gradient(circle at center, #1a1a2e 0%, #0a0a0a 100%)',
-                    backgroundSize: 'cover',
-                    boxShadow: '0 0 100px #000',
-                    border: '4px solid var(--gold-dim)',
-                    borderRadius: '8px'
+                    flex: 1,
+                    overflow: 'auto',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '80px'
                 }}>
-                    <div style={{
-                        position: 'absolute', inset: 0,
-                        pointerEvents: 'none',
-                        zIndex: 1,
-                        perspective: '1000px'
+                    <div className="combat-arena" style={{
+                        width: `${arenaConfig.blocksX * 100}px`,
+                        height: `${arenaConfig.blocksY * 100}px`,
                     }}>
-                        {/* Cinematic Atmosphere (Embers/Dust) */}
-                        <div className="embers-overlay" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 100, opacity: 0.4 }} />
-
-                        {/* Grid Scanline Effect */}
-                        <div style={{ position: 'absolute', inset: 0, background: 'repeating-linear-gradient(rgba(212, 175, 55, 0.03) 0px, transparent 1px, transparent 100px)', zIndex: 2 }} />
-
-                        {/* Vertical Lines */}
-                        {Array.from({ length: arenaConfig.blocksX + 1 }).map((_, i) => {
-                            const tiles = i - Math.floor(arenaConfig.blocksX / 2);
-                            const isMajor = tiles % 5 === 0;
-                            const isCenter = tiles === 0;
-                            const edgePercent = (i / arenaConfig.blocksX) * 100;
-                            return (
-                                <div key={`v-${i}`} style={{
-                                    position: 'absolute', left: `${edgePercent}%`, top: 0, bottom: 0,
-                                    width: isCenter ? '2px' : (isMajor ? '1px' : '1px'),
-                                    background: isCenter ? 'rgba(212, 175, 55, 0.4)' : (isMajor ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)'),
-                                    boxShadow: isCenter ? '0 0 10px rgba(212, 175, 55, 0.5)' : 'none'
-                                }}>
-                                    {isMajor && (
-                                        <div style={{
-                                            position: 'absolute', bottom: '-25px', padding: '2px 8px',
-                                            background: 'rgba(0,0,0,0.85)', borderRadius: '12px',
-                                            fontSize: '0.65rem', color: isCenter ? 'var(--gold-primary)' : 'rgba(255,255,255,0.6)',
-                                            border: '1px solid rgba(255,255,255,0.1)', transform: 'translateX(-50%)',
-                                            zIndex: 10, fontWeight: 'bold'
-                                        }}>
-                                            {tiles}
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-                        {/* Horizontal Lines */}
-                        {Array.from({ length: arenaConfig.blocksY + 1 }).map((_, i) => {
-                            const tiles = i - Math.floor(arenaConfig.blocksY / 2);
-                            const isMajor = tiles % 5 === 0;
-                            const isCenter = tiles === 0;
-                            const edgePercent = (i / arenaConfig.blocksY) * 100;
-                            return (
-                                <div key={`h-${i}`} style={{
-                                    position: 'absolute', top: `${edgePercent}%`, left: 0, right: 0,
-                                    height: isCenter ? '2px' : (isMajor ? '1px' : '1px'),
-                                    background: isCenter ? 'rgba(212, 175, 55, 0.3)' : (isMajor ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.03)'),
-                                    boxShadow: isCenter ? '0 0 10px rgba(212, 175, 55, 0.3)' : 'none'
-                                }}>
-                                    {isMajor && tiles !== 0 && (
-                                        <div style={{
-                                            position: 'absolute', left: '-25px', padding: '2px 6px',
-                                            background: 'rgba(0,0,0,0.85)', borderRadius: '8px',
-                                            fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)',
-                                            transform: 'translateY(-50%)', zIndex: 10, border: '1px solid rgba(255,255,255,0.1)'
-                                        }}>
-                                            {tiles}
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
-
-                    {/* Range Illumination (Tactical Squares) */}
-                    {(selectedAction || canMove) && isLocalPlayerTurn && currentActor && (
-                        <>
-                            {Array.from({ length: arenaConfig.blocksY }).map((_, yIdx) => {
-                                const y = yIdx - Math.floor(arenaConfig.blocksY / 2);
-                                return Array.from({ length: arenaConfig.blocksX }).map((_, xIdx) => {
-                                    const x = xIdx - Math.floor(arenaConfig.blocksX / 2);
-                                    const dx = x - currentActor.posX;
-                                    const dy = y - currentActor.posY;
-                                    // Chebyshev distance for "tactical squares"
-                                    const dist = Math.max(Math.abs(dx), Math.abs(dy));
-
-                                    let highlight = null;
-                                    if (selectedAction) {
-                                        if (dist <= (selectedAction.range || 1) && dist > 0) {
-                                            highlight = { color: 'rgba(212, 175, 55, 0.15)', border: '1px solid rgba(212, 175, 55, 0.3)', glow: 'rgba(212, 175, 55, 0.2)' };
-                                        }
-                                    } else if (canMove && dist <= currentActor.currentPM && dist > 0) {
-                                        highlight = { color: 'rgba(0, 150, 255, 0.08)', border: '1px dashed rgba(0, 150, 255, 0.4)', glow: 'rgba(0, 150, 255, 0.1)' };
-                                    }
-
-                                    if (highlight) {
-                                        const pX = getPosPercent(x);
-                                        const pY = getPosPercent(y, true);
-                                        return (
-                                            <div
-                                                key={`highlight-${x}-${y}`}
-                                                style={{
-                                                    position: 'absolute',
-                                                    left: `${pX}%`,
-                                                    top: `${pY}%`,
-                                                    width: `${100 / arenaConfig.blocksX}%`,
-                                                    height: `${100 / arenaConfig.blocksY}%`,
-                                                    background: highlight.color,
-                                                    border: highlight.border,
-                                                    boxShadow: `inset 0 0 15px ${highlight.glow}`,
-                                                    transform: 'translate(-50%, -50%)',
-                                                    zIndex: 1,
-                                                    pointerEvents: 'none',
-                                                    transition: 'all 0.4s'
-                                                }}
-                                            />
-                                        );
-                                    }
-                                    return null;
-                                });
+                        <div className="arena-grid-container">
+                            {/* Vertical Lines */}
+                            {Array.from({ length: arenaConfig.blocksX + 1 }).map((_, i) => {
+                                const tiles = i - Math.floor(arenaConfig.blocksX / 2);
+                                const isMajor = tiles % 5 === 0;
+                                const isCenter = tiles === 0;
+                                const edgePercent = (i / arenaConfig.blocksX) * 100;
+                                return (
+                                    <div key={`v-${i}`} className={`grid-line-y ${isCenter ? 'center' : (isMajor ? 'major' : '')}`} style={{ left: `${edgePercent}%` }}>
+                                        {isMajor && (
+                                            <div className="grid-coord-label x-axis">
+                                                {tiles}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
                             })}
-                        </>
-                    )}
 
-                    {/* Arena Decor */}
-                    {decor.map(d => (
-                        <div key={d.id} style={{
-                            position: 'absolute',
-                            left: `${getPosPercent(d.posX)}%`,
-                            top: `${getPosPercent(d.posY, true)}%`,
-                            width: `${d.size}px`,
-                            height: `${d.size}px`,
-                            background: d.color,
-                            boxShadow: `0 0 30px ${d.color}`,
-                            opacity: 0.5,
-                            borderRadius: d.name === 'Éclat de Vide' ? '20% 80%' : '8px',
-                            transform: 'translate(-50%, -50%) rotate(45deg)',
-                            pointerEvents: 'none',
-                            border: '2px solid rgba(255,255,255,0.15)',
-                            zIndex: 4
-                        }}>
-                            <div style={{ position: 'absolute', bottom: '-20px', width: '100%', textAlign: 'center', fontSize: '0.55rem', color: 'rgba(255,255,255,0.5)', fontWeight: 'bold', transform: 'rotate(-45deg)' }}>{d.name}</div>
+                            {/* Horizontal Lines */}
+                            {Array.from({ length: arenaConfig.blocksY + 1 }).map((_, i) => {
+                                const tiles = i - Math.floor(arenaConfig.blocksY / 2);
+                                const isMajor = tiles % 5 === 0;
+                                const isCenter = tiles === 0;
+                                const edgePercent = (i / arenaConfig.blocksY) * 100;
+                                return (
+                                    <div key={`h-${i}`} className={`grid-line-x ${isCenter ? 'center' : (isMajor ? 'major' : '')}`} style={{ top: `${edgePercent}%` }}>
+                                        {isMajor && tiles !== 0 && (
+                                            <div className="grid-coord-label y-axis">
+                                                {tiles}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
-                    ))}
 
-                    {/* Arena Units (2D Positioning with smooth animation) */}
-                    <div style={{ position: 'absolute', inset: 0, zIndex: 10 }}>
-                        {combatants.map((u, index) => {
-                            // Check if this unit is currently animating
-                            const isAnimating = movingUnit && movingUnit.id === u.id;
-                            const displayX = isAnimating ? movingUnit.animX : u.posX;
-                            const displayY = isAnimating ? movingUnit.animY : u.posY;
-                            
-                            const x = getPosPercent(displayX);
-                            const y = getPosPercent(displayY, true);
-                            return <UnitCard key={u.id} unit={u} style={{ 
-                                left: `${x}%`, 
-                                top: `${y}%`,
-                                transition: isAnimating ? 'none' : 'left 0.8s cubic-bezier(0.4, 0, 0.2, 1), top 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
-                            }} />;
-                        })}
+                        {/* Range Illumination (Tactical Squares) */}
+                        {(selectedAction || canMove) && isLocalPlayerTurn && currentActor && (
+                            <>
+                                {Array.from({ length: arenaConfig.blocksY }).map((_, yIdx) => {
+                                    const y = yIdx - Math.floor(arenaConfig.blocksY / 2);
+                                    return Array.from({ length: arenaConfig.blocksX }).map((_, xIdx) => {
+                                        const x = xIdx - Math.floor(arenaConfig.blocksX / 2);
+                                        const dx = x - currentActor.posX;
+                                        const dy = y - currentActor.posY;
+                                        // Chebyshev distance for "tactical squares"
+                                        const dist = Math.max(Math.abs(dx), Math.abs(dy));
+
+                                        let highlight = null;
+                                        if (selectedAction) {
+                                            if (dist <= (selectedAction.range || 1) && dist > 0) {
+                                                highlight = { color: 'rgba(212, 175, 55, 0.15)', border: '1px solid rgba(212, 175, 55, 0.3)', glow: 'rgba(212, 175, 55, 0.2)' };
+                                            }
+                                        } else if (canMove && dist <= currentActor.currentPM && dist > 0) {
+                                            highlight = { color: 'rgba(0, 150, 255, 0.08)', border: '1px dashed rgba(0, 150, 255, 0.4)', glow: 'rgba(0, 150, 255, 0.1)' };
+                                        }
+
+                                        if (highlight) {
+                                            const pX = getPosPercent(x);
+                                            const pY = getPosPercent(y, true);
+                                            return (
+                                                <div
+                                                    key={`highlight-${x}-${y}`}
+                                                    style={{
+                                                        position: 'absolute',
+                                                        left: `${pX}%`,
+                                                        top: `${pY}%`,
+                                                        width: `${100 / arenaConfig.blocksX}%`,
+                                                        height: `${100 / arenaConfig.blocksY}%`,
+                                                        background: highlight.color,
+                                                        border: highlight.border,
+                                                        boxShadow: `inset 0 0 15px ${highlight.glow}`,
+                                                        transform: 'translate(-50%, -50%)',
+                                                        zIndex: 1,
+                                                        pointerEvents: 'none',
+                                                        transition: 'all 0.4s'
+                                                    }}
+                                                />
+                                            );
+                                        }
+                                        return null;
+                                    });
+                                })}
+                            </>
+                        )}
+
+                        {/* Arena Decor */}
+                        {decor.map(d => (
+                            <div key={d.id} style={{
+                                position: 'absolute',
+                                left: `${getPosPercent(d.posX)}%`,
+                                top: `${getPosPercent(d.posY, true)}%`,
+                                width: `${d.size}px`,
+                                height: `${d.size}px`,
+                                background: d.color,
+                                boxShadow: `0 0 30px ${d.color}`,
+                                opacity: 0.5,
+                                borderRadius: d.name === 'Éclat de Vide' ? '20% 80%' : '8px',
+                                transform: 'translate(-50%, -50%) rotate(45deg)',
+                                pointerEvents: 'none',
+                                border: '2px solid rgba(255,255,255,0.15)',
+                                zIndex: 4
+                            }}>
+                                <div style={{ position: 'absolute', bottom: '-20px', width: '100%', textAlign: 'center', fontSize: '0.55rem', color: 'rgba(255,255,255,0.5)', fontWeight: 'bold', transform: 'rotate(-45deg)' }}>{d.name}</div>
+                            </div>
+                        ))}
+
+                        {/* Arena Units (2D Positioning with smooth animation) */}
+                        <div style={{ position: 'absolute', inset: 0, zIndex: 10 }}>
+                            {combatants.map((u, index) => {
+                                // Check if this unit is currently animating
+                                const isAnimating = movingUnit && movingUnit.id === u.id;
+                                const displayX = isAnimating ? movingUnit.animX : u.posX;
+                                const displayY = isAnimating ? movingUnit.animY : u.posY;
+
+                                const x = getPosPercent(displayX);
+                                const y = getPosPercent(displayY, true);
+                                return <UnitCard key={u.id} unit={u} style={{
+                                    left: `${x}%`,
+                                    top: `${y}%`,
+                                    transition: isAnimating ? 'none' : 'left 0.8s cubic-bezier(0.4, 0, 0.2, 1), top 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                                }} />;
+                            })}
+                        </div>
                     </div>
                 </div>
+                <div style={{
+                    width: '350px',
+                    background: 'linear-gradient(to right, rgba(0,0,0,0.95), rgba(15,15,25,0.95))',
+                    padding: '2rem 1.5rem',
+                    overflowY: 'auto',
+                    borderLeft: '1px solid rgba(212, 175, 55, 0.2)',
+                    backdropFilter: 'blur(20px)',
+                    boxShadow: '-10px 0 30px rgba(0,0,0,0.5)',
+                    display: 'flex', flexDirection: 'column', gap: '15px',
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: 'var(--gold-dark) transparent'
+                }}>
+                    <div style={{ color: 'var(--gold-light)', fontSize: '0.8rem', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '10px', fontWeight: 'bold', borderBottom: '1px solid rgba(212, 175, 55, 0.2)', paddingBottom: '5px' }}>Journal de Combat</div>
+                    {logs.map((l, i) => {
+                        const isImpact = l.content.includes('💥') || l.content.includes('💀');
+                        const isVictory = l.content.includes('🏆');
+                        const isSystem = l.role === 'system';
+                        return (
+                            <div key={i} style={{
+                                marginBottom: '0.8rem',
+                                fontSize: isVictory ? '1.2rem' : (isImpact ? '0.98rem' : '0.92rem'),
+                                color: isVictory ? 'var(--gold-primary)' : (isImpact ? '#fff' : 'rgba(255,255,255,0.7)'),
+                                borderLeft: isVictory ? '4px solid var(--gold-primary)' : (isImpact ? '3px solid #ff4444' : '2px solid rgba(255,255,255,0.2)'),
+                                padding: '8px 12px',
+                                background: isImpact ? 'linear-gradient(to right, rgba(255,0,0,0.15), transparent)' : (isVictory ? 'linear-gradient(to right, rgba(212, 175, 55, 0.1), transparent)' : 'transparent'),
+                                borderRadius: '0 8px 8px 0',
+                                animation: 'slideRight 0.3s ease-out',
+                                fontFamily: isSystem ? 'monospace' : 'inherit',
+                                lineHeight: '1.4'
+                            }}>
+                                {l.content}
+                            </div>
+                        );
+                    })}
+                    <div ref={logEndRef} />
+                </div>
+                {rollOverlay && <RollOverlay {...rollOverlay} />}
+                {remoteAction && <RemoteActionOverlay action={remoteAction} onComplete={() => setRemoteAction(null)} />}
             </div>
-            <div style={{
-                width: '350px',
-                background: 'linear-gradient(to right, rgba(0,0,0,0.95), rgba(15,15,25,0.95))',
-                padding: '2rem 1.5rem',
-                overflowY: 'auto',
-                borderLeft: '1px solid rgba(212, 175, 55, 0.2)',
-                backdropFilter: 'blur(20px)',
-                boxShadow: '-10px 0 30px rgba(0,0,0,0.5)',
-                display: 'flex', flexDirection: 'column', gap: '15px',
-                scrollbarWidth: 'thin',
-                scrollbarColor: 'var(--gold-dark) transparent'
-            }}>
-                <div style={{ color: 'var(--gold-light)', fontSize: '0.8rem', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '10px', fontWeight: 'bold', borderBottom: '1px solid rgba(212, 175, 55, 0.2)', paddingBottom: '5px' }}>Journal de Combat</div>
-                {logs.map((l, i) => {
-                    const isImpact = l.content.includes('💥') || l.content.includes('💀');
-                    const isVictory = l.content.includes('🏆');
-                    const isSystem = l.role === 'system';
-                    return (
-                        <div key={i} style={{
-                            marginBottom: '0.8rem',
-                            fontSize: isVictory ? '1.2rem' : (isImpact ? '0.98rem' : '0.92rem'),
-                            color: isVictory ? 'var(--gold-primary)' : (isImpact ? '#fff' : 'rgba(255,255,255,0.7)'),
-                            borderLeft: isVictory ? '4px solid var(--gold-primary)' : (isImpact ? '3px solid #ff4444' : '2px solid rgba(255,255,255,0.2)'),
-                            padding: '8px 12px',
-                            background: isImpact ? 'linear-gradient(to right, rgba(255,0,0,0.15), transparent)' : (isVictory ? 'linear-gradient(to right, rgba(212, 175, 55, 0.1), transparent)' : 'transparent'),
-                            borderRadius: '0 8px 8px 0',
-                            animation: 'slideRight 0.3s ease-out',
-                            fontFamily: isSystem ? 'monospace' : 'inherit',
-                            lineHeight: '1.4'
-                        }}>
-                            {l.content}
-                        </div>
-                    );
-                })}
-                <div ref={logEndRef} />
-            </div>
-            {rollOverlay && <RollOverlay {...rollOverlay} />}
-            {remoteAction && <RemoteActionOverlay action={remoteAction} onComplete={() => setRemoteAction(null)} />}
-        </div>
-        <div style={{
-            height: '240px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '1.2rem',
-            padding: '1.5rem',
-            background: 'linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 50%, transparent 100%)',
-            borderTop: '1px solid rgba(212, 175, 55, 0.15)',
-            zIndex: 100
-        }}>
-            {isLocalPlayerTurn ? (
-                <>
+
+            <div className="combat-footer">
+                {isLocalPlayerTurn ? (
                     <div style={{ display: 'flex', gap: '2rem', width: '100%', maxWidth: '1400px', justifyContent: 'center', alignItems: 'flex-end' }}>
                         {/* Movement Cluster */}
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ fontSize: '0.6rem', color: 'var(--gold-dim)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>Déplacement</div>
+                            <div style={{ fontSize: '0.6rem', color: 'var(--combat-gold-dim)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>Déplacement</div>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px', background: 'rgba(255,255,255,0.05)', padding: '6px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
                                 <div />
                                 <button onClick={() => executeMove('up')} disabled={!canMove} className="btn-medieval" style={{ width: '36px', height: '36px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px' }}>▲</button>
@@ -1930,7 +1696,7 @@ return (
 
                         {/* Abilities Scroll */}
                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', minWidth: 0 }}>
-                            <div style={{ fontSize: '0.6rem', color: 'var(--gold-dim)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>Capacités & Sorts</div>
+                            <div style={{ fontSize: '0.6rem', color: 'var(--combat-gold-dim)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>Capacités & Sorts</div>
                             <div style={{ display: 'flex', gap: '1rem', overflowX: 'auto', padding: '10px 5px 30px 5px', scrollbarWidth: 'none' }}>
                                 {[{ name: 'Attaque', desc: 'Attaque de base', range: 2 }, ...(currentActor.spells || currentActor.abilities || [])].map((s, i) => (
                                     <AbilityCard key={i} ability={typeof s === 'string' ? { name: s, range: 2 } : s} />
@@ -1940,7 +1706,7 @@ return (
 
                         {/* Items Section */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <div style={{ fontSize: '0.6rem', color: 'var(--aether-blue)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>Consommables</div>
+                            <div style={{ fontSize: '0.6rem', color: 'var(--combat-cyan)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>Consommables</div>
                             <div style={{ display: 'flex', gap: '10px', background: 'rgba(75, 207, 250, 0.05)', padding: '10px', borderRadius: '12px', border: '1px solid rgba(75, 207, 250, 0.2)', minHeight: '130px' }}>
                                 {currentActor.inventory?.filter(item => (item.stats && (item.stats.heal || item.stats.resource || item.stats.hp)) || ['consumable', 'potion', 'scroll'].includes(item.type?.toLowerCase())).length > 0 ? (
                                     currentActor.inventory
@@ -1949,20 +1715,11 @@ return (
                                             <div
                                                 key={`item-${idx}`}
                                                 onClick={() => !currentActor.hasActed && executeUseItem(item)}
-                                                style={{
-                                                    width: '90px', height: '120px',
-                                                    background: 'rgba(20,20,30,0.9)',
-                                                    border: '1px solid var(--aether-blue)', borderRadius: '8px', padding: '10px',
-                                                    cursor: currentActor.hasActed ? 'not-allowed' : 'pointer',
-                                                    transition: 'all 0.3s',
-                                                    opacity: currentActor.hasActed ? 0.5 : 1,
-                                                    display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-                                                    boxShadow: '0 4px 10px rgba(0,0,0,0.5)',
-                                                    transform: currentActor.hasActed ? 'none' : 'hover:scale(1.05)'
-                                                }}
+                                                className={`ability-card-premium ${currentActor.hasActed ? 'disabled' : ''}`}
+                                                style={{ width: '90px', height: '120px' }}
                                             >
-                                                <div style={{ fontWeight: '900', color: 'var(--aether-blue)', fontSize: '0.6rem', textTransform: 'uppercase' }}>{item.name}</div>
-                                                <div style={{ background: 'var(--aether-blue)', color: 'black', textAlign: 'center', borderRadius: '4px', padding: '2px', fontWeight: '900', fontSize: '0.55rem' }}>USER</div>
+                                                <div className="ability-title" style={{ fontSize: '0.6rem' }}>{item.name}</div>
+                                                <div style={{ background: 'var(--combat-cyan)', color: 'black', textAlign: 'center', borderRadius: '4px', padding: '2px', fontWeight: '900', fontSize: '0.55rem', marginTop: 'auto' }}>OBJET</div>
                                             </div>
                                         ))
                                 ) : (
@@ -1995,21 +1752,15 @@ return (
                             </button>
                         </div>
                     </div>
-                </>
-            ) : (
-                <div style={{
-                    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: 'var(--gold-dim)', fontSize: '1.5rem', letterSpacing: '4px',
-                    textTransform: 'uppercase', fontStyle: 'italic',
-                    animation: 'pulse 2s infinite'
-                }}>
-                    {currentActor?.isEnemy ? "L'ennemi réfléchit..." : `Attente de ${currentActor?.name || 'Joueur'}...`}
-                </div>
-            )}
-            {combatState === 'finished' && (
-                <button onClick={onCombatEnd} className="btn-gold" style={{ padding: '1rem 4rem', fontSize: '1.2rem', boxShadow: '0 0 30px var(--gold-primary)' }}>RETOUR AU MONDE</button>
-            )}
+                ) : (
+                    <div className="waiting-turn-aura">
+                        {currentActor?.isEnemy ? "L'ennemi réfléchit..." : `Attente de ${currentActor?.name || 'Joueur'}...`}
+                    </div>
+                )}
+                {combatState === 'finished' && (
+                    <button onClick={onCombatEnd} className="btn-gold" style={{ padding: '1rem 4rem', fontSize: '1.2rem', boxShadow: '0 0 30px var(--combat-gold)' }}>RETOUR AU MONDE</button>
+                )}
+            </div>
         </div>
-    </div>
-);
+    );
 };

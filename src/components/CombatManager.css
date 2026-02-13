@@ -1,0 +1,549 @@
+/* ============================================================
+   COMBAT MANAGER - PREMIUM THEME (ULTRA-QUALITATIVE)
+   ============================================================ */
+
+:root {
+    --combat-gold: #d4af37;
+    --combat-gold-bright: #fbeea8;
+    --combat-gold-dim: #8a6d3b;
+    --combat-cyan: #4bcffa;
+    --combat-red: #ff4d4d;
+    --combat-green: #2ecc71;
+    --combat-void: #050508;
+    --glass-bg: rgba(0, 0, 0, 0.8);
+    --glass-border: rgba(212, 175, 55, 0.2);
+    --glass-blur: blur(15px);
+}
+
+/* --- ARENA GRID --- */
+.combat-arena {
+    position: relative;
+    background: radial-gradient(circle at center, #1a1b26 0%, var(--combat-void) 100%);
+    overflow: hidden;
+    border-radius: 12px;
+    box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.8), 0 20px 50px rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--glass-border);
+}
+
+.arena-grid-container {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    pointer-events: none;
+}
+
+.grid-line-x,
+.grid-line-y {
+    position: absolute;
+    background: linear-gradient(to right, transparent, rgba(75, 207, 250, 0.1), transparent);
+    pointer-events: none;
+}
+
+.grid-line-x {
+    height: 1px;
+    width: 100%;
+    left: 0;
+}
+
+.grid-line-y {
+    width: 1px;
+    height: 100%;
+    top: 0;
+    background: linear-gradient(to bottom, transparent, rgba(75, 207, 250, 0.1), transparent);
+}
+
+.grid-line-y.center,
+.grid-line-x.center {
+    background: rgba(212, 175, 55, 0.4);
+    box-shadow: 0 0 12px rgba(212, 175, 55, 0.5);
+    z-index: 2;
+}
+
+.grid-line-y.major,
+.grid-line-x.major {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.grid-coord-label {
+    position: absolute;
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: 700;
+    pointer-events: none;
+}
+
+.grid-coord-label.x-axis {
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.85);
+    padding: 2px 8px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.grid-coord-label.y-axis {
+    left: -25px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.85);
+    padding: 2px 6px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* --- UNIT CARDS --- */
+.unit-card {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 10;
+    transform: translate(-50%, -50%);
+}
+
+.unit-card.active-turn {
+    z-index: 100;
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+.unit-card.targetable {
+    cursor: crosshair;
+}
+
+.unit-portrait-wrapper {
+    width: 90%;
+    height: 90%;
+    border-radius: 50%;
+    overflow: hidden;
+    position: relative;
+    background: #000;
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.active-turn .unit-portrait-wrapper {
+    border-color: var(--combat-gold);
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.4);
+}
+
+.targetable .unit-portrait-wrapper {
+    border-color: var(--combat-red);
+    box-shadow: 0 0 30px rgba(255, 77, 77, 0.4);
+}
+
+.unit-portrait {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: filter 0.5s;
+}
+
+.unit-selection-ring {
+    position: absolute;
+    inset: -12px;
+    border: 2px dashed var(--combat-gold);
+    border-radius: 50%;
+    animation: rotate 10s linear infinite, pulse 2s ease-in-out infinite;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.unit-facing-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    z-index: 30;
+    pointer-events: none;
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex;
+    justify-content: center;
+}
+
+.facing-arrow {
+    width: 0;
+    height: 0;
+    border-left: 12px solid transparent;
+    border-right: 12px solid transparent;
+    border-bottom: 22px solid var(--combat-gold);
+    filter: drop-shadow(0 0 15px var(--combat-gold));
+}
+
+/* --- ORBITAL BARS --- */
+.orbital-bars {
+    position: absolute;
+    inset: -5px;
+    pointer-events: none;
+    transform: rotate(-90deg);
+}
+
+.bar-svg {
+    width: 100%;
+    height: 100%;
+}
+
+.bar-circle {
+    fill: none;
+    stroke-linecap: round;
+    stroke-width: 6;
+    transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bar-circle-bg {
+    fill: none;
+    stroke: rgba(0, 0, 0, 0.4);
+    stroke-width: 6;
+}
+
+.hp-bar {
+    stroke: var(--combat-green);
+    filter: drop-shadow(0 0 5px var(--combat-green));
+}
+
+.hp-bar.enemy {
+    stroke: var(--combat-red);
+    filter: drop-shadow(0 0 5px var(--combat-red));
+}
+
+.resource-bar {
+    stroke: var(--combat-cyan);
+    filter: drop-shadow(0 0 5px var(--combat-cyan));
+    stroke-width: 3;
+}
+
+.resource-bar~.bar-circle-bg {
+    stroke-width: 3;
+    stroke: rgba(0, 0, 0, 0.3);
+}
+
+/* --- HUD ELEMENTS --- */
+.unit-name-plate {
+    position: absolute;
+    bottom: -45px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    padding: 5px 15px;
+    border-radius: 20px;
+    border: 1px solid var(--glass-border);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+.stat-orb {
+    position: absolute;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 900;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    z-index: 20;
+}
+
+.stat-orb.initiative {
+    top: -10px;
+    right: -10px;
+    background: linear-gradient(135deg, #444, #111);
+    color: var(--combat-gold-bright);
+    border-color: var(--combat-gold-dim);
+}
+
+.stat-orb.pm {
+    top: -10px;
+    left: -10px;
+    background: linear-gradient(135deg, var(--combat-cyan), #005577);
+    color: white;
+    border-color: #fff;
+}
+
+.unit-badges-container {
+    position: absolute;
+    right: -45px;
+    top: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.unit-badge {
+    width: 24px;
+    height: 24px;
+    background: rgba(60, 60, 70, 0.9);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* --- TURN TRACKER --- */
+.turn-tracker {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 12px 25px;
+    border-radius: 0 0 40px 40px;
+    border: 1px solid var(--glass-border);
+    border-top: none;
+    backdrop-filter: var(--glass-blur);
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.turn-actor-card {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    overflow: visible;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    background: #000;
+}
+
+.turn-actor-card.current {
+    width: 68px;
+    height: 68px;
+    border-color: var(--combat-gold);
+    box-shadow: 0 0 25px rgba(212, 175, 55, 0.4);
+    z-index: 5;
+    transform: scale(1.1);
+}
+
+.turn-actor-card.enemy {
+    border-color: rgba(255, 77, 77, 0.3);
+}
+
+.turn-actor-portrait {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.turn-focus-badge {
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--combat-gold);
+    color: #000;
+    font-size: 0.65rem;
+    font-weight: 900;
+    padding: 2px 8px;
+    border-radius: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    white-space: nowrap;
+}
+
+.turn-enemy-pip {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 12px;
+    height: 12px;
+    background: var(--combat-red);
+    border: 2px solid white;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(255, 77, 77, 0.6);
+}
+
+/* --- ACTION BAR --- */
+.combat-footer {
+    height: 260px;
+    background: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.8) 50%, transparent 100%);
+    border-top: 1px solid var(--glass-border);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: center;
+    z-index: 100;
+    backdrop-filter: var(--glass-blur);
+}
+
+.ability-card-premium {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 15px;
+    width: 140px;
+    height: 190px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
+.ability-card-premium:hover:not(.disabled) {
+    background: rgba(212, 175, 55, 0.1);
+    border-color: var(--combat-gold);
+    transform: translateY(-20px) scale(1.05);
+    box-shadow: 0 15px 35px rgba(212, 175, 55, 0.2);
+}
+
+.ability-card-premium.selected {
+    background: rgba(212, 175, 55, 0.15);
+    border-color: var(--combat-gold);
+    transform: translateY(-25px) scale(1.1);
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
+}
+
+.ability-accent {
+    position: absolute;
+    top: -15px;
+    left: -15px;
+    width: 60px;
+    height: 60px;
+    background: var(--combat-gold);
+    border-radius: 50%;
+    filter: blur(25px);
+    opacity: 0.1;
+}
+
+.selected .ability-accent {
+    opacity: 0.4;
+}
+
+.ability-cooldown-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(4px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.cooldown-value {
+    font-size: 2.5rem;
+    color: #fff;
+    font-weight: 900;
+}
+
+.cooldown-label {
+    font-size: 0.6rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.ability-title {
+    font-size: 0.8rem;
+    font-weight: 900;
+    color: var(--combat-gold-bright);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--glass-border);
+    padding-bottom: 6px;
+}
+
+.ability-desc {
+    flex: 1;
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.4;
+    font-style: italic;
+}
+
+.selected .ability-desc {
+    color: #fff;
+}
+
+.ability-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 6px 10px;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+.ability-range {
+    font-size: 0.75rem;
+    color: #aaa;
+    font-weight: 700;
+}
+
+.ability-cost-orb {
+    width: 26px;
+    height: 26px;
+    background: linear-gradient(135deg, var(--combat-cyan), #004466);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: white;
+    font-weight: 900;
+}
+
+/* --- ANIMATIONS --- */
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 0.6;
+    }
+
+    50% {
+        transform: scale(1.1);
+        opacity: 0.9;
+    }
+}
+
+@keyframes flyUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}

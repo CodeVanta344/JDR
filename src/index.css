@@ -194,6 +194,24 @@ button {
     text-shadow: none;
 }
 
+.btn-secondary {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--text-muted);
+    font-size: 0.9rem;
+    padding: 0.6rem 1.2rem;
+    letter-spacing: 1px;
+    opacity: 0.8;
+}
+
+.btn-secondary:hover {
+    color: var(--gold-primary);
+    border-color: var(--gold-dim);
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.1);
+    opacity: 1;
+}
+
 .ability-card:hover {
     background: rgba(75, 207, 250, 0.1) !important;
     border-color: var(--aether-blue) !important;

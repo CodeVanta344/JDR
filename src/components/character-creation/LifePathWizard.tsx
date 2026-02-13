@@ -3,7 +3,7 @@
 // Navigation par étapes avec sélections multiples
 // ============================================================
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import type { LifepathSelection, LifeChoice, AccumulatedEffects } from '../../types/lore';
 import { accumulateEffects, isLifepathComplete, preloadNextStage } from '../../lore/character-creation/lifepath';
 import { EffectsSidebar } from './EffectsSidebar';
@@ -82,6 +82,17 @@ export const LifePathWizard: React.FC<Props> = ({ onComplete, onUpdate, onCancel
       onUpdate(accumulated);
     }
   }, [selection, onUpdate]);
+
+  // Groupement des options par sous-catégorie
+  const groupedOptions = useMemo(() => {
+    const groups: Record<string, LifeChoice[]> = {};
+    options.forEach(opt => {
+      const cat = opt.subCategory || 'Autres';
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(opt);
+    });
+    return groups;
+  }, [options]);
 
   const loadOptions = async () => {
     setLoading(true);
@@ -217,87 +228,105 @@ export const LifePathWizard: React.FC<Props> = ({ onComplete, onUpdate, onCancel
       {!hideSidebar && <EffectsSidebar selection={selection} />}
 
       {/* Zone Principale */}
-      <div className="wizard-main">
-        {/* Header Navigation */}
-        <div className="wizard-header">
-          <div className="wizard-progress">
-            {['birth', 'childhood', 'adolescence', 'youngAdult'].map((step, idx) => (
-              <div
-                key={step}
-                className={`progress-step ${currentStep === step ? 'active' : ''} ${['birth', 'childhood', 'adolescence', 'youngAdult'].indexOf(currentStep) > idx ? 'completed' : ''
-                  }`}
-              >
-                <span className="step-tag">Phase 0{idx + 1}</span>
-                <span className="step-label">
-                  {step === 'birth' && 'Naissance'}
-                  {step === 'childhood' && 'Enfance'}
-                  {step === 'adolescence' && 'Adolescence'}
-                  {step === 'youngAdult' && 'Jeune Adulte'}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {/* Sous-navigation par tabs */}
-          <div className="wizard-sub-nav">
-            {subStepsMap[currentStep].map((sub, idx) => {
-              const categoryKey = sub;
-              const isSelected = (selection[currentStep] as any)?.[categoryKey];
-              return (
-                <button
-                  key={sub}
-                  className={`sub-nav-item ${currentSubStep === idx ? 'active' : ''} ${isSelected ? 'selected' : ''}`}
-                  onClick={() => isSelected || idx <= currentSubStep ? setCurrentSubStep(idx) : null}
+      <div className="wizard-content-wrapper">
+        <div className="wizard-main">
+          {/* Header Navigation */}
+          <div className="wizard-header">
+            <div className="wizard-progress">
+              {['birth', 'childhood', 'adolescence', 'youngAdult'].map((step, idx) => (
+                <div
+                  key={step}
+                  className={`progress-step ${currentStep === step ? 'active' : ''} ${['birth', 'childhood', 'adolescence', 'youngAdult'].indexOf(currentStep) > idx ? 'completed' : ''
+                    }`}
                 >
-                  {subStepLabels[sub]}
-                </button>
-              );
-            })}
+                  <span className="step-tag">Phase 0{idx + 1}</span>
+                  <span className="step-label">
+                    {step === 'birth' && 'Naissance'}
+                    {step === 'childhood' && 'Enfance'}
+                    {step === 'adolescence' && 'Adolescence'}
+                    {step === 'youngAdult' && 'Jeune Adulte'}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Sous-navigation par tabs */}
+            <div className="wizard-sub-nav">
+              {subStepsMap[currentStep].map((sub, idx) => {
+                const categoryKey = sub;
+                const isSelected = (selection[currentStep] as any)?.[categoryKey];
+                return (
+                  <button
+                    key={sub}
+                    className={`sub-nav-item ${currentSubStep === idx ? 'active' : ''} ${isSelected ? 'selected' : ''}`}
+                    onClick={() => isSelected || idx <= currentSubStep ? setCurrentSubStep(idx) : null}
+                  >
+                    {subStepLabels[sub]}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="wizard-subtitle">
+              ACTE {['birth', 'childhood', 'adolescence', 'youngAdult'].indexOf(currentStep) + 1}
+            </div>
+
+            <h2 className="wizard-title">
+              {subStepLabels[currentCategory]}
+            </h2>
           </div>
 
-          <div className="wizard-subtitle">
-            ACTE {['birth', 'childhood', 'adolescence', 'youngAdult'].indexOf(currentStep) + 1}
-          </div>
-
-          <h2 className="wizard-title">
-            {subStepLabels[currentCategory]}
-          </h2>
+          {/* Grille Options Groupées */}
+          {loading ? (
+            <div className="wizard-loading">
+              <div className="spinner" />
+              <p>Chargement des options...</p>
+            </div>
+          ) : (
+            <div className="wizard-options-container">
+              {Object.entries(groupedOptions).map(([category, categoryOptions]) => (
+                <div key={category} className="option-category-group">
+                  {category !== 'Autres' && (
+                    <div className="category-header-wrap">
+                      <h3 className="category-header">{category}</h3>
+                      <div className="category-line" />
+                    </div>
+                  )}
+                  <div className="wizard-options">
+                    {categoryOptions.map(option => (
+                      <LifeChoiceCard
+                        key={option.id}
+                        choice={option}
+                        selected={currentSelection?.id === option.id}
+                        onSelect={handleSelect}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Grille Options */}
-        {loading ? (
-          <div className="wizard-loading">
-            <div className="spinner" />
-            <p>Chargement des options...</p>
-          </div>
-        ) : (
-          <div className="wizard-options">
-            {options.map(option => (
-              <LifeChoiceCard
-                key={option.id}
-                choice={option}
-                selected={currentSelection?.id === option.id}
-                onSelect={handleSelect}
-              />
-            ))}
-          </div>
-        )}
-
         {/* Footer Navigation */}
-        <div className="wizard-footer">
-          <button onClick={handleBack} className="btn-secondary" disabled={currentStep === 'birth'}>
-            ← Précédent
-          </button>
+        <div className="lifepath-footer">
+          <div className="footer-left">
+            {onCancel && (
+              <button onClick={onCancel} className="btn-tertiary">
+                ← Retour
+              </button>
+            )}
+          </div>
 
-          {onCancel && (
-            <button onClick={onCancel} className="btn-tertiary">
-              Annuler
+          <div className="footer-right" style={{ display: 'flex', gap: '1rem' }}>
+            <button onClick={handleBack} className="btn-secondary" disabled={currentStep === 'birth'}>
+              Précédent
             </button>
-          )}
 
-          <button onClick={handleNext} className="btn-primary" disabled={!canProceed}>
-            {currentStep === 'youngAdult' ? 'Terminer' : 'Suivant →'}
-          </button>
+            <button onClick={handleNext} className="btn-primary" disabled={!canProceed}>
+              {currentStep === 'youngAdult' ? 'Terminer' : 'Suivant →'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

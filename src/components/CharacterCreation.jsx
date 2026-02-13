@@ -52,11 +52,11 @@ export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImag
     const [lifepathData, setLifepathData] = useState(null);
 
     // Old states kept for compatibility but will be replaced by lifepathData
-    const [selectedBirthOrigin, setSelectedBirthOrigin] = useState(BIRTH_ORIGINS[0]);
-    const [selectedChildhoodEvent, setSelectedChildhoodEvent] = useState(CHILDHOOD_EVENTS[0]);
-    const [selectedAdolescencePath, setSelectedAdolescencePath] = useState(ADOLESCENCE_PATHS[0]);
+    const [selectedBirthOrigin, setSelectedBirthOrigin] = useState(null);
+    const [selectedChildhoodEvent, setSelectedChildhoodEvent] = useState(null);
+    const [selectedAdolescencePath, setSelectedAdolescencePath] = useState(null);
 
-    const [selectedEquipmentIndex, setSelectedEquipmentIndex] = useState(0);
+    const [selectedEquipmentIndex, setSelectedEquipmentIndex] = useState(null);
     const [selectedAbilityNames, setSelectedAbilityNames] = useState([]);
     const [attributes, setAttributes] = useState({ str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 });
     const [lifepathStats, setLifepathStats] = useState({ str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 }); // New state for real-time bonuses
@@ -89,14 +89,10 @@ export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImag
 
     useEffect(() => {
         if (CLASSES[selectedClass]) {
-            if (CLASSES[selectedClass].subclasses) {
-                setSelectedSubclass(Object.keys(CLASSES[selectedClass].subclasses)[0]);
-            }
-            const availableBackstories = getBackstoriesForClass(selectedClass);
-            if (availableBackstories.length > 0) {
-                setSelectedBackstory(availableBackstories[0]);
-            }
-            setSelectedEquipmentIndex(0);
+            setSelectedSubclass(null);
+            setSelectedBackstory(null);
+            setLifepathData(null);
+            setSelectedEquipmentIndex(null);
             setSelectedAbilityNames([]);
         }
     }, [selectedClass]);

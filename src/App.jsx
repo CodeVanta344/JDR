@@ -1354,8 +1354,15 @@ export default function App() {
     }, [session, players, profile]);
 
     const handleStartAdventure = async (force = false) => {
-        if (!session || players.length < 1) return;
-        if (!force && STARTING_LOCKS.has(session.id)) return;
+        console.log("handleStartAdventure called", { force, session: session?.id, playersLen: players.length });
+        if (!session || players.length < 1) {
+            console.error("Start aborted: No session or no players");
+            return;
+        }
+        if (!force && STARTING_LOCKS.has(session.id)) {
+            console.warn("Start aborted: Locked");
+            return;
+        }
 
         const lastStartAttempt = sessionStorage.getItem(`start_attempt_${session.id}`);
         const now = Date.now();
@@ -1818,14 +1825,14 @@ export default function App() {
                         setWeather(aiResponse.worldUpdate.weather);
                         // Sync to world_state
                         if (session?.host_id === profile?.id) {
-                            await supabase.from('world_state').upsert({ 
-                                key: 'weather', 
-                                value: aiResponse.worldUpdate.weather 
+                            await supabase.from('world_state').upsert({
+                                key: 'weather',
+                                value: aiResponse.worldUpdate.weather
                             });
                         }
                     }
                 }
-                
+
                 if (aiResponse.world_event) {
                     addToChronicle(aiResponse.world_event);
                     setMessages(prev => [...prev, {
@@ -2135,14 +2142,14 @@ export default function App() {
                         setWeather(aiResponse.worldUpdate.weather);
                         // Sync to world_state
                         if (session?.host_id === profile?.id) {
-                            await supabase.from('world_state').upsert({ 
-                                key: 'weather', 
-                                value: aiResponse.worldUpdate.weather 
+                            await supabase.from('world_state').upsert({
+                                key: 'weather',
+                                value: aiResponse.worldUpdate.weather
                             });
                         }
                     }
                 }
-                
+
                 // Trigger handling synced with handleSubmit
                 if (aiResponse.reward && aiResponse.reward.xp) {
                     handleExperienceGain(aiResponse.reward.xp, aiResponse.reward.reason);
@@ -2291,14 +2298,14 @@ export default function App() {
                         setWeather(aiResponse.worldUpdate.weather);
                         // Sync to world_state
                         if (session?.host_id === profile?.id) {
-                            await supabase.from('world_state').upsert({ 
-                                key: 'weather', 
-                                value: aiResponse.worldUpdate.weather 
+                            await supabase.from('world_state').upsert({
+                                key: 'weather',
+                                value: aiResponse.worldUpdate.weather
                             });
                         }
                     }
                 }
-                
+
                 if (aiResponse.world_event) {
                     addToChronicle(aiResponse.world_event);
                     setMessages(prev => [...prev, {
@@ -2558,9 +2565,8 @@ export default function App() {
                     character={character}
                     onToggleReady={handleToggleReady}
                     onStart={() => {
-                        if (confirm("Forcer le lancement de l'aventure ?")) {
-                            handleStartAdventure(true);
-                        }
+                        console.log("Forcing start adventure...");
+                        handleStartAdventure(true);
                     }}
                     onInvite={() => {
                         const url = window.location.origin + window.location.pathname + '?s=' + session.id;
@@ -2874,8 +2880,8 @@ export default function App() {
 
             {
                 showSettings && (
-                    <div className="settings-modal animate-fade-in" style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'var(--void-panel)', padding: '2rem', border: '1px solid var(--gold-primary)', zIndex: 2000 }}>
-                        <h3 style={{ color: 'var(--gold-primary)', marginBottom: '1.5rem' }}>SANCTUAIRE</h3>
+                    <div className="settings-modal animate-fade-in" style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(10, 11, 14, 0.95)', backdropFilter: 'blur(10px)', padding: '2rem', border: '1px solid var(--gold-primary)', zIndex: 2000, minWidth: '400px', boxShadow: '0 0 50px rgba(0,0,0,0.8)' }}>
+                        <h3 style={{ color: 'var(--gold-primary)', marginBottom: '1.5rem', textAlign: 'center', letterSpacing: '3px' }}>SANCTUAIRE</h3>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '0.8rem', borderRadius: '4px' }}>
                                 <span style={{ color: 'var(--text-secondary)' }}>MUSIQUE & AMBIANCE</span>

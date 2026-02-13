@@ -119,14 +119,7 @@ const WaitingRoom = ({ players, character, onToggleReady, onStart, loading, sess
                             <button
                                 onClick={onStart}
                                 className="btn-secondary"
-                                style={{
-                                    padding: '0.5rem 1rem',
-                                    fontSize: '0.9rem',
-                                    border: '1px solid var(--text-muted)',
-                                    color: 'var(--text-muted)',
-                                    background: 'transparent',
-                                    opacity: 0.7
-                                }}
+                                title="Lancer la partie même si tous les joueurs ne sont pas prêts"
                             >
                                 ⚠️ Forcer le Lancement
                             </button>

@@ -23,6 +23,7 @@ export interface MechanicalTrait {
   name: string;
   desc: string;
   game_effect?: string; // Ex: "+2 Persuasion avec nobles"
+  effect?: string;      // Alias for game_effect used in some data
 }
 
 // ===== SYSTÈME D'EFFETS UNIFIÉ =====
@@ -34,6 +35,7 @@ export interface EffectBundle {
   items: ItemGrant[];                                   // Items de départ
   skills: SkillBonus[];                                 // Bonus compétences
   languages?: string[];                                 // Langues apprises
+  gold?: number;                                        // Or de départ additionnel
   tags: string[];                                       // Tags narratifs
 }
 
@@ -58,7 +60,7 @@ export interface SkillBonus {
 // ===== STAGES ET CATÉGORIES LIFEPATH =====
 export type LifeStage = 'birth' | 'childhood' | 'adolescence' | 'youngAdult';
 
-export type LifeCategory = 
+export type LifeCategory =
   // Birth
   | 'location' | 'status' | 'omen'
   // Childhood
@@ -84,8 +86,10 @@ export interface LifeChoice {
   social_impacts: {
     npc_reactions: Record<string, string>;              // Ex: { "guards": "Méfiance", "nobles": "Respect" }
     first_impression: string;                           // Phrase type PNJ
+    long_term_perception?: string;                      // Perception durable (lint fix)
   };
   tags: string[];                                       // ["urban", "noble", "traumatic", "military"]
+  subCategory?: string;                                 // Grouping (e.g., "Cités", "Élite")
   incompatible_with?: string[];                         // IDs options incompatibles
 }
 
