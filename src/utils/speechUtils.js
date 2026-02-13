@@ -87,50 +87,111 @@ const getVoiceProfile = (characterName) => {
     return DEFAULT_VOICE;
 };
 
+
+// --- Voice Loading Logic ---
+
+let availableVoices = [];
+
+const loadVoices = () => {
+    return new Promise((resolve) => {
+        const voices = window.speechSynthesis.getVoices();
+        if (voices.length > 0) {
+            availableVoices = voices;
+            resolve(voices);
+            return;
+        }
+
+        window.speechSynthesis.onvoiceschanged = () => {
+            availableVoices = window.speechSynthesis.getVoices();
+            resolve(availableVoices);
+        };
+    });
+};
+
+// Initialize voices immediately
+if (typeof window !== 'undefined' && window.speechSynthesis) {
+    loadVoices();
+}
+
 export const extractSpokenText = (content) => {
     if (!content) return "";
 
-    // Regex for various quote types used in RPG narration
-    const dialogueRegex = /(?:"|«|"|'|'|»|")([^"»"'']{3,})(?:"|«|"|'|'|»|")/g;
-    let match;
-    let spokenText = "";
+    // 1. Try to extract from specific quote styles first
+    // French guillemets, standard quotes, smart quotes
+    const dialogueRegex = /(?:«|»|“|”|"|'|'|’)([^«»“”"']{2,})(?:»|«|”|“|"|'|'|’)/g;
 
+    let match;
+    let spokenParts = [];
+
+    // Collect all dialogue parts
     while ((match = dialogueRegex.exec(content)) !== null) {
-        spokenText += match[1] + " ";
+        if (match[1] && match[1].trim().length > 1) {
+            spokenParts.push(match[1].trim());
+        }
     }
 
-    // Fallback: If no quotes, or text is too short, use full content
-    if (!spokenText.trim()) return content;
+    // If we found quotes, join them
+    if (spokenParts.length > 0) {
+        return spokenParts.join(' ... ');
+    }
 
-    return spokenText.trim();
+    // 2. Fallback: Heuristic cleaning if no specific quotes found
+    // Remove markdown parentheticals or actions *action* (simple version)
+    let cleanText = content
+        .replace(/\*[^*]+\*/g, '') // remove *actions*
+        .replace(/\([^(]+\)/g, '') // remove (parentheses)
+        .replace(/\[[^[]+\]/g, '') // remove [brackets]
+        .replace(/^[A-ZÉÀa-z\s]+:/, '') // remove Speaker Name: prefixes
+        .trim();
+
+    return cleanText || content;
 };
 
-export const speakText = (text, characterName = "", onEnd = null) => {
+export const speakText = async (text, characterName = "", onEnd = null) => {
     if (!text || typeof window === 'undefined' || !window.speechSynthesis) return;
 
-    // Stop current speech
+    // Ensure voices are loaded
+    if (availableVoices.length === 0) {
+        await loadVoices();
+    }
+
+    // Stop current speech to avoid overlapping
     window.speechSynthesis.cancel();
 
+    // Create utterance
     const utterance = new SpeechSynthesisUtterance(text);
+
+    // Default to French
     utterance.lang = 'fr-FR';
 
-    // Get voice profile based on character name
+    // Find Best Voice
+    // 1. Try specific French voice (Google, Microsoft, etc.)
+    // 2. Try any 'fr' voice
+    // 3. Fallback to default
+    const frenchVoice = availableVoices.find(v => v.lang === 'fr-FR' && !v.name.includes('Google')) // Prefer system/high-quality checks if needed
+        || availableVoices.find(v => v.lang === 'fr-FR')
+        || availableVoices.find(v => v.lang.startsWith('fr'));
+
+    if (frenchVoice) {
+        utterance.voice = frenchVoice;
+    }
+
+    // Apply Profile
     const profile = getVoiceProfile(characterName);
     utterance.pitch = profile.pitch;
     utterance.rate = profile.rate;
     utterance.volume = profile.volume;
 
-    // Try to find the best French voice
-    const voices = window.speechSynthesis.getVoices();
-    const frenchVoice = voices.find(v => v.lang === 'fr-FR') || voices.find(v => v.lang.startsWith('fr'));
-    if (frenchVoice) {
-        utterance.voice = frenchVoice;
-    }
+    // Event Handling
+    utterance.onend = () => {
+        if (onEnd) onEnd();
+    };
 
-    if (onEnd) utterance.onend = onEnd;
+    utterance.onerror = (e) => {
+        console.warn("Speech synthesis error:", e);
+    };
 
     window.speechSynthesis.speak(utterance);
-
     return utterance;
 };
 
@@ -140,6 +201,14 @@ export const speakText = (text, characterName = "", onEnd = null) => {
  */
 export const initSpeech = () => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
+
+    // Resume if paused (sometimes happens in background tabs)
+    if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+        return;
+    }
+
+    // Play a silent short sound to unlock audio context
     const utterance = new SpeechSynthesisUtterance("");
     window.speechSynthesis.speak(utterance);
 };

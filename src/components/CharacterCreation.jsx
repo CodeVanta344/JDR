@@ -60,12 +60,14 @@ export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImag
     const [selectedAbilityNames, setSelectedAbilityNames] = useState([]);
     const [attributes, setAttributes] = useState({ str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 });
     const [lifepathStats, setLifepathStats] = useState({ str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 }); // New state for real-time bonuses
+    const [lifepathProgress, setLifepathProgress] = useState(null); // New state for real-time narrative
     const [rollingStat, setRollingStat] = useState(null);
     const [portraitUrl, setPortraitUrl] = useState(null);
     const [classPortraits, setClassPortraits] = useState({});
 
     // Callback for real-time lifepath stats
     const handleLifepathUpdate = useCallback((effects) => {
+        setLifepathProgress(effects);
         const stats = effects.final_stats;
         setLifepathStats({
             str: stats.strength || 0,
@@ -361,7 +363,59 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                     {step > 1 && (
                         <div className="wizard-sidebar-layout">
                             <div className="effects-sidebar">
-                                <div className="sidebar-title">EFFETS CUMULÉS</div>
+                                <div className="sidebar-title">HISTOIRE & STATUTS</div>
+
+                                {/* CHRONIQUES DU PARCOURS */}
+                                {(lifepathProgress || lifepathData || selectedBackstory) && (
+                                    <div className="sidebar-section">
+                                        <h4 className="sidebar-label">CHRONIQUES</h4>
+                                        <div className="narrative-timeline">
+                                            {/* Data source: lifepathProgress (active), lifepathData (finished), or legacy selected items */}
+                                            {(() => {
+                                                const source = lifepathProgress || lifepathData;
+                                                if (source) {
+                                                    return (
+                                                        <>
+                                                            {source.origin && (
+                                                                <div className="narrative-entry">
+                                                                    <div className="narrative-step-label">Origine</div>
+                                                                    <div className="narrative-content">{source.origin.label}</div>
+                                                                </div>
+                                                            )}
+                                                            {source.childhood && (
+                                                                <div className="narrative-entry">
+                                                                    <div className="narrative-step-label">Enfance</div>
+                                                                    <div className="narrative-content">{source.childhood.label}</div>
+                                                                </div>
+                                                            )}
+                                                            {source.adolescence && (
+                                                                <div className="narrative-entry">
+                                                                    <div className="narrative-step-label">Adolescence</div>
+                                                                    <div className="narrative-content">{source.adolescence.label}</div>
+                                                                </div>
+                                                            )}
+                                                            {source.adult && (
+                                                                <div className="narrative-entry">
+                                                                    <div className="narrative-step-label">Âge Adulte</div>
+                                                                    <div className="narrative-content">{source.adult.label}</div>
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    );
+                                                } else if (selectedBackstory) {
+                                                    // Legacy fallback or just backstory
+                                                    return (
+                                                        <div className="narrative-entry">
+                                                            <div className="narrative-step-label">Passé</div>
+                                                            <div className="narrative-content">{selectedBackstory.label}</div>
+                                                        </div>
+                                                    );
+                                                }
+                                                return <div className="placeholder-text">Votre histoire s'écrit...</div>;
+                                            })()}
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="sidebar-section">
                                     <h4 className="sidebar-label">STATISTIQUES</h4>
                                     <div className="sidebar-stats-dashboard">
@@ -393,7 +447,7 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                                                 <span className="trait-separator">•</span>
                                                 <strong className="trait-title">{CLASSES[selectedClass]?.mechanic?.name}</strong>
                                             </div>
-                                            <p className="trait-snippet">{CLASSES[selectedClass]?.mechanic?.desc?.slice(0, 100)}...</p>
+                                            <p className="trait-snippet">{CLASSES[selectedClass]?.mechanic?.desc}</p>
                                         </div>
                                         {selectedSubclass && classData?.subclasses?.[selectedSubclass] && (
                                             <div className="trait-card-mini highlighted">
@@ -447,20 +501,40 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                                 {/* STEP 2: SUBCLASS */}
                                 {step === 2 && (
                                     <>
-                                        <div className="wizard-options">
-                                            {Object.entries(classData?.subclasses || {}).map(([key, sub]) => (
-                                                <div key={key} className={`life-choice-card ${selectedSubclass === key ? 'selected' : ''}`} onClick={() => setSelectedSubclass(key)}>
-                                                    <div className="choice-content-main">
-                                                        <div className="card-title">{sub.label}</div>
-                                                        <div className="card-desc">{sub.desc}</div>
+                                        <div className="subclass-selection-container">
+                                            <div className="subclass-grid">
+                                                {Object.entries(classData?.subclasses || {}).map(([key, sub]) => (
+                                                    <div
+                                                        key={key}
+                                                        className={`subclass-card ${selectedSubclass === key ? 'selected' : ''}`}
+                                                        onClick={() => setSelectedSubclass(key)}
+                                                    >
+                                                        <div className="subclass-header">
+                                                            <h3 className="subclass-title">{sub.label}</h3>
+                                                            {sub.details && sub.details.style && (
+                                                                <div className="subclass-style-badge">{sub.details.style}</div>
+                                                            )}
+                                                        </div>
+
+                                                        <div className="subclass-body">
+                                                            <div className="subclass-desc">"{sub.desc}"</div>
+
+                                                            {sub.details && sub.details.feature && (
+                                                                <div className="subclass-feature">
+                                                                    <span className="feature-label">Capacité Unique</span>
+                                                                    <div className="feature-text">{sub.details.feature}</div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        <div className="subclass-icon-watermark">
+                                                            {CLASS_CATEGORIES[classData.category]?.icon || '⚔️'}
+                                                        </div>
                                                     </div>
-                                                    <div className="card-traits">
-                                                        <span className="stat-tag bonus">{sub.details.feature}</span>
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                ))}
+                                            </div>
                                         </div>
-                                        <div className="wizard-footer">
+                                        <div className="wizard-footer" style={{ marginTop: '2rem' }}>
                                             <button className="btn-secondary" onClick={() => setStep(1)}>← Retour</button>
                                             <button className="btn-primary" onClick={() => setStep(3)} disabled={!selectedSubclass}>Confirmer la Spécialisation →</button>
                                         </div>

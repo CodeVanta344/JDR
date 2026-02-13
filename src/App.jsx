@@ -991,6 +991,54 @@ export default function App() {
         }
     };
 
+    const handleSoloCustom = async () => {
+        if (!profile) return;
+        setLoading(true);
+        try {
+            // 1. Create Session marked as started (to skip SessionHub/Lobby)
+            const { data: sessionData, error: sessionError } = await supabase
+                .from('sessions')
+                .insert({
+                    host_id: profile.id,
+                    is_started: true,
+                    active: true
+                })
+                .select()
+                .single();
+
+            if (sessionError || !sessionData) throw sessionError;
+
+            setSession(sessionData);
+            window.history.pushState({}, '', `?s=${sessionData.id}`);
+
+            // 2. Create Host Player Record (Empty/Skeleton)
+            const { data: playerData, error: playerError } = await supabase
+                .from('players')
+                .insert({
+                    session_id: sessionData.id,
+                    user_id: profile.id,
+                    name: profile.name || 'Hero',
+                    is_host: true
+                    // No class/stats yet -> Trigger CharacterCreation
+                })
+                .select()
+                .single();
+
+            if (playerError || !playerData) throw playerError;
+
+            setCharacter(playerData);
+            setPlayers([playerData]);
+
+            // Flow will naturally go to CharacterCreation because character.class is undefined
+
+        } catch (e) {
+            console.error("Solo Custom Error:", e);
+            alert("Erreur lors de la création Solo : " + e.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleQuickStart = async () => {
         if (!profile) return;
         setLoading(true);
@@ -2407,6 +2455,7 @@ export default function App() {
                     onCreate={handleCreateSession}
                     onQuickStart={handleQuickStart}
                     onSoloAdventure={handleSoloAdventure}
+                    onSoloCustom={handleSoloCustom}
                     onJoinQuickStart={handleJoinQuickStart}
                     availableSessions={availableSessions}
                     loading={loading}

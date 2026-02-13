@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 
-export function SessionLobby({ onJoin, onCreate, onQuickStart, onSoloAdventure, onJoinQuickStart, availableSessions = [], loading }) {
+export function SessionLobby({ onJoin, onCreate, onQuickStart, onSoloAdventure, onSoloCustom, onJoinQuickStart, availableSessions = [], loading }) {
     const [sessionId, setSessionId] = useState('');
+    const [showSoloChoice, setShowSoloChoice] = useState(false);
 
     return (
         <div className="creation-overlay">
@@ -67,7 +68,7 @@ export function SessionLobby({ onJoin, onCreate, onQuickStart, onSoloAdventure, 
                                     justifyContent: 'center',
                                     gap: '0.5rem'
                                 }}
-                                onClick={onSoloAdventure}
+                                onClick={() => setShowSoloChoice(true)}
                                 disabled={loading}
                             >
                                 🔮 {loading ? '...' : 'AVENTURE SOLO (TEST)'}
@@ -243,6 +244,86 @@ export function SessionLobby({ onJoin, onCreate, onQuickStart, onSoloAdventure, 
             }}></div>
             <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%)', zIndex: 1 }}></div>
             <div className="fog-overlay" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)', zIndex: 2 }}></div>
+
+            {/* Solo Choice Modal */}
+            {showSoloChoice && (
+                <div style={{
+                    position: 'fixed',
+                    inset: 0,
+                    zIndex: 100,
+                    background: 'rgba(0,0,0,0.85)',
+                    backdropFilter: 'blur(5px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    animation: 'fadeIn 0.3s ease'
+                }}>
+                    <div className="glass-panel" style={{
+                        maxWidth: '500px',
+                        width: '90%',
+                        padding: '2.5rem',
+                        textAlign: 'center',
+                        border: '1px solid var(--gold-primary)',
+                        boxShadow: '0 0 30px rgba(212, 175, 55, 0.2)'
+                    }}>
+                        <h2 className="text-gold" style={{ fontSize: '1.8rem', marginBottom: '1.5rem' }}>DÉBUT DE L'AVENTURE</h2>
+                        <p style={{ color: 'var(--text-secondary)', marginBottom: '2.5rem', lineHeight: '1.6' }}>
+                            Comment souhaitez-vous entrer dans la légende ?
+                        </p>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <button
+                                className="btn-medieval"
+                                onClick={() => {
+                                    setShowSoloChoice(false);
+                                    onSoloCustom();
+                                }}
+                                style={{
+                                    padding: '1.2rem',
+                                    fontSize: '1rem',
+                                    background: 'var(--gradient-gold)',
+                                    color: '#000',
+                                    fontWeight: 'bold'
+                                }}
+                            >
+                                ✨ CRÉER MON PERSONNAGE
+                            </button>
+
+                            <button
+                                className="btn-medieval"
+                                onClick={() => {
+                                    setShowSoloChoice(false);
+                                    onSoloAdventure();
+                                }}
+                                style={{
+                                    padding: '1rem',
+                                    fontSize: '0.9rem',
+                                    background: 'rgba(255, 255, 255, 0.05)',
+                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                    color: 'var(--text-primary)'
+                                }}
+                            >
+                                🎲 PERSONNAGE ALÉATOIRE (QUICK)
+                            </button>
+
+                            <button
+                                onClick={() => setShowSoloChoice(false)}
+                                style={{
+                                    marginTop: '1rem',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    color: 'var(--text-muted)',
+                                    cursor: 'pointer',
+                                    textDecoration: 'underline',
+                                    fontSize: '0.8rem'
+                                }}
+                            >
+                                Annuler
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

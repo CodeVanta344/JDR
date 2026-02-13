@@ -504,16 +504,660 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     incompatible_with: []
   },
 
-  // ===== PLACEHOLDER POUR 33 LOCATIONS RESTANTES =====
-  // NOTE DÉVELOPPEMENT : Créer progressivement 33 locations supplémentaires suivant pattern d100 établi
-  // Catégories prioritaires :
-  // - Déserts (3) : Oasis Commerciale, Cité Sable Perdue, Camp Nomade Itinérant
-  // - Jungles (2) : Village Tribal Ancestral, Ruines Civilisation Ancienne
-  // - Îles (3) : Archipel Pirate Anarchique, Île Volcanique Active, Atoll Tropical Paradisiaque
-  // - Zones Maudites (3) : Terre Brûlée Désolation, Marais Hantés Âmes, Champ Bataille Éternel
-  // - Lieux Magiques (3) : Tour Mage Solitaire, Nexus Élémentaire Chaotique, Bosquet Féérique Enchanté
-  // - Zones Frontalières (3) : Avant-poste Militaire Tendu, Colonie Récente Pionniers, Passage Montagneux Stratégique
-  // - Lieux Interdits (3) : Prison-Île Maximum Sécurité, Catacombes Oubliées, Temple Profané Déchu
-  // - Merveilles Naturelles (3) : Cascade Éternelle Arc-en-Ciel, Canyon Échos Magiques, Champ Geysers Arcaniques
-  // - Cités Secondaires (10) : Port Fluvial, Bourg Fortifié, Ville Minière, Capitale Régionale, Centre Pèlerinage, etc.
+  // ===== DÉSERTS (3) =====
+  {
+    id: 'birth_loc_oasis_marchande',
+    stage: 'birth',
+    category: 'location',
+    label: 'Oasis Marchande du Désert de Feu',
+    desc: 'Né dans rare havre verdoyant au cœur désert impitoyable, carrefour caravanes commerciales transcontinentales.',
+    detailed_lore: {
+      backstory: 'L\'Oasis al-Rashid (Perle des Sables) est miracle survie désertique : source eau pure éternelle alimentée nappe phréatique magique, palmeraies luxuriantes ombragées, jardins suspendus irrigués ingénieusement. Position stratégique Route Épices fait carrefour commercial vital : caravanes chameaux chargées soieries orientales, épices rares, gemmes exotiques s\'y arrêtent obligatoirement ravitailler avant traversée mortelle 20 jours Désert Feu (températures 55°C jour, tempêtes sable aveuglantes). Ville fortifiée murs adobe accueille marchands nomades, contrebandiers, espions diplomates, aventuriers fous cherchant ruines englouties sable. Nuits fraîches résonnent musiques orientales, parfums jasmin, négociations âpres.',
+      defining_moment: 'À neuf ans, vous avez vu caravane perdue 40 jours désert arriver mourante : 3 survivants sur 50, délirants soif, racontant créature sable titanesque dévorant chameaux. Vous avez compris ce jour-là : désert ne pardonne jamais faiblesse, seuls préparés survivent implacable.',
+      worldview_shaped: 'Eau vaut plus or—vie dépend ressources rares précieuses. Adaptabilité climat extrême prime force brute. Hospitalité sacrée loi absolue désert : refuser eau voyageur = meurtre. Marchands honorables respectent parole donnée plus serments écrits.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { constitution: 2, charisma: 2 },
+      mechanical_traits: [
+        {
+          name: 'Enfant du Désert Brûlant',
+          desc: 'Résistance complète chaleur naturelle, besoin eau réduit 50%, +5 Survival (désert/aride), ignore 2 niveaux épuisement chaleur',
+          effect: '+5 Survival (desert)',
+          game_effect: 'Immunité chaleur + endurance désertique extrême'
+        },
+        {
+          name: 'Flair Mercantile Caravanes',
+          desc: '+5 Persuasion (négociation commerciale), +1d20 évaluer valeur marchandises exotiques, connaissance Route Épices (itinéraires secrets)',
+          effect: '+5 Persuasion, +1d20 Appraisal',
+          game_effect: 'Expertise commerce caravanes + géographie désert'
+        },
+        {
+          name: 'Navigation Stellaire Héritée',
+          desc: '+3 Navigation (déserts/nuit), lecture étoiles orientation infaillible, détection tempêtes sable 6h avance',
+          effect: '+3 Navigation (stars)',
+          game_effect: 'Orientation désertique surnaturelle + survie tempêtes'
+        }
+      ],
+      reputation: [
+        { factionId: 'marchands_caravanes', delta: 8, reason: 'Natif oasis, connaissance commerciale' },
+        { factionId: 'nomades_desert', delta: 6, reason: 'Respect lois hospitalité sacrées' },
+        { factionId: 'guilde_eau', delta: 5, reason: 'Compréhension valeur vitale eau' }
+      ],
+      items: [
+        { itemId: 'water_skin_large', quantity: 2, reason: 'Outres eau cuir qualité (4L chacune, survie)' },
+        { itemId: 'desert_veil_silk', quantity: 1, reason: 'Voile soie protection tempêtes sable (tradition nomade)' },
+        { itemId: 'compass_magnetic_bronze', quantity: 1, reason: 'Boussole bronze navigation désert' },
+        { itemId: 'spices_rare_pouch', quantity: 1, reason: 'Sacoche épices rares (safran, cardamome, valeur 100 PO)' }
+      ],
+      skills: [
+        { skillId: 'survival', bonus: 5, reason: 'Vie désert hostile depuis naissance' },
+        { skillId: 'persuasion', bonus: 5, reason: 'Négociations marchandes quotidiennes caravanes' },
+        { skillId: 'animal_handling', bonus: 3, reason: 'Dressage chameaux, chevaux désert' },
+        { skillId: 'navigation', bonus: 3, reason: 'Lecture étoiles, orientation dunes mouvantes' }
+      ],
+      gold: 400,
+      languages: ['Commun', 'Langue Désertique (al-Sahra)', 'Argot Marchands Caravanes'],
+      tags: ['desert', 'trade', 'nomadic', 'harsh', 'mercantile', 'survivor']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'marchands': 'Respect mutuel, affaires facilitées (+8 disposition)',
+        'nomades_desert': 'Fraternité immédiate, hospitalité sacrée (+10 disposition)',
+        'citadins_nordiques': 'Fascination exotique, incompréhension climat (+4 disposition)',
+        'pirates_eau': 'Confusion comique concept piraterie sable (+2 disposition)'
+      },
+      first_impression: '« Un enfant de l\'Oasis al-Rashid ! Vous connaissez Route Épices ? Vendez-vous safran qualité ? »',
+      long_term_perception: 'Marchand-survivant désertique. Certains admirent résilience, d\'autres méfient marchandages. Perçu endurant, débrouillard, hospitalier.'
+    },
+    tags: ['desert', 'trade', 'nomadic', 'harsh'],
+    incompatible_with: []
+  },
+
+  {
+    id: 'birth_loc_cite_sables',
+    stage: 'birth',
+    category: 'location',
+    label: 'Cité des Sables Perdus (Ruines Anciennes)',
+    desc: 'Né dans mystérieuses ruines civilisation disparue, redécouvertes archéologues aventuriers trois générations passées.',
+    detailed_lore: {
+      backstory: 'Zhar-Kareem (Joyau Enseveli) fut capitale empire millénaire disparu il y a 2000 ans cataclysme magique inconnu. Redécouverte récente révéla architecture titanesque : pyramides échelonnées 100m hauteur, obélisques gravés glyphes indéchiffrables, palais cristal rose intact mystérieusement. Colonie archéologues, chercheurs trésors, mages étudiant artefacts anciens établit campement permanent exploiter site. Vous êtes né ce lieu étrange où passé côtoie présent : parents archéologues obsédés déchiffrer secrets, vous jouiez enfant tombeaux royaux, dormiez ombre statues colossales divinités oubliées. Nuits, lueurs fantomatiques dansent ruines, murmures langues mortes résonnent couloirs.',
+      defining_moment: 'À dix ans, vous avez découvert chambre funéraire intacte contenant sarcophage pharaon. Ouvrir couvercle révéla momie parfaitement conservée tenant orbe cristal pulsant. Vous avez touché—vision fulgurante montra chute empire : ciel déchiré, magie déchaînée, millions âmes hurlantes. Vous avez lâché orbe terrorisé, mais vision hante encore.',
+      worldview_shaped: 'Toutes civilisations finissent poussière sable. Gloire, puissance, magie—rien n\'est éternel. Passé recèle secrets dangereux autant que trésors. Curiosité intellectuelle prime superstition, mais prudence conserve vie face inconnu ancien.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { intelligence: 4 },
+      mechanical_traits: [
+        {
+          name: 'Archéologue Né Ruines',
+          desc: '+5 Investigation (ruines/donjons), +5 History (civilisations anciennes), +1d20 déchiffrer glyphes/langues mortes, détection pièges magiques anciens',
+          effect: '+5 Investigation, +5 History, +1d20 Decipher',
+          game_effect: 'Expertise exploration donjons + connaissance historique profonde'
+        },
+        {
+          name: 'Familiarité Artefacts Anciens',
+          desc: '+3 Arcana (identification magie ancienne), avantage jets sauvegarder malédictions artefacts, intuition dangers tombeaux',
+          effect: '+3 Arcana',
+          game_effect: 'Résistance malédictions + instinct sécurité archéologique'
+        },
+        {
+          name: 'Trésor Enfoui Découverte',
+          desc: 'Commence avec 1 artefact mineur ancien (amulette protection +1 AC, ou anneau langues, ou baguette lumière), valeur 500 PO',
+          effect: 'Artefact mineur',
+          game_effect: 'Item magique départ unique'
+        }
+      ],
+      reputation: [
+        { factionId: 'archeologues', delta: 10, reason: 'Natif site majeur, connaissance terrain' },
+        { factionId: 'mages_recherche', delta: 6, reason: 'Accès artefacts rares étude' },
+        { factionId: 'pilleurs_tombes', delta: 4, reason: 'Respect expertise ruines (rivalité potentielle)' },
+        { factionId: 'gardiens_histoire', delta: -3, reason: 'Suspicion exploitation commerciale patrimoine' }
+      ],
+      items: [
+        { itemId: 'ancient_amulet_minor', quantity: 1, reason: 'Amulette ancienne trouvée tombeau (protection +1 AC)' },
+        { itemId: 'map_ruins_partial', quantity: 1, reason: 'Carte partielle niveaux supérieurs Zhar-Kareem' },
+        { itemId: 'toolkit_archaeologist', quantity: 1, reason: 'Outils archéologue (pinceaux, pics délicats, loupe)' },
+        { itemId: 'journal_glyphs', quantity: 1, reason: 'Journal déchiffrage glyphes parents (indices)' }
+      ],
+      skills: [
+        { skillId: 'investigation', bonus: 5, reason: 'Fouilles archéologiques, recherche indices ruines' },
+        { skillId: 'history', bonus: 5, reason: 'Éducation civilisations anciennes, mythologie perdue' },
+        { skillId: 'arcana', bonus: 3, reason: 'Exposition artefacts magiques anciens quotidienne' },
+        { skillId: 'perception', bonus: 5, reason: 'Vigilance pièges tombeaux, dangers ruines' }
+      ],
+      gold: 300,
+      languages: ['Commun', 'Langue Ancienne (Zhar-Kareem, partiel)', 'Glyphes Funéraires (lecture basique)'],
+      tags: ['ancient', 'ruins', 'scholarly', 'cursed', 'archaeological', 'mysterious']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'archeologues': 'Accueil enthousiaste, collaboration recherche (+12 disposition)',
+        'mages': 'Curiosité intense, questions incessantes artefacts (+8 disposition)',
+        'pilleurs_tombes': 'Respect compétence, proposition partenariat (+5 disposition)',
+        'superstitieux': 'Peur malédictions, évitement prudent (-6 disposition)',
+        'nobles_collectionneurs': 'Intérêt acquisition artefacts, propositions achat (+7 disposition)'
+      },
+      first_impression: '« Vous venez Zhar-Kareem mystérieuse ?! Avez-vous vu fantômes pharaons ? Possédez-vous artefacts maudits ? »',
+      long_term_perception: 'Érudit-aventurier hanté passé. Certains admirent savoir, d\'autres craignent malédictions portées. Perçu intelligent, curieux, mais parfois obsédé secrets dangereux.'
+    },
+    tags: ['ancient', 'ruins', 'scholarly', 'cursed'],
+    incompatible_with: []
+  },
+
+  // ===== JUNGLES (2) =====
+  {
+    id: 'birth_loc_village_tribal',
+    stage: 'birth',
+    category: 'location',
+    label: 'Village Tribal de la Jungle Émeraude',
+    desc: 'Né tribu ancestrale cœur jungle impénétrable, vivant harmonie totale nature sauvage hostile.',
+    detailed_lore: {
+      backstory: 'Votre tribu, les Jaguar-Ombres (Yax-Balam), habite jungle Émeraude depuis vingt générations. Villages arboricoles perchés 30m hauteur canopée, reliés ponts lianes tressées, invisibles sol. Tribu vit chasse (jaguars, singes, tapirs), cueillette (fruits exotiques, plantes médicinales), pêche rivières infestées piranhas. Chamans communiquent esprits jungle, guerriers maîtrisent sarbacanes poison paralysant mortel (venin grenouilles dendrobates dorées). Rites initiation incluent chasse solitaire jaguar noir 7 jours forêt—preuve courage adulte. Contact civilisation extérieure limité commerçants rares échangeant plumes rares, jade contre outils métalliques. Jungle tuteur impitoyable : erreur = mort (serpents venimeux, insectes géants, fièvres tropicales mortelles).',
+      defining_moment: 'Lors rite initiation 14 ans, perdu 5 jours jungle seul sans provisions, vous avez survécu mangeant larves, buvant rosée feuilles, échappant anaconda 8m. Nuit finale, jaguar noir apparut, vous fixa—puis disparut ombres. Chamans déclarèrent esprit jaguar vous adopta protecteur.',
+      worldview_shaped: 'Jungle est mère nourricière cruelle : elle donne tout nécessaire mais punit impitoyablement faibles. Respect esprits nature garantit survie, arrogance humaine mène extinction. Force individuelle moins importante cohésion tribale. Technologie métallique fascine mais jungle enseigne mieux.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { dexterity: 2, wisdom: 2 },
+      mechanical_traits: [
+        {
+          name: 'Maître Jungle Émeraude',
+          desc: '+5 Survival (jungle/tropical), +5 Stealth (forêt dense), mouvement arboricole double vitesse, immunité maladies tropicales communes',
+          effect: '+5 Survival, +5 Stealth',
+          game_effect: 'Domination environnement jungle totale + mobilité canopée'
+        },
+        {
+          name: 'Chasseur Tribal Aguerri',
+          desc: '+3 Perception (pistage), maîtrise sarbacane (+5 attaque poison), connaissance poisons naturels (paralysants, somnifères, mortels)',
+          effect: '+3 Perception, Blowgun Mastery',
+          game_effect: 'Pistage expert + armes exotiques tribales'
+        },
+        {
+          name: 'Lien Esprit Jaguar',
+          desc: '+1d20 jets impliquant félins (communication basique, apaisement), vision nocturne améliорée 20m, sens danger prédateurs',
+          effect: '+1d20 Feline Affinity',
+          game_effect: 'Bonus d100 interactions félins + sens bestial'
+        }
+      ],
+      reputation: [
+        { factionId: 'tribus_jungle', delta: 12, reason: 'Membre respecté Yax-Balam, rite initiation accompli' },
+        { factionId: 'druides', delta: 6, reason: 'Harmonie nature reconnue' },
+        { factionId: 'chasseurs', delta: 5, reason: 'Compétence pistage admirée' },
+        { factionId: 'citadins', delta: -4, reason: 'Perçu sauvage incivilisé' }
+      ],
+      items: [
+        { itemId: 'blowgun_tribal', quantity: 1, reason: 'Sarbacane bois noir tribal (portée 30m, silencieuse)' },
+        { itemId: 'poison_darts', quantity: 20, reason: 'Fléchettes poison paralysant (CON DC 15, paralysie 1h)' },
+        { itemId: 'jaguar_tooth_necklace', quantity: 1, reason: 'Collier dent jaguar noir (trophée initiation, symbole adulte)' },
+        { itemId: 'healing_herbs_jungle', quantity: 5, reason: 'Herbes médicinales jungle (soigne 1d8+2 HP chacune)' }
+      ],
+      skills: [
+        { skillId: 'survival', bonus: 5, reason: 'Vie jungle hostile depuis naissance, rite initiation solitaire' },
+        { skillId: 'stealth', bonus: 5, reason: 'Chasse silencieuse canopée, techniques camouflage tribal' },
+        { skillId: 'perception', bonus: 3, reason: 'Pistage proies, vigilance prédateurs jungle' },
+        { skillId: 'athletics', bonus: 5, reason: 'Escalade arbres, nage rivières rapides, course lianes' }
+      ],
+      gold: 100,
+      languages: ['Commun (basique)', 'Tribal Yax-Balam', 'Langage Bestial (félins, rudimentaire)'],
+      tags: ['tribal', 'jungle', 'primitive', 'hunter', 'spiritual', 'wild']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'tribus_jungle': 'Fraternité immédiate, hospitalité chaleureuse (+15 disposition)',
+        'druides': 'Respect connexion nature, curiosité traditions (+8 disposition)',
+        'citadins': 'Peur primitive, fascination voyeuriste (-3 disposition, +4 curiosité)',
+        'nobles': 'Dégoût manières sauvages, exotisme amusant (-5 disposition)',
+        'chasseurs': 'Admiration compétence, demande enseignement (+10 disposition)'
+      },
+      first_impression: '« Un tribal Jungle Émeraude ?! Ces marques faciales... Vous avez vraiment chassé jaguar noir seul ? Impressionnant et terrifiant. »',
+      long_term_perception: 'Chasseur-chaman sauvage. Certains admirent compétences survie, d\'autres craignent primitivité. Perçu agile, dangereux, spirituel, mais inadapté intrigues urbaines.'
+    },
+    tags: ['tribal', 'jungle', 'primitive', 'hunter'],
+    incompatible_with: []
+  },
+
+  // ===== ÎLES (3) =====
+  {
+    id: 'birth_loc_archipel_pirate',
+    stage: 'birth',
+    category: 'location',
+    label: 'Archipel Pirate de Libertalia',
+    desc: 'Né république pirates anarchique où lois maritimes remplacent codes terrestres obsolètes.',
+    detailed_lore: {
+      backstory: 'Libertalia (Port-Libre) : archipel 50 îles volcaniques colonisé pirates révoltés il y a 80 ans. Démocratie pirate radicale : capitaines élus équipages, butin partagé équitablement, aucune noblesse héréditaire. Port principal accueille navires hors-la-loi monde entier : forbans caribéens, corsaires déchus, flibustiers recherchés. Économie basée pillage navires marchands, contrebande, rançons. Mais Code Pirate strict : trahison = pendaison, lâcheté = bannissement, vol entre pirates = fouet. Enfance inhabituelle : apprentissage navigation 5 ans, première abordage 12 ans, maîtrise sabres/pistolets adolescence. Liberté absolue contrepartie danger permanent (marines royales, tempêtes, mutineries).',
+      defining_moment: 'À 13 ans, navire paternel attaqua galion espagnol. Combat sanglant dura 3h—vous avez abordé premier, sabre dents, tué garde ennemi sauver oncle. Capitaine vous nomma "Cœur-de-Fer" devant équipage acclamant. Vous avez compris : courage achète respect, lâcheté mépris éternel.',
+      worldview_shaped: 'Liberté vaut plus sécurité servile. Lois terrestres oppressent, mer libère. Loyauté équipage surpasse tout—frères choisis > famille sang. Richesse volée légitimement appartient audacieux, pas nobles parasites. Honneur pirate existe : parole donnée sacrée, trahison impardonnable.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { dexterity: 2, charisma: 2 },
+      mechanical_traits: [
+        {
+          name: 'Pirate Aguerri Libertalia',
+          desc: '+5 Navigation (maritime), +5 Acrobatics (cordages navire, abordages), maîtrise sabres/pistolets, immunité mal de mer, nage +50% vitesse',
+          effect: '+5 Navigation, +5 Acrobatics',
+          game_effect: 'Maîtrise combat naval + mobilité maritime totale'
+        },
+        {
+          name: 'Code Pirate Respecté',
+          desc: '+1d20 Persuasion/Intimidation avec pirates, accès réseau contrebande mondial, réduction 30% prix marché noir portuaire',
+          effect: '+1d20 Pirate Influence',
+          game_effect: 'Bonus d100 interactions pirates + commerce illicite'
+        },
+        {
+          name: 'Réputation Hors-la-Loi',
+          desc: '-10 disposition marines/autorités (recherché activement), +5 Intimidation (aura dangereuse), prime 500 PO tête (vivant)',
+          effect: 'Wanted Status',
+          game_effect: 'Malus légal sévère compensé terreur inspirée'
+        }
+      ],
+      reputation: [
+        { factionId: 'pirates_libertalia', delta: 15, reason: 'Natif Port-Libre, frère mer reconnu' },
+        { factionId: 'marines_royales', delta: -20, reason: 'Pirate recherché, ennemi naval déclaré' },
+        { factionId: 'contrebandiers', delta: 8, reason: 'Contacts commerciaux illicites fiables' },
+        { factionId: 'marchands_honnetes', delta: -12, reason: 'Peur pillage, méfiance totale' }
+      ],
+      items: [
+        { itemId: 'cutlass_pirate', quantity: 1, reason: 'Sabre abordage rouillé sang (arme signature)' },
+        { itemId: 'flintlock_pistol', quantity: 1, reason: 'Pistolet silex pirate (1d10 dégâts, portée 15m)' },
+        { itemId: 'treasure_map_fragment', quantity: 1, reason: 'Fragment carte trésor légendaire (indices partiels)' },
+        { itemId: 'rum_bottle_quality', quantity: 3, reason: 'Bouteilles rhum qualité Libertalia (monnaie pirate)' }
+      ],
+      skills: [
+        { skillId: 'navigation', bonus: 5, reason: 'Apprentissage navigation depuis 5 ans, voyages mondiaux' },
+        { skillId: 'acrobatics', bonus: 5, reason: 'Abordages navires, combat cordages, échapper chutes' },
+        { skillId: 'intimidation', bonus: 5, reason: 'Culture pirate agressive, réputation construite sang' },
+        { skillId: 'sleight_of_hand', bonus: 3, reason: 'Triche cartes, pickpocket ports, escamotage butin' }
+      ],
+      gold: 600,
+      languages: ['Commun', 'Argot Pirates (Cant Libertalia)', 'Langue Mers du Sud (commercial)'],
+      tags: ['pirate', 'outlaw', 'maritime', 'free', 'dangerous', 'wanted']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'pirates': 'Fraternité immédiate, partage rhum (+15 disposition)',
+        'marines': 'Hostilité meurtrière, arrestation immédiate (-25 disposition)',
+        'marchands': 'Terreur palpable, fuite précipitée (-15 disposition)',
+        'tavernes_ports': 'Accueil prudent, fascination histoires (+5 disposition)',
+        'nobles': 'Dégoût absolu, demande pendaison publique (-20 disposition)'
+      },
+      first_impression: '« Un pirate Libertalia ?! Gardez distances, amis—ce gaillard couperait gorges mères pour doublons or. Mais récits abordages valent fortune ! »',
+      long_term_perception: 'Hors-la-loi maritime charismatique. Certains admirent liberté audacieuse, majorité terrifie violence. Perçu dangereux, loyal équipage, traître lois.'
+    },
+    tags: ['pirate', 'outlaw', 'maritime', 'free'],
+    incompatible_with: []
+  },
+
+  {
+    id: 'birth_loc_ile_volcanique',
+    stage: 'birth',
+    category: 'location',
+    label: 'Île Volcanique de Pyroclast',
+    desc: 'Né île active perpétuelle éruption où lave coule quotidien et forges naturelles façonnent obsidienne magique.',
+    detailed_lore: {
+      backstory: 'Pyroclast : île volcanique 20km diamètre, volcan Mont Ignis éruption continue depuis 500 ans. Coulées lave créent nouvelles terres quotidiennes, geysers vapeur sulfureuse jaillissent partout, lacs acides bouillonnants (pH 2, température 90°C). Population téméraire 2000 âmes : forgerons obsidienne légendaire (verre volcanique tranchant rasoirs), alchimistes récoltant soufre/salpêtre, géomanciens étudiant magie feu primordiale. Villages fortifiés pierre basalte noire résistent chaleur extrême. Vous avez grandi pieds nus cendres chaudes, nagé sources thermales, respiré air volcanique âcre. Danger permanent : éruptions imprévisibles, coulées lave soudaines, gaz toxiques mortels. Mais île produit obsidienne enchantée valant fortune—matériau armes/armures supérieures.',
+      defining_moment: 'À 11 ans, éruption majeure ensevelit quartier Est village lave incandescente. Vous avez sauvé famille voisine piégée en traversant rivière lave sur pierres flottantes instables—exploit suicidaire récompensé titre "Marcheur-Feu" tribu. Cicatrices brûlures jambes témoignent.',
+      worldview_shaped: 'Danger permanent forge courage constant. Feu détruit mais crée aussi—obsidienne naît lave refroidie. Respect élémentaires feu garantit survie, arrogance = immolation. Richesse justifie risque mortel quotidien. Peur paralyse, action audacieuse sauve.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { constitution: 4 },
+      mechanical_traits: [
+        {
+          name: 'Enfant Flammes Pyroclast',
+          desc: 'Résistance feu naturel (50% dégâts), +5 Survival (volcanique), immunité gaz sulfureux, peau cicatrisée (+1 AC naturelle)',
+          effect: 'Fire Resistance 50%, +5 Survival',
+          game_effect: 'Résistance élémentaire feu + endurance toxique'
+        },
+        {
+          name: 'Maître-Forgeron Obsidienne',
+          desc: '+5 Crafting (obsidienne/verre volcanique), +1d20 créer armes obsidienne magique (+1 tranchant, ignore 2 AC armures), expertise gemmes volcaniques',
+          effect: '+5 Crafting, +1d20 Obsidian Craft',
+          game_effect: 'Artisanat légendaire matériaux rares + armes supérieures'
+        },
+        {
+          name: 'Marcheur-Feu Honoré',
+          desc: '+10 HP maximum, avantage jets Constitution résister chaleur/poison, cicatrices intimidantes (+3 Intimidation)',
+          effect: '+10 HP, +3 Intimidation',
+          game_effect: 'Vitalité accrue + présence impressionnante'
+        }
+      ],
+      reputation: [
+        { factionId: 'forgerons_obsidienne', delta: 10, reason: 'Natif Pyroclast, maîtrise artisanat volcanique' },
+        { factionId: 'geomanciens', delta: 6, reason: 'Familiarité magie feu primordiale' },
+        { factionId: 'elementaires_feu', delta: 4, reason: 'Respect survie territoire hostile' },
+        { factionId: 'druides_eau', delta: -3, reason: 'Opposition philosophique élément opposé' }
+      ],
+      items: [
+        { itemId: 'obsidian_dagger', quantity: 1, reason: 'Dague obsidienne noire forge personnelle (1d4+2, ignore 2 AC)' },
+        { itemId: 'fire_resistant_cloak', quantity: 1, reason: 'Cape cuir salamandre (résistance feu +10%)' },
+        { itemId: 'sulfur_pouches', quantity: 5, reason: 'Sachets soufre pur (composant alchimique, 20 PO chacun)' },
+        { itemId: 'lava_stone_charm', quantity: 1, reason: 'Amulette pierre lave refroidie (porte-bonheur tribal)' }
+      ],
+      skills: [
+        { skillId: 'survival', bonus: 5, reason: 'Vie île volcanique active, éviter dangers quotidiens' },
+        { skillId: 'crafting_obsidian', bonus: 5, reason: 'Forge obsidienne depuis enfance, techniques ancestrales' },
+        { skillId: 'athletics', bonus: 5, reason: 'Escalade falaises basalte, traversées lave, endurance chaleur' },
+        { skillId: 'intimidation', bonus: 3, reason: 'Cicatrices impressionnantes, aura danger volcanique' }
+      ],
+      gold: 400,
+      languages: ['Commun', 'Ignan (dialecte feu élémentaire, basique)', 'Langue Forgerons Pyroclast'],
+      tags: ['volcanic', 'fire', 'crafting', 'dangerous', 'elemental', 'resilient']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'forgerons': 'Admiration compétence obsidienne, demande collaboration (+12 disposition)',
+        'mages_feu': 'Fascination résistance élémentaire, propositions étude (+8 disposition)',
+        'citadins_normaux': 'Peur cicatrices, respect courage suicidaire (+3 disposition)',
+        'druides_nature': 'Malaise environnement hostile vie, incompréhension (-2 disposition)',
+        'collectionneurs_armes': 'Intérêt obsession armes obsidienne légendaires (+10 disposition)'
+      },
+      first_impression: '« Pyroclast ?! Ces cicatrices brûlures... Vous avez vraiment marché lave vivant ? Respectez, forgerons obsidienne produisent lames tranchant surnaturel. »',
+      long_term_perception: 'Forgeron-survivant volcanique. Certains admirent ténacité extrême, d\'autres terrifie environnement mortel. Perçu endurant, compétent artisanat, mais parfois imprudent danger.'
+    },
+    tags: ['volcanic', 'fire', 'crafting', 'dangerous'],
+    incompatible_with: []
+  },
+
+  // ===== ZONES MAUDITES (2) =====
+  {
+    id: 'birth_loc_terre_brulee',
+    stage: 'birth',
+    category: 'location',
+    label: 'Terre Brûlée de Cinder (Désolation Magique)',
+    desc: 'Né zone apocalyptique désolée où bataille mages anciens vitrifiа terre et corrompit magie ambiante à jamais.',
+    detailed_lore: {
+      backstory: 'Cinder : plaine 100km² vitrifiée magiquement il y a 300 ans durant Guerre Mages Archmages déchaînèrent sortilèges apocalyptiques. Sol cristal noir fendu, végétation inexistante, eau empoisonnée radiation arcanique. Ruines tours mages effondrées parsèment désolation, encore dangereuses (pièges magiques actifs, golems fous errants, zones distorsion temporelle). Petite communauté 200 survivants obstinés habite bunker renforcé : chasseurs artefacts, mages exilés, criminels fuyant justice. Vous êtes né cet enfer—mutation mineure possible (yeux luisants, résistance magique innée). Nourriture importée, eau filtrée magiquement. Dangers : radiations magiques (cancer arcanique), créatures mutées agressives, tempêtes mana sauvages imprévisibles.',
+      defining_moment: 'À 8 ans, tempête mana violette balaya bunker. Exposition 2h magie chaotique tua 12 personnes désintégration spontanée. Vous avez survécu mystérieusement—mages détectèrent résistance innée magie sauvage rare (1/1000). Vous compris ce jour-là : vous êtes différent, adapté enfer magique.',
+      worldview_shaped: 'Magie puissance ultime mais danger mortel incontrôlée. Arrogance mages détruisit civilisation entière. Adaptabilité prime force—seuls flexibles survivent chaos. Normalité luxe, mutation prix survie acceptable. Espoir persiste même apocalypse.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { constitution: 2, intelligence: 2 },
+      mechanical_traits: [
+        {
+          name: 'Résistance Mana Sauvage',
+          desc: 'Résistance magie 25% (jets sauvegarder sorts +5), immunité radiations arcaniques, +1d20 résister malédictions/corruption magique',
+          effect: 'Magic Resistance 25%, +1d20 vs Curses',
+          game_effect: 'Défense anti-magie exceptionnelle + survie zones corrompues'
+        },
+        {
+          name: 'Mutation Bénéfique Mineure',
+          desc: 'Yeux luisent faiblement ténèbres (vision crépuscule améliorée 15m), +5 Arcana (magie sauvage), détection zones mana instables 30m',
+          effect: '+5 Arcana, Mana Sense',
+          game_effect: 'Sens magique surnaturel + expertise chaos arcanique'
+        },
+        {
+          name: 'Chasseur Artefacts Expérimenté',
+          desc: '+5 Investigation (ruines magiques), +3 Perception (pièges magiques), connaissance désarmement sécurités arcaniques basiques',
+          effect: '+5 Investigation, +3 Perception',
+          game_effect: 'Expertise donjons magiques + survie pièges'
+        }
+      ],
+      reputation: [
+        { factionId: 'mages_recherche', delta: 8, reason: 'Résistance mana rare, sujet étude fascinant' },
+        { factionId: 'chasseurs_artefacts', delta: 6, reason: 'Connaissance terrain Cinder, guide fiable' },
+        { factionId: 'superstitious', delta: -8, reason: 'Peur mutation, suspicion corruption démoniaque' },
+        { factionId: 'anti_magie', delta: 5, reason: 'Respect survie zone anti-vie' }
+      ],
+      items: [
+        { itemId: 'artifact_shard_minor', quantity: 1, reason: 'Fragment artefact archmage (cristal mana, 300 PO valeur)' },
+        { itemId: 'anti_radiation_charm', quantity: 1, reason: 'Amulette protection radiations magiques (+10 résistance)' },
+        { itemId: 'goggles_mana_sight', quantity: 1, reason: 'Lunettes vision flux mana (détecte magie invisible)' },
+        { itemId: 'rations_preserved_magic', quantity: 10, reason: 'Rations préservées magiquement (ne pourrissent jamais)' }
+      ],
+      skills: [
+        { skillId: 'arcana', bonus: 5, reason: 'Exposition quotidienne magie sauvage, observations phénomènes' },
+        { skillId: 'investigation', bonus: 5, reason: 'Fouilles ruines tours mages, récupération artefacts' },
+        { skillId: 'survival', bonus: 5, reason: 'Vie zone apocalyptique hostile, éviter dangers magiques' },
+        { skillId: 'perception', bonus: 3, reason: 'Vigilance pièges magiques, créatures mutées' }
+      ],
+      gold: 300,
+      languages: ['Commun', 'Arcanique Ancien (ruines, fragments)', 'Code Chasseurs Artefacts'],
+      tags: ['cursed', 'magical', 'wasteland', 'mutant', 'dangerous', 'arcane']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'mages': 'Fascination scientifique résistance, propositions étude (+10 disposition)',
+        'chasseurs_artefacts': 'Respect compétence, demandes guidage Cinder (+8 disposition)',
+        'villageois_normaux': 'Peur mutation visible, évitement prudent (-7 disposition)',
+        'prêtres': 'Malaise corruption possible, tentatives purification (-4 disposition)',
+        'aventuriers': 'Admiration survie impossible, curiosité récits (+6 disposition)'
+      },
+      first_impression: '« Terre Brûlée ?! Vos yeux luisent... Mutation magique ? Vous avez survécu radiations mana sauvages ? Impressionnant et inquiétant égale mesure. »',
+      long_term_perception: 'Survivant apocalypse magique. Certains admirent résilience surhumaine, majoritaire craint corruption. Perçu résistant, expert magie, mais socialement isolé stigmate mutation.'
+    },
+    tags: ['cursed', 'magical', 'wasteland', 'mutant'],
+    incompatible_with: []
+  },
+
+  // ===== LIEUX MAGIQUES (1) =====
+  {
+    id: 'birth_loc_tour_mage',
+    stage: 'birth',
+    category: 'location',
+    label: 'Tour du Mage Solitaire Étoilé',
+    desc: 'Né tour arcane isolée où mage ermite étudie cosmos, élevé parmi grimoires anciens et expériences magiques quotidiennes.',
+    detailed_lore: {
+      backstory: 'Tour Stellaire Azurael : flèche pierre blanche 80m hauteur perchée montagne isolée 2500m altitude. Mage archmage Azurael Étoilé (300 ans, spécialiste astromancie) y vit reclus depuis siècle, étudiant constellations, cartographiant plans extérieurs, invoquant esprits stellaires. Vous êtes né apprenti (parent serviteur tour, ou adoption mage) : enfance extraordinaire parmi golems serviteurs animés, bibliothèque 10.000 tomes arcanes, laboratoire alchimique bouillonnant potions colorées, observatoire télescope enchanté scrutant galaxies lointaines. Leçons quotidiennes : mathématiques cosmiques, langages morts, invocations basiques. Vous avez assisté rituels astraux, conversé esprits élémentaires, mangé dîners créés sorts (nourriture immatérielle nutritive). Isolement social total : seuls visiteurs comètes passage décennale.',
+      defining_moment: 'À 10 ans, rituel astromancie maître tourna mal—portail dimensionnel ouvert aspira vous espace stellaire 30 secondes horrifiantes. Vous avez flotté vide, vu étoiles milliers simultanément, entendu chants cosmiques indescriptibles. Maître ferma portail urgence—vous êtes revenu changé, marqué cosmos (rêves prophétiques occasionnels).',
+      worldview_shaped: 'Magie clé comprendre univers infini. Connaissance pouvoir ultime surpasse richesse matérielle. Solitude nécessaire concentration études profondes. Mortalité éphémère face éternité cosmique—sagesse accumulation seule immortalité vraie. Pratique disciplinée prime talent brut.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { intelligence: 4 },
+      mechanical_traits: [
+        {
+          name: 'Prodige Arcane Formé',
+          desc: '+5 Arcana (tous domaines), +1d20 identifier sorts/artefacts magiques, connaissance 3 sorts niveau 0 (cantrips, usage illimité)',
+          effect: '+5 Arcana, +1d20 Spellcraft, 3 Cantrips',
+          game_effect: 'Expertise magique profonde + capacités lanceur débutant'
+        },
+        {
+          name: 'Éducation Bibliothèque Arcane',
+          desc: '+5 Knowledge (Histoire/Religion/Arcanes), alphabétisation 5 langues, accès mental bibliothèque 1000 tomes (rappel parfait lectures)',
+          effect: '+5 Knowledge, Eidetic Memory',
+          game_effect: 'Érudition encyclopédique + mémoire surhumaine'
+        },
+        {
+          name: 'Marqué Cosmos Stellaire',
+          desc: '+3 Perception (vision nocturne étoiles), rêves prophétiques 1/semaine (indices vagues futurs possibles), résistance psychique +3',
+          effect: '+3 Perception, Prophetic Dreams',
+          game_effect: 'Sens cosmique + intuition surnaturelle événements'
+        }
+      ],
+      reputation: [
+        { factionId: 'mages_academies', delta: 10, reason: 'Élève archmage renommé, éducation supérieure' },
+        { factionId: 'bibliotheques', delta: 8, reason: 'Accès connaissances rares, contribution recherche' },
+        { factionId: 'astrologues', delta: 6, reason: 'Formation astromancie unique' },
+        { factionId: 'anti_magie', delta: -10, reason: 'Incarnation dépendance magie dangereuse' }
+      ],
+      items: [
+        { itemId: 'spellbook_apprentice', quantity: 1, reason: 'Grimoire apprenti (10 sorts niveau 0-1, notes personnelles)' },
+        { itemId: 'wand_minor_magic', quantity: 1, reason: 'Baguette bois étoilé (focus arcane, +1 sorts)' },
+        { itemId: 'star_map_enchanted', quantity: 1, reason: 'Carte stellaire enchantée (navigation astrale, prophéties)' },
+        { itemId: 'component_pouch_quality', quantity: 1, reason: 'Sacoche composants qualité (cristaux, poudres rares)' }
+      ],
+      skills: [
+        { skillId: 'arcana', bonus: 5, reason: 'Études quotidiennes magie, expériences laboratoire depuis enfance' },
+        { skillId: 'knowledge_history', bonus: 5, reason: 'Lectures bibliothèque exhaustive, chroniques millénaires' },
+        { skillId: 'knowledge_religion', bonus: 5, reason: 'Étude panthéons divins, plans extérieurs, théologies' },
+        { skillId: 'perception', bonus: 3, reason: 'Observations astronomiques, vigilance expériences dangereuses' }
+      ],
+      gold: 200,
+      languages: ['Commun', 'Arcanique Classique', 'Célestien (stellaire)', 'Draconique (invocations)', 'Infernal (études planes)'],
+      tags: ['magical', 'scholarly', 'isolated', 'prodigy', 'cosmic', 'arcane']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'mages': 'Accueil chaleureux confrère, échanges savoirs (+12 disposition)',
+        'bibliothecaires': 'Respect érudition, accès privilégié archives (+10 disposition)',
+        'paysans': 'Peur superstition magie, méfiance étrange (+/ disposition)',
+        'nobles': 'Fascination pouvoirs, invitations tuteur enfants (+7 disposition)',
+        'inquisition': 'Surveillance étroite, suspicion pactes démoniaques (-8 disposition)'
+      },
+      first_impression: '« Vous venez Tour Stellaire légendaire ?! Azurael Étoilé vit vraiment 300 ans ?! Enseignez-moi magie, je vous en prie ! »',
+      long_term_perception: 'Prodige arcane isolé. Certains admirent génie précoce, d\'autres craignent arrogance mages. Perçu intelligent, puissant magiquement, mais socialement maladroit isolement enfance.'
+    },
+    tags: ['magical', 'scholarly', 'isolated', 'prodigy'],
+    incompatible_with: []
+  },
+
+  // ===== FRONTIÈRES (1) =====
+  {
+    id: 'birth_loc_avant_poste',
+    stage: 'birth',
+    category: 'location',
+    label: 'Avant-Poste Militaire Frontière Nord',
+    desc: 'Né forteresse militaire tendue première ligne défense contre invasions barbares nordiques récurrentes.',
+    detailed_lore: {
+      backstory: 'Fort Griseguarde : avant-poste militaire 500 soldats gardant Col Gris, unique passage praticable montagnes Nord vers royaumes civilisés. Position stratégique vitale : raids barbares annuels tentent forcer passage piller villages sud. Garnison vie militaire stricte : entraînement martial quotidien, patrouilles dangereuses terres hostiles, vigilance permanente signaux fumée ennemis. Vous êtes né famille militaire (parent officier, ou enfant blanchisseuse camp) : enfance rythmée clairons, odeur cuir huilé, récits batailles vétérans scarifiés. Vous avez appris discipliner précoce, hiérarchie martiale, camaraderie soldatesque. À 12 ans, raid barbare testa fort—vous avez aidé défense portant munitions, soigné blessés. Vie spartan forge caractères acier.',
+      defining_moment: 'Durant siège hivernal 14 ans, barbares assiégèrent fort 18 jours. Provisions épuisées, moral effondré. Vous avez proposé sortie nocturne audacieuse incendier camp ennemi—succès spectaculaire brisa siège. Commandant vous décora Étoile Courage Bronze devant garnison acclamante.',
+      worldview_shaped: 'Discipline militaire sauve vies chaos bataille. Hiérarchie nécessaire efficacité tactique. Camaraderie soldats plus forte liens sang—frères armes. Sacrifice individuel légitime si protège collectif. Lâcheté déshonneur pire mort. Paix luxe gagné sang guerriers.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { strength: 2, constitution: 2 },
+      mechanical_traits: [
+        {
+          name: 'Formation Militaire Complète',
+          desc: '+5 Athletics (endurance marches), +5 Intimidation (commandement), maîtrise armes martiales (épées/lances/arbalètes), +1 CA armures lourdes',
+          effect: '+5 Athletics, +5 Intimidation, Weapon Mastery',
+          game_effect: 'Compétence martiale professionnelle + autorité naturelle'
+        },
+        {
+          name: 'Tacticien Terrain Formé',
+          desc: '+1d20 jets tactiques bataille (planification, embuscades), +3 Perception (dangers militaires, ennemis cachés), connaissance fortifications',
+          effect: '+1d20 Tactics, +3 Perception',
+          game_effect: 'Bonus d100 stratégie combat + vigilance entraînée'
+        },
+        {
+          name: 'Frère Armes Respecté',
+          desc: '+5 disposition soldats/gardes (reconnaissance fraternité), avantage rallier troupes morales basses, contacts militaires 5 garnisons',
+          effect: 'Military Brotherhood',
+          game_effect: 'Réseau martial étendu + leadership inspire'
+        }
+      ],
+      reputation: [
+        { factionId: 'armee_royale', delta: 10, reason: 'Natif avant-poste, famille militaire reconnue' },
+        { factionId: 'veterans_guerre', delta: 8, reason: 'Respect épreuves combat partagées' },
+        { factionId: 'barbares_nord', delta: -8, reason: 'Ennemi défense active frontière' },
+        { factionId: 'pacifistes', delta: -5, reason: 'Désapprobation culture militariste' }
+      ],
+      items: [
+        { itemId: 'longsword_military_issue', quantity: 1, reason: 'Épée longue réglementaire armée (bien entretenue)' },
+        { itemId: 'chainmail_armor', quantity: 1, reason: 'Cotte mailles familiale (AC 16, héritage paternel)' },
+        { itemId: 'medal_bronze_courage', quantity: 1, reason: 'Médaille Étoile Courage Bronze (décoration officielle)' },
+        { itemId: 'military_rations', quantity: 10, reason: 'Rations militaires standardisées (longue conservation)' }
+      ],
+      skills: [
+        { skillId: 'athletics', bonus: 5, reason: 'Entraînement physique martial quotidien depuis enfance' },
+        { skillId: 'intimidation', bonus: 5, reason: 'Commandement troupes, présence martiale autoritaire' },
+        { skillId: 'survival', bonus: 3, reason: 'Patrouilles terres hostiles, bivouacs terrain ennemi' },
+        { skillId: 'perception', bonus: 3, reason: 'Vigilance sentinelle, détection embuscades ennemies' }
+      ],
+      gold: 300,
+      languages: ['Commun', 'Nordique (ennemi, basique)', 'Code Militaire (signaux, ordres)'],
+      tags: ['military', 'frontier', 'disciplined', 'warrior', 'loyal', 'tactical']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'soldats': 'Fraternité immédiate, respect vétéran jeune (+12 disposition)',
+        'officiers': 'Appréciation discipline, considération recrutement (+8 disposition)',
+        'barbares': 'Hostilité ennemis héréditaires, respect courage combattant (-10 disposition, +5 honneur)',
+        'civils': 'Gratitude protection frontière, admiration sacrifice (+6 disposition)',
+        'nobles': 'Respect service militaire, propositions garde personnelle (+5 disposition)'
+      },
+      first_impression: '« Fort Griseguarde héroïque ! Vous avez tenu siège 18 jours barbares ?! Vétéran si jeune... Respects, guerrier. »',
+      long_term_perception: 'Soldat-né discipliné. Certains admirent dévouement, d\'autres irrités rigidité militaire. Perçu loyal, courageux, compétent combat, mais parfois inflexible situations subtiles.'
+    },
+    tags: ['military', 'frontier', 'disciplined', 'warrior'],
+    incompatible_with: []
+  },
+
+  // ===== CITÉS SECONDAIRES (1) =====
+  {
+    id: 'birth_loc_port_fluvial',
+    stage: 'birth',
+    category: 'location',
+    label: 'Port Fluvial de Pont-de-Pierre',
+    desc: 'Né cité commerciale prospère contrôlant fleuve navigable majeur, carrefour marchandises continentales.',
+    detailed_lore: {
+      backstory: 'Pont-de-Pierre : ville 15.000 habitants construite pont monumental 300m enjambant fleuve Aethel (largeur 200m, profondeur 15m). Position stratégique contrôle commerce fluvial : barges chargées céréales/bois/minerais descendent capitales côtières, remontent textiles/épices/artefacts. Ville vit péages pont (tarif 5% valeur marchandises), construction navires fluviaux, pêche industrielle. Quartiers : Rive-Nord aristocratique (manoirs marchands riches), Rive-Sud populaire (dockers, pêcheurs, artisans), Pont-Central neutre (guildes, temples, marché). Vous avez grandi observant ballet chalands quotidien, négociations âpres péages, festivals fluviaux annuels (courses bateaux, feux artifices). Ville riche mais tensions sociales (grèves dockers, taxations impopulaires).',
+      defining_moment: 'À 13 ans, crue centennale menaça détruire pont—piliers craquaient dangereusement. Vous avez rejoint 1000 volontaires renforçant structure sacs sable, cordes, sortilèges urgence. 48h labeur ininterrompu sauva pont miraculeux. Ville entière célébra semaine—vous compris importance coopération communautaire crises.',
+      worldview_shaped: 'Commerce civilise humanité plus guerres. Cooperation pragmatique profit mutuel surpasse conflits. Position géographique stratégique = richesse garantie. Eau artère vitale civilisation—contrôler fleuve = contrôler prospérité. Communauté solide résiste crises naturelles.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { charisma: 2, intelligence: 2 },
+      mechanical_traits: [
+        {
+          name: 'Négociateur Commercial Né',
+          desc: '+5 Persuasion (négociations marchandes), +5 Insight (détecter arnaques), réduction 15% prix achats villes fluviales, connaissance valeurs marchés',
+          effect: '+5 Persuasion, +5 Insight',
+          game_effect: 'Expertise commerce + détection fraudes'
+        },
+        {
+          name: 'Connaissance Réseaux Fluviaux',
+          desc: '+3 Navigation (fleuves/rivières), connaissance ports 20 villes fleuve Aethel, contacts capitaines barges/guildes dockers',
+          effect: '+3 Navigation',
+          game_effect: 'Réseau transport fluvial + géographie commerciale'
+        },
+        {
+          name: 'Fils du Pont Légendaire',
+          desc: '+1d20 jets impliquant coopération communautaire (rallier foules causes communes), réputation positive villes alliées Pont-de-Pierre',
+          effect: '+1d20 Community Rally',
+          game_effect: 'Bonus d100 leadership civique + diplomatie régionale'
+        }
+      ],
+      reputation: [
+        { factionId: 'guildes_marchandes', delta: 8, reason: 'Natif centre commercial, familiarité affaires' },
+        { factionId: 'dockers_fluviaux', delta: 6, reason: 'Respect travailleurs fleuve, solidarité crise' },
+        { factionId: 'capitaines_barges', delta: 5, reason: 'Connaissance navigation fluviale, contacts fiables' },
+        { factionId: 'nobles_fonciers', delta: 3, reason: 'Appréciation prospérité commerce régional' }
+      ],
+      items: [
+        { itemId: 'merchants_ledger', quantity: 1, reason: 'Registre marchand (prix moyens 100 biens, 5 villes)' },
+        { itemId: 'river_map_detailed', quantity: 1, reason: 'Carte fluviale détaillée fleuve Aethel (500km, ports, dangers)' },
+        { itemId: 'guild_seal_merchants', quantity: 1, reason: 'Sceau guilde marchands Pont-de-Pierre (crédit commercial)' },
+        { itemId: 'fine_silk_bolt', quantity: 1, reason: 'Rouleau soie qualité (valeur 80 PO, marchandise type)' }
+      ],
+      skills: [
+        { skillId: 'persuasion', bonus: 5, reason: 'Négociations marchandes quotidiennes, marchandages péages' },
+        { skillId: 'insight', bonus: 5, reason: 'Détection arnaques commerçants, évaluation honnêteté' },
+        { skillId: 'navigation', bonus: 3, reason: 'Observation trafic fluvial, connaissance courants/dangers' },
+        { skillId: 'knowledge_commerce', bonus: 5, reason: 'Éducation affaires familiales, observation économie régionale' }
+      ],
+      gold: 500,
+      languages: ['Commun', 'Langue Marchande (jargon commercial)', 'Code Signaux Fluviaux'],
+      tags: ['urban', 'trade', 'river', 'prosperous', 'mercantile', 'cooperative']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'marchands': 'Confiance professionnelle, affaires facilitées (+10 disposition)',
+        'dockers': 'Respect solidarité crise, fraternité travail (+8 disposition)',
+        'nobles': 'Appréciation prospérité, invitations événements (+5 disposition)',
+        'pirates_fluviaux': 'Méfiance contrôle commerce, rivalité potentielle (-4 disposition)',
+        'paysans_isolés': 'Envie richesse urbaine, admiration mêlée jalousie (+2 disposition)'
+      },
+      first_impression: '« Pont-de-Pierre prospère ! Vous connaissez prix soie qualité aujourd\'hui ? Commerce fluvial enrichit villes, pas vrai ? »',
+      long_term_perception: 'Marchand-diplomate urbain. Certains admirent pragmatisme commercial, d\'autres jalousent richesse. Perçu intelligent, sociable, débrouillard, bon négociateur.'
+    },
+    tags: ['urban', 'trade', 'river', 'prosperous'],
+    incompatible_with: []
+  },
+
+  // ===== PLACEHOLDER 23 LOCATIONS RESTANTES =====
+  // TODO: Créer progressivement 23 locations supplémentaires suivant pattern d100 établi
+  // Priorités restantes :
+  // - Désert : Camp Nomade Itinérant (1)
+  // - Jungle : Ruines Civilisation Ancienne (1)
+  // - Îles : Atoll Tropical Paradisiaque (1)
+  // - Zones Maudites : Marais Hantés Âmes (1), Champ Bataille Éternel (1)
+  // - Lieux Magiques : Nexus Élémentaire Chaotique (1), Bosquet Féérique Enchanté (1)
+  // - Zones Frontalières : Colonie Récente Pionniers (1), Passage Montagneux Stratégique (1)
+  // - Lieux Interdits : Prison-Île Maximum Sécurité (1), Catacombes Oubliées (1), Temple Profané Déchu (1)
+  // - Merveilles Naturelles : Cascade Éternelle Arc-en-Ciel (1), Canyon Échos Magiques (1), Champ Geysers Arcaniques (1)
+  // - Cités Secondaires : Bourg Fortifié (1), Ville Minière (1), Capitale Régionale (1), Centre Pèlerinage (1), Ville Universitaire (1), Port Pêche (1), Marché Frontalier (1), Ville Thermale (1), Cité Souterraine (1)
 ];

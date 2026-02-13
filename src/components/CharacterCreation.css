@@ -1746,3 +1746,176 @@
     border-color: #666;
     color: #eee;
 }
+
+/* ===== SPECIALIZATION / SUBCLASS CARD REDESIGN ===== */
+
+.subclass-selection-container {
+    padding: 1rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.subclass-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    perspective: 1000px;
+}
+
+.subclass-card {
+    background: linear-gradient(145deg, rgba(20, 20, 25, 0.9) 0%, rgba(10, 10, 12, 0.95) 100%);
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    border-radius: 12px;
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    cursor: pointer;
+    min-height: 320px;
+    display: flex;
+    flex-direction: column;
+}
+
+.subclass-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+    opacity: 0.5;
+    transition: all 0.4s ease;
+}
+
+.subclass-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(212, 175, 55, 0.4);
+    background: linear-gradient(145deg, rgba(25, 25, 30, 0.95) 0%, rgba(15, 15, 18, 0.98) 100%);
+}
+
+.subclass-card:hover::before {
+    opacity: 1;
+    background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+    box-shadow: 0 0 15px var(--gold-primary);
+}
+
+.subclass-card.selected {
+    border-color: var(--gold-primary);
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.15), inset 0 0 0 1px var(--gold-primary);
+    transform: translateY(-4px);
+}
+
+.subclass-card.selected::before {
+    background: var(--gold-primary);
+    opacity: 1;
+    height: 6px;
+    box-shadow: 0 0 20px var(--gold-primary);
+}
+
+/* Card Header */
+.subclass-header {
+    padding: 2rem 2rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    position: relative;
+}
+
+.subclass-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.8rem;
+    color: var(--gold-primary);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+    transition: color 0.3s ease;
+}
+
+.subclass-card:hover .subclass-title {
+    color: var(--gold-bright);
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+}
+
+.subclass-style-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+}
+
+/* Card Body */
+.subclass-body {
+    padding: 1.5rem 2rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.subclass-desc {
+    font-family: 'IM Fell English', serif;
+    font-size: 1.1rem;
+    color: #ccc;
+    line-height: 1.6;
+    font-style: italic;
+}
+
+/* Feature Box */
+.subclass-feature {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: auto;
+}
+
+.feature-label {
+    display: block;
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    color: var(--gold-dim);
+    margin-bottom: 0.4rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.feature-text {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.9rem;
+    color: #e2e8f0;
+    line-height: 1.4;
+}
+
+/* Icon Watermark */
+.subclass-icon-watermark {
+    position: absolute;
+    bottom: -20px;
+    right: -20px;
+    font-size: 8rem;
+    opacity: 0.03;
+    pointer-events: none;
+    transition: all 0.5s ease;
+    transform: rotate(-10deg);
+}
+
+.subclass-card:hover .subclass-icon-watermark {
+    opacity: 0.08;
+    transform: rotate(0deg) scale(1.1);
+}
+
+/* Selected state specific */
+.subclass-card.selected .subclass-feature {
+    background: rgba(212, 175, 55, 0.05);
+    border-color: rgba(212, 175, 55, 0.3);
+}
+
+.subclass-card.selected .feature-label {
+    color: var(--gold-primary);
+}
