@@ -173,6 +173,8 @@ export const useGameState = (profile) => {
         syncedCombatState, setSyncedCombatState,
         realTimeSync, setRealTimeSync,
         weather, setWeather,
+        resetChronicle,
+        resetGameTime,
 
         fetchSession,
         fetchWorldState,
@@ -193,6 +195,12 @@ export const useGameState = (profile) => {
             setGameTime(initialTime);
             if (session?.host_id === profile?.id) {
                 await supabase.from('world_state').upsert({ key: 'game_time', value: initialTime });
+            }
+        },
+        resetChronicle: async () => {
+            setChronicle([]);
+            if (session?.host_id === profile?.id) {
+                await supabase.from('world_state').upsert({ key: 'chronicle', value: [] });
             }
         },
         fetchAvailableSessions: async () => {

@@ -1132,8 +1132,12 @@ export default function App() {
             await supabase.from('messages').delete().eq('session_id', session.id);
             setMessages([]);
 
-            // 2. Delete the player character
+            // 2. Delete the player character and related records
+            // We explicitly delete from player_titles and npc_affinities to avoid 409 Conflict
+            await supabase.from('player_titles').delete().eq('player_id', character.id);
+            await supabase.from('npc_affinities').delete().eq('player_id', character.id);
             await supabase.from('players').delete().eq('id', character.id);
+
             setCharacter(null);
             setCombatMode(false);
 
