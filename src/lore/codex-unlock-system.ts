@@ -124,18 +124,20 @@ export const CREATURE_UNLOCK_CONDITIONS: Record<string, UnlockCondition[]> = {
 // ═══════════════════════════════════════════════════════════════════════
 
 export const PROFESSION_TIER_UNLOCK_CONDITIONS: Record<string, Record<number, UnlockCondition[]>> = {
+    // ═══ CRAFT PROFESSIONS ═══
+    
     blacksmithing: {
-        1: [], // Apprenti (toujours accessible)
-        2: [ // Compagnon
+        1: [],
+        2: [
             { type: 'profession_tier', value: 1, description: 'Maîtriser le palier Apprenti (20 objets forgés)' },
             { type: 'craft', value: 'épée_acier', description: 'Forger une épée en acier' }
         ],
-        3: [ // Maître
+        3: [
             { type: 'profession_tier', value: 2, description: 'Maîtriser le palier Compagnon (50 objets forgés)' },
             { type: 'craft', value: 'armure_plaques', description: 'Forger une armure de plaques complète' },
             { type: 'level', value: 8, description: 'Atteindre le niveau 8' }
         ],
-        4: [ // Grand Maître
+        4: [
             { type: 'profession_tier', value: 3, description: 'Maîtriser le palier Maître (100 objets forgés)' },
             { type: 'craft', value: 'épée_mithril', description: 'Forger une arme en mithril' },
             { type: 'level', value: 12, description: 'Atteindre le niveau 12' },
@@ -162,6 +164,116 @@ export const PROFESSION_TIER_UNLOCK_CONDITIONS: Record<string, Record<number, Un
         ]
     },
     
+    enchanting: {
+        1: [],
+        2: [
+            { type: 'profession_tier', value: 1, description: 'Enchanter 10 objets' },
+            { type: 'craft', value: 'enchant_weapon_fire', description: 'Créer un Enchantement de Feu' }
+        ],
+        3: [
+            { type: 'profession_tier', value: 2, description: 'Enchanter 30 objets' },
+            { type: 'craft', value: 'ring_power', description: 'Créer un Anneau de Pouvoir' },
+            { type: 'level', value: 9, description: 'Atteindre le niveau 9' }
+        ],
+        4: [
+            { type: 'profession_tier', value: 3, description: 'Enchanter 60 objets' },
+            { type: 'craft', value: 'artifact_legendary', description: 'Créer un Artefact Légendaire' },
+            { type: 'level', value: 14, description: 'Atteindre le niveau 14' }
+        ]
+    },
+    
+    cooking: {
+        1: [],
+        2: [
+            { type: 'profession_tier', value: 1, description: 'Cuisiner 30 repas' },
+            { type: 'craft', value: 'feast_heroes', description: 'Préparer un Festin des Héros' }
+        ],
+        3: [
+            { type: 'profession_tier', value: 2, description: 'Cuisiner 70 repas' },
+            { type: 'craft', value: 'elixir_vitality', description: 'Créer un Élixir de Vitalité' },
+            { type: 'level', value: 7, description: 'Atteindre le niveau 7' }
+        ],
+        4: [
+            { type: 'profession_tier', value: 3, description: 'Cuisiner 150 repas' },
+            { type: 'craft', value: 'ambrosia_divine', description: 'Créer l\'Ambroisie Divine' },
+            { type: 'level', value: 13, description: 'Atteindre le niveau 13' }
+        ]
+    },
+    
+    leatherworking: {
+        1: [],
+        2: [
+            { type: 'profession_tier', value: 1, description: 'Travailler 25 peaux' },
+            { type: 'craft', value: 'armor_studded', description: 'Créer une Armure Cloutée' }
+        ],
+        3: [
+            { type: 'profession_tier', value: 2, description: 'Travailler 60 peaux' },
+            { type: 'craft', value: 'armor_dragonscale', description: 'Créer une Armure en Écailles de Dragon' },
+            { type: 'level', value: 8, description: 'Atteindre le niveau 8' }
+        ],
+        4: [
+            { type: 'profession_tier', value: 3, description: 'Travailler 120 peaux' },
+            { type: 'craft', value: 'cloak_invisibility', description: 'Créer une Cape d\'Invisibilité' },
+            { type: 'level', value: 14, description: 'Atteindre le niveau 14' }
+        ]
+    },
+    
+    tailoring: {
+        1: [],
+        2: [
+            { type: 'profession_tier', value: 1, description: 'Coudre 25 vêtements' },
+            { type: 'craft', value: 'robe_apprentice_mage', description: 'Créer une Robe de Mage Apprenti' }
+        ],
+        3: [
+            { type: 'profession_tier', value: 2, description: 'Coudre 60 vêtements' },
+            { type: 'craft', value: 'cloak_runic', description: 'Créer une Cape Runique' },
+            { type: 'level', value: 8, description: 'Atteindre le niveau 8' }
+        ],
+        4: [
+            { type: 'profession_tier', value: 3, description: 'Coudre 120 vêtements' },
+            { type: 'craft', value: 'carpet_flying', description: 'Créer un Tapis Volant' },
+            { type: 'level', value: 15, description: 'Atteindre le niveau 15' }
+        ]
+    },
+    
+    carpentry: {
+        1: [],
+        2: [
+            { type: 'profession_tier', value: 1, description: 'Créer 20 objets en bois' },
+            { type: 'craft', value: 'bow_longbow', description: 'Créer un Arc Long' }
+        ],
+        3: [
+            { type: 'profession_tier', value: 2, description: 'Créer 50 objets en bois' },
+            { type: 'craft', value: 'staff_living_wood', description: 'Créer un Bâton de Bois Vivant' },
+            { type: 'level', value: 8, description: 'Atteindre le niveau 8' }
+        ],
+        4: [
+            { type: 'profession_tier', value: 3, description: 'Créer 100 objets en bois' },
+            { type: 'craft', value: 'ship_warship', description: 'Construire un Navire de Guerre' },
+            { type: 'level', value: 14, description: 'Atteindre le niveau 14' }
+        ]
+    },
+    
+    jewelcrafting: {
+        1: [],
+        2: [
+            { type: 'profession_tier', value: 1, description: 'Créer 15 bijoux' },
+            { type: 'craft', value: 'ring_sapphire', description: 'Créer un Anneau de Saphir' }
+        ],
+        3: [
+            { type: 'profession_tier', value: 2, description: 'Créer 40 bijoux' },
+            { type: 'craft', value: 'amulet_arcane_focus', description: 'Créer une Amulette de Focalisation Arcanique' },
+            { type: 'level', value: 9, description: 'Atteindre le niveau 9' }
+        ],
+        4: [
+            { type: 'profession_tier', value: 3, description: 'Créer 80 bijoux' },
+            { type: 'craft', value: 'crown_kings', description: 'Créer une Couronne des Rois' },
+            { type: 'level', value: 15, description: 'Atteindre le niveau 15' }
+        ]
+    },
+    
+    // ═══ GATHER PROFESSIONS ═══
+    
     mining: {
         1: [],
         2: [
@@ -180,24 +292,6 @@ export const PROFESSION_TIER_UNLOCK_CONDITIONS: Record<string, Record<number, Un
         ]
     },
     
-    enchanting: {
-        1: [],
-        2: [
-            { type: 'profession_tier', value: 1, description: 'Enchanter 10 objets' },
-            { type: 'craft', value: 'enchantement_feu', description: 'Créer un Enchantement de Feu' }
-        ],
-        3: [
-            { type: 'profession_tier', value: 2, description: 'Enchanter 30 objets' },
-            { type: 'craft', value: 'rune_protection', description: 'Créer une Rune de Protection' },
-            { type: 'level', value: 9, description: 'Atteindre le niveau 9' }
-        ],
-        4: [
-            { type: 'profession_tier', value: 3, description: 'Enchanter 60 objets' },
-            { type: 'craft', value: 'artefact_legendaire', description: 'Créer un Artefact Légendaire' },
-            { type: 'level', value: 14, description: 'Atteindre le niveau 14' }
-        ]
-    },
-    
     herbalism: {
         1: [],
         2: [
@@ -211,6 +305,74 @@ export const PROFESSION_TIER_UNLOCK_CONDITIONS: Record<string, Record<number, Un
         4: [
             { type: 'profession_tier', value: 3, description: 'Récolter 150 herbes rares' },
             { type: 'level', value: 11, description: 'Atteindre le niveau 11' }
+        ]
+    },
+    
+    fishing: {
+        1: [],
+        2: [
+            { type: 'profession_tier', value: 1, description: 'Pêcher 40 poissons' }
+        ],
+        3: [
+            { type: 'profession_tier', value: 2, description: 'Pêcher 80 poissons' },
+            { type: 'discover', value: 'port_azure', description: 'Découvrir Port d\'Azur' },
+            { type: 'level', value: 6, description: 'Atteindre le niveau 6' }
+        ],
+        4: [
+            { type: 'profession_tier', value: 3, description: 'Pêcher 150 poissons rares' },
+            { type: 'craft', value: 'kraken_tentacle', description: 'Pêcher un Tentacule de Kraken' },
+            { type: 'level', value: 12, description: 'Atteindre le niveau 12' }
+        ]
+    },
+    
+    hunting: {
+        1: [],
+        2: [
+            { type: 'profession_tier', value: 1, description: 'Chasser 35 animaux' }
+        ],
+        3: [
+            { type: 'profession_tier', value: 2, description: 'Chasser 70 animaux' },
+            { type: 'kill', value: 'griffin', description: 'Chasser un Griffon' },
+            { type: 'level', value: 7, description: 'Atteindre le niveau 7' }
+        ],
+        4: [
+            { type: 'profession_tier', value: 3, description: 'Chasser 140 animaux' },
+            { type: 'kill', value: 'behemoth', description: 'Chasser un Béhémoth Ancien' },
+            { type: 'level', value: 13, description: 'Atteindre le niveau 13' }
+        ]
+    },
+    
+    woodcutting: {
+        1: [],
+        2: [
+            { type: 'profession_tier', value: 1, description: 'Abattre 40 arbres' }
+        ],
+        3: [
+            { type: 'profession_tier', value: 2, description: 'Abattre 80 arbres' },
+            { type: 'discover', value: 'foret_emeraude', description: 'Découvrir la Forêt d\'Émeraude' },
+            { type: 'level', value: 6, description: 'Atteindre le niveau 6' }
+        ],
+        4: [
+            { type: 'profession_tier', value: 3, description: 'Abattre 150 arbres' },
+            { type: 'craft', value: 'ancient_oak_log', description: 'Abattre un Chêne Ancien' },
+            { type: 'level', value: 11, description: 'Atteindre le niveau 11' }
+        ]
+    },
+    
+    skinning: {
+        1: [],
+        2: [
+            { type: 'profession_tier', value: 1, description: 'Dépecer 35 animaux' }
+        ],
+        3: [
+            { type: 'profession_tier', value: 2, description: 'Dépecer 70 animaux' },
+            { type: 'kill', value: 'dragon_mineur', description: 'Dépecer un Dragon Mineur' },
+            { type: 'level', value: 8, description: 'Atteindre le niveau 8' }
+        ],
+        4: [
+            { type: 'profession_tier', value: 3, description: 'Dépecer 140 animaux' },
+            { type: 'craft', value: 'dragonhide_ancient', description: 'Dépecer un Dragon Ancien' },
+            { type: 'level', value: 14, description: 'Atteindre le niveau 14' }
         ]
     }
 };
