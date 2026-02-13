@@ -1998,7 +1998,7 @@ Deno.serve(async (req: Request) => {
         const hasCombatKeyword = combatKeywords.some(kw => actionLower.includes(kw));
 
         // If player used combat keyword but GM didn't send combat, FORCE IT
-        if (hasCombatKeyword && (!result.combat || !result.combat.trigger)) {
+        if (hasCombatKeyword && !action.startsWith('[SYSTEM]') && (!result.combat || !result.combat.trigger)) {
             const avgLevel = partyDetails.length > 0
                 ? Math.round(partyDetails.reduce((sum: number, p: any) => sum + (p.level || 1), 0) / partyDetails.length)
                 : 1;

@@ -1,78 +1,156 @@
-import { CLASSES, ENRICHED_BACKSTORIES } from '../lore';
+import { CLASSES } from '../lore';
+import { 
+    BIRTH_LOCATIONS, SOCIAL_STATUSES, OMENS,
+    FAMILIES, EDUCATIONS, TRAUMAS,
+    TRAININGS, EXPLOITS, ENCOUNTERS,
+    PROFESSIONS, MOTIVATIONS, CONNECTIONS,
+    accumulateEffects
+} from '../lore/character-creation/lifepath';
+import { ITEMS_BY_ID } from '../lore/items-catalog';
 
 /**
- * Generates a completely random character for debug/testing purposes.
+ * Generates a completely random character with FULL LIFEPATH (12 subcategories).
  * @param {string} sessionId - The current session ID.
  * @param {string} userId - The user's ID.
  * @returns {object} A fully formed character object.
  */
 export const generateRandomCharacter = (sessionId, userId) => {
-    const classKeys = Object.keys(CLASSES);
-    const charClassKey = classKeys[Math.floor(Math.random() * classKeys.length)];
-    const classData = CLASSES[charClassKey];
-
-    const subclassKeys = Object.keys(classData.subclasses);
-    const subclassName = subclassKeys[Math.floor(Math.random() * subclassKeys.length)];
-
-    // Roll Stats (4d6 drop lowest)
-    const rollStat = () => {
+    // Helper: Pick random from array
+    const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    
+    // Helper: Roll 4d6 drop lowest
+    const roll4d6 = () => {
         const rolls = Array.from({ length: 4 }, () => Math.floor(Math.random() * 6) + 1);
-        rolls.sort((a, b) => b - a);
-        return rolls[0] + rolls[1] + rolls[2];
+        rolls.sort((a, b) => a - b);
+        return rolls.slice(1).reduce((a, b) => a + b, 0);
     };
-
-    const stats = {
-        str: rollStat(),
-        dex: rollStat(),
-        con: rollStat(),
-        int: rollStat(),
-        wis: rollStat(),
-        cha: rollStat()
+    
+    // Helper: Resolve item IDs to full objects
+    const resolveItems = (items) => {
+        if (!items) return [];
+        return items.map(({ itemId, quantity, reason }) => {
+            const item = ITEMS_BY_ID[itemId];
+            if (!item) return null;
+            return { ...item, quantity: quantity || 1, equipped: false, lifepathReason: reason };
+        }).filter(Boolean);
     };
-
-    // Pick compatible backstory
-    const compatibleBackstories = ENRICHED_BACKSTORIES.filter(b => b.compatible_classes.includes(charClassKey));
-    const backstory = compatibleBackstories[Math.floor(Math.random() * compatibleBackstories.length)] || ENRICHED_BACKSTORIES[0];
-
-    // Pick a random starting equipment set
-    const equipmentOption = classData.starting_equipment_options[Math.floor(Math.random() * classData.starting_equipment_options.length)];
-    const inventory = equipmentOption.items.map(item => ({ ...item, id: crypto.randomUUID() }));
-
-    // Pick 2 random abilities from options
-    const abilities = [];
-    const options = [...classData.initial_ability_options];
-    for (let i = 0; i < 2; i++) {
-        if (options.length > 0) {
-            const idx = Math.floor(Math.random() * options.length);
-            abilities.push(options[idx].name);
-            options.splice(idx, 1);
+    
+    // 1. Random Class
+    const classNames = Object.keys(CLASSES);
+    const randomClass = pick(classNames);
+    const classData = CLASSES[randomClass];
+    
+    // 2. Random Subclass
+    const randomSubclass = classData.subclasses ? pick(classData.subclasses) : null;
+    
+    // 3. Random Lifepath Choices (12 subcategories)
+    const lifepathSelection = {
+        birth: {
+            location: pick(BIRTH_LOCATIONS),
+            status: pick(SOCIAL_STATUSES),
+            omen: pick(OMENS)
+        },
+        childhood: {
+            family: pick(FAMILIES),
+            education: pick(EDUCATIONS),
+            trauma: pick(TRAUMAS)
+        },
+        adolescence: {
+            training: pick(TRAININGS),
+            exploit: pick(EXPLOITS),
+            encounter: pick(ENCOUNTERS)
+        },
+        youngAdult: {
+            profession: pick(PROFESSIONS),
+            motivation: pick(MOTIVATIONS),
+            connection: pick(CONNECTIONS)
         }
+    };
+    
+    // 4. Accumulate Lifepath Effects
+    const lifepathEffects = accumulateEffects(lifepathSelection);
+    
+    // 5. Roll Base Attributes
+    const baseStats = {
+        str: roll4d6(),
+        dex: roll4d6(),
+        con: roll4d6(),
+        int: roll4d6(),
+        wis: roll4d6(),
+        cha: roll4d6()
+    };
+    
+    // 6. Apply Lifepath Bonuses
+    const finalStats = {
+        str: baseStats.str + (lifepathEffects.final_stats.strength || 0),
+        dex: baseStats.dex + (lifepathEffects.final_stats.dexterity || 0),
+        con: baseStats.con + (lifepathEffects.final_stats.constitution || 0),
+        int: baseStats.int + (lifepathEffects.final_stats.intelligence || 0),
+        wis: baseStats.wis + (lifepathEffects.final_stats.wisdom || 0),
+        cha: baseStats.cha + (lifepathEffects.final_stats.charisma || 0)
+    };
+    
+    // 7. Random Abilities (3 from class)
+    const availableAbilities = classData.initial_ability_options || [];
+    const chosenAbilities = [];
+    const abilityCount = Math.min(3, availableAbilities.length);
+    const shuffled = [...availableAbilities].sort(() => Math.random() - 0.5);
+    for (let i = 0; i < abilityCount; i++) {
+        chosenAbilities.push(shuffled[i]);
     }
-
-    const maxHp = classData.hitDie + Math.floor((stats.con - 10) / 2);
-    const maxRes = 20 + 5 + Math.floor((stats[classData.resourceStat || 'con'] - 10) / 2) * 5 + stats[classData.resourceStat || 'con'];
-
+    
+    // 8. Random Equipment (first equipment pack)
+    const equipment = classData.equipment_packs ? classData.equipment_packs[0] || [] : [];
+    
+    // 9. Resolve Lifepath Items
+    const lifepathItems = resolveItems(lifepathEffects.items);
+    
+    // 10. Random Name
+    const names = ['Aragorn', 'Legolas', 'Gimli', 'Gandalf', 'Frodo', 'Sam', 'Boromir', 'Faramir'];
+    const randomName = `${pick(names)}_${Math.floor(Math.random() * 1000)}`;
+    
+    // 11. Calculate HP
+    const conMod = Math.floor((finalStats.con - 10) / 2);
+    const maxHp = (classData.hitDie || 8) + 10 + (conMod * 2);
+    
     return {
-        name: `Héros_${Math.floor(Math.random() * 1000)}`,
-        class: `${charClassKey} (${classData.subclasses[subclassName].label})`,
-        hp: maxHp,
-        max_hp: maxHp,
-        inventory: inventory,
-        stats: { ...stats, mechanic: classData.mechanic },
-        abilities: abilities,
-        spells: [], // Some classes might have separate spells but initial_ability_options covers them for now
-        portrait_url: classData.portrait,
-        resource: maxRes,
-        max_resource: maxRes,
-        level: 1,
-        xp: 0,
-        gold: 100,
-        backstory: backstory.label,
-        backstory_gm_context: backstory.desc,
-        starting_reputation: backstory.starting_reputation || {},
         session_id: sessionId,
         user_id: userId,
-        is_ready: true
+        name: randomName,
+        class: `${randomClass} (${randomSubclass?.label || 'Voie Standard'})`,
+        mechanic: classData.mechanic,
+        desc: classData.desc,
+        stats: finalStats,
+        gold: Math.floor(100 * (lifepathSelection.birth.status.effects.gold_modifier || 1.0)),
+        abilities: chosenAbilities,
+        equipment: equipment,
+        hp: maxHp,
+        maxHp: maxHp,
+        resource: 100,
+        max_resource: 100,
+        inventory: [...equipment, ...lifepathItems],
+        portrait_url: classData.portrait || '',
+        backstory: lifepathEffects.narrative_summary,
+        life_path: {
+            birth: lifepathSelection.birth.location.label,
+            childhood: lifepathSelection.childhood.trauma.label,
+            adolescence: lifepathSelection.adolescence.training.label,
+            adult: lifepathSelection.youngAdult.profession.label
+        },
+        mechanical_traits: lifepathEffects.all_traits,
+        skill_bonuses: lifepathEffects.skills || [],
+        backstory_gm_context: lifepathEffects.narrative_summary,
+        starting_reputation: Object.fromEntries(lifepathEffects.reputation_map),
+        visited_npcs: [],
+        faction_ties: [],
+        discovered_secrets: [],
+        discovered_locations: [],
+        active_quests: [],
+        important_events: [],
+        languages: lifepathEffects.languages || ['Commun'],
+        is_ready: true,
+        level: 1,
+        xp: 0
     };
 };
 
