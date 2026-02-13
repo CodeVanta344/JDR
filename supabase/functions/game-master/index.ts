@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // ─── CORS ────────────────────────────────────────────────────────────
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, prefer',
     'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, PUT, DELETE',
 };
 
@@ -297,6 +297,125 @@ const RULES: string[] = [
     `  - Si OUI: Autorise l'action et demande le jet approprie (Investigation/Arcanes).\n` +
     `  - Si NON: REFUSE L'ACTION. Dit: "Vous ne possedez pas cet objet pour pouvoir l'examiner."\n` +
     `  EXCEPTION: Si le joueur dit "Je demande a [Nom du porteur] de me le montrer" ou "Je regarde par-dessus son epaule", c'est autorise (action de groupe).`,
+
+    // 2d. Geographic Knowledge & Travel (CRITICAL)
+    `🗺️ CONNAISSANCE GEOGRAPHIQUE & VOYAGE (REGLE CRITIQUE - STRICTEMENT APPLIQUER):\n` +
+    `  \n` +
+    `  === PRINCIPE FONDAMENTAL ===\n` +
+    `  Les joueurs NE CONNAISSENT PAS toutes les regions/villes d'Aethelgard au depart.\n` +
+    `  Ils doivent DECOUVRIR le monde via exploration, dialogues PNJ, panneaux, cartes, rumeurs.\n` +
+    `  Si un joueur veut aller dans un lieu qu'il n'a JAMAIS entendu parler, TU REFUSES et GUIDES.\n` +
+    `  \n` +
+    `  === LIEUX CONNUS PAR DEFAUT (DEBUT JEU) ===\n` +
+    `  Selon BIRTH LOCATION du joueur (40 locations possibles), il connait UNIQUEMENT:\n` +
+    `  - Sa ville/region de NAISSANCE (ex: Hammerdeep, Capitale Valoria, Village Cotier...)\n` +
+    `  - Regions IMMEDIATEMENT VOISINES (1-2 max, via commerce/voyages famille)\n` +
+    `  - Capitale du royaume (entendu parler, mais jamais visite si roturier)\n` +
+    `  - Aucune connaissance precise routes/distances/dangers\n` +
+    `  \n` +
+    `  === PROTOCOLE VOYAGE VERS LIEU INCONNU (APPLIQUE SYSTEMATIQUEMENT) ===\n` +
+    `  \n` +
+    `  ETAPE 1 - DETECTION:\n` +
+    `  Si joueur dit "Je vais a [LIEU]" / "Je me rends a [REGION]" / "Je voyage vers [VILLE]":\n` +
+    `  -> VERIFIE: A-t-il deja entendu parler de ce lieu dans la session ?\n` +
+    `  -> Sources valides: PNJ mentionne, panneau routier, carte trouvee, rumeur taverne, backstory creation perso\n` +
+    `  \n` +
+    `  ETAPE 2 - SI LIEU INCONNU, REFUSE + GUIDE:\n` +
+    `  NE DIS PAS juste "Vous ne connaissez pas ce lieu."\n` +
+    `  UTILISE narration immersive + PROPOSE sources information concretes.\n` +
+    `  \n` +
+    `  === EXEMPLES REFUS + GUIDANCE ===\n` +
+    `  \n` +
+    `  Joueur Niveau 2, ne d'un village cotier: "Je vais a Hammerdeep"\n` +
+    `  MJ: "Hammerdeep... Ce nom resonne vaguement dans votre memoire — la cite naine des montagnes, forgée dans la roche. Mais ou est-elle exactement ? Au nord ? A l'est ? Combien de jours de marche ? Vous ne savez pas.\n` +
+    `  \n` +
+    `  Vous etes actuellement a ${currentLocation}. Autour de vous:\n` +
+    `  - Une TAVERNE ou des voyageurs echangent des histoires de routes\n` +
+    `  - Un PANNEAU en bois indiquant 'Route du Nord - Capitale 3 jours'\n` +
+    `  - Un MARCHAND ambulant chargeant des caisses sur sa carriole\n` +
+    `  \n` +
+    `  Que faites-vous ?\n` +
+    `  A) Entrer dans la taverne, demander directions Hammerdeep\n` +
+    `  B) Examiner le panneau routier pour indices\n` +
+    `  C) Parler au marchand (il voyage souvent)\n` +
+    `  D) Chercher une CARTE dans les boutiques locales (50-200 PO)"\n` +
+    `  \n` +
+    `  Joueur: "Je veux aller dans les Terres Brulees"\n` +
+    `  MJ: "Les Terres Brulees ? Ce nom ne vous dit absolument rien. Vous n'avez jamais entendu parler d'un tel endroit.\n` +
+    `  \n` +
+    `  Vous pourriez:\n` +
+    `  - Interroger un ERUDIT ou BIBLIOTHECAIRE (jet Investigation DD 50 pour trouver references)\n` +
+    `  - Poser des questions dans la TAVERNE locale ('Quelqu'un connait les Terres Brulees ?')\n` +
+    `  - Consulter une CARTE DETAILLEE chez un cartographe (200 PO)\n` +
+    `  - Demander a la GUILDE DES AVENTURIERS s'ils ont des dossiers\n` +
+    `  \n` +
+    `  Quelle approche choisissez-vous ?"\n` +
+    `  \n` +
+    `  Joueur apres rumeur taverne: "Je vais a la Crypte de Sir Valerius"\n` +
+    `  MJ: "Ah ! Le tavernier a mentionne ce lieu tout a l'heure. 'Col de Rougemont, versant est, ruines d'un ancien temple,' a-t-il dit. Mais vous ne savez toujours pas:\n` +
+    `  - Ou se trouve le col de Rougemont (direction/distance)\n` +
+    `  - Quels dangers sur la route\n` +
+    `  - Si vous avez l'equipement necessaire (torches, cordes...)\n` +
+    `  \n` +
+    `  Le tavernier est toujours au comptoir. Voulez-vous:\n` +
+    `  A) Lui demander directions precises (jet Charisme DD 40)\n` +
+    `  B) Acheter une CARTE REGIONALE chez le cartographe (100 PO)\n` +
+    `  C) Chercher un GUIDE local (50 PO/jour + part butin)\n` +
+    `  D) Partir quand meme a l'aveugle (risque se perdre, jets Survie DD 60)"\n` +
+    `  \n` +
+    `  === DECOUVERTE PROGRESSIVE (COMMENT DEBLOQUER LIEUX) ===\n` +
+    `  \n` +
+    `  METHODE 1 - DIALOGUE PNJ:\n` +
+    `  PNJ mentionne lieu avec contexte.\n` +
+    `  Exemple: "Si tu cherches un forgeron maitre, va voir Thorgrim a Hammerdeep. 5 jours au nord, suis la Route des Caravanes."\n` +
+    `  -> Joueur peut maintenant voyager vers Hammerdeep (mais doit suivre indications)\n` +
+    `  \n` +
+    `  METHODE 2 - PANNEAUX ROUTIERS:\n` +
+    `  Decrire panneaux aux croisements.\n` +
+    `  Exemple: "Un panneau en bois sculpte indique: 'Kuldahar 2 jours Nord - Capitale Valoria 4 jours Sud - Foret Sylmanir 3 jours Est'"\n` +
+    `  -> Joueur debloque ces 3 destinations\n` +
+    `  \n` +
+    `  METHODE 3 - CARTES ACHETEES/TROUVEES:\n` +
+    `  Carte regionale (100-200 PO): Debloque 5-10 villes region\n` +
+    `  Carte royaume (500 PO): Debloque toutes villes majeures\n` +
+    `  Carte ancienne (quete): Debloque lieux secrets (donjons, ruines)\n` +
+    `  \n` +
+    `  METHODE 4 - RUMEURS TAVERNE:\n` +
+    `  Jet Charisme/Investigation pour obtenir info.\n` +
+    `  Exemple: "Un marchand ivre raconte: 'J'ai vu des lumieres etranges pres du Gouffre d'Ymir, au nord de Kuldahar. On dit qu'une creature ancienne y reside...'\n` +
+    `  -> Joueur debloque Gouffre d'Ymir (mais avec warning danger)\n` +
+    `  \n` +
+    `  METHODE 5 - GUIDES LOCAUX:\n` +
+    `  Embaucher guide (50-200 PO/jour).\n` +
+    `  Guide connait region, evite dangers, accelere voyage.\n` +
+    `  \n` +
+    `  === VOYAGE VERS LIEU CONNU (AUTORISE) ===\n` +
+    `  Si joueur a deja entendu parler + a directions:\n` +
+    `  - AUTORISE le voyage\n` +
+    `  - DECRIS le trajet (jours, paysages, rencontres aleatoires)\n` +
+    `  - DEMANDE jets Survie si route dangereuse\n` +
+    `  - PROPOSE choix routes (rapide mais dangereuse vs lente mais sure)\n` +
+    `  \n` +
+    `  Exemple:\n` +
+    `  "Vous quittez ${currentLocation} direction Hammerdeep (5 jours nord). Deux routes possibles:\n` +
+    `  A) Route des Caravanes (7 jours, sure, patrouilles gardes)\n` +
+    `  B) Sentier Montagnard (4 jours, dangereux, bandits/betes)\n` +
+    `  \n` +
+    `  Vous choisissez: [attends choix joueur]"\n` +
+    `  \n` +
+    `  === PANNEAUX INDICATEURS (OBLIGATOIRE AUX CROISEMENTS) ===\n` +
+    `  TOUJOURS decrire panneaux routiers quand joueurs passent croisement:\n` +
+    `  - "Un vieux panneau en bois pointe: 'Valoria 3j Sud, Hammerdeep 5j Nord, Sylmanir 4j Est'"\n` +
+    `  - "Panneau grave: 'DANGER - Terres Brulees - Acces Interdit - Autorite Royale'"\n` +
+    `  - "Pierre milliaire: 'Kuldahar 20 km - Col Rougemont 35 km'"\n` +
+    `  \n` +
+    `  === REGLE ABSOLUE ===\n` +
+    `  TU NE LAISSES JAMAIS un joueur voyager vers lieu dont il ignore l'existence/emplacement.\n` +
+    `  TU GUIDES toujours vers sources information concretes (PNJ, panneaux, cartes, tavernes).\n` +
+    `  TU DECRIS panneaux routiers aux croisements pour debloquer regions.\n` +
+    `  Voyage = decouverte progressive, pas teleportation instantanee omnisciente.\n` +
+    `  \n` +
+    `  EXCEPTION: Si joueur a CARTE COMPLETE royaume ou BACKSTORY justifie (ex: ancien messager royal, cartographe), il peut connaitre plus lieux. MAIS routes/dangers restent inconnus sans exploration.`,
 
     // 3. Anti god-mode (ULTRA STRICT + RIDICULE NARRATIF)
     `🚨🚨🚨 ANTI GOD-MODE - REGLE ABSOLUE N°1 - NE JAMAIS ENFREINDRE 🚨🚨🚨\n` +
@@ -1557,7 +1676,7 @@ function buildSystemPrompt(opts: {
 
 Deno.serve(async (req: Request) => {
     if (req.method === 'OPTIONS') {
-        return new Response('ok', { headers: corsHeaders });
+        return new Response(null, { status: 204, headers: corsHeaders });
     }
 
     try {
