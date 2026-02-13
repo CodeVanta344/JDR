@@ -119,6 +119,28 @@ export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImag
         }
     }, [selectedClass]);
 
+    // Music effect: Play character creation theme
+    useEffect(() => {
+        const audio = new Audio('/Music/Creation de personnages/Wii Sports Theme (Medieval Cover).mp3');
+        audio.loop = true;
+        audio.volume = 0.3; // Volume à 30%
+        
+        // Start playing
+        const playPromise = audio.play();
+        
+        if (playPromise !== undefined) {
+            playPromise.catch(error => {
+                console.log('[CharacterCreation] Audio autoplay prevented:', error);
+            });
+        }
+        
+        // Cleanup: stop music when component unmounts (creation complete)
+        return () => {
+            audio.pause();
+            audio.currentTime = 0;
+        };
+    }, []); // Run only once on mount
+
     const rollStatPromise = (statKey) => {
         return new Promise((resolve) => {
             setRollingStat(statKey);
