@@ -322,7 +322,7 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                 )}
 
                 {activeTab === 'equip' && (
-                    <div className="animate-fade-in gallery-view">
+                    <div className="animate-fade-in sheet-gallery-view">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                             <h4 style={{ fontSize: '0.7rem', color: 'var(--gold-dim)', margin: 0, textTransform: 'uppercase', letterSpacing: '1.5px' }}>Besace & Equipement</h4>
                             {onTradeClick && (
@@ -413,7 +413,7 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                 )}
 
                 {activeTab === 'abilities' && (
-                    <div className="animate-fade-in list-view">
+                    <div className="animate-fade-in sheet-list-view">
                         <h4 style={{ fontSize: '0.7rem', color: 'var(--gold-dim)', marginBottom: '1.2rem', textTransform: 'uppercase', letterSpacing: '1.5px' }}>Aptitudes Connues</h4>
                         <div style={{ display: 'grid', gap: '1rem' }}>
                             {knownAbilities.map((ability, i) => (
