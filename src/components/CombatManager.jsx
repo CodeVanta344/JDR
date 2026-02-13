@@ -833,15 +833,28 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
         // Only consume PM if position actually changed
         const actualMove = (newX !== freshActor.posX || newY !== freshActor.posY);
         if (actualMove) {
-            // Start smooth animation
+            // Update state IMMEDIATELY (don't wait for animation)
+            const latestCombatants = combatantsRef.current;
+            const newCombatants = latestCombatants.map(u => u.id === freshActor.id ? { ...u, posX: newX, posY: newY, currentPM: u.currentPM - 1, facing: newFacing, hasMoved: true } : u);
+            setCombatants(newCombatants);
+            
+            // Sync immediately to all clients
+            if (onUpdateCombatState) {
+                onUpdateCombatState({ 
+                    combatants: newCombatants, 
+                    turnIndex: currentTurnIndex, 
+                    round, 
+                    active: true, 
+                    logs, 
+                    updatedAt: Date.now() 
+                });
+            }
+
+            // Start smooth animation AFTER state update
             animateMovement(freshActor.id, freshActor.posX, freshActor.posY, newX, newY, () => {
-                // Animation complete - update game state
-                // CRITICAL FIX: Use combatantsRef.current to get latest state (not stale closure)
-                const latestCombatants = combatantsRef.current;
-                const newCombatants = latestCombatants.map(u => u.id === freshActor.id ? { ...u, posX: newX, posY: newY, currentPM: u.currentPM - 1, facing: newFacing, hasMoved: true } : u);
-                setCombatants(newCombatants);
-                if (onUpdateCombatState) onUpdateCombatState({ combatants: newCombatants, turnIndex: currentTurnIndex, round, active: true, logs, updatedAt: Date.now() });
+                console.log(`[executeMove] Animation complete for ${freshActor.name} at (${newX}, ${newY})`);
             });
+            
             if (onSFX) onSFX('footstep');
         }
     };
@@ -1292,8 +1305,8 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                         if (moveX !== 0 || moveY !== 0) {
                             const direction = moveX > 0 ? 'right' : moveX < 0 ? 'left' : moveY > 0 ? 'down' : 'up';
                             executeMove(direction);
-                            // Wait for move animation to complete before attacking
-                            await new Promise(r => setTimeout(r, 400));
+                            // Wait for move to sync (reduced delay for smoother combat)
+                            await new Promise(r => setTimeout(r, 350));
                         }
                     }
                 }

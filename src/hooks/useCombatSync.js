@@ -59,35 +59,39 @@ export function useCombatSync(sessionId, initialCombatants = []) {
                 const newState = payload.new.value;
                 const newVersion = payload.new.version || 0;
 
-                // Only apply if this is a newer version
+                // Always apply newer versions to prevent missing updates
                 if (newVersion > lastAppliedVersionRef.current) {
                     lastAppliedVersionRef.current = newVersion;
                     
-                    // Apply update immediately
+                    // Apply update with debounce protection
                     if (!isApplyingUpdateRef.current && newState.active) {
                         isApplyingUpdateRef.current = true;
                         
-                        setCombatants(newState.combatants || []);
-                        setRound(newState.round || 1);
-                        setCurrentTurnIndex(newState.turnIndex || 0);
-                        setVersion(newVersion);
-                        
-                        // Merge logs (avoid duplicates)
-                        if (newState.logs && newState.logs.length > 0) {
-                            setLogs(prev => {
-                                const existingIds = new Set(prev.map(l => l.id));
-                                const newLogs = newState.logs.filter(l => !existingIds.has(l.id));
-                                return [...prev, ...newLogs];
-                            });
-                        }
-                        
-                        setTimeout(() => {
-                            isApplyingUpdateRef.current = false;
-                        }, 100);
+                        // Use requestAnimationFrame to batch updates
+                        requestAnimationFrame(() => {
+                            setCombatants(newState.combatants || []);
+                            setRound(newState.round || 1);
+                            setCurrentTurnIndex(newState.turnIndex || 0);
+                            setVersion(newVersion);
+                            
+                            // Merge logs (avoid duplicates)
+                            if (newState.logs && newState.logs.length > 0) {
+                                setLogs(prev => {
+                                    const existingIds = new Set(prev.map(l => l.id));
+                                    const newLogs = newState.logs.filter(l => !existingIds.has(l.id));
+                                    return [...prev, ...newLogs];
+                                });
+                            }
+                            
+                            setTimeout(() => {
+                                isApplyingUpdateRef.current = false;
+                            }, 50);
+                        });
                     }
                 } else if (newVersion === lastAppliedVersionRef.current) {
-                    // Same version - likely our own update, ignore
-                    console.log('[CombatSync] Ignoring same version update');
+                    // Same version - could be concurrent update, check timestamp
+                    const currentTimestamp = newState.updatedAt || 0;
+                    console.log('[CombatSync] Same version - checking timestamp', { currentTimestamp });
                 }
             })
             .subscribe();
