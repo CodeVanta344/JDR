@@ -240,11 +240,14 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                                     <span>Compétences Maîtrisées</span>
                                 </h4>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                                    {character.skill_bonuses.map((skill, idx) => (
-                                        <div key={idx} style={{ padding: '0.4rem 0.7rem', background: 'rgba(84,160,255,0.1)', borderRadius: '4px', border: '1px solid rgba(84,160,255,0.3)' }}>
-                                            <span style={{ fontSize: '0.7rem', color: '#54a0ff', fontWeight: '600' }}>{skill}</span>
-                                        </div>
-                                    ))}
+                                    {character.skill_bonuses.map((skill, idx) => {
+                                        const label = typeof skill === 'string' ? skill : (skill.skillId || 'Compétence');
+                                        return (
+                                            <div key={idx} style={{ padding: '0.4rem 0.7rem', background: 'rgba(84,160,255,0.1)', borderRadius: '4px', border: '1px solid rgba(84,160,255,0.3)' }}>
+                                                <span style={{ fontSize: '0.7rem', color: '#54a0ff', fontWeight: '600' }}>{label}</span>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -276,7 +279,7 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                         </div>
                         {/* DEBUG: Log inventory */}
                         {console.log('[CharacterSheet] Inventory:', character.inventory, 'Count:', character.inventory?.length)}
-                        
+
                         {(!character.inventory || character.inventory.length === 0) ? (
                             <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#666' }}>
                                 <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎒</div>
@@ -288,66 +291,66 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                         ) : (
                             <div style={{ display: 'grid', gap: '0.8rem' }}>
                                 {character.inventory.map((item, i) => {
-                                const equipped = item.equipped;
-                                const isConsumable = (item.stats && (item.stats.heal || item.stats.resource || item.stats.hp)) ||
-                                    ['consumable', 'potion', 'scroll'].includes(item.type?.toLowerCase());
-                                const equippable = isEquippable(item);
+                                    const equipped = item.equipped;
+                                    const isConsumable = (item.stats && (item.stats.heal || item.stats.resource || item.stats.hp)) ||
+                                        ['consumable', 'potion', 'scroll'].includes(item.type?.toLowerCase());
+                                    const equippable = isEquippable(item);
 
-                                return (
-                                    <div key={i} style={{
-                                        padding: '1rem',
-                                        background: equipped ? 'rgba(212, 175, 55, 0.08)' : 'rgba(0,0,0,0.3)',
-                                        borderRadius: '6px',
-                                        border: equipped ? '1px solid var(--gold-primary)' : '1px solid rgba(255,255,255,0.05)',
-                                        boxShadow: equipped ? '0 0 15px rgba(212,175,55,0.1)' : 'none'
-                                    }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <div style={{ flex: 1 }}>
-                                                <div style={{ fontWeight: 'bold', color: equipped ? 'var(--gold-primary)' : '#fff', fontSize: '0.9rem' }}>{item.name}</div>
-                                                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontStyle: 'italic', marginTop: '2px' }}>{item.desc}</div>
+                                    return (
+                                        <div key={i} style={{
+                                            padding: '1rem',
+                                            background: equipped ? 'rgba(212, 175, 55, 0.08)' : 'rgba(0,0,0,0.3)',
+                                            borderRadius: '6px',
+                                            border: equipped ? '1px solid var(--gold-primary)' : '1px solid rgba(255,255,255,0.05)',
+                                            boxShadow: equipped ? '0 0 15px rgba(212,175,55,0.1)' : 'none'
+                                        }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{ fontWeight: 'bold', color: equipped ? 'var(--gold-primary)' : '#fff', fontSize: '0.9rem' }}>{item.name}</div>
+                                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontStyle: 'italic', marginTop: '2px' }}>{item.desc}</div>
+                                                </div>
+                                                <div style={{ display: 'flex', gap: '0.5rem', marginLeft: '10px' }}>
+                                                    {isConsumable && (
+                                                        <button
+                                                            style={{ fontSize: '0.65rem', padding: '5px 10px', background: 'rgba(84, 160, 255, 0.1)', border: '1px solid #54a0ff', color: '#54a0ff', cursor: 'pointer', borderRadius: '4px', fontWeight: 'bold' }}
+                                                            onClick={() => onConsume && onConsume(item, i)}
+                                                        >
+                                                            USER
+                                                        </button>
+                                                    )}
+                                                    {equippable && (
+                                                        <button
+                                                            style={{
+                                                                fontSize: '0.65rem', padding: '5px 10px',
+                                                                background: equipped ? 'rgba(255,107,107,0.1)' : 'rgba(212,175,55,0.1)',
+                                                                border: '1px solid currentColor',
+                                                                color: equipped ? '#ff6b6b' : 'var(--gold-primary)',
+                                                                cursor: 'pointer', borderRadius: '4px', fontWeight: 'bold'
+                                                            }}
+                                                            onClick={() => {
+                                                                if (onEquipItem) onEquipItem(i);
+                                                                else {
+                                                                    const newInv = character.inventory.map((invItem, idx) => idx === i ? { ...invItem, equipped: !equipped } : invItem);
+                                                                    onUpdateInventory(newInv);
+                                                                }
+                                                            }}
+                                                        >
+                                                            {equipped ? 'RETIRER' : 'ÉQUIPER'}
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <div style={{ display: 'flex', gap: '0.5rem', marginLeft: '10px' }}>
-                                                {isConsumable && (
-                                                    <button
-                                                        style={{ fontSize: '0.65rem', padding: '5px 10px', background: 'rgba(84, 160, 255, 0.1)', border: '1px solid #54a0ff', color: '#54a0ff', cursor: 'pointer', borderRadius: '4px', fontWeight: 'bold' }}
-                                                        onClick={() => onConsume && onConsume(item, i)}
-                                                    >
-                                                        USER
-                                                    </button>
-                                                )}
-                                                {equippable && (
-                                                    <button
-                                                        style={{
-                                                            fontSize: '0.65rem', padding: '5px 10px',
-                                                            background: equipped ? 'rgba(255,107,107,0.1)' : 'rgba(212,175,55,0.1)',
-                                                            border: '1px solid currentColor',
-                                                            color: equipped ? '#ff6b6b' : 'var(--gold-primary)',
-                                                            cursor: 'pointer', borderRadius: '4px', fontWeight: 'bold'
-                                                        }}
-                                                        onClick={() => {
-                                                            if (onEquipItem) onEquipItem(i);
-                                                            else {
-                                                                const newInv = character.inventory.map((invItem, idx) => idx === i ? { ...invItem, equipped: !equipped } : invItem);
-                                                                onUpdateInventory(newInv);
-                                                            }
-                                                        }}
-                                                    >
-                                                        {equipped ? 'RETIRER' : 'ÉQUIPER'}
-                                                    </button>
-                                                )}
-                                            </div>
+                                            {item.stats && (
+                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
+                                                    {Object.entries(item.stats).map(([k, v]) => (
+                                                        <span key={k} style={{ fontSize: '0.6rem', color: '#48dbfb', textTransform: 'uppercase', background: 'rgba(72,219,251,0.05)', padding: '2px 6px', borderRadius: '3px', border: '1px solid rgba(72,219,251,0.1)' }}>{k} +{v}</span>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
-                                        {item.stats && (
-                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
-                                                {Object.entries(item.stats).map(([k, v]) => (
-                                                    <span key={k} style={{ fontSize: '0.6rem', color: '#48dbfb', textTransform: 'uppercase', background: 'rgba(72,219,251,0.05)', padding: '2px 6px', borderRadius: '3px', border: '1px solid rgba(72,219,251,0.1)' }}>{k} +{v}</span>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
+                                    );
+                                })}
+                            </div>
                         )}
                     </div>
                 )}

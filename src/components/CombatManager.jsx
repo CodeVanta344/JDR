@@ -880,6 +880,24 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
         const authorized = freshActor.isEnemy || canAct;
         if (!authorized) return;
 
+        // SÉCURITÉ : Empêcher de s'attaquer soi-même avec des attaques offensives
+        if (!action.friendly && target.id === freshActor.id) {
+            addLog({ role: 'system', content: `❌ **${freshActor.name}** ne peut pas s'attaquer soi-même !` });
+            return;
+        }
+
+        // SÉCURITÉ : Les attaques offensives ciblent uniquement les ennemis
+        if (!action.friendly && (target.isEnemy === freshActor.isEnemy)) {
+            addLog({ role: 'system', content: `❌ **${freshActor.name}** ne peut pas attaquer un allié !` });
+            return;
+        }
+
+        // SÉCURITÉ : Les sorts friendly ciblent uniquement les alliés
+        if (action.friendly && (target.isEnemy !== freshActor.isEnemy)) {
+            addLog({ role: 'system', content: `❌ **${action.name}** ne peut cibler que des alliés !` });
+            return;
+        }
+
         const dx = freshActor.posX - target.posX;
         const dy = freshActor.posY - target.posY;
         const distance = Math.sqrt(dx * dx + dy * dy);
@@ -1329,8 +1347,8 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                 // Sort allié : cibler son propre camp (et potentiellement soi-même)
                 isTargetable = (unit.isEnemy === currentActor?.isEnemy);
             } else {
-                // Sort offensif : cibler le camp opposé
-                isTargetable = (unit.isEnemy !== currentActor?.isEnemy);
+                // Sort offensif : cibler le camp opposé UNIQUEMENT (jamais soi-même)
+                isTargetable = (unit.isEnemy !== currentActor?.isEnemy) && (unit.id !== currentActor?.id);
             }
         }
         
