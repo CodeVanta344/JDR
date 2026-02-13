@@ -1250,7 +1250,7 @@ export default function App() {
 
             const finalChar = {
                 name: charData.name,
-                class: `${charData.class} (${charData.subclass})`,
+                class: charData.subclass ? `${charData.class} (${charData.subclass})` : charData.class,
                 hp: charData.hp,
                 max_hp: charData.maxHp,
                 inventory: charData.inventory || [],
@@ -2445,6 +2445,21 @@ export default function App() {
         }
     }, [combatEnemies, combatMode]);
 
+    const handleTestCombat = () => {
+        const dummyEnemies = [
+            { id: 'gob1', name: 'Gobelin', hp: 20, maxHp: 20, ac: 12, x: 3, y: 3, type: 'enemy' },
+            { id: 'gob2', name: 'Chef Gobelin', hp: 45, maxHp: 45, ac: 14, x: 6, y: 4, type: 'enemy' }
+        ];
+        setSceneImage('/maps/test_map.jpg');
+        setCombatEnemies(dummyEnemies);
+        setCombatMode(true);
+        addMessage({
+            role: 'system',
+            content: "⚔️ **MODE DEBUG:** Combat de test lancé avec la carte personnalisée.",
+            id: crypto.randomUUID()
+        });
+    };
+
 
     return (
         <div className="app-container">
@@ -2899,7 +2914,7 @@ export default function App() {
             />
 
             {/* Debug Panel for Combat Logs */}
-            <DebugPanel />
+            <DebugPanel onTestCombat={handleTestCombat} />
         </div>
     );
 }

@@ -179,7 +179,118 @@ const RULES: string[] = [
     // 2. Spell verification
     `VERIFICATION SORTS: Regarde le champ SPELLS. Si le joueur veut lancer un sort qui N'EST PAS dans SPELLS, REFUSE. Dit: "Vous tentez de canaliser cette energie, mais vous ne maitrisez pas ce sort."`,
 
-    // 2b. Quest Item Inspection (CRITICAL)
+    // 2b. Economy & Merchant Prices (STRICT)
+    `🪙 SYSTEME ECONOMIQUE (REGLE CRITIQUE - STRICTEMENT APPLIQUER):\n` +
+    `  \n` +
+    `  === PHILOSOPHIE ===\n` +
+    `  Les joueurs DEBUTANTS sont PAUVRES. Ils commencent avec 200-800 PO.\n` +
+    `  Les equipements DECENTS sont CHERS. La progression est LENTE.\n` +
+    `  Les objets puissants EXIGENT un niveau minimum pour etre equipes.\n` +
+    `  \n` +
+    `  === GRILLE DE PRIX (BASE × MARKUP MARCHAND) ===\n` +
+    `  \n` +
+    `  ARMES (prix marchand ville majeure, +50% markup):\n` +
+    `  Niveau 1-2 (Commun):\n` +
+    `  - Dague Rouillee: 50 PO (dégâts 1d4, Force 5 requis)\n` +
+    `  - Epee Courte Milicien: 120 PO (dégâts 1d6, Force 8 requis)\n` +
+    `  - Gourdin Ferre: 80 PO (dégâts 1d6, Force 10 requis)\n` +
+    `  \n` +
+    `  Niveau 3-5 (Non-commun):\n` +
+    `  - Epee Longue Forgee: 750 PO (dégâts 1d8+1, ATK +1, Force 12, NIVEAU 3 requis)\n` +
+    `  - Hache Bataille Naine: 900 PO (dégâts 1d10+1, crit +5%, Force 14, NIVEAU 4 requis)\n` +
+    `  - Arc Composite Elfique: 1200 PO (dégâts 1d8+2, ATK +1, portée 150m, Dex 14, NIVEAU 4 requis)\n` +
+    `  \n` +
+    `  Niveau 6-9 (Rare):\n` +
+    `  - Lame Enflammee: 6500 PO (dégâts 1d10+3 + 1d6 feu, ATK +2, Force 14, NIVEAU 6 requis)\n` +
+    `  - Arbalete Lourde Precision: 7000 PO (dégâts 2d8+2, ATK +3, crit +10%, Force 12, Dex 16, NIVEAU 7 requis)\n` +
+    `  - Baton Maitrise Arcanique: 8500 PO (puissance sorts +15, regen mana +5, Int 16, NIVEAU 8 requis)\n` +
+    `  \n` +
+    `  Niveau 10-14 (Epique):\n` +
+    `  - Epee Os de Dragon: 35000 PO (dégâts 2d8+5, ATK +4, dragon slayer, Force 16, NIVEAU 10 requis)\n` +
+    `  - Arc Chute Stellaire: 42000 PO (dégâts 2d10+4 + 2d6 radiant, ATK +5, visée auto, Dex 18, NIVEAU 12 requis)\n` +
+    `  \n` +
+    `  Niveau 15+ (Legendaire) - NON VENDUS, QUETE UNIQUEMENT:\n` +
+    `  - Lame de l'Aube (Solaris): 180000 PO valeur estimee (dégâts 3d8+8 + 3d8 radiant, ATK +6, tue morts-vivants, Force 18, Charisme 14, NIVEAU 15 requis)\n` +
+    `  - Marteau de Thundrak: 250000 PO valeur estimee (dégâts 4d10+10 + 4d6 foudre, ATK +7, forge partout, Force 20, NIVEAU 18, Classes: Guerrier/Paladin/Forgeron)\n` +
+    `  \n` +
+    `  ARMURES (prix marchand ville majeure):\n` +
+    `  Niveau 1-2:\n` +
+    `  - Robe Tissu Rapiecee: 60 PO (AC +1)\n` +
+    `  - Armure Cuir Basique: 200 PO (AC +3, Dex 10 requis)\n` +
+    `  \n` +
+    `  Niveau 3-5:\n` +
+    `  - Cotte Mailles Forgee: 1500 PO (AC +6, Force 12, NIVEAU 3 requis)\n` +
+    `  - Harnois Partiel: 3000 PO (AC +8, Force 14, Con 12, NIVEAU 5 requis)\n` +
+    `  \n` +
+    `  Niveau 6-9:\n` +
+    `  - Plate Enchantee Gardien: 12000 PO (AC +12, resist magie +10, Force 16, Con 14, NIVEAU 7 requis)\n` +
+    `  \n` +
+    `  Niveau 10+:\n` +
+    `  - Armure Ecailles Dragon: 50000 PO (AC +15, resist feu/froid +50%, Force 16, NIVEAU 10 requis)\n` +
+    `  - Bouclier du Bastion: 200000 PO (AC +20, reflet magie 50%, indestructible, Force 18, Con 16, NIVEAU 15 requis)\n` +
+    `  \n` +
+    `  CONSOMMABLES (CHERS pour eviter spam):\n` +
+    `  - Petite Potion Soin: 50 PO (soigne 1d8+5 PV)\n` +
+    `  - Potion Soin Moyenne: 250 PO (soigne 3d8+15 PV, NIVEAU 3 requis)\n` +
+    `  - Grande Potion Soin: 1200 PO (soigne 6d8+30 PV, NIVEAU 6 requis)\n` +
+    `  - Potion Soin Supreme: 5000 PO (soigne 10d8+50 PV, NIVEAU 10 requis)\n` +
+    `  - Petite Potion Mana: 60 PO (restore 20 mana)\n` +
+    `  - Grande Potion Mana: 1500 PO (restore 100 mana, NIVEAU 6 requis)\n` +
+    `  - Pain Rassis: 3 PO (soigne 1d4 PV)\n` +
+    `  - Repas Taverne: 20 PO (soigne 2d6 PV, +1 Con 1h)\n` +
+    `  - Festin Royal: 150 PO (soigne 4d8 PV, +2 tous attributs 3h, NIVEAU 3 requis)\n` +
+    `  \n` +
+    `  === MARKUP MARCHAND (APPLIQUE SUR PRIX BASE) ===\n` +
+    `  - Ville Majeure (Capitale, Hammerdeep): +50% (×1.5)\n` +
+    `  - Petite Ville: +80% (×1.8)\n` +
+    `  - Village Isole: +120% (×2.2)\n` +
+    `  - Marchand Donjon (rare): +200% (×3.0)\n` +
+    `  \n` +
+    `  === REVENUS MOYENS PAR NIVEAU (via quetes) ===\n` +
+    `  Niv 1: 50 PO/quete | Niv 2: 100 PO | Niv 3: 200 PO\n` +
+    `  Niv 4: 400 PO | Niv 5: 800 PO | Niv 6: 1500 PO\n` +
+    `  Niv 7: 2500 PO | Niv 8: 4000 PO | Niv 9: 6500 PO\n` +
+    `  Niv 10: 10000 PO/quete epique\n` +
+    `  \n` +
+    `  === PROTOCOLE ACHAT (STRICTEMENT APPLIQUER) ===\n` +
+    `  \n` +
+    `  ETAPE 1 - VERIFICATION OR:\n` +
+    `  Si joueur niveau ${playerLevel} demande objet X PO:\n` +
+    `  - Verifie son OR actuel (INV ou question)\n` +
+    `  - Si OR insuffisant: REFUSE vente, propose alternatives moins cheres\n` +
+    `  \n` +
+    `  ETAPE 2 - VERIFICATION NIVEAU/STATS:\n` +
+    `  Verifie exigences item:\n` +
+    `  - Niveau minimum respecte ?\n` +
+    `  - Stats (Force, Dex, etc.) suffisantes ?\n` +
+    `  - Classe autorisee ?\n` +
+    `  Si NON: Marchand REFUSE ou avertit "Vous ne pouvez pas l'equiper actuellement. Revenez niveau X."\n` +
+    `  \n` +
+    `  ETAPE 3 - NARRATION MARCHAND:\n` +
+    `  Le marchand evalue le joueur et reagit en consequence:\n` +
+    `  - Niveau 1-2: "Un debutant ? Voici ce que je peux vous offrir..." (montre items communs)\n` +
+    `  - Joueur demande item trop cher: "Ha ! ${itemPrice} PO ? Vous n'avez que ${playerGold} PO. Revenez quand vous serez plus riche."\n` +
+    `  - Joueur demande item niveau trop haut: "Cette lame exige Niveau ${reqLevel} et Force ${reqStr}. Vous etes Niveau ${playerLevel}. Entrainement d'abord !"\n` +
+    `  - Joueur demande legendaire: "Les armes legendaires NE SE VENDENT PAS. Elles se GAGNENT. Accomplissez des quetes heroiques."\n` +
+    `  \n` +
+    `  === EXEMPLES CONCRETS ===\n` +
+    `  \n` +
+    `  Joueur Niveau 2, 300 PO: "Je veux acheter une Epee Longue Forgee"\n` +
+    `  MJ: "Le forgeron jauge votre equipement d'un regard experimente. 'Epee Longue Forgee ? 750 pieces d'or, fiston. Et je vois que t'as... 300 tout au plus.' Il croise les bras. 'Reviens avec 450 de plus. Ou prends cette Epee Courte pour 120 PO, c'est deja bien pour ton niveau.'"\n` +
+    `  \n` +
+    `  Joueur Niveau 1, Force 10: "Je veux la Hache de Bataille Naine"\n` +
+    `  MJ: "Le marchand nain eclate de rire. 'Hache de Bataille ? Elle pese autant que toi, gamin ! Force 14 minimum, Niveau 4. T'es niveau 1 avec Force 10. Tu la souleverais meme pas !' Il tape sur le comptoir. 'Commence par ce Gourdin Ferre, 80 PO. Quand t'auras de vrais muscles, reviens.'"\n` +
+    `  \n` +
+    `  Joueur Niveau 8, 5000 PO: "Je veux acheter la Lame de l'Aube"\n` +
+    `  MJ: "Le pretre du temple te fixe avec intensite. 'La Lame de l'Aube... Tu ignores ce que tu demandes. Cette epee sacree NE SE VEND PAS. Elle est perdue depuis la bataille du col de Rougemont. Si tu veux la posseder, tu devras la RETROUVER dans la crypte de Sir Valerius, affronter les gardiens morts-vivants, et prouver la purete de ton cœur. Seul un heros niveau 15+ avec Force 18 et Charisme 14 peut la manier. Tu es niveau 8. Reviens quand tu seras digne.'"\n` +
+    `  \n` +
+    `  === REGLE ABSOLUE ===\n` +
+    `  TU NE LAISSES JAMAIS un joueur debutant acheter equipement puissant sans justification.\n` +
+    `  L'OR est RARE. Les objets puissants se GAGNENT par quetes, pas par achat facile.\n` +
+    `  Les marchands EVALUENT le niveau joueur et REFUSENT ventes inappropriees.\n` +
+    `  Items legendaires/artefacts = QUETES UNIQUEMENT, JAMAIS vendus.`,
+
+    // 2c. Quest Item Inspection (CRITICAL)
     `VERIFICATION OBJET DE QUETE (STRICT):\n` +
     `  Si un joueur veut "en savoir plus", "examiner", "analyser" ou "etudier" un OBJET DE QUETE (medaillon, carte, artefact, lettre, etc.):\n` +
     `  TU DOIS VERIFIER SI L'OBJET EST DANS SON INVENTAIRE (INV).\n` +

@@ -1,413 +1,546 @@
-// ============================================================
-// SYSTÈME ÉCONOMIQUE DYNAMIQUE
-// Prix variables selon offre/demande, commerce inter-cités
-// ============================================================
+/**
+ * SYSTÈME ÉCONOMIQUE AETHELGARD - Équilibrage Strict
+ * 
+ * PHILOSOPHIE:
+ * - Les joueurs débutants sont PAUVRES (200-800 PO départ)
+ * - Les équipements décents sont CHERS (progression lente)
+ * - Niveaux requis pour équiper items puissants
+ * - Quêtes et exploration nécessaires pour richesse
+ */
 
-export interface Market {
-  city_id: string;
-  city_name: string;
-  prosperity_level: 1 | 2 | 3 | 4 | 5; // 1=Pauvre, 5=Prospère
-  specialties: string[]; // Produits locaux (prix réduits)
-  imports_needed: string[]; // Produits rares (prix majorés)
-  current_events: MarketEvent[];
+// ============================================================================
+// CONSTANTES ÉCONOMIQUES
+// ============================================================================
+
+export const ECONOMY_CONSTANTS = {
+  // Or de départ (création personnage)
+  STARTING_GOLD: {
+    MIN: 200,
+    MAX: 800,
+    AVERAGE: 500
+  },
+
+  // Multiplicateurs de prix par rareté
+  PRICE_MULTIPLIERS: {
+    common: 1,
+    uncommon: 5,
+    rare: 25,
+    epic: 125,
+    legendary: 625,
+    artifact: 3125
+  },
+
+  // Prix BASE par catégorie (en PO)
+  BASE_PRICES: {
+    // Armes
+    weapon_dagger: 80,
+    weapon_sword_short: 150,
+    weapon_sword_long: 300,
+    weapon_sword_great: 600,
+    weapon_axe: 250,
+    weapon_mace: 200,
+    weapon_spear: 180,
+    weapon_bow: 350,
+    weapon_crossbow: 500,
+    weapon_staff: 400,
+
+    // Armures
+    armor_cloth: 100,
+    armor_leather: 300,
+    armor_chainmail: 800,
+    armor_plate: 2000,
+    armor_shield_light: 200,
+    armor_shield_heavy: 500,
+
+    // Consommables
+    potion_health_minor: 50,
+    potion_health_major: 250,
+    potion_mana_minor: 60,
+    potion_mana_major: 300,
+    food_basic: 5,
+    food_quality: 25,
+    scroll_spell_1: 100,
+    scroll_spell_3: 500,
+    scroll_spell_5: 2000,
+
+    // Matériaux craft
+    material_common: 10,
+    material_uncommon: 50,
+    material_rare: 250,
+    material_epic: 1250
+  },
+
+  // Revenus moyens par niveau
+  INCOME_PER_LEVEL: {
+    1: 50,      // Quêtes triviales
+    2: 100,
+    3: 200,
+    4: 400,
+    5: 800,     // Quêtes majeures
+    6: 1500,
+    7: 2500,
+    8: 4000,
+    9: 6500,
+    10: 10000   // Quêtes épiques
+  },
+
+  // Taxes marchands (markup sur prix de vente)
+  MERCHANT_MARKUP: {
+    city_major: 1.5,      // +50% en ville majeure
+    city_minor: 1.8,      // +80% petite ville
+    village: 2.2,         // +120% village
+    dungeon_merchant: 3.0 // +200% marchand donjon (rare)
+  }
+};
+
+// ============================================================================
+// EXIGENCES D'ÉQUIPEMENT
+// ============================================================================
+
+export interface EquipmentRequirements {
+  level: number;
+  strength?: number;
+  dexterity?: number;
+  constitution?: number;
+  intelligence?: number;
+  wisdom?: number;
+  charisma?: number;
+  class?: string[]; // Classes autorisées
 }
 
-export interface MarketEvent {
+export const LEVEL_REQUIREMENTS_BY_RARITY: Record<string, number> = {
+  common: 1,
+  uncommon: 3,
+  rare: 6,
+  epic: 10,
+  legendary: 15,
+  artifact: 20
+};
+
+// ============================================================================
+// CATALOGUE ÉQUIPEMENTS ÉQUILIBRÉS
+// ============================================================================
+
+export interface BalancedItem {
   id: string;
   name: string;
+  type: 'weapon' | 'armor' | 'consumable' | 'material' | 'quest';
+  rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'artifact';
+  basePrice: number;
+  requirements: EquipmentRequirements;
+  stats: {
+    damage?: string;
+    armor?: number;
+    attackBonus?: number;
+    [key: string]: any;
+  };
   description: string;
-  duration_days: number;
-  price_modifiers: Array<{
-    item_category: string;
-    multiplier: number; // 0.5 = -50%, 2.0 = +100%
-    reason: string;
-  }>;
-  availability_changes?: Array<{
-    item_id: string;
-    stock_multiplier: number;
-  }>;
+  lore?: string;
 }
 
-export interface TradingRoute {
-  id: string;
-  from_city: string;
-  to_city: string;
-  distance_km: number;
-  travel_time_days: number;
-  danger_level: 'safe' | 'risky' | 'dangerous' | 'deadly';
-  profit_margin_base: number; // %
-  random_events: Array<{
-    event: string;
-    probability: number;
-    effect: string;
-  }>;
-}
+// ═══════════════════════════════════════════════════════════════════════════
+// ARMES (PROGRESSION STRICTE)
+// ═══════════════════════════════════════════════════════════════════════════
 
-// ============================================================
-// MARCHÉS DES CITÉS PRINCIPALES
-// ============================================================
-
-export const MARKETS: Market[] = [
+export const BALANCED_WEAPONS: BalancedItem[] = [
+  // NIVEAU 1-2 (COMMUNE) - Armes de débutant
   {
-    city_id: 'aethelmere',
-    city_name: 'Aethelmere (Capitale)',
-    prosperity_level: 5,
-    specialties: [
-      'Livres et Parchemins (Académies)',
-      'Articles Nobles (Orfèvrerie, Soieries)',
-      'Potions de Qualité',
-      'Armes d\'Apparat'
-    ],
-    imports_needed: [
-      'Minerais Rares (Mithril, Adamantine)',
-      'Peaux Exotiques (Dragons, Griffons)',
-      'Épices des Îles Lointaines'
-    ],
-    current_events: [
-      {
-        id: 'event_aethel_festival',
-        name: 'Festival du Soleil Levant',
-        description: 'Célébration annuelle attirant marchands de tout Aethelgard. Marché bouillonne d\'activité.',
-        duration_days: 7,
-        price_modifiers: [
-          { item_category: 'food', multiplier: 1.5, reason: 'Demande festive accrue' },
-          { item_category: 'alcohol', multiplier: 2.0, reason: 'Banquets royaux' },
-          { item_category: 'luxe', multiplier: 0.8, reason: 'Afflux marchands concurrence' }
-        ],
-        availability_changes: [
-          { item_id: 'exotic_spices', stock_multiplier: 3.0 },
-          { item_id: 'rare_gems', stock_multiplier: 2.0 }
-        ]
-      }
-    ]
+    id: 'weapon:dagger:rusty',
+    name: 'Dague Rouillée',
+    type: 'weapon',
+    rarity: 'common',
+    basePrice: 50,
+    requirements: { level: 1, strength: 5 },
+    stats: { damage: '1d4', attackBonus: 0 },
+    description: 'Lame ébréchée, à peine tranchante. Mieux que rien.'
+  },
+  {
+    id: 'weapon:sword:short:basic',
+    name: 'Épée Courte de Milicien',
+    type: 'weapon',
+    rarity: 'common',
+    basePrice: 120,
+    requirements: { level: 1, strength: 8 },
+    stats: { damage: '1d6', attackBonus: 0 },
+    description: 'Épée standard des gardes de ville. Fonctionnelle mais sans éclat.'
+  },
+  {
+    id: 'weapon:mace:wooden',
+    name: 'Gourdin Ferré',
+    type: 'weapon',
+    rarity: 'common',
+    basePrice: 80,
+    requirements: { level: 1, strength: 10 },
+    stats: { damage: '1d6', attackBonus: 0 },
+    description: 'Bâton de bois renforcé avec ferraille. Efficace contre crânes.'
   },
 
+  // NIVEAU 3-5 (NON-COMMUNE) - Équipement décent
   {
-    city_id: 'port_azure',
-    city_name: 'Port-Azure',
-    prosperity_level: 4,
-    specialties: [
-      'Poissons et Fruits de Mer',
-      'Équipement Maritime (Cordes, Voiles)',
-      'Rhum et Alcools Forts',
-      'Artefacts Submergés (Épaves)'
-    ],
-    imports_needed: [
-      'Bois de Construction (Forêts Intérieures)',
-      'Métaux (Pas de mines locales)',
-      'Grains et Céréales'
-    ],
-    current_events: [
-      {
-        id: 'event_port_blockade',
-        name: 'Blocus Pirate',
-        description: 'Pirates de la Côte des Tempêtes bloquent port. Commerce paralysé, prix flambent.',
-        duration_days: 14,
-        price_modifiers: [
-          { item_category: 'imports', multiplier: 3.0, reason: 'Pénurie ravitaillement' },
-          { item_category: 'weapons', multiplier: 1.8, reason: 'Demande défense' },
-          { item_category: 'seafood', multiplier: 0.6, reason: 'Pêcheurs bloqués, surplus' }
-        ],
-        availability_changes: [
-          { item_id: 'exotic_goods', stock_multiplier: 0.2 },
-          { item_id: 'gunpowder', stock_multiplier: 0.0 }
-        ]
-      }
-    ]
+    id: 'weapon:sword:long:quality',
+    name: 'Épée Longue Forgée',
+    type: 'weapon',
+    rarity: 'uncommon',
+    basePrice: 750,
+    requirements: { level: 3, strength: 12 },
+    stats: { damage: '1d8+1', attackBonus: 1 },
+    description: 'Lame équilibrée, forgée par un artisan compétent. Tranchant fiable.'
+  },
+  {
+    id: 'weapon:axe:battle',
+    name: 'Hache de Bataille Naine',
+    type: 'weapon',
+    rarity: 'uncommon',
+    basePrice: 900,
+    requirements: { level: 4, strength: 14 },
+    stats: { damage: '1d10+1', attackBonus: 0, critChance: 5 },
+    description: 'Forgée dans les mines de Hammerdeep. Lourde mais dévastatrice.',
+    lore: 'Les nains n\'offrent leurs haches qu\'aux guerriers dignes de confiance.'
+  },
+  {
+    id: 'weapon:bow:composite',
+    name: 'Arc Composite Elfique',
+    type: 'weapon',
+    rarity: 'uncommon',
+    basePrice: 1200,
+    requirements: { level: 4, dexterity: 14 },
+    stats: { damage: '1d8+2', attackBonus: 1, range: 150 },
+    description: 'Bois élastique de Sylmanir. Portée et précision supérieures.'
   },
 
+  // NIVEAU 6-9 (RARE) - Armes puissantes
   {
-    city_id: 'ironhold',
-    city_name: 'Bastion-de-Fer',
-    prosperity_level: 3,
-    specialties: [
-      'Armes et Armures (Forge Légendaire)',
-      'Minerais (Fer, Acier, Mithril)',
-      'Fourrures Nordiques',
-      'Hydromel et Bière'
-    ],
-    imports_needed: [
-      'Fruits et Légumes (Climat Rude)',
-      'Tissus Fins (Production Locale Limitée)',
-      'Herbes Médicinales'
-    ],
-    current_events: [
-      {
-        id: 'event_iron_dragon',
-        name: 'Raid de Dragon',
-        description: 'Dragon Blanc attaque mines, tue mineurs. Production métaux paralysée.',
-        duration_days: 30,
-        price_modifiers: [
-          { item_category: 'metals', multiplier: 2.5, reason: 'Mines fermées' },
-          { item_category: 'armor', multiplier: 2.0, reason: 'Matériaux rares' },
-          { item_category: 'furs', multiplier: 0.7, reason: 'Chasseurs fuient dragon' }
-        ],
-        availability_changes: [
-          { item_id: 'steel_ingot', stock_multiplier: 0.3 },
-          { item_id: 'mithril_ingot', stock_multiplier: 0.0 }
-        ]
-      }
-    ]
+    id: 'weapon:sword:enchanted:flame',
+    name: 'Lame Enflammée',
+    type: 'weapon',
+    rarity: 'rare',
+    basePrice: 6500,
+    requirements: { level: 6, strength: 14 },
+    stats: { damage: '1d10+3', attackBonus: 2, fireBonus: '1d6' },
+    description: 'Épée enchantée par un mage de guerre. Lame crépite de flammes.',
+    lore: 'Forgée durant la Guerre des Cendres. Chaque coup brûle la chair.'
+  },
+  {
+    id: 'weapon:crossbow:heavy:precision',
+    name: 'Arbalète Lourde de Précision',
+    type: 'weapon',
+    rarity: 'rare',
+    basePrice: 7000,
+    requirements: { level: 7, strength: 12, dexterity: 16 },
+    stats: { damage: '2d8+2', attackBonus: 3, critChance: 10 },
+    description: 'Mécanisme complexe, viseur magique. Perce armures lourdes.',
+    lore: 'Chef-d\'œuvre des ingénieurs de la Guilde des Artificiers.'
+  },
+  {
+    id: 'weapon:staff:arcane:mastery',
+    name: 'Bâton de Maîtrise Arcanique',
+    type: 'weapon',
+    rarity: 'rare',
+    basePrice: 8500,
+    requirements: { level: 8, intelligence: 16 },
+    stats: { damage: '1d6', attackBonus: 0, spellPower: 15, manaRegen: 5 },
+    description: 'Bois ancien imprégné d\'énergie magique. Amplifie les sorts.',
+    lore: 'Seuls les archimages confirment leur puissance avec un tel bâton.'
   },
 
+  // NIVEAU 10-14 (ÉPIQUE) - Armes héroïques
   {
-    city_id: 'sylvanor',
-    city_name: 'Sylvanor (Cité Elfique)',
-    prosperity_level: 4,
-    specialties: [
-      'Arcs et Flèches Elfiques',
-      'Herbes Rares (Forêt Ancienne)',
-      'Bijoux de Bois Vivant',
-      'Vins Millénaires'
-    ],
-    imports_needed: [
-      'Métaux Travaillés (Elfes peu forgerons)',
-      'Livres de Magie Humaine',
-      'Viandes Rouges (Elfes végétariens)'
-    ],
-    current_events: [
-      {
-        id: 'event_sylvan_bloom',
-        name: 'Floraison Millénaire',
-        description: 'Arbre-Monde fleurit (1x/1000 ans). Plantes magiques poussent partout. Ruée alchimistes.',
-        duration_days: 60,
-        price_modifiers: [
-          { item_category: 'herbs', multiplier: 0.4, reason: 'Surabondance' },
-          { item_category: 'potions', multiplier: 0.6, reason: 'Composants abondants' },
-          { item_category: 'accommodation', multiplier: 3.0, reason: 'Afflux visiteurs' }
-        ],
-        availability_changes: [
-          { item_id: 'rare_herbs', stock_multiplier: 10.0 },
-          { item_id: 'legendary_herbs', stock_multiplier: 2.0 }
-        ]
-      }
-    ]
+    id: 'weapon:sword:dragonbone',
+    name: 'Épée en Os de Dragon',
+    type: 'weapon',
+    rarity: 'epic',
+    basePrice: 35000,
+    requirements: { level: 10, strength: 16 },
+    stats: { damage: '2d8+5', attackBonus: 4, dragonSlayer: true },
+    description: 'Forgée à partir d\'os de dragon ancien. Légère mais indestructible.',
+    lore: 'Seul un héros ayant tué un dragon peut en posséder une. Le reste est illégal.'
+  },
+  {
+    id: 'weapon:bow:starfall',
+    name: 'Arc de Chute Stellaire',
+    type: 'weapon',
+    rarity: 'epic',
+    basePrice: 42000,
+    requirements: { level: 12, dexterity: 18 },
+    stats: { damage: '2d10+4', attackBonus: 5, radiantBonus: '2d6', autoAim: true },
+    description: 'Arc elfique légendaire. Flèches ne ratent jamais leur cible.',
+    lore: 'Forgé sous les étoiles de Sylmanir. Un seul existe dans tout Aethelgard.'
+  },
+
+  // NIVEAU 15+ (LÉGENDAIRE) - Armes de légende
+  {
+    id: 'weapon:sword:solaris',
+    name: 'Lame de l\'Aube (Solaris)',
+    type: 'weapon',
+    rarity: 'legendary',
+    basePrice: 180000,
+    requirements: { level: 15, strength: 18, charisma: 14 },
+    stats: { damage: '3d8+8', attackBonus: 6, radiantBonus: '3d8', undeadBane: true },
+    description: 'Épée sacrée de Sir Valerius. Brille d\'une lumière divine éternelle.',
+    lore: 'Ne peut être maniée que par un cœur pur. Brûle les mains corrompues (4d6 radiant).'
+  },
+  {
+    id: 'weapon:hammer:thundrak',
+    name: 'Marteau de Thundrak',
+    type: 'weapon',
+    rarity: 'legendary',
+    basePrice: 250000,
+    requirements: { level: 18, strength: 20, class: ['Guerrier', 'Paladin', 'Forgeron'] },
+    stats: { damage: '4d10+10', attackBonus: 7, lightningBonus: '4d6', forgeAnywhere: true },
+    description: 'Marteau ancestral des nains. Forge le métal à volonté.',
+    lore: 'Premier marteau forgé. Seuls les descendants de Thundrak peuvent le soulever.'
   }
 ];
 
-// ============================================================
-// ROUTES COMMERCIALES
-// ============================================================
+// ═══════════════════════════════════════════════════════════════════════════
+// ARMURES (PROGRESSION STRICTE)
+// ═══════════════════════════════════════════════════════════════════════════
 
-export const TRADE_ROUTES: TradingRoute[] = [
+export const BALANCED_ARMORS: BalancedItem[] = [
+  // NIVEAU 1-2 (COMMUNE)
   {
-    id: 'route_aethel_port',
-    from_city: 'aethelmere',
-    to_city: 'port_azure',
-    distance_km: 250,
-    travel_time_days: 5,
-    danger_level: 'safe',
-    profit_margin_base: 15,
-    random_events: [
-      { event: 'Bandits sur Route', probability: 0.1, effect: 'Combat CR 4-6, perte 30% cargaison si défaite' },
-      { event: 'Rencontre Caravane Alliée', probability: 0.15, effect: 'Partage infos prix, +5% profit' },
-      { event: 'Météo Favorable', probability: 0.2, effect: 'Arrivée 1 jour avance, +10% profit' }
-    ]
+    id: 'armor:cloth:tattered',
+    name: 'Robe de Tissu Rapiécée',
+    type: 'armor',
+    rarity: 'common',
+    basePrice: 60,
+    requirements: { level: 1 },
+    stats: { armor: 1, weight: 2 },
+    description: 'Tissu épais mais usé. Protection minimale.'
+  },
+  {
+    id: 'armor:leather:basic',
+    name: 'Armure de Cuir Basique',
+    type: 'armor',
+    rarity: 'common',
+    basePrice: 200,
+    requirements: { level: 1, dexterity: 10 },
+    stats: { armor: 3, weight: 8 },
+    description: 'Cuir tanné standard. Flexible et abordable.'
   },
 
+  // NIVEAU 3-5 (NON-COMMUNE)
   {
-    id: 'route_port_iron',
-    from_city: 'port_azure',
-    to_city: 'ironhold',
-    distance_km: 800,
-    travel_time_days: 20,
-    danger_level: 'dangerous',
-    profit_margin_base: 45,
-    random_events: [
-      { event: 'Tempête de Neige', probability: 0.3, effect: 'Retard 3 jours, JdS Con DD 15 ou épuisement' },
-      { event: 'Orcs des Montagnes', probability: 0.25, effect: 'Combat CR 8-10, butin possible si victoire' },
-      { event: 'Rencontre Clan Nordique', probability: 0.15, effect: 'Échange culturel, +10 réputation Nordiques' },
-      { event: 'Yéti Affamé', probability: 0.1, effect: 'Combat CR 9, viande vaut 500 PO' }
-    ]
+    id: 'armor:chainmail:quality',
+    name: 'Cotte de Mailles Forgée',
+    type: 'armor',
+    rarity: 'uncommon',
+    basePrice: 1500,
+    requirements: { level: 3, strength: 12 },
+    stats: { armor: 6, weight: 20 },
+    description: 'Mailles entrelacées avec soin. Protection solide contre lames.'
+  },
+  {
+    id: 'armor:plate:partial',
+    name: 'Harnois Partiel',
+    type: 'armor',
+    rarity: 'uncommon',
+    basePrice: 3000,
+    requirements: { level: 5, strength: 14, constitution: 12 },
+    stats: { armor: 8, weight: 35 },
+    description: 'Plastron, jambières et épaulières en acier. Lourd mais efficace.'
   },
 
+  // NIVEAU 6-9 (RARE)
   {
-    id: 'route_iron_sylvan',
-    from_city: 'ironhold',
-    to_city: 'sylvanor',
-    distance_km: 600,
-    travel_time_days: 15,
-    danger_level: 'risky',
-    profit_margin_base: 35,
-    random_events: [
-      { event: 'Loups-Garous', probability: 0.2, effect: 'Combat CR 7-9, pelage vaut 300 PO/loup' },
-      { event: 'Druides Méfiants', probability: 0.15, effect: 'Persuasion DD 18 ou taxation 20% cargaison' },
-      { event: 'Sentier Féérique Secret', probability: 0.1, effect: 'Raccourci mystique, arrivée 5 jours avance' },
-      { event: 'Rencontre Licorne', probability: 0.05, effect: 'Bénédiction (+2 chance 1 semaine)' }
-    ]
+    id: 'armor:plate:enchanted',
+    name: 'Plate Enchantée du Gardien',
+    type: 'armor',
+    rarity: 'rare',
+    basePrice: 12000,
+    requirements: { level: 7, strength: 16, constitution: 14 },
+    stats: { armor: 12, weight: 30, magicResist: 10 },
+    description: 'Armure complète avec runes de protection. Résiste à la magie.',
+    lore: 'Portée par les Chevaliers Jurés de la Couronne.'
   },
 
+  // NIVEAU 10+ (ÉPIQUE/LÉGENDAIRE)
   {
-    id: 'route_aethel_sylvan',
-    from_city: 'aethelmere',
-    to_city: 'sylvanor',
-    distance_km: 400,
-    travel_time_days: 10,
-    danger_level: 'safe',
-    profit_margin_base: 20,
-    random_events: [
-      { event: 'Trolls de Pont', probability: 0.15, effect: 'Péage 100 PO ou combat CR 6' },
-      { event: 'Marchands Concurrents', probability: 0.2, effect: 'Guerre prix, -10% profit' },
-      { event: 'Escorte Royale', probability: 0.1, effect: 'Route sécurisée, +15% prix vente' }
-    ]
+    id: 'armor:plate:dragonscale',
+    name: 'Armure d\'Écailles de Dragon',
+    type: 'armor',
+    rarity: 'epic',
+    basePrice: 50000,
+    requirements: { level: 10, strength: 16 },
+    stats: { armor: 15, weight: 25, fireResist: 50, coldResist: 50 },
+    description: 'Écailles de dragon assemblées. Légère et quasi-indestructible.',
+    lore: 'Nécessite écailles d\'un dragon vaincu en combat honorable.'
+  },
+  {
+    id: 'armor:plate:bastion',
+    name: 'Bouclier du Bastion',
+    type: 'armor',
+    rarity: 'legendary',
+    basePrice: 200000,
+    requirements: { level: 15, strength: 18, constitution: 16 },
+    stats: { armor: 20, weight: 15, reflectMagic: 50, indestructible: true },
+    description: 'Bouclier légendaire. Réfléchit 50% magie reçue. Indestructible.',
+    lore: 'Forgé avec fragment golem Ashkan. Protège contre dieux eux-mêmes.'
   }
 ];
 
-// ============================================================
-// SYSTÈME DE PRIX DYNAMIQUES
-// ============================================================
+// ═══════════════════════════════════════════════════════════════════════════
+// CONSOMMABLES (PRIX ÉLEVÉS POUR ÉVITER SPAM)
+// ═══════════════════════════════════════════════════════════════════════════
 
-export class EconomyManager {
-  private markets: Map<string, Market> = new Map();
-  private basePrices: Map<string, number> = new Map();
+export const BALANCED_CONSUMABLES: BalancedItem[] = [
+  // Potions santé
+  {
+    id: 'potion:health:minor',
+    name: 'Petite Potion de Soin',
+    type: 'consumable',
+    rarity: 'common',
+    basePrice: 50,
+    requirements: { level: 1 },
+    stats: { heal: '1d8+5' },
+    description: 'Soigne 1d8+5 PV. Goût amer mais efficace.'
+  },
+  {
+    id: 'potion:health:moderate',
+    name: 'Potion de Soin Moyenne',
+    type: 'consumable',
+    rarity: 'uncommon',
+    basePrice: 250,
+    requirements: { level: 3 },
+    stats: { heal: '3d8+15' },
+    description: 'Soigne 3d8+15 PV. Qualité supérieure.'
+  },
+  {
+    id: 'potion:health:major',
+    name: 'Grande Potion de Soin',
+    type: 'consumable',
+    rarity: 'rare',
+    basePrice: 1200,
+    requirements: { level: 6 },
+    stats: { heal: '6d8+30' },
+    description: 'Soigne 6d8+30 PV. Recette alchimique complexe.'
+  },
+  {
+    id: 'potion:health:supreme',
+    name: 'Potion de Soin Suprême',
+    type: 'consumable',
+    rarity: 'epic',
+    basePrice: 5000,
+    requirements: { level: 10 },
+    stats: { heal: '10d8+50' },
+    description: 'Soigne 10d8+50 PV. Ingrédients rarissimes.'
+  },
 
-  constructor() {
-    MARKETS.forEach(m => this.markets.set(m.city_id, m));
+  // Potions mana
+  {
+    id: 'potion:mana:minor',
+    name: 'Petite Potion de Mana',
+    type: 'consumable',
+    rarity: 'common',
+    basePrice: 60,
+    requirements: { level: 1 },
+    stats: { manaRestore: 20 },
+    description: 'Restaure 20 points de mana.'
+  },
+  {
+    id: 'potion:mana:major',
+    name: 'Grande Potion de Mana',
+    type: 'consumable',
+    rarity: 'rare',
+    basePrice: 1500,
+    requirements: { level: 6 },
+    stats: { manaRestore: 100 },
+    description: 'Restaure 100 points de mana.'
+  },
+
+  // Nourriture
+  {
+    id: 'food:bread',
+    name: 'Pain Rassis',
+    type: 'consumable',
+    rarity: 'common',
+    basePrice: 3,
+    requirements: { level: 1 },
+    stats: { heal: '1d4' },
+    description: 'Pain dur. Rassasie mais sans plaisir.'
+  },
+  {
+    id: 'food:meal:quality',
+    name: 'Repas de Taverne',
+    type: 'consumable',
+    rarity: 'common',
+    basePrice: 20,
+    requirements: { level: 1 },
+    stats: { heal: '2d6', buff: '+1 Constitution 1h' },
+    description: 'Ragoût chaud, pain frais, bière. Restaure moral.'
+  },
+  {
+    id: 'food:feast',
+    name: 'Festin Royal',
+    type: 'consumable',
+    rarity: 'uncommon',
+    basePrice: 150,
+    requirements: { level: 3 },
+    stats: { heal: '4d8', buff: '+2 tous attributs 3h' },
+    description: 'Viandes rares, vins fins. Bonus prolongé.'
   }
+];
 
-  /**
-   * Calcule prix d'un item dans une ville donnée
-   */
-  calculatePrice(itemId: string, cityId: string, isBuying: boolean): number {
-    const basePrice = this.basePrices.get(itemId) || 100;
-    const market = this.markets.get(cityId);
-    if (!market) return basePrice;
+// ============================================================================
+// UTILITAIRES CALCUL PRIX
+// ============================================================================
 
-    let finalPrice = basePrice;
-
-    // Multiplicateur prospérité (ville riche = prix hauts)
-    finalPrice *= 0.7 + (market.prosperity_level * 0.15);
-
-    // Spécialités locales (production locale = -30%)
-    const itemCategory = this.getItemCategory(itemId);
-    if (market.specialties.some(s => s.includes(itemCategory))) {
-      finalPrice *= 0.7;
-    }
-
-    // Imports nécessaires (rareté = +50%)
-    if (market.imports_needed.some(i => i.includes(itemCategory))) {
-      finalPrice *= 1.5;
-    }
-
-    // Événements de marché
-    market.current_events.forEach(event => {
-      const modifier = event.price_modifiers.find(m => m.item_category === itemCategory);
-      if (modifier) {
-        finalPrice *= modifier.multiplier;
-      }
-    });
-
-    // Différence achat/vente (marchands prennent marge)
-    if (isBuying) {
-      finalPrice *= 1.2; // +20% prix achat joueur
-    } else {
-      finalPrice *= 0.6; // -40% prix vente joueur
-    }
-
-    return Math.round(finalPrice);
-  }
-
-  /**
-   * Simule commerce entre 2 villes (retourne profit)
-   */
-  simulateTradeRun(fromCityId: string, toCityId: string, itemId: string, quantity: number): {
-    investment: number;
-    selling_price: number;
-    base_profit: number;
-    travel_time_days: number;
-    danger_level: string;
-    random_events: string[];
-  } {
-    const route = TRADE_ROUTES.find(r => r.from_city === fromCityId && r.to_city === toCityId);
-    if (!route) {
-      throw new Error('Route commerciale inexistante');
-    }
-
-    const buyPrice = this.calculatePrice(itemId, fromCityId, true);
-    const sellPrice = this.calculatePrice(itemId, toCityId, false);
-
-    const investment = buyPrice * quantity;
-    const revenue = sellPrice * quantity;
-    const baseProfit = revenue - investment;
-
-    // Événements aléatoires
-    const triggeredEvents: string[] = [];
-    route.random_events.forEach(re => {
-      if (Math.random() < re.probability) {
-        triggeredEvents.push(re.event);
-      }
-    });
-
-    return {
-      investment,
-      selling_price: revenue,
-      base_profit: baseProfit,
-      travel_time_days: route.travel_time_days,
-      danger_level: route.danger_level,
-      random_events: triggeredEvents
-    };
-  }
-
-  /**
-   * Mise à jour quotidienne (événements, prix)
-   */
-  dailyUpdate(): void {
-    this.markets.forEach(market => {
-      // Réduire durée événements
-      market.current_events = market.current_events.filter(event => {
-        event.duration_days -= 1;
-        return event.duration_days > 0;
-      });
-
-      // Générer nouveaux événements (10% chance/jour)
-      if (Math.random() < 0.1) {
-        market.current_events.push(this.generateRandomEvent(market.city_id));
-      }
-    });
-  }
-
-  private generateRandomEvent(cityId: string): MarketEvent {
-    const eventPool = [
-      {
-        name: 'Arrivée Convoi Marchand',
-        desc: 'Grande caravane arrive, surplus marchandises',
-        duration: 3,
-        modifiers: [{ item_category: 'general_goods', multiplier: 0.8, reason: 'Surplus temporaire' }]
-      },
-      {
-        name: 'Vol dans Entrepôts',
-        desc: 'Guilde des Voleurs a frappé, pénurie',
-        duration: 7,
-        modifiers: [{ item_category: 'valuables', multiplier: 1.5, reason: 'Stock volé' }]
-      },
-      {
-        name: 'Bénédiction de Récolte',
-        desc: 'Prêtres bénissent fermes, récolte abondante',
-        duration: 14,
-        modifiers: [{ item_category: 'food', multiplier: 0.6, reason: 'Récolte exceptionnelle' }]
-      }
-    ];
-
-    const template = eventPool[Math.floor(Math.random() * eventPool.length)];
-    return {
-      id: `event_${cityId}_${Date.now()}`,
-      name: template.name,
-      description: template.desc,
-      duration_days: template.duration,
-      price_modifiers: template.modifiers
-    };
-  }
-
-  private getItemCategory(itemId: string): string {
-    // Mapping items → catégories (simplifié)
-    const categoryMap: Record<string, string> = {
-      sword: 'weapons',
-      potion: 'potions',
-      bread: 'food',
-      iron_ingot: 'metals'
-    };
-    return categoryMap[itemId] || 'general_goods';
-  }
+/**
+ * Calcule le prix final avec markup marchand
+ */
+export function calculateMerchantPrice(
+  basePrice: number,
+  rarity: string,
+  merchantType: keyof typeof ECONOMY_CONSTANTS.MERCHANT_MARKUP = 'city_major'
+): number {
+  const multiplier = ECONOMY_CONSTANTS.PRICE_MULTIPLIERS[rarity as keyof typeof ECONOMY_CONSTANTS.PRICE_MULTIPLIERS] || 1;
+  const markup = ECONOMY_CONSTANTS.MERCHANT_MARKUP[merchantType];
+  return Math.floor(basePrice * multiplier * markup);
 }
 
-export const globalEconomy = new EconomyManager();
+/**
+ * Vérifie si joueur peut équiper item
+ */
+export function canEquipItem(
+  item: BalancedItem,
+  playerLevel: number,
+  playerStats: { [key: string]: number },
+  playerClass?: string
+): { canEquip: boolean; missingRequirements: string[] } {
+  const missing: string[] = [];
+
+  // Niveau
+  if (playerLevel < item.requirements.level) {
+    missing.push(`Niveau ${item.requirements.level} requis (vous: ${playerLevel})`);
+  }
+
+  // Stats
+  const statReqs = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
+  statReqs.forEach(stat => {
+    const required = item.requirements[stat as keyof EquipmentRequirements] as number;
+    if (required && (!playerStats[stat] || playerStats[stat] < required)) {
+      missing.push(`${stat.charAt(0).toUpperCase() + stat.slice(1)} ${required} requis (vous: ${playerStats[stat] || 0})`);
+    }
+  });
+
+  // Classe
+  if (item.requirements.class && playerClass && !item.requirements.class.includes(playerClass)) {
+    missing.push(`Classes autorisées: ${item.requirements.class.join(', ')}`);
+  }
+
+  return {
+    canEquip: missing.length === 0,
+    missingRequirements: missing
+  };
+}
+
+/**
+ * Estime or nécessaire pour atteindre niveau
+ */
+export function estimateGoldForLevel(targetLevel: number): number {
+  let total = ECONOMY_CONSTANTS.STARTING_GOLD.AVERAGE;
+  for (let lvl = 1; lvl < targetLevel; lvl++) {
+    total += (ECONOMY_CONSTANTS.INCOME_PER_LEVEL[lvl as keyof typeof ECONOMY_CONSTANTS.INCOME_PER_LEVEL] || 0) * 2;
+  }
+  return total;
+}

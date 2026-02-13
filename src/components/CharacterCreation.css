@@ -34,10 +34,14 @@
 
 .spellbook-shell {
     position: relative;
-    max-width: 1350px;
+    max-width: 1400px;
     width: 95%;
+    max-height: 95vh;
+    /* Ensure it fits within view */
+    overflow-y: auto;
+    /* Allow internal scrolling if needed */
     background: var(--dark-leather);
-    padding: 3.5rem 3rem;
+    padding: 2.5rem;
     border-radius: 20px;
     box-shadow:
         0 40px 100px rgba(0, 0, 0, 0.9),
@@ -637,6 +641,52 @@
     background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.95) 5%);
     scrollbar-width: thin;
     scrollbar-color: var(--gold-dim) transparent;
+}
+
+.preview-actions {
+    padding: 1.5rem 2rem;
+    border-top: 1px solid rgba(212, 175, 55, 0.2);
+    display: flex;
+    justify-content: space-between;
+    background: rgba(0, 0, 0, 0.8);
+    position: relative;
+    z-index: 5;
+    flex-shrink: 0;
+}
+
+.btn-spellbook {
+    padding: 0.8rem 1.5rem;
+    background: transparent;
+    border: 1px solid var(--gold-dim);
+    color: var(--gold-dim);
+    font-family: 'Cinzel', serif;
+    cursor: pointer;
+    transition: all 0.3s;
+    border-radius: 4px;
+}
+
+.btn-spellbook:hover {
+    border-color: var(--gold-primary);
+    color: var(--gold-primary);
+}
+
+.btn-select-class {
+    padding: 0.8rem 2rem;
+    background: linear-gradient(135deg, var(--gold-primary) 0%, #ffd700 100%);
+    color: #000;
+    font-weight: 700;
+    font-family: 'Cinzel', serif;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+    transition: all 0.3s;
+    margin-left: 1rem;
+}
+
+.btn-select-class:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5);
 }
 
 .class-preview-content::-webkit-scrollbar {

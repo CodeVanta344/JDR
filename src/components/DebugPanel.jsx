@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CombatLogger } from '../utils/logger';
 
-export const DebugPanel = () => {
+export const DebugPanel = ({ onTestCombat }) => {
     const [logs, setLogs] = useState([]);
     const [visible, setVisible] = useState(false);
 
@@ -61,6 +61,18 @@ export const DebugPanel = () => {
                 </button>
                 <button onClick={() => setVisible(false)} style={{ padding: '5px 10px', cursor: 'pointer', marginLeft: 'auto' }}>
                     ❌ Close
+                </button>
+            </div>
+            <div style={{ marginBottom: '10px' }}>
+                <button onClick={onTestCombat} style={{
+                    padding: '5px 10px',
+                    cursor: 'pointer',
+                    background: '#500',
+                    color: '#fff',
+                    border: '1px solid #f00',
+                    width: '100%'
+                }}>
+                    ⚔️ Test Combat (Custom Map)
                 </button>
             </div>
             <div>
