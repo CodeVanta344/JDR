@@ -129,7 +129,7 @@ export const generateRandomCharacter = (sessionId, userId) => {
         gold: Math.floor(100 * (lifepathSelection.birth.status.effects.gold_modifier || 1.0)),
         abilities: chosenAbilities,
         hp: maxHp,
-        maxHp: maxHp,
+        max_hp: maxHp,
         resource: 100,
         max_resource: 100,
         inventory: [...equipment, ...lifepathItems],
