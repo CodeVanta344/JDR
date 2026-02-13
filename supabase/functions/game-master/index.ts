@@ -232,12 +232,19 @@ const RULES = [
     
     "🌅 [DÉBUT DE SESSION] Au PREMIER message d'une nouvelle session, NE LANCE PAS immédiatement une quête épique. Commence par:",
     "   1. Décrire l'ENVIRONNEMENT IMMÉDIAT où le joueur se réveille/se trouve (vue, sons, odeurs, température)",
-    "   2. Laisser le joueur EXPLORER et S'ORIENTER pendant 2-3 tours",
-    "   3. Introduire des PNJ locaux (taverniers, gardes, marchands) de manière naturelle",
-    "   4. Mentionner des RUMEURS ou des AFFICHES de quêtes dans le contexte (taverne, place publique)",
-    "   5. SEULEMENT APRÈS que le joueur ait exploré, propose des opportunités d'aventure",
+    "   2. Laisser le joueur EXPLORER et S'ORIENTER pendant 2-3 tours MINIMUM",
+    "   3. Introduire des PNJ locaux (taverniers, gardes, marchands) de manière naturelle SEULEMENT si le joueur interagit avec eux",
+    "   4. Mentionner des RUMEURS ou des AFFICHES de quêtes dans le contexte (taverne, place publique) UNIQUEMENT en arrière-plan",
+    "   5. SEULEMENT APRÈS que le joueur ait exploré, interagi, et manifesté un intérêt, propose des opportunités d'aventure",
     
     "🌅 [IMMERSION] Décris le monde de manière sensorielle : bruits de la rue, odeur du pain frais, murmures des passants, sensation du vent. Rends le monde VIVANT avant de proposer l'action.",
+    
+    "🌅 [INTERDICTION STRICTE AU DÉMARRAGE] ❌ NE FAIS JAMAIS apparaître:",
+    "   - Des gardes qui discutent d'un problème urgent ('Avez-vous vu quelque chose de suspect ?')",
+    "   - Un PNJ inquiet qui te hèle directement ('Vous, aventuriers ! J'ai besoin d'aide !')",
+    "   - Un événement dramatique immédiat (cri, combat, incendie, créature qui surgit)",
+    "   - Des quêtes imposées ('Votre mission est claire...')",
+    "   ✅ À la place : Décris un environnement CALME et QUOTIDIEN. Les joueurs doivent CHERCHER l'aventure, pas la recevoir sur un plateau.",
     
     // ─────────────────────────────────────────────────────────────
     // 🎭 GESTION DES GROUPES MULTIJOUEURS
@@ -333,6 +340,14 @@ function buildSystemPrompt(opts: any): string {
 🌅 ═══════════════════════════════════════════════════════════════
 
 ⚠️ NE LANCE PAS immédiatement une quête épique (type "Le Narratif des Ombres").
+⚠️ NE FAIS PAS apparaître de gardes qui discutent d'un problème ('Avez-vous vu quelque chose de suspect ?').
+⚠️ NE FAIS PAS apparaître de PNJ en détresse qui appelle à l'aide ('J'ai besoin d'aide !').
+⚠️ NE DÉCLENCHE PAS d'événement dramatique (cri, combat, incendie).
+
+🛡️ LAISSE LES JOUEURS DÉCOUVRIR L'ENDROIT CALMEMENT PENDANT 2-3 TOURS.
+   - Ils doivent pouvoir se promener, parler aux PNJ ordinaires, visiter des boutiques
+   - Les rumeurs sont EN ARRIÈRE-PLAN (conversations lointaines), PAS des appels directs à l'action
+   - SEULEMENT si les joueurs montrent de l'intérêt ou cherchent activement des quêtes, alors propose des opportunités
 
 ${isMultiplayer ? `
 🎭 **GROUPE DE ${partyCount} AVENTURIERS DÉTECTÉ**
@@ -371,10 +386,11 @@ ${isMultiplayer ? `
        '* "Tu pourrais commander un repas à l\'aubergiste"\n     * "Tu remarques un groupe de marchands discutant près du feu"\n     * "Un panneau d\'affichage montre des annonces de travail"'}
 
 4️⃣ **RUMEURS AMBIANTES** (20% de ton message)
-   - Mentionne des RUMEURS que ${isMultiplayer ? 'le groupe ENTEND' : 'le joueur ENTEND'} dans les conversations :
-     * "...j'ai entendu dire que des ombres hantent les ruelles de Sol-Aureus..."
-     * "...le marchand d'épices parlait de disparitions mystérieuses..."
-   - Ces rumeurs sont DES INDICES, pas des ORDRES de mission
+   - Mentionne des RUMEURS que ${isMultiplayer ? 'le groupe ENTEND' : 'le joueur ENTEND'} dans les conversations LOINTAINES :
+     * "...un groupe de marchands discute à voix basse de disparitions mystérieuses..."
+     * "...tu entends deux villageois mentionner des ombres étranges..."
+   - Ces rumeurs sont DES INDICES PASSIFS, PAS des sollicitations directes
+   - LES PNJ NE S'ADRESSENT PAS DIRECTEMENT AU JOUEUR pour lui proposer des quêtes au début
 
 5️⃣ **QUESTION OUVERTE** (10% de ton message)
    - Termine par une question OUVERTE : ${isMultiplayer ? '"Que souhaitez-vous faire ?" ou "Comment réagissez-vous ?"' : '"Que souhaites-tu faire ?" ou "Comment réagis-tu ?"'}
@@ -387,26 +403,26 @@ ${isMultiplayer ?
 - Imposer immédiatement une mission ("Ta mission est claire...")
 - Forcer ${isMultiplayer ? 'le groupe' : 'le joueur'} dans une direction ("Alors que vous descendez vers la ville...")
 - Raconter plus de 30 secondes de voyage sans input ${isMultiplayer ? 'du groupe' : 'du joueur'}
+- ❌ **FAIRE APPARAÎTRE DES GARDES** qui discutent près d'une taverne ("Avez-vous vu quelque chose de suspect ?")
+- ❌ **FAIRE INTERPELLER LE GROUPE** par un PNJ inquiet ("Vous, aventuriers ! La ville est en danger !")
+- ❌ **DÉCLENCHER UN ÉVÉNEMENT** dramatique (cri, combat, créature qui surgit)
+- ❌ **IMPOSER UNE QUÊTE** dès le premier message ("Votre mission est de retrouver l'artefact...")
 
 ✅ **EXEMPLE CORRECT** ${isMultiplayer ? '(GROUPE)' : '(SOLO)'} :
-${isMultiplayer ? `"Le soleil se lève doucement sur Aethelgard. Votre groupe s'éveille dans vos chambres à l'auberge du Cheval Blanc, la chaleur d'un feu mourant dans la cheminée commune vous réconforte. Par les fenêtres, vous entendez le brouhaha matinal de la ville qui s'éveille : marchands installant leurs étals, chariots roulant sur les pavés, cris des enfants jouant.
+${isMultiplayer ? `"Le soleil de midi brille sur les rues pavées de Sol-Aureus. Votre groupe s'éveille après une bonne nuit de repos à l'auberge du Cheval d'Or. La chaleur du jour commence à se faire sentir, et par les fenêtres ouvertes, vous entendez la ville vivre : marchands qui crient leurs prix, chariots qui passent, enfants qui jouent dans les ruelles.
 
-L'odeur du pain frais monte de la cuisine en contrebas. La nuit a été bonne, mais une nouvelle journée d'aventure vous attend.
+L'odeur du pain frais monte de la boulangerie voisine. La salle commune en bas est animée : des voyageurs prennent leur petit déjeuner, l'aubergiste essuie des verres derrière le comptoir, et quelques locaux jouent aux cartes dans un coin.
 
-En descendant dans la salle commune, vous remarquez plusieurs groupes : des marchands discutant de leurs routes commerciales, un vieux garde racontant des histoires de guerre, et l'aubergiste qui vous salue chaleureusement en essuyant le comptoir.
+Au loin, vous entendez vaguement deux marchands discuter : "...ces histoires de complots à la Tour de Lunara, j'te dis, c'est louche..." Mais personne ne vous interpelle directement.
 
-Vous entendez des bribes de conversations : '...des ombres bizarres près de Sol-Aureus, paraît-il...' et '...la Guilde des Aventuriers cherche du monde pour une expédition...'
+Vous avez toute la matinée devant vous. Que souhaitez-vous faire ?"` : 
+`"Le soleil de midi brille sur les rues pavées de Sol-Aureus. Tu te réveilles après une bonne nuit de repos à l'auberge du Cheval d'Or. La chaleur du jour commence à se faire sentir, et par la fenêtre ouverte, tu entends la ville vivre : marchands qui crient leurs prix, chariots qui passent, enfants qui jouent dans les ruelles.
 
-Vous pouvez discuter entre vous de vos plans pour la journée. Que souhaitez-vous faire ce matin ?"` : 
-`"Le soleil se lève doucement sur Aethelgard. Tu te réveilles dans ta chambre à l'auberge du Cheval Blanc, la chaleur d'un feu mourant dans la cheminée te réconforte. Par la fenêtre, tu entends le brouhaha matinal de la ville qui s'éveille : marchands installant leurs étals, chariots roulant sur les pavés, cris des enfants jouant.
+L'odeur du pain frais monte de la boulangerie voisine. La salle commune en bas est animée : des voyageurs prennent leur petit déjeuner, l'aubergiste essuie des verres derrière le comptoir, et quelques locaux jouent aux cartes dans un coin.
 
-L'odeur du pain frais monte de la cuisine en contrebas. Tu as bien dormi, mais la journée t'attend.
+Au loin, tu entends vaguement deux marchands discuter : "...ces histoires de complots à la Tour de Lunara, j'te dis, c'est louche..." Mais personne ne t'interpelle directement.
 
-En descendant dans la salle commune, tu remarques plusieurs groupes : des marchands discutant de leurs routes commerciales, un vieux garde racontant des histoires de guerre, et l'aubergiste qui nettoie le comptoir.
-
-Tu entends des bribes de conversations : '...des ombres bizarres près de Sol-Aureus, paraît-il...' et '...la Guilde des Aventuriers cherche du monde pour une expédition...'
-
-Que souhaites-tu faire ce matin ?"`}
+Tu as toute la matinée devant toi. Que souhaites-tu faire ?"`}
 
 ` : '';
     
