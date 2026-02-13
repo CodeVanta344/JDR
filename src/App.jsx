@@ -200,7 +200,11 @@ export default function App() {
             const { data: pData } = await supabase.from('players').select('*').eq('session_id', session.id);
             setPlayers(pData || []);
             const pc = pData?.find(p => p.user_id === profile?.id);
-            if (pc) setCharacter(pc);
+            if (pc) {
+                console.log("[fetchData] Found current player data:", pc);
+                console.log("[fetchData] Abilities:", pc.abilities, "Spells:", pc.spells);
+                setCharacter(pc);
+            }
         } catch (err) {
             console.error("Fetch error:", err);
         }
@@ -812,7 +816,7 @@ export default function App() {
             if (pData) {
                 setPlayers(pData);
                 const pc = pData.find(p => p.user_id === profile?.id);
-                if (pc) setCharacter(prev => prev?.id === pc.id && prev?.is_ready === pc.is_ready ? prev : pc);
+                if (pc) setCharacter(pc);
             }
             // Also poll session state to ensure is_started sync
             const { data: sData } = await supabase.from('sessions').select('*').eq('id', session.id).maybeSingle();
@@ -1282,6 +1286,9 @@ export default function App() {
                 user_id: profile.id,
                 is_ready: false
             };
+
+            console.log("[CharacterCreate] Final character object to be saved:", finalChar);
+            console.log("[CharacterCreate] Abilities:", finalChar.abilities, "Spells:", finalChar.spells);
 
             const { data, error } = await supabase
                 .from('players')
