@@ -4,30 +4,28 @@ import os
 def process_image(input_path, output_path):
     print(f"Opening {input_path}...")
     img = Image.open(input_path).convert("RGBA")
-    width, height = img.size
+    datas = img.getdata()
     
-    # Use flood fill from the corners to create a mask for the background
-    # We use a tolerance to handle non-pure white at the edges
-    mask = Image.new("L", (width, height), 0)
+    # Target the detected background color with a tighter threshold
+    # to avoid eating into the tree highlights
+    new_data = []
+    bg_color = (255, 255, 255) # Standard white base
     
-    # We'll try to find a "background" color by looking at the top-left pixel
-    bg_color = img.getpixel((0, 0))
-    print(f"Detected background color: {bg_color}")
-    
-    # Fill from the four corners
-    # (Checking if the pixel is close to bg_color)
-    ImageDraw.floodfill(img, (0, 0), (0, 0, 0, 0), thresh=30)
-    ImageDraw.floodfill(img, (width-1, 0), (0, 0, 0, 0), thresh=30)
-    ImageDraw.floodfill(img, (0, height-1), (0, 0, 0, 0), thresh=30)
-    ImageDraw.floodfill(img, (width-1, height-1), (0, 0, 0, 0), thresh=30)
-    
-    # Save the result
+    for item in datas:
+        # If the pixel is very close to white, make it transparent
+        # Using a threshold of 15 to catch the off-white compression artifacts
+        if item[0] > 240 and item[1] > 240 and item[2] > 240:
+            new_data.append((255, 255, 255, 0))
+        else:
+            new_data.append(item)
+            
+    img.putdata(new_data)
     img.save(output_path, "PNG")
     print(f"Saved to {output_path}")
 
 if __name__ == "__main__":
-    input_file = r"C:\Users\loicr\.gemini\antigravity\brain\4220d9b8-edb6-450a-bfe1-d69a78f1d174\castle_solarius_building_only_white_bg_retry_1771012179761.png"
-    output_file = r"C:\Users\loicr\.gemini\antigravity\brain\4220d9b8-edb6-450a-bfe1-d69a78f1d174\castle_solarius_isolated_final.png"
+    input_file = r"C:\Users\loicr\.gemini\antigravity\brain\4220d9b8-edb6-450a-bfe1-d69a78f1d174\hammerdeep_forge_white_bg_1771012549658.png"
+    output_file = r"C:\Users\loicr\.gemini\antigravity\brain\4220d9b8-edb6-450a-bfe1-d69a78f1d174\hammerdeep_forge_final_transparent.png"
     
     if os.path.exists(input_file):
         process_image(input_file, output_file)
