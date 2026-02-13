@@ -18,48 +18,59 @@ export const SOCIAL_STATUSES: LifeChoice[] = [
       worldview_shaped: 'Le pouvoir vient du sang et du devoir. Les roturiers méritent protection, mais ne peuvent comprendre le poids des responsabilités nobles.'
     },
     effects: {
-      stats: { charisma: 2, intelligence: 1 },
+      // ========== STATS D100 (×2) ==========
+      stats: { charisma: 4, intelligence: 2 },  // Ancien: CHA+2, INT+1
       mechanical_traits: [
         {
           name: 'Privilège Aristocratique',
-          desc: '+2 Persuasion avec nobles/autorités, accès privilégié cour royale',
-          effect: '+2 Persuasion (Nobles)',
-          game_effect: 'Avantage social politique'
+          desc: '+5 Persuasion avec nobles/autorités, avantage jets sociaux cour royale',
+          effect: '+5 Persuasion (Nobles)',  // Ancien: +2 × 2.5 = +5
+          game_effect: 'Avantage social politique, accès privilégié décisions royales'
         },
         {
           name: 'Héritage Prestigieux',
-          desc: 'Commence avec 200 PO supplémentaires + obligations familiales',
-          effect: '+200 PO',
-          game_effect: 'Richesse de départ équilibrée'
+          desc: 'Commence avec 1000 PO supplémentaires + obligations familiales (quêtes dynastiques)',
+          effect: '+1000 PO',  // Ancien: +200 × 5 = +1000
+          game_effect: 'Richesse substantielle mais attentes familiales élevées'
+        },
+        {
+          name: 'Éducation Supérieure',
+          desc: '+1d20 aux jets Connaissance (Histoire/Noblesse/Étiquette)',
+          effect: '+1d20 Connaissance (spécialisée)',
+          game_effect: 'Bonus d100 culture aristocratique et protocole'
         }
       ],
       reputation: [
         { factionId: 'noblesse', delta: 8, reason: 'Membre de l\'aristocratie' },
-        { factionId: 'peuple', delta: -3, reason: 'Perçu comme privilégié' }
+        { factionId: 'peuple', delta: -3, reason: 'Perçu comme privilégié' },
+        { factionId: 'guildes_marchandes', delta: 3, reason: 'Crédit commercial familial' }
       ],
       items: [
-        { itemId: 'signet_ring', quantity: 1, reason: 'Sceau familial' },
-        { itemId: 'fine_clothes', quantity: 1, reason: 'Garde-robe noble' },
-        { itemId: 'gold_coins', quantity: 200, reason: 'Avance sur héritage' }
+        { itemId: 'signet_ring', quantity: 1, reason: 'Sceau familial (armoiries reconnues)' },
+        { itemId: 'fine_clothes', quantity: 3, reason: 'Garde-robe noble (tenues formelles)' },
+        { itemId: 'gold_coins', quantity: 1000, reason: 'Avance substantielle sur héritage' },
+        { itemId: 'letter_of_credit', quantity: 1, reason: 'Crédit auprès banques royales' }
       ],
       skills: [
-        { skillId: 'persuasion', bonus: 2, reason: 'Éducation courtisane' },
-        { skillId: 'knowledge_nobility', bonus: 2, reason: 'Généalogie et héraldique' }
+        { skillId: 'persuasion', bonus: 5, reason: 'Éducation courtisane poussée' },  // Ancien: +2 × 2.5 = +5
+        { skillId: 'knowledge_nobility', bonus: 5, reason: 'Généalogie, héraldique, protocole' },  // Ancien: +2 × 2.5 = +5
+        { skillId: 'insight', bonus: 3, reason: 'Déchiffrer intrigues de cour' }  // Nouveau bonus d100
       ],
-      languages: ['Commun', 'Langue Noble'],
-      tags: ['noble', 'wealthy', 'privileged', 'political']
+      languages: ['Commun', 'Langue Noble', 'Langue des Cours'],  // +1 langue
+      tags: ['noble', 'wealthy', 'privileged', 'political', 'educated']
     },
     social_impacts: {
       npc_reactions: {
-        'nobles': 'Respect immédiat (ou rivalité)',
-        'paysans': 'Déférence forcée',
-        'marchands': 'Opportunisme',
-        'bandits': 'Cible prioritaire'
+        'nobles': 'Respect immédiat (+8 disposition) ou rivalité selon faction',
+        'paysans': 'Déférence forcée, parfois ressentiment caché',
+        'marchands': 'Opportunisme, offres avantageuses',
+        'bandits': 'Cible prioritaire rançon',
+        'gardes': 'Laxisme, laisser-passer tacite (+5 Intimidation/Persuasion)'
       },
-      first_impression: '« Seigneur/Dame, votre présence nous honore. » (courbette)'
+      first_impression: '« Seigneur/Dame, votre présence nous honore. Que puis-je faire pour votre lignée ? » (courbette respectueuse)'
     },
     tags: ['noble', 'wealthy', 'privileged'],
-    incompatible_with: ['birth_status_esclave', 'birth_status_orphelin']
+    incompatible_with: ['birth_status_esclave', 'birth_status_orphelin', 'birth_status_paria']
   },
 
   {
@@ -74,40 +85,52 @@ export const SOCIAL_STATUSES: LifeChoice[] = [
       worldview_shaped: 'Tout est question de valeur et de timing. L\'honneur ne nourrit pas les familles. L\'or achète liberté et respect.'
     },
     effects: {
-      stats: { intelligence: 1, charisma: 1 },
+      // ========== STATS D100 (×2) ==========
+      stats: { intelligence: 2, charisma: 2 },  // Ancien: INT+1, CHA+1
       mechanical_traits: [
         {
           name: 'Sens du Commerce',
-          desc: '+3 Persuasion (marchandage), prix d\'achat réduits de 10%',
-          game_effect: 'Avantage économique'
+          desc: '+8 Persuasion (marchandage), prix d\'achat réduits de 15%, +5% ventes',
+          effect: '+8 Persuasion (Commerce)',  // Ancien: +3 × 2.5 arrondi = +8
+          game_effect: 'Avantage économique majeur, réseau marchand'
+        },
+        {
+          name: 'Réseau Commercial',
+          desc: 'Contacts dans 5 villes majeures, accès entrepôts/caravanes',
+          effect: 'Réseau marchand actif',
+          game_effect: 'Transport marchandises gratuit, info marchés en temps réel'
         }
       ],
       reputation: [
-        { factionId: 'guildes_marchandes', delta: 6, reason: 'Famille connue' },
-        { factionId: 'noblesse', delta: -2, reason: 'Nouveaux riches' }
+        { factionId: 'guildes_marchandes', delta: 6, reason: 'Famille connue et respectée' },
+        { factionId: 'noblesse', delta: -2, reason: 'Nouveaux riches sans titre' },
+        { factionId: 'peuple', delta: 2, reason: 'Employeur local' }
       ],
       items: [
-        { itemId: 'merchant_ledger', quantity: 1, reason: 'Registre familial' },
-        { itemId: 'gold_coins', quantity: 200, reason: 'Avance sur héritage' }
+        { itemId: 'merchant_ledger', quantity: 1, reason: 'Registre familial (contacts +100)' },
+        { itemId: 'gold_coins', quantity: 1000, reason: 'Capital commercial' },  // Ancien: 200 × 5
+        { itemId: 'trade_goods', quantity: 5, reason: 'Stock marchandises variées' }
       ],
       skills: [
-        { skillId: 'persuasion', bonus: 3, reason: 'Négociations quotidiennes' },
-        { skillId: 'insight', bonus: 2, reason: 'Détecter les menteurs' }
+        { skillId: 'persuasion', bonus: 8, reason: 'Négociations quotidiennes intensives' },  // Ancien: +3 × 2.5
+        { skillId: 'insight', bonus: 5, reason: 'Détecter menteurs et opportunistes' },  // Ancien: +2 × 2.5
+        { skillId: 'appraisal', bonus: 5, reason: 'Évaluation valeur instantanée' }  // Nouveau d100
       ],
-      languages: ['Commun', 'Langue Marchande'],
-      tags: ['merchant', 'wealthy', 'pragmatic', 'urban']
+      languages: ['Commun', 'Langue Marchande', 'Langue Étrangère (au choix)'],  // +1 langue
+      tags: ['merchant', 'wealthy', 'pragmatic', 'urban', 'networked']
     },
     social_impacts: {
       npc_reactions: {
-        'marchands': 'Confiance professionnelle',
-        'nobles': 'Dédain poli',
-        'paysans': 'Envie',
-        'voleurs': 'Intérêt'
+        'marchands': 'Confiance professionnelle (+6 disposition)',
+        'nobles': 'Dédain poli mais intéressés par vos contacts',
+        'paysans': 'Envie mêlée de respect (vous créez emplois)',
+        'voleurs': 'Intérêt marchand, possible protection racket',
+        'guildes': 'Portes ouvertes, accès privilégié'
       },
-      first_impression: '« Ah, un négociant ! Voyons si nous pouvons trouver un arrangement mutuellement profitable. »'
+      first_impression: '« Ah, un négociant de la famille [Nom] ! Voyons si nous pouvons trouver un arrangement mutuellement profitable. » (poignée de main calculatrice)'
     },
     tags: ['merchant', 'wealthy', 'pragmatic'],
-    incompatible_with: ['birth_status_esclave', 'birth_status_paria']
+    incompatible_with: ['birth_status_esclave', 'birth_status_paria', 'birth_status_hermit']
   },
 
   {
