@@ -125,7 +125,6 @@ export const generateRandomCharacter = (sessionId, userId) => {
         name: randomName,
         class: `${randomClass} (${randomSubclass?.label || 'Voie Standard'})`,
         mechanic: classData.mechanic,
-        desc: classData.desc,
         stats: finalStats,
         gold: Math.floor(100 * (lifepathSelection.birth.status.effects.gold_modifier || 1.0)),
         abilities: chosenAbilities,
