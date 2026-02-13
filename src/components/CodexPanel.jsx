@@ -20,6 +20,7 @@ import { CLASSES } from '../lore/classes';
 import { ALL_QUESTS } from '../lore/quests';
 import { TAVERNS_AND_LOCATIONS } from '../lore/locations';
 import { LEVEL_THRESHOLDS, EQUIPMENT_RULES, DIFFICULTY_THRESHOLDS } from '../lore/rules';
+import { ALL_LOCATIONS as WORLD_LOCATIONS } from '../lore/world-map';
 import './CodexPanel.css';
 
 // Build rules summary for Codex
@@ -46,11 +47,33 @@ const FULL_BESTIARY = [
   index === self.findIndex((t) => t.id === c.id)
 );
 
-// Consolidated Locations
+// Consolidated Locations - Merge world-map with taverns/landmarks
 const ALL_LOCATIONS = [
-  ...(TAVERNS_AND_LOCATIONS.taverns || []).map(t => ({ ...t, type: 'Auberge', description: t.desc })),
-  ...(TAVERNS_AND_LOCATIONS.shops || []).map(s => ({ ...s, description: s.desc })),
-  ...(TAVERNS_AND_LOCATIONS.landmarks || []).map(l => ({ ...l, type: 'Point d\'intérêt', description: l.desc }))
+  ...WORLD_LOCATIONS,
+  ...(TAVERNS_AND_LOCATIONS.taverns || []).map(t => ({ 
+    ...t, 
+    type: 'Auberge', 
+    description: t.desc,
+    dangerLevel: 'safe',
+    suggestedLevel: 1,
+    region: t.location || 'Inconnu'
+  })),
+  ...(TAVERNS_AND_LOCATIONS.shops || []).map(s => ({ 
+    ...s, 
+    type: 'Boutique',
+    description: s.desc,
+    dangerLevel: 'safe',
+    suggestedLevel: 1,
+    region: 'Commerce'
+  })),
+  ...(TAVERNS_AND_LOCATIONS.landmarks || []).map(l => ({ 
+    ...l, 
+    type: 'Point d\'intérêt', 
+    description: l.desc,
+    dangerLevel: l.danger_level || 'medium',
+    suggestedLevel: l.suggested_level || 5,
+    region: l.location || 'Inconnu'
+  }))
 ];
 
 export function CodexPanel({ isOpen, onClose }) {
@@ -364,7 +387,16 @@ export function CodexPanel({ isOpen, onClose }) {
                 {ALL_LOCATIONS.map((loc, idx) => (
                   <div key={loc.id || idx} className={`location-card ${selectedItem?.id === loc.id ? 'active' : ''}`} onClick={() => setSelectedItem(loc)}>
                     <h4>{loc.name}</h4>
-                    <p className="location-type">{loc.type || 'Lieu'}</p>
+                    <p className="location-type">📍 {loc.type || 'Lieu'}</p>
+                    {loc.dangerLevel && (
+                      <span className={`danger-badge danger-${loc.dangerLevel}`}>
+                        {loc.dangerLevel === 'safe' ? '🛡️ Sûr' : 
+                         loc.dangerLevel === 'low' ? '⚠️ Risque faible' : 
+                         loc.dangerLevel === 'medium' ? '⚔️ Dangereux' :
+                         loc.dangerLevel === 'high' ? '☠️ Très dangereux' : 
+                         loc.dangerLevel === 'extreme' ? '💀 Extrême' : '🔥 Mortel'}
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>
@@ -373,14 +405,128 @@ export function CodexPanel({ isOpen, onClose }) {
               ) : (
                 <div className="location-details">
                   <h3>{selectedItem.name}</h3>
+                  
                   <div className="stats-section">
-                    <h4>📍 Localisation</h4>
+                    <h4>📍 Informations Générales</h4>
                     <div className="stats-grid">
-                      <div className="stat-item"><span className="stat-label">Région</span><span className="stat-value">{selectedItem.region || selectedItem.location}</span></div>
-                      <div className="stat-item"><span className="stat-label">Type</span><span className="stat-value">{selectedItem.type}</span></div>
+                      <div className="stat-item">
+                        <span className="stat-label">Région</span>
+                        <span className="stat-value">{selectedItem.region || 'Inconnu'}</span>
+                      </div>
+                      <div className="stat-item">
+                        <span className="stat-label">Type</span>
+                        <span className="stat-value">{selectedItem.type}</span>
+                      </div>
+                      <div className="stat-item">
+                        <span className="stat-label">Danger</span>
+                        <span className="stat-value">{selectedItem.dangerLevel || 'Moyen'}</span>
+                      </div>
+                      <div className="stat-item">
+                        <span className="stat-label">Niveau suggéré</span>
+                        <span className="stat-value">{selectedItem.suggestedLevel || 1}</span>
+                      </div>
+                      {selectedItem.population && (
+                        <div className="stat-item">
+                          <span className="stat-label">Population</span>
+                          <span className="stat-value">{selectedItem.population.toLocaleString()}</span>
+                        </div>
+                      )}
+                      {selectedItem.biome && (
+                        <div className="stat-item">
+                          <span className="stat-label">Biome</span>
+                          <span className="stat-value">{selectedItem.biome}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div className="lore-section"><h4>📜 Description</h4><p className="lore-p">{selectedItem.description}</p></div>
+
+                  <div className="lore-section">
+                    <h4>📜 Description</h4>
+                    <p className="lore-p">{selectedItem.description}</p>
+                  </div>
+
+                  {selectedItem.lore && (
+                    <div className="lore-section">
+                      <h4>📖 Histoire & Légendes</h4>
+                      <p className="lore-p">{selectedItem.lore}</p>
+                    </div>
+                  )}
+
+                  {selectedItem.services && Object.keys(selectedItem.services).some(k => selectedItem.services[k]) && (
+                    <div className="services-section">
+                      <h4>🏪 Services Disponibles</h4>
+                      <div className="services-grid">
+                        {selectedItem.services.inn && <span className="service-badge">🏠 Auberge</span>}
+                        {selectedItem.services.blacksmith && <span className="service-badge">⚒️ Forge</span>}
+                        {selectedItem.services.merchant && <span className="service-badge">💰 Marchand</span>}
+                        {selectedItem.services.temple && <span className="service-badge">⛪ Temple</span>}
+                        {selectedItem.services.guild && <span className="service-badge">🛡️ Guilde</span>}
+                        {selectedItem.services.stables && <span className="service-badge">🐴 Écuries</span>}
+                        {selectedItem.services.bank && <span className="service-badge">🏦 Banque</span>}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedItem.pointsOfInterest && selectedItem.pointsOfInterest.length > 0 && (
+                    <div className="points-of-interest-section">
+                      <h4>✨ Points d'Intérêt</h4>
+                      <div className="poi-list">
+                        {selectedItem.pointsOfInterest.map((poi, idx) => (
+                          <div key={idx} className="poi-card">
+                            <h5>{poi.name}</h5>
+                            <p>{poi.description}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedItem.economy && (
+                    <div className="economy-section">
+                      <h4>💰 Économie</h4>
+                      <div className="stats-grid">
+                        <div className="stat-item">
+                          <span className="stat-label">Richesse</span>
+                          <span className="stat-value">{
+                            selectedItem.economy.wealth === 'poor' ? '💔 Pauvre' :
+                            selectedItem.economy.wealth === 'modest' ? '💛 Modeste' :
+                            selectedItem.economy.wealth === 'prosperous' ? '💚 Prospère' : '💎 Riche'
+                          }</span>
+                        </div>
+                      </div>
+                      {selectedItem.economy.mainExports && (
+                        <div className="trade-info">
+                          <strong>Exports :</strong> {selectedItem.economy.mainExports.join(', ')}
+                        </div>
+                      )}
+                      {selectedItem.economy.mainImports && (
+                        <div className="trade-info">
+                          <strong>Imports :</strong> {selectedItem.economy.mainImports.join(', ')}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {selectedItem.connectedTo && selectedItem.connectedTo.length > 0 && (
+                    <div className="connections-section">
+                      <h4>🛤️ Chemins & Connexions</h4>
+                      <div className="connections-list">
+                        {selectedItem.connectedTo.map((conn, idx) => (
+                          <div key={idx} className="connection-card">
+                            <div className="connection-header">
+                              <strong>→ {conn.locationId}</strong>
+                              <span className={`difficulty-badge diff-${conn.difficulty}`}>
+                                {conn.difficulty === 'easy' ? '🟢 Facile' : 
+                                 conn.difficulty === 'medium' ? '🟡 Moyen' : '🔴 Difficile'}
+                              </span>
+                            </div>
+                            <p>{conn.distance} km • {conn.travelTime}h de voyage</p>
+                            {conn.description && <p className="connection-desc">{conn.description}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -18,7 +18,18 @@ ADD COLUMN IF NOT EXISTS faction_ties JSONB DEFAULT '[]',
 ADD COLUMN IF NOT EXISTS personal_secrets JSONB DEFAULT '[]',
 ADD COLUMN IF NOT EXISTS stats JSONB DEFAULT '{}',
 ADD COLUMN IF NOT EXISTS abilities JSONB DEFAULT '[]',
-ADD COLUMN IF NOT EXISTS spells JSONB DEFAULT '[]';
+ADD COLUMN IF NOT EXISTS spells JSONB DEFAULT '[]',
+ADD COLUMN IF NOT EXISTS mechanical_traits JSONB DEFAULT '[]',
+ADD COLUMN IF NOT EXISTS skill_bonuses JSONB DEFAULT '[]',
+ADD COLUMN IF NOT EXISTS visited_npcs JSONB DEFAULT '[]',
+ADD COLUMN IF NOT EXISTS discovered_secrets JSONB DEFAULT '[]',
+ADD COLUMN IF NOT EXISTS discovered_locations JSONB DEFAULT '[]',
+ADD COLUMN IF NOT EXISTS active_quests JSONB DEFAULT '[]',
+ADD COLUMN IF NOT EXISTS important_events JSONB DEFAULT '[]',
+ADD COLUMN IF NOT EXISTS languages JSONB DEFAULT '["Commun"]',
+ADD COLUMN IF NOT EXISTS life_path JSONB DEFAULT '{}',
+ADD COLUMN IF NOT EXISTS mechanic TEXT,
+ADD COLUMN IF NOT EXISTS description TEXT;
 
 -- Ensure a unique constraint exists for session_id and user_id to support upsert
 -- Check if it exists first to avoid error

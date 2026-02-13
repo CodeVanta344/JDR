@@ -818,3 +818,204 @@
 .item-rarity-rare {
   border-color: #4bcffa;
 }
+
+/* ============================================================================
+   ATLAS ENRICHI - Location Details Styles
+   ============================================================================ */
+
+.danger-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.danger-badge.danger-safe {
+  background: rgba(0, 255, 0, 0.15);
+  color: #5fff5f;
+}
+
+.danger-badge.danger-low {
+  background: rgba(255, 255, 0, 0.15);
+  color: #ffeb3b;
+}
+
+.danger-badge.danger-medium {
+  background: rgba(255, 165, 0, 0.15);
+  color: #ffa726;
+}
+
+.danger-badge.danger-high {
+  background: rgba(255, 69, 0, 0.15);
+  color: #ff6b35;
+}
+
+.danger-badge.danger-extreme {
+  background: rgba(255, 0, 0, 0.15);
+  color: #ff3838;
+}
+
+.danger-badge.danger-deadly {
+  background: rgba(139, 0, 0, 0.25);
+  color: #ff1744;
+}
+
+.services-section {
+  margin-top: 1.5rem;
+}
+
+.services-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 0.75rem;
+}
+
+.service-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: var(--codex-gold-bright);
+  transition: all 0.2s;
+}
+
+.service-badge:hover {
+  background: rgba(212, 175, 55, 0.2);
+  transform: translateY(-2px);
+}
+
+.points-of-interest-section {
+  margin-top: 1.5rem;
+}
+
+.poi-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 0.75rem;
+}
+
+.poi-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: 4px;
+  padding: 12px;
+  transition: all 0.3s;
+}
+
+.poi-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(212, 175, 55, 0.3);
+  transform: translateX(4px);
+}
+
+.poi-card h5 {
+  font-family: var(--font-decorative);
+  color: var(--codex-gold);
+  margin: 0 0 6px 0;
+  font-size: 1rem;
+}
+
+.poi-card p {
+  color: #ccc;
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.economy-section {
+  margin-top: 1.5rem;
+}
+
+.trade-info {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-left: 2px solid var(--codex-gold-dim);
+  border-radius: 2px;
+  font-size: 0.9rem;
+  color: #ccc;
+}
+
+.trade-info strong {
+  color: var(--codex-gold);
+  margin-right: 6px;
+}
+
+.connections-section {
+  margin-top: 1.5rem;
+}
+
+.connections-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 0.75rem;
+}
+
+.connection-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: 4px;
+  padding: 12px;
+  transition: all 0.3s;
+}
+
+.connection-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(212, 175, 55, 0.3);
+  transform: translateX(4px);
+}
+
+.connection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.connection-header strong {
+  color: var(--codex-gold-bright);
+  font-size: 0.95rem;
+}
+
+.difficulty-badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.difficulty-badge.diff-easy {
+  background: rgba(0, 255, 0, 0.15);
+  color: #5fff5f;
+}
+
+.difficulty-badge.diff-medium {
+  background: rgba(255, 255, 0, 0.15);
+  color: #ffeb3b;
+}
+
+.difficulty-badge.diff-hard {
+  background: rgba(255, 0, 0, 0.15);
+  color: #ff6b35;
+}
+
+.connection-card p {
+  margin: 4px 0;
+  color: #aaa;
+  font-size: 0.85rem;
+}
+
+.connection-desc {
+  font-style: italic;
+  color: #999;
+  margin-top: 6px !important;
+}
