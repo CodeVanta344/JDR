@@ -20,8 +20,18 @@ export const useGameState = (profile) => {
         const { data: ws } = await supabase.from('world_state').select('*');
         if (ws) {
             const time = ws.find(i => i.key === 'game_time');
-            const rt = ws.find(i => i.key === 'real_time_sync');
-            if (time) setGameTime({ ...time.value, minute: time.value.minute || 0 });
+            if (time) {
+                let val = time.value;
+                // SANITIZATION: If day is a huge number (Unix Epoch), reset it to 1
+                if (val.day > 5000) {
+                    val.day = 1;
+                    if (session?.host_id === profile?.id) {
+                        supabase.from('world_state').upsert({ key: 'game_time', value: val });
+                    }
+                }
+                setGameTime({ ...val, minute: val.minute || 0 });
+            }
+            const rt = ws.find(i => i.key === 'realtime_sync');
             if (rt) setRealTimeSync(rt.value);
             const ch = ws.find(i => i.key === 'chronicle');
             if (ch) setChronicle(ch.value || []);
@@ -94,10 +104,14 @@ export const useGameState = (profile) => {
         const interval = setInterval(async () => {
             if (realTimeSync) {
                 const now = new Date();
+                // Relative Epoch: Feb 1, 2026. This prevents massive day numbers (20000+)
+                const gameEpoch = new Date('2026-02-01').getTime();
+                const dayDiff = Math.floor((now.getTime() - gameEpoch) / (1000 * 60 * 60 * 24));
+
                 const nextTime = {
                     hour: now.getHours(),
                     minute: now.getMinutes(),
-                    day: Math.floor(now.getTime() / (1000 * 60 * 60 * 24))
+                    day: Math.max(1, dayDiff + 1) // Day 1 is the start date
                 };
                 setGameTime(nextTime);
                 if (session.host_id === profile.id) {
