@@ -128,7 +128,6 @@ export const generateRandomCharacter = (sessionId, userId) => {
         stats: finalStats,
         gold: Math.floor(100 * (lifepathSelection.birth.status.effects.gold_modifier || 1.0)),
         abilities: chosenAbilities,
-        equipment: equipment,
         hp: maxHp,
         maxHp: maxHp,
         resource: 100,
