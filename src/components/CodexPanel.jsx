@@ -326,9 +326,14 @@ export function CodexPanel({ isOpen, onClose }) {
             <div className="economy-view">
               <div className="economy-header">
                 <h3>💰 Marchés d'Aethelgard</h3>
-                <p>Système économique dynamique. Les prix fluctuent selon la prospérité, les événements et les spécialités locales.</p>
+                <p className="economy-notice">
+                  ⚠️ Système économique en migration vers economy-system.ts.
+                  <br />
+                  Prix dynamiques et marchés seront bientôt disponibles.
+                </p>
               </div>
 
+              {/* TODO: Re-enable when MARKETS migrated to new economy-system.ts
               <div className="markets-grid">
                 {MARKETS.map(market => (
                   <div key={market.city_id} className="market-card">
@@ -374,6 +379,7 @@ export function CodexPanel({ isOpen, onClose }) {
                   </div>
                 ))}
               </div>
+              */}
             </div>
           )}
         </div>
