@@ -24,6 +24,7 @@ import { TradeModal } from './components/TradeModal';
 import { HUDHeader } from './components/HUD/HUDHeader';
 import { NarrationPanel } from './components/HUD/NarrationPanel';
 import { CodexPanel } from './components/CodexPanel';
+import { DMPanel } from './components/DMPanel';
 import WaitingRoom from './components/WaitingRoom';
 import { WeatherOverlay } from './components/WeatherOverlay';
 import { SceneBackground } from './components/SceneBackground';
@@ -54,6 +55,7 @@ export default function App() {
     const [audioVolume, setAudioVolume] = useState(0.5);
     const [voiceEnabled, setVoiceEnabled] = useState(true);
     const [showCodex, setShowCodex] = useState(false);
+    const [showDMPanel, setShowDMPanel] = useState(false);
     const [showHelper, setShowHelper] = useState(false);
     const [helperMessages, setHelperMessages] = useState([]);
     const [typingUsers, setTypingUsers] = useState([]);
@@ -2530,6 +2532,7 @@ export default function App() {
                             onToggleHelper={() => setShowHelper(!showHelper)}
                             showHelper={showHelper}
                             onToggleCodex={() => setShowCodex(!showCodex)}
+                            onToggleDMPanel={() => setShowDMPanel(!showDMPanel)}
                             onDebugCombat={handleDebugCombat}
                             connStatus={connStatus}
                             isGM={session && profile && session.gm_id === profile.id}
@@ -2838,6 +2841,53 @@ export default function App() {
             <CodexPanel
                 isOpen={showCodex}
                 onClose={() => setShowCodex(false)}
+            />
+
+            <DMPanel
+                isOpen={showDMPanel}
+                onClose={() => setShowDMPanel(false)}
+                gameState={{
+                    location: session?.current_location || 'Zone Inconnue',
+                    players: players.map(p => ({
+                        class: p.class || 'Aventurier',
+                        level: p.level || 1,
+                        name: p.name,
+                        user_id: p.user_id
+                    })),
+                    history: messages.filter(m => m.role === 'assistant' || m.role === 'narrage').slice(-10).map(m => m.content),
+                    lore: {
+                        context: WORLD_CONTEXT,
+                        factions: FACTION_LORE,
+                        npcs: NPC_TEMPLATES,
+                        quests: QUEST_HOOKS,
+                        locations: LOCATION_BACKGROUNDS,
+                        rumors: RUMORS_AND_GOSSIP,
+                        encounters: RANDOM_ENCOUNTERS,
+                        bestiary: { ...BESTIARY, ...BESTIARY_EXTENDED },
+                        legendaryItems: LEGENDARY_ITEMS,
+                        myths: [...WORLD_MYTHS_AND_LEGENDS, ...WORLD_MYTHS_EXTENDED],
+                        chronicle: chronicle,
+                        classes: CLASSES
+                    }
+                }}
+                onSpawnNPC={(npc) => {
+                    // Ajouter NPC dans le chat narratif
+                    addMessage({
+                        role: 'narrage',
+                        content: `**[NPC SPAWNED]** ${npc.name} apparaît.\n\n*${npc.appearance}*\n\n${npc.dialogue_samples[0]}`,
+                        timestamp: Date.now()
+                    });
+                }}
+                onTriggerCombat={(encounter) => {
+                    // Déclencher combat généré
+                    setCombatEnemies(encounter.enemies);
+                    setCombatMode(true);
+                    addMessage({
+                        role: 'narrage',
+                        content: `**[COMBAT IMPROVISÉ]**\n\n${encounter.terrain.ambient}\n\n${encounter.enemies.map(e => `- ${e.name} (HP ${e.hp}, AC ${e.ac})`).join('\n')}`,
+                        timestamp: Date.now()
+                    });
+                }}
             />
 
             <AudioManager

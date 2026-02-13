@@ -1148,16 +1148,1716 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     incompatible_with: []
   },
 
-  // ===== PLACEHOLDER 23 LOCATIONS RESTANTES =====
-  // TODO: Créer progressivement 23 locations supplémentaires suivant pattern d100 établi
-  // Priorités restantes :
-  // - Désert : Camp Nomade Itinérant (1)
-  // - Jungle : Ruines Civilisation Ancienne (1)
-  // - Îles : Atoll Tropical Paradisiaque (1)
-  // - Zones Maudites : Marais Hantés Âmes (1), Champ Bataille Éternel (1)
-  // - Lieux Magiques : Nexus Élémentaire Chaotique (1), Bosquet Féérique Enchanté (1)
-  // - Zones Frontalières : Colonie Récente Pionniers (1), Passage Montagneux Stratégique (1)
-  // - Lieux Interdits : Prison-Île Maximum Sécurité (1), Catacombes Oubliées (1), Temple Profané Déchu (1)
-  // - Merveilles Naturelles : Cascade Éternelle Arc-en-Ciel (1), Canyon Échos Magiques (1), Champ Geysers Arcaniques (1)
-  // - Cités Secondaires : Bourg Fortifié (1), Ville Minière (1), Capitale Régionale (1), Centre Pèlerinage (1), Ville Universitaire (1), Port Pêche (1), Marché Frontalier (1), Ville Thermale (1), Cité Souterraine (1)
+  // ===== DÉSERT NOMADE (1) =====
+  {
+    id: 'birth_loc_camp_nomade',
+    stage: 'birth',
+    category: 'location',
+    label: 'Camp Nomade Itinérant du Désert',
+    desc: 'Né caravane nomade perpétuelle mouvement, vivant selon rythmes ancestraux transhumance désertique millénaire.',
+    detailed_lore: {
+      backstory: 'Tribu Bani-Sahra (Fils des Sables) : 500 nomades parcourant désert selon cycles immuables 18 mois. Jamais ville, jamais murs—seules tentes cuir chameau démontables 2h. Vie pastorale : élevage chameaux/chèvres, commerce sel/dattes oasis, navigation stellaire héritée génération. Vous êtes né sous tente nomade tempête sable—sage-femme coupa cordon ombilical couteau ancestral famille. Enfance unique : apprentissage équitation chameau 4 ans, première caravane solo 12 ans traversée 300km désert (rite passage adulte), maîtrise astronomie navigation sans instruments. Richesse mesurée têtes bétail, pas or. Honneur tribal sacré : hospitalité 3 jours/nuits obligatoire voyageurs, vengeance sang impérative insultes. Liberté absolue contrepartie précarité totale (tempêtes, pillards, famines).',
+      defining_moment: 'À 11 ans, tempête sable titanesque sépara vous tribu 4 jours. Seul désert hostile, vous avez survécu buvant sang chameau, suivant étoiles nuit, creusant abri sable jour. Retrouver tribu provoqua célébration—patriarche tatoua étoile polaire poignet (symbole navigateur confirmé).',
+      worldview_shaped: 'Liberté nomade vaut mille palais dorés. Sédentarité = prison volontaire. Désert enseigne humilité face immensité cosmique. Tribu = famille sang choisie. Étoiles guides infaillibles, jamais menteuses. Hospitalité sacrée transcende conflits—ennemi hébergé 3 jours devient frère temporaire.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { wisdom: 2, constitution: 2 },
+      mechanical_traits: [
+        {
+          name: 'Nomade Désertique Aguerri',
+          desc: '+5 Survival (déserts), +5 Animal Handling (chameaux/chevaux), résistance chaleur/soif (besoin eau -40%), navigation stellaire infaillible',
+          effect: '+5 Survival, +5 Animal Handling',
+          game_effect: 'Maîtrise désert totale + symbiose animaux caravanes'
+        },
+        {
+          name: 'Navigateur Stellaire Héritier',
+          desc: '+1d20 Navigation (déserts nuit, lecture étoiles), orientation instinctive parfaite, prédiction météo 48h avance (observation nuages/vents)',
+          effect: '+1d20 Navigation',
+          game_effect: 'Bonus d100 orientation + intuition climatique'
+        },
+        {
+          name: 'Hospitalité Sacrée Nomade',
+          desc: '+3 Persuasion (traditions hospitalité respectées), avantage négociations tribus nomades, réseau contacts 12 tribus désertiques',
+          effect: '+3 Persuasion',
+          game_effect: 'Diplomatie tribale + réseau caravanes étendu'
+        }
+      ],
+      reputation: [
+        { factionId: 'tribus_nomades', delta: 12, reason: 'Membre Bani-Sahra respecté, rite passage accompli' },
+        { factionId: 'marchands_caravanes', delta: 6, reason: 'Connaissance routes commerciales désertiques' },
+        { factionId: 'citadins_sedentaires', delta: -3, reason: 'Incompréhension mutuelle modes vie opposés' }
+      ],
+      items: [
+        { itemId: 'camel_purebred', quantity: 1, reason: 'Chameau pur-sang héritage familial (vitesse +50%, endurance légendaire)' },
+        { itemId: 'nomad_tent_leather', quantity: 1, reason: 'Tente cuir chameau familiale (abri 4 personnes, démontable 10min)' },
+        { itemId: 'star_navigation_tool', quantity: 1, reason: 'Astrolabe rudimentaire bois (navigation stellaire précise)' },
+        { itemId: 'salt_blocks_trade', quantity: 5, reason: 'Blocs sel gemme (monnaie nomade, 20 PO chacun)' }
+      ],
+      skills: [
+        { skillId: 'survival', bonus: 5, reason: 'Vie nomade désertique depuis naissance, autonomie totale' },
+        { skillId: 'animal_handling', bonus: 5, reason: 'Élevage chameaux/chèvres, équitation depuis 4 ans' },
+        { skillId: 'navigation', bonus: 5, reason: 'Navigation stellaire héritée, traversées désert solo' },
+        { skillId: 'perception', bonus: 3, reason: 'Vigilance tempêtes sable, prédateurs, pillards' }
+      ],
+      gold: 200,
+      languages: ['Commun', 'Dialecte Nomade Bani-Sahra', 'Langue Signes Caravanes (silencieux)'],
+      tags: ['nomadic', 'desert', 'free', 'tribal', 'pastoral', 'wanderer']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'nomades_desert': 'Fraternité immédiate, hospitalité chaleureuse (+15 disposition)',
+        'citadins': 'Fascination exotique, incompréhension profonde (+2 disposition)',
+        'marchands': 'Respect connaissance routes, affaires facilitées (+6 disposition)',
+        'sedentaires': 'Méfiance instabilité, perception bohème (-3 disposition)'
+      },
+      first_impression: '« Nomade Bani-Sahra ! Vous connaissez vraiment étoiles par cœur ? Jamais dormi murs ville ? Liberté enviable et terrifiante. »',
+      long_term_perception: 'Voyageur libre éternel. Certains admirent indépendance totale, d\'autres irrités refus sédentarité. Perçu sage, autonome, hospitalier, mais inadapté contraintes urbaines.'
+    },
+    tags: ['nomadic', 'desert', 'free', 'tribal'],
+    incompatible_with: []
+  },
+
+  // ===== JUNGLE RUINES (1) =====
+  {
+    id: 'birth_loc_ruines_jungle',
+    stage: 'birth',
+    category: 'location',
+    label: 'Ruines Englouties Civilisation Jungle',
+    desc: 'Né cité temple millénaire engloutie jungle, redécouverte explorateurs générations passées, abritant secrets perdus.',
+    detailed_lore: {
+      backstory: 'Xal-Kotep (Cité Serpent Jade) : métropole 100.000 habitants abandonnée mystérieusement il y a 800 ans. Pyramides échelonnées 50m hauteur envahies lianes titanesques, palais sculptés effondrement partiel, fresques murales dévoilant mythologie inconnue. Petite communauté 300 habitants : archéologues obsédés déchiffrer glyphes serpentins, aventuriers chercheurs trésors jade, chamans étudiant magie nature ancienne. Vous êtes né ce lieu étrange où civilisation morte rencontre jungle vivante conquérante : parents explorateurs cartographiant niveaux souterrains, vous jouiez temples ruinés, dormiez ombre statues serpents ailés colossaux. Dangers quotidiens : serpents venimeux géants, insectes toxiques, pièges temples actifs, malédictions idoles profanées. Mais cité recèle jade vert impérial valant fortune.',
+      defining_moment: 'À 9 ans, explorant crypte interdite seul, vous avez déclenché piège ancien : murs claquèrent, eau montante noyade imminente. Vous avez résolu énigme glyphes porte (séquence constellation serpent) sous pression mortelle—porte ouvrit 10 secondes avant noyade. Vous compris : intelligence sauve là où force échoue.',
+      worldview_shaped: 'Civilisations brillantes finissent ruines oubliées. Nature reconquiert toujours œuvres humaines. Passé contient sagesses perdues valant redécouverte. Pièges anciens respectent logique—comprendre concepteurs = survie. Jade vert impérial plus précieux or vulgaire.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { intelligence: 2, dexterity: 2 },
+      mechanical_traits: [
+        {
+          name: 'Explorateur Ruines Jungle Né',
+          desc: '+5 Investigation (temples anciens), +5 Survival (jungle tropicale), +1d20 désactiver pièges mécaniques anciens, connaissance glyphes serpentins basique',
+          effect: '+5 Investigation, +5 Survival, +1d20 Disarm Traps',
+          game_effect: 'Expertise donjons jungle + sécurité pièges archéologiques'
+        },
+        {
+          name: 'Familiarité Serpents Sacrés',
+          desc: '+3 Animal Handling (serpents), immunité venin serpents jungle communs (résistance 75%), communication empathique reptiles',
+          effect: '+3 Animal Handling, Venom Resist',
+          game_effect: 'Affinité reptilienne + survie morsures'
+        },
+        {
+          name: 'Trésor Jade Découvert',
+          desc: 'Commence 1 idole jade vert impérial (valeur 400 PO, +1 WIS si portée, mais malédiction mineure : cauchemars anciens 1/semaine)',
+          effect: 'Jade Idol (+1 WIS, Cursed Dreams)',
+          game_effect: 'Artefact précieux pouvoir/malédiction'
+        }
+      ],
+      reputation: [
+        { factionId: 'archeologues', delta: 10, reason: 'Natif Xal-Kotep, connaissance site unique' },
+        { factionId: 'aventuriers', delta: 6, reason: 'Respect survie dangers jungle/ruines' },
+        { factionId: 'marchands_jade', delta: 8, reason: 'Accès jade impérial rare' },
+        { factionId: 'chamans_nature', delta: 5, reason: 'Familiarité esprits jungle anciens' }
+      ],
+      items: [
+        { itemId: 'jade_idol_serpent', quantity: 1, reason: 'Idole jade serpent ailé (+1 WIS, cauchemars hebdomadaires)' },
+        { itemId: 'rope_vine_reinforced', quantity: 20, reason: 'Corde lianes renforcées (charge 500kg, jungle-proof)' },
+        { itemId: 'antivenom_jungle', quantity: 3, reason: 'Antivenin jungle (neutralise poisons reptiles, 50 PO chacun)' },
+        { itemId: 'map_ruins_partial', quantity: 1, reason: 'Carte partielle niveaux Xal-Kotep (3/7 étages)' }
+      ],
+      skills: [
+        { skillId: 'investigation', bonus: 5, reason: 'Exploration temples, déchiffrage glyphes depuis enfance' },
+        { skillId: 'survival', bonus: 5, reason: 'Vie jungle tropicale hostile, dangers quotidiens' },
+        { skillId: 'animal_handling', bonus: 3, reason: 'Interaction serpents sacrés, reptiles jungle' },
+        { skillId: 'acrobatics', bonus: 3, reason: 'Escalade ruines, échapper pièges, passages étroits' }
+      ],
+      gold: 400,
+      languages: ['Commun', 'Glyphes Xal-Kotep (basique)', 'Langage Reptilien (empathique)'],
+      tags: ['ruins', 'jungle', 'ancient', 'cursed', 'archaeological', 'dangerous']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'archeologues': 'Enthousiasme collaboration, questions incessantes (+12 disposition)',
+        'aventuriers': 'Respect compétence, demande guidage (+8 disposition)',
+        'superstitieux': 'Peur malédictions portées, évitement (-6 disposition)',
+        'marchands_jade': 'Intérêt commercial intense, propositions achat (+10 disposition)',
+        'chamans': 'Curiosité spirituelle, détection malédiction idole (+5 disposition)'
+      },
+      first_impression: '« Ruines Xal-Kotep maudites ?! Cette idole jade... Elle pulse énergie étrange. Cauchemars serpents ailés ? Prix pouvoir ancien. »',
+      long_term_perception: 'Explorateur maudit bénéficié. Certains admirent bravoure, majoritaire craint malédiction contagieuse. Perçu intelligent, agile, riche jade, mais hanté.'
+    },
+    tags: ['ruins', 'jungle', 'ancient', 'cursed'],
+    incompatible_with: []
+  },
+
+  // ===== ÎLE TROPICALE (1) =====
+  {
+    id: 'birth_loc_atoll_tropical',
+    stage: 'birth',
+    category: 'location',
+    label: 'Atoll Tropical Paradisiaque',
+    desc: 'Né île corallienne isolée océan turquoise, paradis naturel préservé civilisation moderne.',
+    detailed_lore: {
+      backstory: 'Atoll Maui-Lani (Perle Céleste) : anneau corallien 5km diamètre entourant lagon cristallin turquoise. Population 200 insulaires : pêcheurs récifs coralliens, cueilleurs cocos/mangues, artisans colliers coquillages nacre. Vie paradisiaque simple : pêche quotidienne abondante (thons, marlins, pieuvres), fruits tropicaux surabondants gratuits, climat éternel 28°C. Mais isolement total : navire marchand passage 6 mois apportant sel/métaux contre perles/nacre. Vous êtes né cabane bambou pilotis lagon—première baignade 6 mois, première plongée apnée 5 ans récifs peu profonds. Enfance idyllique : natation dauphins curieux, grimper cocotiers 20m, tisser filets pêche. Dangers rares : requins tigres, cyclones tropicaux décennaux, pirates sporadiques.',
+      defining_moment: 'À 10 ans, cyclone catégorie 4 dévasta atoll—vagues 8m détruisirent moitié village. Vous avez sauvé enfants piégés cabane effondrée plongeant eaux déchaînées 12 fois consécutives. Communauté vous tatoua vague sacrée épaule (symbole courage marin héroïque).',
+      worldview_shaped: 'Nature pourvoit généreusement si respectée humblement. Océan mère nourricière capricieuse—donne poissons mais reprend imprudents. Communauté insulaire solidarité vitale face isolement. Richesse matérielle illusion—bonheur simple suffit. Technologie superflue face sagesse ancestrale.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { dexterity: 2, constitution: 2 },
+      mechanical_traits: [
+        {
+          name: 'Enfant Océan Tropical',
+          desc: '+5 Swimming (vitesse nage ×2), +5 Athletics (escalade, plongée apnée 5min), résistance noyade (flottabilité naturelle), vision sous-marine claire 15m',
+          effect: '+5 Swimming, +5 Athletics',
+          game_effect: 'Maîtrise aquatique totale + endurance plongée'
+        },
+        {
+          name: 'Pêcheur Récifs Coralliens',
+          desc: '+1d20 Survival (océanique, pêche récifs), connaissance faune marine 200+ espèces, détection requins 50m (sixième sens vibrations)',
+          effect: '+1d20 Survival (ocean)',
+          game_effect: 'Bonus d100 pêche + instinct prédateurs marins'
+        },
+        {
+          name: 'Artisan Nacre Insulaire',
+          desc: '+3 Crafting (bijoux nacre/coquillages), commerce perles/colliers (+20% prix vente), réputation artisan insulaire reconnue',
+          effect: '+3 Crafting',
+          game_effect: 'Artisanat précieux + commerce maritime'
+        }
+      ],
+      reputation: [
+        { factionId: 'insulaires_pacifique', delta: 12, reason: 'Natif Maui-Lani, héros cyclone reconnu' },
+        { factionId: 'pecheurs', delta: 8, reason: 'Maîtrise techniques récifs coralliens' },
+        { factionId: 'marchands_perles', delta: 6, reason: 'Accès perles/nacre qualité supérieure' }
+      ],
+      items: [
+        { itemId: 'fishing_spear_bone', quantity: 1, reason: 'Harpon os baleine artisanal (1d6+2, portée 10m sous-marin)' },
+        { itemId: 'pearl_necklace_rare', quantity: 1, reason: 'Collier perles noires rares (valeur 150 PO, beauté +1 CHA si porté)' },
+        { itemId: 'coconut_water_skin', quantity: 3, reason: 'Noix coco pleines eau fraîche (hydratation parfaite)' },
+        { itemId: 'wave_tattoo_sacred', quantity: 1, reason: 'Tatouage vague sacrée épaule (symbole courage, +2 disp insulaires)' }
+      ],
+      skills: [
+        { skillId: 'swimming', bonus: 5, reason: 'Natation quotidienne lagon/océan depuis 6 mois' },
+        { skillId: 'athletics', bonus: 5, reason: 'Plongée apnée, escalade cocotiers, endurance aquatique' },
+        { skillId: 'survival', bonus: 5, reason: 'Pêche récifs, cueillette fruits, prévision tempêtes' },
+        { skillId: 'crafting', bonus: 3, reason: 'Artisanat colliers nacre, filets pêche, pirogues' }
+      ],
+      gold: 250,
+      languages: ['Commun', 'Dialecte Insulaire Maui-Lani', 'Langage Dauphins (rudimentaire)'],
+      tags: ['tropical', 'island', 'paradise', 'aquatic', 'peaceful', 'isolated']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'insulaires': 'Fraternité immédiate océanique (+15 disposition)',
+        'marins': 'Respect compétence aquatique (+8 disposition)',
+        'citadins_continentaux': 'Fascination exotique, envie mode vie (+6 disposition)',
+        'pirates': 'Sous-estimation dangereuse (cible facile présumée, -3 disposition)',
+        'marchands': 'Intérêt perles rares, négociations privilégiées (+7 disposition)'
+      },
+      first_impression: '« Atoll Maui-Lani paradis légendaire ! Vous nagez vraiment avec dauphins ?! Tatouage vague... Héros cyclone. Respectez. »',
+      long_term_perception: 'Insulaire pacifique compétent. Certains admirent harmonie nature, d\'autres jalousent insouciance. Perçu agile, paisible, artisan talentueux, mais naïf intrigues continentales.'
+    },
+    tags: ['tropical', 'island', 'paradise', 'aquatic'],
+    incompatible_with: []
+  },
+
+  // ===== ZONES MAUDITES (2) =====
+  {
+    id: 'birth_loc_marais_hantes',
+    stage: 'birth',
+    category: 'location',
+    label: 'Marais Hantés des Âmes Perdues',
+    desc: 'Né marécages maudits où morts-vivants errent éternellement, frontière fragile entre vivants et défunts.',
+    detailed_lore: {
+      backstory: 'Marais Lamentations : zone 50km² marécages putrides où bataille sanglante il y a 200 ans tua 10.000 soldats. Cadavres mal enterrés, rites funéraires négligés, malédiction nécromantique corrompent terre eau air. Morts-vivants errent brumes nocturnes : squelettes désorientés, zombies pourrissants, spectres hurlant regrets éternels. Petite communauté 150 survivants obstinés : exorcistes combattant malédiction, herboristes récoltant plantes rares marais, criminels fuyant justice (personne cherche ici). Vous êtes né cabane pilotis isolée—enfance terrifiante normalisée : spectres fenêtres nuit, odeur chair putride permanente, brumes toxiques asphyxiantes. Mais marais produit lotus noir (composant alchimique 100 PO), racines mandragore vivantes.',
+      defining_moment: 'À 12 ans, spectre guerrier attaqua vous nuit hurlant vengeance. Vous avez récité exorcisme improvisé appris prêtre—spectre se dissipa lumière argentée. Prêtre déclara vous "Touché Lumière"—résistance innée ténèbres morts-vivants.',
+      worldview_shaped: 'Mort pas fin absolue—âmes torturées hantent monde. Respect défunts prévient malédictions horribles. Vivants doivent honorer morts ou payer prix spectres vengeurs. Courage face ténèbres acquis exposition quotidienne terreurs. Isolement prix survie marais maudits.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { wisdom: 2, constitution: 2 },
+      mechanical_traits: [
+        {
+          name: 'Touché Lumière Exorciste',
+          desc: '+5 Religion (exorcismes), +1d20 repousser morts-vivants, résistance nécromancie 50% (jets sauvegarder +5), détection morts-vivants 30m',
+          effect: '+5 Religion, +1d20 Turn Undead',
+          game_effect: 'Pouvoir exorciste inné + défense nécromantique'
+        },
+        {
+          name: 'Survivant Marais Maudits',
+          desc: '+5 Survival (marécages), +5 Stealth (brumes), immunité maladies marais (fièvres, parasites), résistance toxines naturelles',
+          effect: '+5 Survival, +5 Stealth',
+          game_effect: 'Maîtrise marécages + santé renforcée'
+        },
+        {
+          name: 'Herboriste Plantes Maudites',
+          desc: '+3 Medicine (herbes rares), connaissance lotus noir/mandragore, commerce composants alchimiques 200+ PO valeur',
+          effect: '+3 Medicine',
+          game_effect: 'Expertise botanique obscure + commerce lucratif'
+        }
+      ],
+      reputation: [
+        { factionId: 'exorcistes', delta: 10, reason: 'Touché Lumière reconnu, résistance innée' },
+        { factionId: 'morts_vivants', delta: -15, reason: 'Ennemi naturel, pouvoir repousser redouté' },
+        { factionId: 'alchimistes', delta: 8, reason: 'Accès lotus noir, mandragore vivante' },
+        { factionId: 'superstitious', delta: -6, reason: 'Peur contamination malédiction, évitement' }
+      ],
+      items: [
+        { itemId: 'holy_symbol_silver', quantity: 1, reason: 'Symbole sacré argent béni (focus exorcismes, +2 repousser)' },
+        { itemId: 'black_lotus_flowers', quantity: 3, reason: 'Fleurs lotus noir (composant alchimique, 100 PO chacune)' },
+        { itemId: 'mandrake_root_living', quantity: 1, reason: 'Racine mandragore vivante (potion résurrection partielle, 200 PO)' },
+        { itemId: 'spectral_ward_charm', quantity: 1, reason: 'Amulette protection spectres (résistance possession +3)' }
+      ],
+      skills: [
+        { skillId: 'religion', bonus: 5, reason: 'Exorcismes quotidiens, rites funéraires, prières protection' },
+        { skillId: 'survival', bonus: 5, reason: 'Vie marais toxiques, navigation brumes, éviter morts-vivants' },
+        { skillId: 'stealth', bonus: 5, reason: 'Déplacement silencieux marais, éviter patrouilles spectres' },
+        { skillId: 'medicine', bonus: 3, reason: 'Herboristerie marais, antidotes toxines, soins maladies' }
+      ],
+      gold: 300,
+      languages: ['Commun', 'Latin Exorciste (prières)', 'Murmures Spectraux (compréhension partielle)'],
+      tags: ['cursed', 'swamp', 'undead', 'haunted', 'dangerous', 'holy']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'exorcistes': 'Accueil fraternel, collaboration spirituelle (+12 disposition)',
+        'morts_vivants': 'Hostilité terrifiée, fuite instinctive (-20 disposition)',
+        'villageois_normaux': 'Peur contamination, maintien distance (+2 disposition, -5 contact)',
+        'alchimistes': 'Intérêt commercial intense, propositions partenariat (+10 disposition)',
+        'prêtres': 'Respect pouvoir divin, bénédictions offertes (+8 disposition)'
+      },
+      first_impression: '« Marais Lamentations horrifiants ?! Vous repoussez vraiment spectres ?! Touché Lumière rare... Béni ou maudit ? »',
+      long_term_perception: 'Exorciste-survivant hanteur. Certains admirent courage surnaturel, majoritaire terrifie aura ténèbres. Perçu saint, endurant, lugubre, socialement isolé.'
+    },
+    tags: ['cursed', 'swamp', 'undead', 'haunted'],
+    incompatible_with: []
+  },
+
+  {
+    id: 'birth_loc_champ_bataille',
+    stage: 'birth',
+    category: 'location',
+    label: 'Champ de Bataille Éternel Maudit',
+    desc: 'Né terre maudite où armées fantômes rejouent bataille perdue éternellement chaque nuit.',
+    detailed_lore: {
+      backstory: 'Plaine Lames Brisées : champ bataille 10km² où Dernière Bataille Royaumes décida sort continent il y a 150 ans. 50.000 morts 1 journée sanglante, serments vengeance derniers souffles, malédiction guerre éternelle. Chaque nuit minuit-aube, armées fantômes transparentes rejouent bataille : charges cavalerie spectrale, sortilèges arcanes bleus, cris agonie éternels. Jour, plaine apparence normale mais sol cendres noires, herbe poussée tordue, air goût métallique sang. Communauté 100 habitants : vétérans hantés recherchant camarades morts, nécromanciens étudiant malédiction, pilleurs équipements anciens. Vous êtes né baraque bois vétéran traumatisé—enfance bercée cris bataille nocturnes, réveil quotidien cadavres spectraux dissipés aube.',
+      defining_moment: 'À 13 ans, fantôme général ennemi apparut jour (rarissime) vous suppliant briser malédiction. Vous avez trouvé épée brisée cachée 150 ans, réparé forge village, planté tombe symbolique. Général se dissipa paix lumière dorée—malédiction affaiblie 10%. Vous compris : paix défunts libère vivants.',
+      worldview_shaped: 'Guerre atrocité absolue—gloire mensongère masque horreur. Morts méritent repos honorable indépendamment camp. Vengeance perpétue souffrance éternelle cycles. Courage affronter passé traumatique nécessaire guérison. Vivre champ bataille forge résilience inhumaine.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { constitution: 2, wisdom: 2 },
+      mechanical_traits: [
+        {
+          name: 'Né Guerre Éternelle',
+          desc: '+5 Intimidation (présence martiale spectrale), +1d20 résister terreur/désespoir, immunité peur magique (exposition quotidienne horreurs), aura lugubre (+3 Intimidation)',
+          effect: '+5 Intimidation, +1d20 Fear Resist',
+          game_effect: 'Résistance mentale légendaire + terreur inspirée'
+        },
+        {
+          name: 'Connaissance Tactiques Anciennes',
+          desc: '+5 History (guerres anciennes), +3 Tactics (stratégies bataille classiques), détection embuscades militaires (+5 Perception contexte martial)',
+          effect: '+5 History, +3 Tactics',
+          game_effect: 'Expertise militaire historique + sens tactique'
+        },
+        {
+          name: 'Apaiseur Âmes Guerrières',
+          desc: '+3 Religion (rites funéraires militaires), avantage négociations spectres guerriers, +1d20 briser malédictions mineures liées guerre',
+          effect: '+3 Religion, +1d20 Break War Curses',
+          game_effect: 'Pacification spectres + exorcisme spécialisé'
+        }
+      ],
+      reputation: [
+        { factionId: 'veterans_guerre', delta: 10, reason: 'Comprend traumatisme guerre intimement' },
+        { factionId: 'fantomes_guerriers', delta: 8, reason: 'Apaiseur reconnu, libérateur âmes' },
+        { factionId: 'pacifistes', delta: 6, reason: 'Respect opposition guerre héritée horreur' },
+        { factionId: 'militaristes', delta: -4, reason: 'Perception défaitiste, mémoire honteuse' }
+      ],
+      items: [
+        { itemId: 'broken_sword_repaired', quantity: 1, reason: 'Épée brisée réparée général (1d8+1, +2 vs spectres)' },
+        { itemId: 'dog_tags_ancient', quantity: 5, reason: 'Plaques identité soldats anciens (libérer 5 âmes si rendues familles)' },
+        { itemId: 'war_medal_tarnished', quantity: 1, reason: 'Médaille militaire ternie 150 ans (symbole sacrifice)' },
+        { itemId: 'field_journal_soldier', quantity: 1, reason: 'Journal soldat derniers jours (récit poignant bataille)' }
+      ],
+      skills: [
+        { skillId: 'intimidation', bonus: 5, reason: 'Aura guerre traumatisante, présence lugubre' },
+        { skillId: 'history', bonus: 5, reason: 'Connaissance intime Dernière Bataille, tactiques anciennes' },
+        { skillId: 'religion', bonus: 3, reason: 'Rites funéraires militaires, apaisement spectres' },
+        { skillId: 'perception', bonus: 5, reason: 'Vigilance dangers champ bataille, pièges oubliés' }
+      ],
+      gold: 250,
+      languages: ['Commun', 'Cant Militaire Ancien', 'Murmures Spectres Guerriers (compréhension)'],
+      tags: ['cursed', 'battlefield', 'haunted', 'war', 'traumatic', 'undead']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'veterans': 'Solidarité profonde traumatisme partagé (+12 disposition)',
+        'spectres_guerriers': 'Reconnaissance libérateur, coopération rare (+10 disposition)',
+        'pacifistes': 'Respect témoignage horreur guerre (+8 disposition)',
+        'militaristes_glorieux': 'Malaise réalité sombre guerre, irritation (-5 disposition)',
+        'villageois_normaux': 'Peur aura lugubre, évitement prudent (-4 disposition)'
+      },
+      first_impression: '« Champ Bataille Éternel ?! Vous entendez cris fantômes chaque nuit ?! Comment santé mentale survivre ? Respectez courage. »',
+      long_term_perception: 'Survivant guerre éternelle. Certains admirent résilience surhumaine, d\'autres terrifie lugubre hanteur. Perçu sage, traumatisé, pacificateur, socialement isolé.'
+    },
+    tags: ['cursed', 'battlefield', 'haunted', 'war'],
+    incompatible_with: []
+  },
+
+  // ===== LIEUX MAGIQUES (2) =====
+  {
+    id: 'birth_loc_nexus_elementaire',
+    stage: 'birth',
+    category: 'location',
+    label: 'Nexus Élémentaire Chaotique',
+    desc: 'Né convergence plans élémentaires où feu eau air terre fusionnent chaos magique permanent.',
+    detailed_lore: {
+      backstory: 'Vortex Éléments : zone 5km diamètre où barrières plans élémentaires fracturées magiquement accident arcan il y a 400 ans. Quartiers différents éléments coexistent : Nord flammes éternelles (température 100°C), Sud océan flottant gravité inversée, Est tornades permanentes, Ouest falaises terre vivante mouvante. Centre point neutre fragile où 50 mages/élémentalistes habitent forteresse cristal. Vous êtes né ce chaos—enfance surréaliste : jouer fontaines feu liquide, nager airs (gravité variable), converser salamandres feu conscientes, esquiver éclairs spontanés. Mutations mineures courantes : yeux bicolores (feu/eau), peau teinte élémentaire, affinité magique innée.',
+      defining_moment: 'À 11 ans, vortex instabilité critique menaça explosion planaire. Vous avez canalisé instinctivement quatre éléments simultanément (talent rarissime) stabilisant temporairement. Archimage baptisa vous "Enfant Nexus"—destiné équilibrer éléments.',
+      worldview_shaped: 'Éléments forces fondamentales réalité, pas outils. Équilibre quatre éléments maintient existence cosmos. Chaos apparent cache ordre profond harmonieux. Magie élémentaire respiration naturelle, pas sortilèges artificiels. Mutation prix pouvoir cosmique acceptable.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { intelligence: 2, constitution: 2 },
+      mechanical_traits: [
+        {
+          name: 'Enfant Nexus Élémentaire',
+          desc: 'Résistance 25% quatre éléments (feu/froid/électricité/acide), +5 Arcana (magie élémentaire), connaissance 2 cantrips élémentaires (usage illimité), détection déséquilibre élémentaire 50m',
+          effect: 'Elemental Resist 25%, +5 Arcana, 2 Cantrips',
+          game_effect: 'Défense multi-élémentaire + magie innée'
+        },
+        {
+          name: 'Canalisation Éléments Instinctive',
+          desc: '+1d20 lancer sorts élémentaires (feu/eau/air/terre), +3 dégâts sorts élémentaires, 1/jour : invoquer élémentaire mineur (4h service)',
+          effect: '+1d20 Elemental Spells, Summon Minor Elemental',
+          game_effect: 'Bonus d100 magie élémentaire + invocation'
+        },
+        {
+          name: 'Mutation Élémentaire Bénéfique',
+          desc: 'Yeux bicolores feu/eau (vision ténèbres 20m, détection magie élémentaire), peau teinte bleutée (CHA -1 mais +3 Intimidation contexte magique)',
+          effect: 'Darkvision, Detect Elemental Magic',
+          game_effect: 'Sens magique + apparence imposante'
+        }
+      ],
+      reputation: [
+        { factionId: 'elementalistes', delta: 12, reason: 'Enfant Nexus rare, destinée prophétisée' },
+        { factionId: 'elementaires', delta: 8, reason: 'Reconnaissance affinité naturelle' },
+        { factionId: 'mages_academies', delta: 6, reason: 'Fascination talent élémentaire inné' },
+        { factionId: 'anti_magie', delta: -10, reason: 'Incarnation dépendance magique dangereuse' }
+      ],
+      items: [
+        { itemId: 'elemental_focus_crystal', quantity: 1, reason: 'Cristal focus quatre couleurs (amplifie sorts élémentaires +2)' },
+        { itemId: 'salamander_scale', quantity: 1, reason: 'Écaille salamandre feu (composant invocations, 80 PO)' },
+        { itemId: 'water_breathing_potion', quantity: 2, reason: 'Potion respiration aquatique (1h chacune, gravité inversée Sud)' },
+        { itemId: 'robe_elemental_weave', quantity: 1, reason: 'Robe tissage élémentaire (résistance +5% quatre éléments)' }
+      ],
+      skills: [
+        { skillId: 'arcana', bonus: 5, reason: 'Immersion quotidienne magie élémentaire, observations phénomènes' },
+        { skillId: 'survival', bonus: 3, reason: 'Vie environnements élémentaires extrêmes hostiles' },
+        { skillId: 'knowledge_planes', bonus: 5, reason: 'Familiarité plans élémentaires, créatures natives' },
+        { skillId: 'perception', bonus: 3, reason: 'Détection instabilités magiques, dangers élémentaires' }
+      ],
+      gold: 300,
+      languages: ['Commun', 'Ignan (feu)', 'Aquan (eau)', 'Auran (air)', 'Terran (terre)'],
+      tags: ['magical', 'elemental', 'chaotic', 'mutant', 'powerful', 'destined']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'elementalistes': 'Accueil enthousiaste, mentorat offert (+15 disposition)',
+        'elementaires': 'Respect naturel affinité, coopération facilitée (+10 disposition)',
+        'mages': 'Fascination talent, propositions étude (+8 disposition)',
+        'villageois_normaux': 'Peur mutation visible, superstition (+0 disposition)',
+        'anti_magie': 'Hostilité idéologique, méfiance totale (-12 disposition)'
+      },
+      first_impression: '« Nexus Élémentaire ?! Yeux bicolores fascinants... Vous canalisez vraiment quatre éléments simultanément ?! Enfant Nexus prophétisé ! »',
+      long_term_perception: 'Prodige élémentaire destiné. Certains admirent pouvoir surnaturel, d\'autres terrifie mutation. Perçu puissant, sage éléments, mais socialement inadapté chaos vécu.'
+    },
+    tags: ['magical', 'elemental', 'chaotic', 'mutant'],
+    incompatible_with: []
+  },
+
+  {
+    id: 'birth_loc_bosquet_feerique',
+    stage: 'birth',
+    category: 'location',
+    label: 'Bosquet Féérique Enchanté',
+    desc: 'Né clairière magique frontière monde mortel et royaume féérique, baigné enchantements millénaires.',
+    detailed_lore: {
+      backstory: 'Bosquet Lune-Argent : clairière 1km² forêt ancestrale où voile réalités aminci permet passage créatures féeriques. Arbres phosphorescents argentés brillent nuit, champignons géants parlants, ruisseau chantant mélodies hypnotiques, papillons translucides porteurs rêves. Population 80 habitants : druides protégeant frontière, fées exilées cour Reine Été, mortels adoptés peuple fée enfance. Vous êtes né sous arbre millénaire bénédiction fée marraine—sang mortel mais touche féerique marquée. Enfance féérique : jouer pixies espiègles, apprendre danse cercle champignons, converser arbres sages conscients, boire rosée étoilée (nectar fée). Dangers : perte notion temps (1 nuit = 1 an mortel), pactes fées dangereux, satyre ivres violents.',
+      defining_moment: 'À 10 ans, chasseur mortel poursuivit biche blanche sacrée dans bosquet. Vous avez supplié fée marraine sauver biche—elle transforma chasseur chêne 100 ans. Vous compris pouvoir fées terrible capricieux, ne jamais offenser.',
+      worldview_shaped: 'Monde féérique réel coexiste mortel invisiblement. Nature consciente mérite respect absolu—arbres écoutent, rivières jugent. Pactes paroles contraignants magiquement—jamais promettre légèrement. Beauté féérique cache dangers mortels. Temps relatif illusion, éternité possible.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { charisma: 2, dexterity: 2 },
+      mechanical_traits: [
+        {
+          name: 'Touche Féérique Héritée',
+          desc: '+5 Persuasion (charme naturel fée), +5 Performance (danse/chant enchanteur), avantage résister charme/sommeil magique, +1d20 négociations créatures féeriques',
+          effect: '+5 Persuasion, +5 Performance, +1d20 Fey Influence',
+          game_effect: 'Charisme surnaturel + diplomatie féérique'
+        },
+        {
+          name: 'Ami Nature Consciente',
+          desc: '+3 Nature (communication plantes/animaux basique), +3 Animal Handling (créatures forestières), détection présences féeriques 30m',
+          effect: '+3 Nature, +3 Animal Handling',
+          game_effect: 'Empathie naturelle + sens féérique'
+        },
+        {
+          name: 'Bénédiction Fée Marraine',
+          desc: '1/jour : invoquer fée marraine aide mineure (conseil, petite magie, distraction ennemis 1 round), mais dette accumulée nécessite service futur',
+          effect: 'Fey Patron Boon (Debt Accrued)',
+          game_effect: 'Assistance surnaturelle coût obligations'
+        }
+      ],
+      reputation: [
+        { factionId: 'fey_court', delta: 10, reason: 'Protégé fée marraine, touche féérique reconnue' },
+        { factionId: 'druides', delta: 8, reason: 'Respect harmonie nature, bénédiction féerique' },
+        { factionId: 'chasseurs', delta: -5, reason: 'Protection animaux sacrés, opposition chasse' },
+        { factionId: 'eglise', delta: -4, reason: 'Suspicion pactes démoniaques (confusion fées)' }
+      ],
+      items: [
+        { itemId: 'moonsilver_acorn', quantity: 1, reason: 'Gland argenté bosquet (planter = arbre parlant 10 ans, 200 PO valeur)' },
+        { itemId: 'fey_flower_crown', quantity: 1, reason: 'Couronne fleurs éternelles (CHA +1 si portée, fane si retirée)' },
+        { itemId: 'pixie_dust_pouch', quantity: 3, reason: 'Poussière pixie (lévitation 10min chacune, ou invisibilité 1min)' },
+        { itemId: 'singing_stream_vial', quantity: 1, reason: 'Fiole eau ruisseau chantant (apaise colère, soigne 1d6 HP)' }
+      ],
+      skills: [
+        { skillId: 'persuasion', bonus: 5, reason: 'Charme féérique naturel, négociations enchantées' },
+        { skillId: 'performance', bonus: 5, reason: 'Danse cercles fées, chant mélodies hypnotiques' },
+        { skillId: 'nature', bonus: 3, reason: 'Communication arbres/plantes, connaissance écosystème magique' },
+        { skillId: 'animal_handling', bonus: 3, reason: 'Affinité créatures forestières, familiers féeriques' }
+      ],
+      gold: 250,
+      languages: ['Commun', 'Sylvan (féérique)', 'Langage Arbres (empathique)', 'Chants Oiseaux (compréhension)'],
+      tags: ['fey', 'magical', 'forest', 'enchanted', 'charming', 'mysterious']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'fey_creatures': 'Accueil chaleureux familial, protection offerte (+15 disposition)',
+        'druides': 'Respect connexion nature profonde, mentorat spirituel (+10 disposition)',
+        'villageois_superstitieux': 'Peur pactes féeriques, évitement prudent (-5 disposition)',
+        'chasseurs': 'Irritation protection gibier, conflits potentiels (-6 disposition)',
+        'nobles_romantiques': 'Fascination beauté éthérée, propositions cour (+8 disposition)'
+      },
+      first_impression: '« Bosquet Lune-Argent enchanté ?! Couronne fleurs éternelles... Touche féérique visible. Beauté surnaturelle troublante. Quel prix payé ? »',
+      long_term_perception: 'Protégé fées mystérieux. Certains admirent grâce enchantée, majoritaire méfie pactes obscurs. Perçu charmant, sage nature, mais obligations féeriques inquiétantes.'
+    },
+    tags: ['fey', 'magical', 'forest', 'enchanted'],
+    incompatible_with: []
+  },
+
+  // ===== FRONTIÈRE COLONIE (1) =====
+  {
+    id: 'birth_loc_colonie_pionniers',
+    stage: 'birth',
+    category: 'location',
+    label: 'Colonie Récente Pionniers Frontière',
+    desc: 'Né établissement pionnier 10 ans âge, première génération coloniser terres sauvages inexplorées.',
+    detailed_lore: {
+      backstory: 'Nouvelle Espérance : colonie fondée il y a 12 ans par 200 pionniers courageux cherchant terres vierges prospérité nouvelle. Construite défriche forêt dense frontière Nord, entourée palissade bois renforcée contre ours/loups/barbares. Population actuelle 350 habitants : fermiers défrichant champs, bûcherons abattant arbres titanesques, chasseurs trappeurs fourrures, milice volontaire 30 hommes. Vous êtes né cabane rondin première année établissement—vie pionnière rude : hivers -20°C, récoltes incertaines sol vierge, attaques animaux sauvages, maladies sans médecin. Mais communauté solidarité farouche : construction collective, partage récoltes disettes, défense mutuelle dangers. Expansion progressive : +50 habitants/an, nouvelles fermes défriche.',
+      defining_moment: 'À 12 ans, meute loups affamés attaqua colonie hiver brutal. Vous avez rallié enfants défense palissade pendant adultes combattaient—ingéniosité torches enflammées effraya loups. Fondateurs vous nommèrent "Gardien Nouvelle Espérance".',
+      worldview_shaped: 'Pionniers bâtissent avenir courage audace. Terres vierges opportunités infinies risques mortels. Communauté solidaire survit, individualistes périssent. Civilisation avance défrichant sauvage progressivement. Première génération forge destin descendants.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { strength: 2, wisdom: 2 },
+      mechanical_traits: [
+        {
+          name: 'Pionnier Frontière Aguerri',
+          desc: '+5 Survival (forêts/frontières), +5 Athletics (défrichage, construction), maîtrise haches/scies (outils = armes 1d8), +10 HP (endurance pionnière)',
+          effect: '+5 Survival, +5 Athletics, +10 HP',
+          game_effect: 'Polyvalence frontière + vitalité accrue'
+        },
+        {
+          name: 'Bâtisseur Communauté Né',
+          desc: '+1d20 jets construction (bâtiments, palissades, ponts), +3 Persuasion (rallier colons causes communes), réduction 30% coûts constructions (ingéniosité)',
+          effect: '+1d20 Construction, +3 Persuasion',
+          game_effect: 'Bonus d100 génie civil + leadership civique'
+        },
+        {
+          name: 'Première Génération Fierté',
+          desc: '+3 inspiration alliés colons (moral +1 combat défense colonie), réseau contacts 5 colonies pionnières frontières',
+          effect: 'Inspire Settlers',
+          game_effect: 'Buff moral + réseau pionnier'
+        }
+      ],
+      reputation: [
+        { factionId: 'pionniers_colonies', delta: 12, reason: 'Gardien Nouvelle Espérance, héros défense' },
+        { factionId: 'fermiers_frontiere', delta: 8, reason: 'Solidarité travail terre dur partagé' },
+        { factionId: 'natifs_autochtones', delta: -5, reason: 'Expansion colonie empiète territoires ancestraux' },
+        { factionId: 'nobles_anciens', delta: 3, reason: 'Admiration courage pionnier, soutien expansion' }
+      ],
+      items: [
+        { itemId: 'axe_logging_quality', quantity: 1, reason: 'Hache abattage qualité (1d8+1, outil/arme double usage)' },
+        { itemId: 'bear_pelt_winter', quantity: 1, reason: 'Peau ours chasse personnelle (chaleur extrême, valeur 60 PO)' },
+        { itemId: 'cabin_deed', quantity: 1, reason: 'Titre propriété cabane familiale Nouvelle Espérance (patrimoine)' },
+        { itemId: 'militia_badge', quantity: 1, reason: 'Insigne milice colonie (badge Gardien, autorité locale)' }
+      ],
+      skills: [
+        { skillId: 'survival', bonus: 5, reason: 'Vie frontière sauvage depuis naissance, autonomie totale' },
+        { skillId: 'athletics', bonus: 5, reason: 'Travaux défrichage, construction, chasse quotidiens' },
+        { skillId: 'animal_handling', bonus: 3, reason: 'Élevage bétail, chevaux, défense contre prédateurs' },
+        { skillId: 'persuasion', bonus: 3, reason: 'Rallier colons projets communs, leadership jeune' }
+      ],
+      gold: 250,
+      languages: ['Commun', 'Dialecte Pionniers Frontière', 'Signes Natifs (rudimentaire)'],
+      tags: ['frontier', 'pioneer', 'settler', 'builder', 'hardy', 'community']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'pionniers': 'Fraternité profonde épreuves partagées (+15 disposition)',
+        'fermiers': 'Respect travail terre, solidarité agricole (+10 disposition)',
+        'natifs': 'Méfiance expansion, respect courage individuel (-4 disposition, +3 honneur)',
+        'citadins_confortables': 'Admiration courage, incompréhension choix vie (+4 disposition)',
+        'nobles': 'Soutien expansion civilisation, offres financement (+6 disposition)'
+      },
+      first_impression: '« Nouvelle Espérance pionnière ! Première génération colonie... Gardien 12 ans défense loups ?! Courage exceptionnel jeunesse. »',
+      long_term_perception: 'Bâtisseur pionnier courageux. Certains admirent audace fondatrice, d\'autres compatissent dureté vie. Perçu travailleur, solidaire, optimiste, leader naturel.'
+    },
+    tags: ['frontier', 'pioneer', 'settler', 'builder'],
+    incompatible_with: []
+  },
+
+  // ===== CITÉS SECONDAIRES (2) =====
+  {
+    id: 'birth_loc_bourg_fortifie',
+    stage: 'birth',
+    category: 'location',
+    label: 'Bourg Fortifié Médiéval',
+    desc: 'Né ville fortifiée 5000 habitants, centre régional commerce artisanat protégé murailles imposantes.',
+    detailed_lore: {
+      backstory: 'Rochefort : bourg médiéval construit colline rocheuse, murailles pierre 8m hauteur 2m épaisseur ceinturent ville. Quatre tours guet 20m surveillent campagnes alentours. Population 5000 habitants : artisans guildes (forgerons, tanneurs, tisserands), marchands boutiques, milice 200 soldats, noble local château citadelle. Marché hebdomadaire attire fermiers 50 villages alentours. Vous avez grandi rue pavées étroites, observant patrouilles gardes, festivals saisonniers, crieur public annonçant décrets seigneuriaux. Vie urbaine structurée : couvre-feu nocturne, taxes marchandes, justice sévère place publique (pilori, pendaisons). Mais sécurité murailles, commerce prospère, guildes formation apprentis.',
+      defining_moment: 'À 14 ans, bandits assiégèrent ville 5 jours. Vous avez aidé défense portant munitions remparts, soignant blessés. Siège levé, seigneur récompensa vous exemption taxe commerciale 10 ans (privilège rare).',
+      worldview_shaped: 'Murailles protègent civilisation chaos extérieur. Lois strictes maintiennent ordre paix. Guildes transmettent savoir-faire générations. Commerce enrichit communautés, autarcie appauvrit. Noblesse dirigeante légitime si protège peuple efficacement.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { constitution: 2, intelligence: 2 },
+      mechanical_traits: [
+        {
+          name: 'Bourgeois Fortifié Expérimenté',
+          desc: '+5 Persuasion (négociations guildes), +3 Knowledge (lois/commerce), familiarité milice urbaine (+2 Tactics défense murailles), réseau guildes artisanales 8 métiers',
+          effect: '+5 Persuasion, +3 Knowledge',
+          game_effect: 'Expertise commerce urbain + connaissance défense'
+        },
+        {
+          name: 'Privilège Seigneurial Accordé',
+          desc: 'Exemption taxe commerciale Rochefort 10 ans (économies 15% achats locaux), accès archives château (recherches historiques), audience seigneur 1/an garantie',
+          effect: 'Tax Exemption, Archive Access',
+          game_effect: 'Avantages économiques + accès politique'
+        },
+        {
+          name: 'Défenseur Siège Vétéran',
+          desc: '+1d20 jets défense fortifications (sièges, embuscades urbaines), +3 Intimidation (présence martiale civique), connaissance ingénierie militaire basique',
+          effect: '+1d20 Siege Defense',
+          game_effect: 'Bonus d100 défense urbaine + autorité'
+        }
+      ],
+      reputation: [
+        { factionId: 'guildes_artisanales', delta: 8, reason: 'Membre familles guilde, réseau établi' },
+        { factionId: 'noblesse_locale', delta: 6, reason: 'Reconnaissance seigneur, privilège accordé' },
+        { factionId: 'milice_urbaine', delta: 5, reason: 'Respect défense siège, camaraderie' },
+        { factionId: 'paysans_ruraux', delta: 3, reason: 'Relations commerciales marché hebdomadaire' }
+      ],
+      items: [
+        { itemId: 'guild_seal_rochefort', quantity: 1, reason: 'Sceau guilde artisan (crédit commercial, accès ateliers)' },
+        { itemId: 'tax_exemption_charter', quantity: 1, reason: 'Charte exemption taxe signée seigneur (document légal)' },
+        { itemId: 'city_map_detailed', quantity: 1, reason: 'Plan détaillé Rochefort (passages secrets, caches)' },
+        { itemId: 'quality_tools_trade', quantity: 1, reason: 'Outils métier qualité (forgeron ou tanneur ou tisserand)' }
+      ],
+      skills: [
+        { skillId: 'persuasion', bonus: 5, reason: 'Négociations guildes, marchandages marché quotidiens' },
+        { skillId: 'knowledge_commerce', bonus: 5, reason: 'Éducation commerciale, observation économie régionale' },
+        { skillId: 'crafting', bonus: 3, reason: 'Apprentissage guilde métier familial' },
+        { skillId: 'perception', bonus: 3, reason: 'Vigilance urbaine, détection pickpockets, dangers rues' }
+      ],
+      gold: 400,
+      languages: ['Commun', 'Jargon Guildes Artisanales', 'Latin Légal (contrats)'],
+      tags: ['urban', 'fortified', 'trade', 'guild', 'secure', 'prosperous']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'artisans': 'Confiance professionnelle, collaboration facilitée (+10 disposition)',
+        'milice': 'Respect vétéran siège, camaraderie (+8 disposition)',
+        'nobles': 'Reconnaissance privilège, considération (+6 disposition)',
+        'paysans': 'Relations commerciales positives (+5 disposition)',
+        'bandits': 'Méfiance défenseur compétent, évitement (-4 disposition)'
+      },
+      first_impression: '« Rochefort fortifiée ! Défense siège 14 ans... Privilège seigneurial rare. Bourgeois respecté compétent. »',
+      long_term_perception: 'Bourgeois artisan prospère. Certains admirent réussite commerciale, d\'autres jalousent privilèges. Perçu travailleur, loyal cité, défenseur efficace.'
+    },
+    tags: ['urban', 'fortified', 'trade', 'guild'],
+    incompatible_with: []
+  },
+
+  {
+    id: 'birth_loc_ville_miniere',
+    stage: 'birth',
+    category: 'location',
+    label: 'Ville Minière des Montagnes',
+    desc: 'Né cité minière 3000 habitants exploitant filon or/argent, richesse rapide vie dangereuse.',
+    detailed_lore: {
+      backstory: 'Val-d\'Argent : ville minière boomtown fondée il y a 25 ans découverte filon argent pur massif. Population 3000 habitants fluctuante : mineurs travaillant galeries 12h/jour salaires élevés, prospecteurs cherchant fortune claims, marchands équipements, prostituées tavernes, joueurs saloons. Ville bruyante sale : dynamite explosant quotidien, chariots minerai bruyants, poussière argentée omniprésente. Dangers permanents : éboulements galeries, grisou explosif, accidents mortels fréquents (10 morts/mois), criminalité violente (vols, meurtres argent). Mais richesse rapide possible : mineur chanceux trouve pépite valant 5000 PO vie changée. Vous avez grandi taverne parentale observant fortunes faites/perdues quotidien, écoutant récits mineurs cicatrisés.',
+      defining_moment: 'À 13 ans, éboulement piégea père oncle galerie 48h. Vous avez organisé sauvetage bénévole 20 mineurs—creusé 30h consécutives, extraits vivants miraculeux. Ville vous surnomma "Ange Galeries".',
+      worldview_shaped: 'Richesse rapide corrompt autant libère. Argent physique vaut sueur sang versés extraction. Solidarité mineurs fraternité forgée dangers partagés. Vie précieuse éphémère—profiter aujourd\'hui car demain incertain. Tavernes lieux vérité alcool déliant langues.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { strength: 2, constitution: 2 },
+      mechanical_traits: [
+        {
+          name: 'Enfant Mines Argent',
+          desc: '+5 Athletics (minage, tunnels), +3 Survival (souterrain), vision pénombre 15m (yeux adaptés ténèbres galeries), résistance poussières toxiques',
+          effect: '+5 Athletics, +3 Survival, Lowlight Vision',
+          game_effect: 'Endurance minière + adaptation souterraine'
+        },
+        {
+          name: 'Sauveteur Galeries Héros',
+          desc: '+1d20 jets sauvetage (effondrements, noyades, incendies), +5 Medicine (premiers soins urgence), avantage rallier mineurs causes urgentes',
+          effect: '+1d20 Rescue, +5 Medicine',
+          game_effect: 'Bonus d100 sauvetages + soins traumatiques'
+        },
+        {
+          name: 'Fortune Minière Héritée',
+          desc: 'Commence 800 PO économies familiales (taverne prospère + pépites trouvées), réseau contacts mineurs 50+ galeries, accès claims miniers familiaux',
+          effect: '800 Gold, Mining Network',
+          game_effect: 'Richesse départ + opportunités exploitation'
+        }
+      ],
+      reputation: [
+        { factionId: 'mineurs', delta: 15, reason: 'Ange Galeries vénéré, sauveteur héroïque' },
+        { factionId: 'prospecteurs', delta: 6, reason: 'Respect connaissance terrains miniers' },
+        { factionId: 'tavernes', delta: 8, reason: 'Famille tenanciers respectés, hospitalité connue' },
+        { factionId: 'criminels', delta: -4, reason: 'Morale élevée gêne activités illicites' }
+      ],
+      items: [
+        { itemId: 'mining_pick_reinforced', quantity: 1, reason: 'Pioche renforcée paternelle (1d6+2, outil/arme, incassable)' },
+        { itemId: 'silver_nuggets', quantity: 5, reason: 'Pépites argent pur (80 PO chacune, 400 PO total)' },
+        { itemId: 'miners_lamp_quality', quantity: 1, reason: 'Lampe mineur huile qualité (lumière 30m, 12h autonomie)' },
+        { itemId: 'claim_deed_family', quantity: 1, reason: 'Titre claim minier familial (galerie productive, revenu passif 50 PO/mois)' }
+      ],
+      skills: [
+        { skillId: 'athletics', bonus: 5, reason: 'Travaux minage, creusage tunnels, endurance physique' },
+        { skillId: 'survival', bonus: 3, reason: 'Orientation galeries, détection gaz, éviter effondrements' },
+        { skillId: 'medicine', bonus: 5, reason: 'Premiers soins accidents miniers quotidiens urgence' },
+        { skillId: 'persuasion', bonus: 3, reason: 'Négociations taverne, rallier mineurs causes' }
+      ],
+      gold: 800,
+      languages: ['Commun', 'Cant Mineurs (jargon technique)', 'Signes Main Silencieux (galeries)'],
+      tags: ['mining', 'mountain', 'prosperous', 'dangerous', 'hardworking', 'heroic']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'mineurs': 'Vénération héros sauveteur, loyauté absolue (+20 disposition)',
+        'prospecteurs': 'Respect expertise, demandes partenariat (+8 disposition)',
+        'tavernes': 'Accueil chaleureux famille, crédit illimité (+10 disposition)',
+        'criminels': 'Irritation morale élevée, évitement prudent (-6 disposition)',
+        'marchands': 'Intérêt richesse familiale, propositions affaires (+7 disposition)'
+      },
+      first_impression: '« Val-d\'Argent ! Ange Galeries légendaire... Sauvetage 48h héroïque. Respect profond courage. »',
+      long_term_perception: 'Héros mineur prospère. Certains admirent bravoure altruiste, d\'autres jalousent richesse. Perçu courageux, généreux, fort, leader naturel ouvriers.'
+    },
+    tags: ['mining', 'mountain', 'prosperous', 'dangerous'],
+    incompatible_with: []
+  },
+
+  // ===== FRONTIÈRE MONTAGNE (1) =====
+  {
+    id: 'birth_loc_passage_montagne',
+    stage: 'birth',
+    category: 'location',
+    label: 'Passage Montagneux Stratégique',
+    desc: 'Né forteresse col montagne contrôlant seule route commerciale traversant chaîne titanesque.',
+    detailed_lore: {
+      backstory: 'Fort Aiguillon : forteresse militaire 800 habitants perchée col 2800m altitude, unique passage traversant Montagnes Crocs Dragon. Hiver 8 mois/an, températures -30°C, avalanches quotidiennes, air raréfié. Mais contrôle route commerciale reliant deux royaumes ennemis—droits passage génèrent 50.000 PO/an taxes. Population : 300 soldats garnison permanente, 200 civils (aubergistes, forgerons, guide montagne), 300 caravaniers temporaires. Vous êtes né caserne militaire haute altitude—enfance spartiates : entraînement milice 8 ans, corvées neige quotidiennes, rations militaires strictes, exercices survie blizzard. Mais discipline forge caractère acier. Dangers : brigands attaquant caravanes, avalanches ensevelissant passages, engelures mortelles, altitude provoquant mal aigu montagnes.',
+      defining_moment: 'À 13 ans, avalanche massive coupa passage 12 jours—caravanes bloquées, vivres épuisés, émeute imminente. Vous avez guidé expédition 20 volontaires creusant tunnel neige compacte 3 jours consécutifs—passage rouvert juste avant famine. Commandant fort vous promut caporal honoraire 13 ans (record historique).',
+      worldview_shaped: 'Positions stratégiques valent armées entières. Montagnes respectent force volonté, punissent faiblesse. Discipline militaire survie civilisation face chaos nature. Commerce enrichit nations mais génère conflits territoriaux. Altitude enseigne humilité face immensité cosmique.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { constitution: 2, strength: 2 },
+      mechanical_traits: [
+        {
+          name: 'Enfant Haute Altitude Aguerri',
+          desc: '+5 Survival (montagnes), +5 Athletics (escalade, alpinisme), immunité mal altitude (acclimatation permanente), résistance froid extrême (besoin chaleur -50%)',
+          effect: '+5 Survival, +5 Athletics',
+          game_effect: 'Maîtrise montagne totale + endurance climatique'
+        },
+        {
+          name: 'Formation Milice Précoce',
+          desc: '+1d20 Tactics (défense positions fortifiées), +3 Intimidation (présence militaire), maîtrise arbalètes/piques (armes garnison standard), +10 HP (endurance spartiate)',
+          effect: '+1d20 Tactics, +3 Intimidation, +10 HP',
+          game_effect: 'Bonus d100 stratégie défensive + vitalité militaire'
+        },
+        {
+          name: 'Guide Passage Certifié',
+          desc: '+3 Navigation (cols montagneux), détection avalanches 80% précision (lecture neige), connaissance 12 routes alternatives secrètes, réseau guides montagne 30+ professionnels',
+          effect: '+3 Navigation, Avalanche Sense',
+          game_effect: 'Guidage expert + instinct dangers montagne'
+        }
+      ],
+      reputation: [
+        { factionId: 'garnison_militaire', delta: 12, reason: 'Caporal honoraire 13 ans, héros avalanche' },
+        { factionId: 'caravanes_commerciales', delta: 10, reason: 'Sauveteur passage, guide fiable' },
+        { factionId: 'guides_montagne', delta: 8, reason: 'Respect compétence alpinisme précoce' },
+        { factionId: 'brigands_cols', delta: -8, reason: 'Défenseur caravanes, ennemi raids' }
+      ],
+      items: [
+        { itemId: 'crossbow_heavy_military', quantity: 1, reason: 'Arbalète lourde garnison (2d6, portée 100m, perce armure)' },
+        { itemId: 'ice_climbing_gear', quantity: 1, reason: 'Équipement escalade glace complet (crampons, piolets, cordes)' },
+        { itemId: 'avalanche_beacon', quantity: 1, reason: 'Balise avalanche magique (localisation sous neige 50m)' },
+        { itemId: 'military_rank_insignia', quantity: 1, reason: 'Insigne caporal honoraire (autorité garnisons, respect soldats)' }
+      ],
+      skills: [
+        { skillId: 'survival', bonus: 5, reason: 'Vie haute altitude hostile depuis naissance, autonomie montagne' },
+        { skillId: 'athletics', bonus: 5, reason: 'Escalade quotidienne, alpinisme, corvées militaires' },
+        { skillId: 'tactics', bonus: 5, reason: 'Formation défense fortifications, observation stratégie garnison' },
+        { skillId: 'intimidation', bonus: 3, reason: 'Discipline militaire, présence martiale, rang caporal' }
+      ],
+      gold: 350,
+      languages: ['Commun', 'Cant Militaire Garnison', 'Dialecte Guides Montagne', 'Signes Main Avalanche (urgence)'],
+      tags: ['mountain', 'military', 'strategic', 'fortress', 'hardy', 'tactical']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'militaires': 'Respect rang honoraire, camaraderie fraternelle (+15 disposition)',
+        'caravanes': 'Gratitude sauvetage, confiance guidage (+12 disposition)',
+        'guides': 'Reconnaissance compétence, collaboration offerte (+10 disposition)',
+        'brigands': 'Méfiance défenseur redoutable, évitement prudent (-10 disposition)',
+        'citadins_plaine': 'Admiration endurance extrême, incompréhension choix (+4 disposition)'
+      },
+      first_impression: '« Fort Aiguillon 2800m altitude ?! Caporal honoraire 13 ans... Tunnel avalanche héroïque. Discipline montagnarde impressionnante. »',
+      long_term_perception: 'Gardien passage stratégique. Certains admirent courage militaire, d\'autres compatissent vie spartiate. Perçu discipliné, endurant, protecteur, leader tactique.'
+    },
+    tags: ['mountain', 'military', 'strategic', 'fortress'],
+    incompatible_with: []
+  },
+
+  // ===== LIEUX INTERDITS (3) =====
+  {
+    id: 'birth_loc_prison_ile',
+    stage: 'birth',
+    category: 'location',
+    label: 'Prison-Île Maximum Sécurité',
+    desc: 'Né île pénitentiaire isolée océan où royaume exile criminels dangereux, gardiens naissent prison.',
+    detailed_lore: {
+      backstory: 'Île Fers : prison maximum sécurité 2000 détenus située île rocheuse 50km côtes, courants marins mortels empêchent évasion. 500 gardiens familles vivent forteresse centrale—vous fils/fille gardien-chef, né cellule réaménagée appartement. Enfance paradoxale : jouer cours exercice prisonniers, apprendre lecture bibliothèque pénitentiaire, observer interrogatoires, assister exécutions publiques place centrale (pédagogie justice). Détenus : meurtriers, traîtres, mages renégats, cultistes démoniaques. Sécurité draconienne : patrouilles 24h, magie anti-évasion, rations minimales, travaux forcés carrières. Mais exposition quotidienne criminalité enseigne nature humaine sombre. Dangers : émeutes prisonniers, tentatives assassinat gardiens, contrebande armes/drogues, corruption intérieure.',
+      defining_moment: 'À 14 ans, émeute sanglante 300 détenus tua 40 gardiens—vous avez rallié survivants défense ultime arsenal, résisté 8h jusqu\'arrivée renforts navals. Répression brutale exécuta 80 meneurs. Vous compris : ordre maintenu prix sang constant.',
+      worldview_shaped: 'Justice nécessite violence légitime contrôler chaos. Criminalité nature humaine inévitable, pas anomalie sociale. Pitié excessive dangereuse—clémence invite trahison. Ordre civilisé fragile murailles invisibles discipline. Pardon luxe impossibles sociétés imparfaites.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { wisdom: 2, constitution: 2 },
+      mechanical_traits: [
+        {
+          name: 'Psychologie Criminelle Experte',
+          desc: '+5 Insight (détection mensonges), +5 Investigation (interrogatoires), +1d20 résister intimidation/manipulation, immunité charme/coercition mentale (exposition quotidienne manipulation)',
+          effect: '+5 Insight, +5 Investigation, +1d20 Mental Resist',
+          game_effect: 'Lecture humaine légendaire + défense psychologique'
+        },
+        {
+          name: 'Défenseur Ordre Aguerri',
+          desc: '+3 Intimidation (présence autoritaire pénitentiaire), +3 Athletics (maîtrise prisonniers), connaissance protocoles sécurité maximum, réseau gardiens 12 prisons royaume',
+          effect: '+3 Intimidation, +3 Athletics',
+          game_effect: 'Autorité carcérale + force physique contrôle'
+        },
+        {
+          name: 'Survivant Émeute Héroïque',
+          desc: '+10 HP (endurance combats brutaux), avantage jets sauvegarder contexte foules hostiles, +2 initiative (réflexes survie aiguisés)',
+          effect: '+10 HP, +2 Initiative',
+          game_effect: 'Vitalité renforcée + réactivité combat'
+        }
+      ],
+      reputation: [
+        { factionId: 'gardiens_prisons', delta: 15, reason: 'Héros émeute Île Fers, fils gardien-chef' },
+        { factionId: 'forces_ordre', delta: 10, reason: 'Respect maintien ordre, compétence sécuritaire' },
+        { factionId: 'criminels_liberes', delta: -12, reason: 'Haine gardiens, souvenir brutalité répression' },
+        { factionId: 'reformistes_sociaux', delta: -6, reason: 'Opposition philosophie justice punitive dure' }
+      ],
+      items: [
+        { itemId: 'baton_reinforced_steel', quantity: 1, reason: 'Bâton acier renforcé gardien (1d8, non-létal option, incassable)' },
+        { itemId: 'shackles_magic_binding', quantity: 2, reason: 'Menottes liaison magique (bloquent sorts niveau 1-3, 120 PO chacune)' },
+        { itemId: 'warden_badge_authority', quantity: 1, reason: 'Insigne gardien-fils chef (autorité carcérale, accès prisons royaume)' },
+        { itemId: 'interrogation_manual', quantity: 1, reason: 'Manuel interrogatoire pénitentiaire (techniques psychologiques avancées)' }
+      ],
+      skills: [
+        { skillId: 'insight', bonus: 5, reason: 'Observation détenus quotidienne, détection mensonges, manipulation' },
+        { skillId: 'investigation', bonus: 5, reason: 'Interrogatoires assistés, fouilles cellules, enquêtes internes' },
+        { skillId: 'intimidation', bonus: 3, reason: 'Maintien ordre autoritaire, présence pénitentiaire' },
+        { skillId: 'athletics', bonus: 3, reason: 'Maîtrise physique prisonniers, patrouilles, défense' }
+      ],
+      gold: 400,
+      languages: ['Commun', 'Cant Criminels (compréhension)', 'Codes Gardiens Prisons', 'Signes Main Silencieux (surveillance)'],
+      tags: ['prison', 'law', 'dark', 'brutal', 'authoritarian', 'isolated']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'gardiens': 'Fraternité profonde, loyauté inconditionnelle (+18 disposition)',
+        'forces_ordre': 'Respect compétence, collaboration facilitée (+12 disposition)',
+        'ex_criminels': 'Haine viscérale, hostilité automatique (-15 disposition)',
+        'reformistes': 'Désapprobation morale méthodes dures (-8 disposition)',
+        'villageois': 'Malaise passé prison, crainte brutalité (+1 disposition, distance)'
+      },
+      first_impression: '« Île Fers maximum sécurité... Émeute 300 détenus survécue ?! Regardez ces yeux—ont vu noirceurs profondes. Respectez distance. »',
+      long_term_perception: 'Gardien-né ordre brutal. Certains admirent dévouement justice, majorité terrifie dureté morale. Perçu compétent, impitoyable, traumatisé, socialement isolé.'
+    },
+    tags: ['prison', 'law', 'dark', 'brutal'],
+    incompatible_with: []
+  },
+
+  {
+    id: 'birth_loc_catacombes',
+    stage: 'birth',
+    category: 'location',
+    label: 'Catacombes Oubliées Millénaires',
+    desc: 'Né réseau souterrain 200km tunnels ossements où communauté isolée vit ténèbres permanentes générations.',
+    detailed_lore: {
+      backstory: 'Catacombes Éternelles : labyrinthe souterrain 8 niveaux profondeur 150m abritant ossements 2 millions défunts 600 ans accumulation. Niveau inférieur habité 300 habitants : descendants gardiens catacombes anciens, réfugiés persécutions oubliés, mages ténèbres cherchant isolation. Aucune lumière naturelle jamais—torchères champignons phosphorescents, cristaux luisants faibles. Vous avez grandi alcôve creusée mur ossements—jamais vu soleil avant 16 ans, peau albinos pâle, yeux surdéveloppés vision ténèbres. Nourriture : champignons cultivés, rats souterrains chassés, eau suintement roche filtrée. Dangers : effondrements tunnels, morts-vivants niveaux profonds, folie isolation prolongée, cannibalisme désespoir famines. Mais catacombes recèlent trésors enterrés morts riches.',
+      defining_moment: 'À 12 ans, perdu niveau 6 inconnu 3 jours ténèbres absolues (torche consumée). Vous avez développé écholocalisation spontanée (cris/échos navigation) survécu mangeant champignons toxiques (résistance acquise). Retrouver communauté provoqua révérence—Ancien nomma vous \"Enfant Ténèbres Béni\".',
+      worldview_shaped: 'Lumière luxe superflu—ténèbres environnement naturel adapté. Surface monde étranger terrifiant (espace infini angoissant). Morts compagnons silencieux respectables, pas menaces. Isolation protège persécutions cruelles surface. Champignons nourriture sacrée sustentation souterraine.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { dexterity: 2, intelligence: 2 },
+      mechanical_traits: [
+        {
+          name: 'Enfant Ténèbres Absolues',
+          desc: 'Vision ténèbres parfaite 40m (écholocalisation + yeux adaptés), +5 Stealth (ténèbres), +1d20 Navigation (souterrain total), désavantage lumière vive (sensibilité solaire douloureuse)',
+          effect: 'Darkvision 40m, +5 Stealth, +1d20 Underground Nav',
+          game_effect: 'Maîtrise ténèbres totale mais faiblesse lumière'
+        },
+        {
+          name: 'Survivant Souterrain Extrême',
+          desc: '+5 Survival (souterrain), immunité maladies fongiques (exposition générationnelle), +3 Athletics (escalade tunnels verticaux), résistance toxines champignons 75%',
+          effect: '+5 Survival, +3 Athletics, Fungal Immunity',
+          game_effect: 'Endurance souterraine + santé adaptée'
+        },
+        {
+          name: 'Connaissance Ossuaires Anciens',
+          desc: '+3 Religion (rites funéraires obscurs), +3 History (secrets enterrés), détection passages secrets catacombes (+5 Investigation contexte souterrain), réseau contacts 5 niveaux catacombes',
+          effect: '+3 Religion, +3 History',
+          game_effect: 'Sagesse mortuaire + archéologie souterraine'
+        }
+      ],
+      reputation: [
+        { factionId: 'habitants_catacombes', delta: 12, reason: 'Enfant Ténèbres Béni, survie légendaire' },
+        { factionId: 'mages_tenebres', delta: 8, reason: 'Affinité obscurité naturelle, respect adaptation' },
+        { factionId: 'surface_dwellers', delta: -6, reason: 'Malaise apparence albinos, peur souterrain' },
+        { factionId: 'archeologues', delta: 10, reason: 'Connaissance catacombes inestimable, guidage sites' }
+      ],
+      items: [
+        { itemId: 'fungal_torch_perpetual', quantity: 2, reason: 'Torche champignon perpétuelle (lumière faible 10m, pousse indéfiniment)' },
+        { itemId: 'bone_dagger_ancient', quantity: 1, reason: 'Dague os humain ancienne (1d4+1, légère, canal nécromancie +1)' },
+        { itemId: 'echolocation_whistle', quantity: 1, reason: 'Sifflet écholocalisation (navigation ténèbres 30m précision)' },
+        { itemId: 'catacomb_map_partial', quantity: 1, reason: 'Carte partielle 5 niveaux supérieurs (passages secrets marqués)' }
+      ],
+      skills: [
+        { skillId: 'stealth', bonus: 5, reason: 'Déplacement silencieux ténèbres absolues quotidien' },
+        { skillId: 'survival', bonus: 5, reason: 'Vie souterraine hostile, chasse rats, cueillette champignons' },
+        { skillId: 'athletics', bonus: 3, reason: 'Escalade tunnels verticaux, passages étroits' },
+        { skillId: 'religion', bonus: 3, reason: 'Rites funéraires catacombes, respect ossements anciens' }
+      ],
+      gold: 200,
+      languages: ['Commun', 'Dialecte Catacombes (chuchotements)', 'Écholocalisation (clics/échos)', 'Latin Funéraire (inscriptions anciennes)'],
+      tags: ['underground', 'dark', 'isolated', 'cursed', 'albino', 'eerie']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'habitants_souterrains': 'Fraternité profonde ténèbres partagées (+15 disposition)',
+        'archeologues': 'Enthousiasme guidage, questions incessantes (+12 disposition)',
+        'villageois_surface': 'Peur albinisme, superstition malédiction (-8 disposition)',
+        'mages_tenebres': 'Fascination adaptation, propositions mentorat (+10 disposition)',
+        'prêtres_lumière': 'Pitié compassion, offres rédemption (+4 disposition)'
+      },
+      first_impression: '« Catacombes Éternelles ?! Peau albinos, yeux immenses... Jamais vu soleil 16 ans ?! Écholocalisation humaine possible ? Fascinant terrifiant. »',
+      long_term_perception: 'Enfant ténèbres énigmatique. Certains admirent adaptation extrême, majoritaire terrifie apparence spectrale. Perçu étrange, silencieux, sage souterrain, socialement inadapté surface.'
+    },
+    tags: ['underground', 'dark', 'isolated', 'cursed'],
+    incompatible_with: []
+  },
+
+  {
+    id: 'birth_loc_temple_profane',
+    stage: 'birth',
+    category: 'location',
+    label: 'Temple Profané Déchu',
+    desc: 'Né sanctuaire sacré corrompu culte démoniaque générations passées, ruines maudites abritant hérétiques.',
+    detailed_lore: {
+      backstory: 'Temple Sept Vertus Profanées : cathédrale grandiose 300 ans âge, jadis dédiée panthéon divin, corrompue rituel démoniaque catastrophique il y a 80 ans. Prêtres-traîtres invoquèrent seigneur démon—bataille céleste/infernale ravagea temple, anges déchus statues brisées, autels souillés sang innocent, vitraux saints fracassés. Ruine abandonnée officiellement mais 120 habitants marginaux : cultistes démoniaques continuant rites interdits, hérétiques théologiques réfugiés, mages nécromanciens exploitant énergies ténèbres résiduelles. Vous avez grandi crypte sous-temple converti dortoir—enfance blasphématoire : assister sacrifices rituels animaux (parfois humains), apprendre théologie inversée (vice = vertu), observer invocations mineures démons familiers. Architecture corrompue : gargouilles animées hostiles, portes scellées magie noire, présence oppressante mal palpable.',
+      defining_moment: 'À 13 ans, paladin Ordre Lumière attaqua temple exorcisme—10 paladins massacrèrent cultistes. Vous avez caché 15 enfants crypte secrète, négocié reddition évitant massacre total. Paladin-commandant épargna innocents mais marqua vous symbole pénitence front (stigmate visible permanent).',
+      worldview_shaped: 'Bien/mal constructions subjectives dominants. Dieux abandonnent fidèles—démons offrent pouvoir réel tangible. Église hypocrite persécute différence théologique violemment. Innocence enfantine corrompue environnement—responsabilité adultes éduquant. Rédemption possible mais stigmate social permanent.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { charisma: 2, intelligence: 2 },
+      mechanical_traits: [
+        {
+          name: 'Théologien Hérétique Éduqué',
+          desc: '+5 Religion (théologie orthodoxe/hérétique), +5 Arcana (magie démoniaque), +1d20 résister détection/bannissement divin (aura corrompue masquée), connaissance 3 invocations démons mineurs',
+          effect: '+5 Religion, +5 Arcana, +1d20 Divine Resist',
+          game_effect: 'Érudition blasphématoire + défense céleste'
+        },
+        {
+          name: 'Survivant Massacre Exorcisme',
+          desc: '+3 Persuasion (négociation désespérée), +3 Deception (cacher nature hérétique), stigmate pénitence visible (CHA -1 interactions cléricales, +2 Intimidation contexte démoniaque)',
+          effect: '+3 Persuasion, +3 Deception',
+          game_effect: 'Diplomatie salvatrice + dissimulation identité'
+        },
+        {
+          name: 'Résilience Ténèbres Corrompues',
+          desc: 'Résistance nécromancie/démonologie 25% (exposition générationnelle), immunité possession démons mineurs (âme marquée démoniaque), détection présences infernales 20m',
+          effect: 'Dark Resist 25%, Possession Immunity',
+          game_effect: 'Défense ténèbres + sens infernal'
+        }
+      ],
+      reputation: [
+        { factionId: 'cultistes_demoniaques', delta: 8, reason: 'Enfant temple, éducation hérétique, survie massacre' },
+        { factionId: 'eglise_orthodoxe', delta: -15, reason: 'Stigmate pénitence, origine blasphématoire, hérésie' },
+        { factionId: 'mages_noirs', delta: 10, reason: 'Connaissance démoniaque rare, affinité ténèbres' },
+        { factionId: 'paladins_redemption', delta: 4, reason: 'Reconnaissance innocence enfantine, potentiel rédempteur' }
+      ],
+      items: [
+        { itemId: 'unholy_symbol_defaced', quantity: 1, reason: 'Symbole impie défiguré (focus démoniaque, +2 invocations)' },
+        { itemId: 'demon_summoning_tome', quantity: 1, reason: 'Tome invocations démons mineurs (3 rituels niveau 1-2, interdit)' },
+        { itemId: 'penance_scar_visible', quantity: 1, reason: 'Stigmate pénitence front (marque permanente, CHA -1 prêtres)' },
+        { itemId: 'sanctuary_key_corrupted', quantity: 1, reason: 'Clé sanctuaire corrompu (accès cryptes secrètes temple)' }
+      ],
+      skills: [
+        { skillId: 'religion', bonus: 5, reason: 'Éducation théologique hérétique/orthodoxe comparative intensive' },
+        { skillId: 'arcana', bonus: 5, reason: 'Observation rituels démoniaques, magie noire quotidienne' },
+        { skillId: 'persuasion', bonus: 3, reason: 'Négociation survie massacre, diplomatie désespérée' },
+        { skillId: 'deception', bonus: 3, reason: 'Cacher origines hérétiques, éviter persécution cléricale' }
+      ],
+      gold: 250,
+      languages: ['Commun', 'Infernal (démonique)', 'Latin Ecclésiastique (prières corrompues)', 'Cant Cultistes (rituel)'],
+      tags: ['cursed', 'heretical', 'demonic', 'dark', 'stigmatized', 'blasphemous']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'cultistes': 'Solidarité marginalisés, fraternité hérétique (+10 disposition)',
+        'clergé_orthodoxe': 'Hostilité automatique stigmate, évangélisation forcée (-18 disposition)',
+        'mages_noirs': 'Fascination connaissance démoniaque, propositions enseignement (+12 disposition)',
+        'paladins': 'Suspicion méfiante, surveillance constante (-8 disposition, +6 si repenti)',
+        'villageois': 'Peur stigmate visible, superstition malédiction (-10 disposition)'
+      },
+      first_impression: '« Temple Profané ?! Stigmate pénitence front... Vous connaissez vraiment invocations démoniaques ?! Dangereux mais survivant massacre innocent. »',
+      long_term_perception: 'Hérétique stigmatisé pénitent. Certains compatissent innocence corrompue, majorité terrifie blasphème. Perçu érudit, dangereux, marqué, quête rédemption impossible.'
+    },
+    tags: ['cursed', 'heretical', 'demonic', 'dark'],
+    incompatible_with: []
+  },
+
+  // ===== MERVEILLES NATURELLES (3) =====
+  {
+    id: 'birth_loc_cascade_eternelle',
+    stage: 'birth',
+    category: 'location',
+    label: 'Cascade Éternelle Arc-en-Ciel',
+    desc: 'Né merveille naturelle cascade 500m hauteur générant arc-en-ciel permanent, site sacré pèlerinage.',
+    detailed_lore: {
+      backstory: 'Chutes Prisme Céleste : cascade titanesque 500m chute verticale, volume eau 10.000 litres/seconde, brume permanente créant arc-en-ciel visible 10km. Légende locale : larmes déesse Joie pleurant beauté monde mortel. Site sacré : 300 pèlerins permanents campant amphithéâtre naturel base, druides vénérant esprits eau, artistes capturant beauté sublime, couples célébrant mariages symboliques. Vous êtes né grotte derrière cascade (passage secret rideau eau)—enfance féérique : baigner bassins arc-en-ciel, écouter tonnerres eau constants, observer double/triple arcs-en-ciel jours ensoleillés, méditer brume apaisante. Eau cascade possède propriétés curatives mineures (folklore confirmé guérisons miraculeuses). Dangers : glissades rochers mouillés mortelles, inondations saisonnières, hypothermie brume froide.',
+      defining_moment: 'À 9 ans, enfant pèlerin tomba cascade—vous avez plongé torrent déchaîné, nagé contre-courant titanique, saisi enfant 50m chute. Druides déclarèrent vous \"Béni Déesse Joie\"—immunité noyade, respiration aquatique 10min.',
+      worldview_shaped: 'Beauté naturelle manifestation divine tangible. Eau source vie sacrée méritant vénération. Joie émotion spirituelle légitime, pas frivolité. Nature généreuse offre miracles quotidiens observateurs attentifs. Sacrifice altruiste récompensé bénédictions divines.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { wisdom: 2, charisma: 2 },
+      mechanical_traits: [
+        {
+          name: 'Béni Déesse Joie',
+          desc: 'Respiration aquatique 10min, +5 Swimming (torrents), immunité noyade (flottabilité divine), +1d20 jets sauvegarder joie/désespoir (équilibre émotionnel béni)',
+          effect: 'Water Breathing, +5 Swimming, +1d20 Emotion Saves',
+          game_effect: 'Affinité aquatique divine + sérénité mentale'
+        },
+        {
+          name: 'Enfant Arc-en-Ciel Sacré',
+          desc: '+5 Performance (chant harmonie cascade), +3 Medicine (eaux curatives), aura apaisante (+3 Persuasion contextes conflits), connaissance prières eau 12 traditions',
+          effect: '+5 Performance, +3 Medicine',
+          game_effect: 'Charisme harmonieux + guérison aquatique'
+        },
+        {
+          name: 'Sauveteur Héroïque Cascade',
+          desc: '+3 Athletics (natation torrents), +10 HP (endurance noyade survécue), avantage secourir personnes eaux dangereuses, réseau pèlerins 200+ fidèles reconnaissants',
+          effect: '+3 Athletics, +10 HP',
+          game_effect: 'Force sauvetage + vitalité aquatique'
+        }
+      ],
+      reputation: [
+        { factionId: 'pelerins_cascade', delta: 15, reason: 'Béni Déesse Joie, sauveteur miraculeux' },
+        { factionId: 'druides_eau', delta: 12, reason: 'Affinité esprits eau, bénédiction divine reconnue' },
+        { factionId: 'artistes', delta: 8, reason: 'Inspiration beauté vécue, muse cascade' },
+        { factionId: 'pretres_joie', delta: 10, reason: 'Incarnation vivante doctrine joie sacrée' }
+      ],
+      items: [
+        { itemId: 'rainbow_water_vial', quantity: 5, reason: 'Fioles eau arc-en-ciel (soigne 1d6 HP chacune, bénédiction +1 jets 1h)' },
+        { itemId: 'waterfall_crystal', quantity: 1, reason: 'Cristal cascade (focus prières eau, amplifie sorts aquatiques +2)' },
+        { itemId: 'pilgrims_blessing_token', quantity: 1, reason: 'Médaillon bénédiction pèlerins (symbole sacré reconnu universellement)' },
+        { itemId: 'silk_rope_waterproof', quantity: 20, reason: 'Corde soie imperméable (sauvetages aquatiques, 300kg charge)' }
+      ],
+      skills: [
+        { skillId: 'swimming', bonus: 5, reason: 'Natation torrents cascade quotidienne depuis enfance' },
+        { skillId: 'performance', bonus: 5, reason: 'Chant harmonie eau, cérémonies pèlerins' },
+        { skillId: 'medicine', bonus: 3, reason: 'Connaissance propriétés curatives eaux sacrées' },
+        { skillId: 'athletics', bonus: 3, reason: 'Escalade rochers mouillés, sauvetages aquatiques' }
+      ],
+      gold: 300,
+      languages: ['Commun', 'Aquan (esprits eau)', 'Chants Cascade (mélodies sacrées)', 'Prières Joie (12 traditions)'],
+      tags: ['natural', 'sacred', 'aquatic', 'blessed', 'beautiful', 'healing']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'pelerins': 'Vénération béni vivant, hospitalité infinie (+18 disposition)',
+        'druides': 'Respect profond affinité eau, collaboration spirituelle (+15 disposition)',
+        'artistes': 'Fascination beauté incarnée, demandes modèle (+10 disposition)',
+        'cyniques': 'Scepticisme miracles, irritation piété naïve (-4 disposition)',
+        'prêtres_joie': 'Accueil fraternel doctrine partagée, bénédictions offertes (+12 disposition)'
+      },
+      first_impression: '« Cascade Éternelle 500m ?! Béni Déesse Joie... Sauvetage torrent 9 ans miraculeux. Aura sérénité palpable. Respectez grandement. »',
+      long_term_perception: 'Enfant miracle cascade sacrée. Certains admirent sainteté naturelle, d\'autres jalousent bénédictions divines. Perçu serein, altruiste, guérisseur, inspirant.'
+    },
+    tags: ['natural', 'sacred', 'aquatic', 'blessed'],
+    incompatible_with: []
+  },
+
+  {
+    id: 'birth_loc_canyon_echos',
+    stage: 'birth',
+    category: 'location',
+    label: 'Canyon Échos Magiques',
+    desc: 'Né gorge profonde où sons résonnent éternellement, créant symphonie naturelle perpétuelle.',
+    detailed_lore: {
+      backstory: 'Canyon Voix Immortelles : faille géologique 10km longueur 300m profondeur, parois rocheuses cristallines amplifient/prolongent sons indéfiniment. Acoustique surnaturelle : murmure devient tonnerre 30 secondes plus tard, chanson simple résonne harmoniques complexes 5min. Légende : canyon créé cri agonie titan enchaîné sous-terre. Population 200 habitants : bardes étudiant acoustique parfaite, moines silence vœu mutisme permanent, acousticiens cartographiant phénomènes sonores. Vous avez grandi cabane paroi canyon accessible échelles—enfance sonore unique : chaque mot prononcé revient transformé, composer mélodies architecture sonore, communiquer échos lointains (messages 5km instantanés). Dangers : avalanches déclenchées sons forts, désorientation échos contradictoires, folie cacophonie involontaire.',
+      defining_moment: 'À 11 ans, avalanche piégea 30 personnes caverne effondrée. Vous avez utilisé échos canyon localiser précisément survivants (cartographie sonore mentale 3D), guidé sauveteurs excavation ciblée—tous sauvés. Moines silence vous enseignèrent langage signes complet reconnaissance maîtrise son.',
+      worldview_shaped: 'Son force physique tangible, pas phénomène abstrait. Silence vertu spirituelle face bruit oppressant monde. Architecture acoustique forme art légitime négligée. Communication non-verbale supérieure paroles souvent trompeuses. Écoute attentive révèle vérités cachées bavardages.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { intelligence: 2, wisdom: 2 },
+      mechanical_traits: [
+        {
+          name: 'Maître Échos Canyon',
+          desc: '+5 Perception (auditive), +1d20 Navigation (écholocalisation canyon), détection créatures invisibles sons 50m, cartographie mentale 3D environnements acoustiques',
+          effect: '+5 Perception, +1d20 Echo Navigation',
+          game_effect: 'Ouïe légendaire + orientation sonore'
+        },
+        {
+          name: 'Acousticien Prodige',
+          desc: '+5 Performance (chant harmoniques), connaissance théorie musicale avancée, amplifier sons ×10 volume (architecture acoustique), +3 Arcana (magie sonore/thunder)',
+          effect: '+5 Performance, +3 Arcana',
+          game_effect: 'Expertise son + magie tonnerre'
+        },
+        {
+          name: 'Langage Silence Moines',
+          desc: 'Communication signes parfaite (100 mots/min silencieux), +3 Stealth (déplacement silencieux absolu), avantage résister sorts thunder/sonic (acclimatation quotidienne)',
+          effect: 'Sign Language, +3 Stealth',
+          game_effect: 'Communication muette + défense sonique'
+        }
+      ],
+      reputation: [
+        { factionId: 'bardes_canyon', delta: 12, reason: 'Prodige acoustique, sauveteur échos' },
+        { factionId: 'moines_silence', delta: 10, reason: 'Maîtrise langage signes, respect discipline sonore' },
+        { factionId: 'acousticiens', delta: 8, reason: 'Cartographie mentale 3D unique, collaboration scientifique' },
+        { factionId: 'mages_thunder', delta: 6, reason: 'Affinité magie sonore naturelle' }
+      ],
+      items: [
+        { itemId: 'tuning_fork_crystal', quantity: 1, reason: 'Diapason cristal canyon (focus sorts thunder +2, navigation 100m)' },
+        { itemId: 'echo_mapping_journal', quantity: 1, reason: 'Journal cartographie échos (cartes acoustiques 20 sites)' },
+        { itemId: 'silent_boots_monk', quantity: 1, reason: 'Bottes silence moines (Stealth +5, déplacement totalement muet)' },
+        { itemId: 'voice_amplifier_horn', quantity: 1, reason: 'Corne amplification voix (porte son 5km canyon, communication longue distance)' }
+      ],
+      skills: [
+        { skillId: 'perception', bonus: 5, reason: 'Écoute attentive quotidienne échos, détection sons subtils' },
+        { skillId: 'performance', bonus: 5, reason: 'Chant acoustique canyon, composition harmoniques' },
+        { skillId: 'stealth', bonus: 3, reason: 'Déplacement silencieux absolu, discipline moines' },
+        { skillId: 'arcana', bonus: 3, reason: 'Étude magie sonore, sorts thunder observés' }
+      ],
+      gold: 300,
+      languages: ['Commun', 'Langage Signes Canyon (complet)', 'Harmoniques Musicales (notation)', 'Écholocalisation (clics)'],
+      tags: ['natural', 'acoustic', 'silent', 'unique', 'scholarly', 'mysterious']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'bardes': 'Admiration maîtrise acoustique, collaboration musicale (+12 disposition)',
+        'moines': 'Respect discipline silence, fraternité spirituelle (+10 disposition)',
+        'acousticiens': 'Fascination cartographie mentale, demandes étude (+8 disposition)',
+        'villageois_bruyants': 'Irritation préférence silence, incompréhension (+2 disposition)',
+        'mages': 'Intérêt affinité thunder, propositions enseignement (+6 disposition)'
+      },
+      first_impression: '« Canyon Voix Immortelles ?! Cartographie mentale 3D sons... Sauvetage écholocalisation extraordinaire. Communication signes fluide impressionnante. »',
+      long_term_perception: 'Maître échos énigmatique. Certains admirent expertise sonore unique, d\'autres déconcertés préférence silence. Perçu intelligent, contemplatif, artistique, socialement réservé.'
+    },
+    tags: ['natural', 'acoustic', 'silent', 'unique'],
+    incompatible_with: []
+  },
+
+  {
+    id: 'birth_loc_geysers_arcaniques',
+    stage: 'birth',
+    category: 'location',
+    label: 'Champ Geysers Arcaniques',
+    desc: 'Né zone géothermique où geysers crachent eau magique saturée énergie arcan brute.',
+    detailed_lore: {
+      backstory: 'Plaine Fontaines Mana : champ 20km² abritant 300 geysers actifs crachant eau bouillante infusée magie arcan 5-120min intervalles réguliers. Origine : faille plan Magie percée terre il y a 400 ans, saturation permanente énergie élémentaire. Eau geysers possède propriétés alchimiques extraordinaires (composants potions, catalyseurs sorts). Population 250 habitants : alchimistes récoltant eau magique, mages étudiant phénomènes arcaniques, marchands exportant fioles précieuses. Vous avez grandi cabane pilotis (sol instable/chaud)—enfance magique dangereuse : esquiver geysers éruptions surprise, baigner bassins tièdes chargés mana, absorber énergie arcan quotidienne (métabolisme modifié). Dangers : ébouillures eau 95°C, explosions mana incontrôlées, mutations mineures exposition prolongée.',
+      defining_moment: 'À 10 ans, geyser majeur éruption catastrophique menaça inonder alchimie district—vous avez canalisé instinctivement énergie arcan torrent stabilisant pression magique. Archimage identifié vous \"Conduit Mana Vivant\"—capacité absorber/libérer mana ×3 normal.',
+      worldview_shaped: 'Magie force naturelle élémentaire, pas discipline académique artificielle. Danger omniprésent prix progrès scientifique acceptable. Mutations mineures évolution adaptative bénéfique. Alchimie plus lucrative épée—savoir vaut or. Énergie arcan respiration invisible environnement.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { intelligence: 2, constitution: 2 },
+      mechanical_traits: [
+        {
+          name: 'Conduit Mana Vivant',
+          desc: 'Slots sorts +3 niveau 1 (réserve mana accrue), +1d20 Arcana (magie arcan brute), récupération repos court restaure 50% slots (métabolisme magique), absorption énergie arcan environnement',
+          effect: '+3 Level 1 Slots, +1d20 Arcana',
+          game_effect: 'Réserve magique titanesque + affinité arcan'
+        },
+        {
+          name: 'Alchimiste Geysers Expérimenté',
+          desc: '+5 Alchemy (potions eau magique), connaissance 20 formules rares, +30% efficacité potions créées (eau geysers supérieure), réseau alchimistes 15 guildes',
+          effect: '+5 Alchemy, Potion Boost 30%',
+          game_effect: 'Maîtrise alchimique + commerce lucratif'
+        },
+        {
+          name: 'Résistance Mutation Arcan',
+          desc: 'Résistance dégâts magie arcan 25%, immunité mutations magiques involontaires (stabilité génétique), détection pics mana 50m (instinct survie)',
+          effect: 'Arcane Resist 25%, Mutation Immunity',
+          game_effect: 'Défense magie + santé protégée'
+        }
+      ],
+      reputation: [
+        { factionId: 'alchimistes', delta: 12, reason: 'Accès eau geysers qualité suprême, expertise formules' },
+        { factionId: 'mages_academies', delta: 10, reason: 'Conduit Mana Vivant rare, étude phénomène' },
+        { factionId: 'marchands_composants', delta: 8, reason: 'Commerce fioles eau magique lucratif' },
+        { factionId: 'anti_magie', delta: -8, reason: 'Incarnation dépendance arcan excessive' }
+      ],
+      items: [
+        { itemId: 'geyser_water_vials', quantity: 10, reason: 'Fioles eau geyser magique (composant alchimique, 50 PO chacune)' },
+        { itemId: 'mana_crystal_charged', quantity: 1, reason: 'Cristal mana chargé geysers (stocke 5 slots niveau 1, rechargeable)' },
+        { itemId: 'heat_resistant_gloves', quantity: 1, reason: 'Gants résistance chaleur alchimique (manipulation eau bouillante sûre)' },
+        { itemId: 'alchemy_portable_lab', quantity: 1, reason: 'Laboratoire alchimie portable (créer potions terrain, 200 PO valeur)' }
+      ],
+      skills: [
+        { skillId: 'arcana', bonus: 5, reason: 'Immersion quotidienne énergie arcan, observations phénomènes' },
+        { skillId: 'alchemy', bonus: 5, reason: 'Apprentissage alchimie geysers, formules eau magique' },
+        { skillId: 'survival', bonus: 3, reason: 'Vie zone géothermique dangereuse, esquive geysers' },
+        { skillId: 'perception', bonus: 3, reason: 'Détection éruptions imminentes, instinct survie mana' }
+      ],
+      gold: 500,
+      languages: ['Commun', 'Draconic (notation alchimique)', 'Formules Arcaniques (symbolique)', 'Cant Alchimistes (jargon)'],
+      tags: ['magical', 'alchemical', 'geothermal', 'prosperous', 'dangerous', 'scholarly']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'alchimistes': 'Enthousiasme collaboration, demandes partenariat (+15 disposition)',
+        'mages': 'Fascination capacité conduit, propositions étude (+12 disposition)',
+        'marchands': 'Intérêt commercial intense, offres exclusivité (+10 disposition)',
+        'anti_magie': 'Hostilité idéologique, méfiance corruption (+(-10) disposition)',
+        'villageois': 'Admiration richesse alchimique, envie prospérité (+6 disposition)'
+      },
+      first_impression: '« Champ Geysers Arcaniques ?! Conduit Mana Vivant... Slots sorts +3 niveau 1 extraordinaire. Alchimie eau magique fortune. Respectez puissance. »',
+      long_term_perception: 'Prodige alchimique prospère. Certains admirent maîtrise arcan, d\'autres jalousent richesse. Perçu intelligent, riche, puissant magiquement, obsédé commerce.'
+    },
+    tags: ['magical', 'alchemical', 'geothermal', 'prosperous'],
+    incompatible_with: []
+  },
+
+  // ===== CITÉS SECONDAIRES (4) =====
+  {
+    id: 'birth_loc_capitale_regionale',
+    stage: 'birth',
+    category: 'location',
+    label: 'Capitale Régionale Politique',
+    desc: 'Né grande cité 80.000 habitants siège pouvoir politique régional, intrigue noblesse concentrée.',
+    detailed_lore: {
+      backstory: 'Valcour : capitale province 80.000 habitants, résidence duc régional palais marbre blanc 300 pièces. Centre pouvoir : parlement provincial 200 nobles, ambassades 12 nations étrangères, cours justice suprême régionale, académie diplomatie prestigieuse. Vous avez grandi quartier noblesse mineure—famille courtisans influents mais non-titrés. Enfance politique : assister bals masqués intrigue, observer négociations traités, apprendre étiquette aristocratique stricte, jouer échecs nobles vieillissants (métaphore politique). Vie urbaine raffinée : théâtres 5 salles opéra, bibliothèque ducale 100.000 volumes, jardins suspendus botaniques exotiques. Mais intrigues constantes : assassinats politiques discrets, scandales ruinant familles, corruption omniprésente.',
+      defining_moment: 'À 15 ans, découvert complot assassinat duc rival factions. Vous avez alerté garde ducale codes secrets famille—complot déjoué, 8 conspirateurs exécutés. Duc récompensa vous titre noblesse mineure héréditaire + fief 500 hectares (fortune instantanée).',
+      worldview_shaped: 'Politique guerre civilisée mots remplacent épées. Pouvoir réel concentré capitales, pas champs bataille. Alliances fragiles trahisons quotidiennes inévitables. Étiquette arme sociale redoutable. Information monnaie plus précieuse or physique.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { charisma: 2, intelligence: 2 },
+      mechanical_traits: [
+        {
+          name: 'Courtisan Politique Élevé',
+          desc: '+5 Persuasion (intrigue noblesse), +5 Insight (détection mensonges politiques), +1d20 Diplomacy (négociations traités), connaissance protocoles 20 nations, réseau 50+ nobles influents',
+          effect: '+5 Persuasion, +5 Insight, +1d20 Diplomacy',
+          game_effect: 'Maîtrise intrigue + réseau pouvoir étendu'
+        },
+        {
+          name: 'Noble Mineur Titré',
+          desc: 'Titre noblesse héréditaire (Chevalier/Dame), fief 500 hectares (revenu passif 100 PO/mois), accès exclusif palais ducal, audiences duc garanties trimestrielles',
+          effect: 'Noble Title, Estate Income',
+          game_effect: 'Statut social + richesse passive'
+        },
+        {
+          name: 'Héros Complot Déjoué',
+          desc: '+3 Investigation (conspirations), +3 Deception (contre-espionnage), avantage résister intimidation/charme politique (exposition quotidienne manipulation), faveur duc utilisable 1×',
+          effect: '+3 Investigation, +3 Deception',
+          game_effect: 'Expertise sécurité + capital politique'
+        }
+      ],
+      reputation: [
+        { factionId: 'noblesse_regionale', delta: 12, reason: 'Titre héréditaire, héros complot, famille établie' },
+        { factionId: 'garde_ducale', delta: 10, reason: 'Alerte complot sauvé duc, confiance sécurité' },
+        { factionId: 'diplomates', delta: 8, reason: 'Formation académie diplomatie, protocoles maîtrisés' },
+        { factionId: 'conspirateurs', delta: -15, reason: 'Déjoué complot, responsable 8 exécutions' }
+      ],
+      items: [
+        { itemId: 'noble_signet_ring', quantity: 1, reason: 'Chevalière noblesse armoiries familiales (authentification documents)' },
+        { itemId: 'estate_deed', quantity: 1, reason: 'Titre fief 500 hectares (revenu 100 PO/mois, patrimoine)' },
+        { itemId: 'palace_access_token', quantity: 1, reason: 'Jeton accès palais ducal permanent (sécurité, privilège)' },
+        { itemId: 'diplomatic_protocols_manual', quantity: 1, reason: 'Manuel protocoles 20 nations (référence négociations)' }
+      ],
+      skills: [
+        { skillId: 'persuasion', bonus: 5, reason: 'Éducation courtisan, intrigue noblesse quotidienne' },
+        { skillId: 'insight', bonus: 5, reason: 'Détection mensonges politiques, observation comportements' },
+        { skillId: 'investigation', bonus: 3, reason: 'Recherche complot, enquêtes discrètes' },
+        { skillId: 'deception', bonus: 3, reason: 'Dissimulation intentions, contre-espionnage' }
+      ],
+      gold: 800,
+      languages: ['Commun', 'Langues Diplomatiques (4 nations)', 'Latin Légal (droit)', 'Cant Courtisans (intrigue)'],
+      tags: ['urban', 'noble', 'political', 'wealthy', 'intrigue', 'influential']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'nobles': 'Respect titre héréditaire, acceptation cercles (+12 disposition)',
+        'diplomates': 'Collaboration professionnelle, propositions missions (+10 disposition)',
+        'garde': 'Confiance sécuritaire, coopération facilitée (+10 disposition)',
+        'roturiers': 'Déférence statutaire, distance sociale (+4 disposition, -2 familiarité)',
+        'conspirateurs': 'Haine viscérale, danger assassinat permanent (-18 disposition)'
+      },
+      first_impression: '« Capitale Valcour ! Chevalier/Dame titré 15 ans... Complot déjoué héroïque. Fief 500 hectares fortune. Respectez noblesse méritée. »',
+      long_term_perception: 'Noble politique influent. Certains admirent héroïsme récompensé, d\'autres jalousent ascension rapide. Perçu intelligent, charmant, riche, cible dangereuse.'
+    },
+    tags: ['urban', 'noble', 'political', 'wealthy'],
+    incompatible_with: []
+  },
+
+  {
+    id: 'birth_loc_centre_pelerinage',
+    stage: 'birth',
+    category: 'location',
+    label: 'Centre Pèlerinage Sacré',
+    desc: 'Né cité sainte 30.000 habitants destination pèlerinage 500.000 fidèles/an, piété concentrée.',
+    detailed_lore: {
+      backstory: 'Luminaëlle : cité sainte construite site miracle saint Aurélien il y a 600 ans (résurrection 100 morts simultanée témoignée). Cathédrale Lumière Éternelle 150m hauteur domine cité, reliquaires saint attirent pèlerins 50 nations. Population permanente 30.000 habitants : prêtres/moines 8000, artisans souvenirs religieux, aubergistes hébergement pèlerins, guérisseurs miraculeux. Vous avez grandi orphelinat cathédrale (parents décédés fièvre)—enfance pieuse : chorales quotidiennes 5h matin, études théologiques intensives, service charité soupe populaire, observation guérisons miraculeuses hebdomadaires. Pèlerins apportent 2 millions PO/an dons—richesse ecclésiastique colossale mais vœu pauvreté personnel. Atmosphère spirituelle intense : processions quotidiennes, flagellants pénitents, extases mystiques publiques.',
+      defining_moment: 'À 12 ans, épidémie peste noire ravagea quartier pauvre—vous avez soigné malades 60 jours consécutifs sans contracter maladie (immunité miraculeuse). Archevêque déclara vous \"Béni Saint Aurélien\"—pouvoir guérison mineures mains (1/jour, 2d8 HP).',
+      worldview_shaped: 'Foi pouvoir tangible opérant miracles réels. Charité devoir sacré non-négociable. Richesse matérielle corruption spirituelle dangereuse. Souffrance épreuve purificatrice rapprochant divin. Communauté fidèles famille choisie transcendant sang.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { wisdom: 2, charisma: 2 },
+      mechanical_traits: [
+        {
+          name: 'Béni Saint Aurélien',
+          desc: '1/jour : Lay on Hands (2d8 HP restaurés toucher), +5 Religion (théologie approfondie), +1d20 résister maladies/poisons (immunité miraculeuse), détection alignements maléfiques 20m',
+          effect: 'Lay on Hands 2d8, +5 Religion, +1d20 Disease Resist',
+          game_effect: 'Pouvoir guérison divin + piété protectrice'
+        },
+        {
+          name: 'Orphelin Cathédrale Élevé',
+          desc: '+5 Persuasion (prédication foi), +3 Medicine (soins malades), vœu pauvreté (richesse max 100 PO possédées, surplus donné charité obligatoire), réseau ecclésiastique 30 diocèses',
+          effect: '+5 Persuasion, +3 Medicine',
+          game_effect: 'Charisme spirituel + contrainte pauvreté'
+        },
+        {
+          name: 'Témoin Miracles Quotidiens',
+          desc: '+3 Insight (discerner foi sincère/hypocrite), avantage jets Inspiration (foi inébranlable), +2 jets sauvegarder désespoir/peur (espoir béni)',
+          effect: '+3 Insight, Inspiration Advantage',
+          game_effect: 'Discernement spirituel + moral renforcé'
+        }
+      ],
+      reputation: [
+        { factionId: 'eglise_lumiere', delta: 18, reason: 'Béni Saint Aurélien reconnu, orphelin cathédrale vénéré' },
+        { factionId: 'pelerins', delta: 12, reason: 'Guérisseur miraculeux, espoir fidèles' },
+        { factionId: 'ordres_caritatifs', delta: 10, reason: 'Service charité héroïque, vœu pauvreté respecté' },
+        { factionId: 'cyniques_athees', delta: -8, reason: 'Irritation piété ostentatoire, rejet miracles' }
+      ],
+      items: [
+        { itemId: 'holy_symbol_blessed', quantity: 1, reason: 'Symbole sacré béni archevêque (focus sorts divins +2)' },
+        { itemId: 'relic_fragment_saint', quantity: 1, reason: 'Fragment relique saint Aurélien (1× guérison maladie mortelle)' },
+        { itemId: 'pilgrims_robe_simple', quantity: 1, reason: 'Robe pèlerin simple (vœu pauvreté, reconnaissance universelle)' },
+        { itemId: 'prayer_book_illuminated', quantity: 1, reason: 'Livre prières enluminé (théologie 200 pages, valeur sentimentale)' }
+      ],
+      skills: [
+        { skillId: 'religion', bonus: 5, reason: 'Éducation théologique intensive cathédrale depuis enfance' },
+        { skillId: 'persuasion', bonus: 5, reason: 'Prédication foi, inspiration fidèles, charité quotidienne' },
+        { skillId: 'medicine', bonus: 3, reason: 'Soins malades orphelinat/épidémie, premiers soins' },
+        { skillId: 'insight', bonus: 3, reason: 'Observation fidèles, discernement foi sincère' }
+      ],
+      gold: 100,
+      languages: ['Commun', 'Latin Ecclésiastique', 'Langues Pèlerins (4 dialectes)', 'Chants Liturgiques'],
+      tags: ['sacred', 'urban', 'blessed', 'charitable', 'poor', 'healing']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'fideles': 'Vénération béni vivant, hospitalité absolue (+20 disposition)',
+        'pretres': 'Respect fraternel, collaboration spirituelle (+15 disposition)',
+        'malades': 'Espoir guérison, gratitude anticipée (+12 disposition)',
+        'cyniques': 'Scepticisme miracles, irritation piété (-10 disposition)',
+        'marchands': 'Admiration vœu pauvreté, dons charité offerts (+6 disposition)'
+      },
+      first_impression: '« Luminaëlle Centre Pèlerinage ! Béni Saint Aurélien... Guérison miraculeuse 2d8 HP ?! Vœu pauvreté robe simple respectée. Saint vivant. »',
+      long_term_perception: 'Guérisseur saint pauvre. Certains vénèrent piété authentique, d\'autres irrités renoncement richesse. Perçu charitable, humble, miraculeux, socialement admiré.'
+    },
+    tags: ['sacred', 'urban', 'blessed', 'charitable'],
+    incompatible_with: []
+  },
+
+  // ===== CITÉS SECONDAIRES FINALES (3) =====
+  {
+    id: 'birth_loc_ville_universitaire',
+    stage: 'birth',
+    category: 'location',
+    label: 'Ville Universitaire Académique',
+    desc: 'Né cité 40.000 habitants dominée université millénaire, savoir concentré bibliothèques infinies.',
+    detailed_lore: {
+      backstory: 'Érudis : ville universitaire 40.000 habitants (15.000 étudiants permanents) construite autour Université Arcanes Lumière fondée il y a 1200 ans. Campus 200 hectares : bibliothèque centrale 500.000 volumes anciens, 12 facultés spécialisées (magie arcan, théologie, droit, médecine, astronomie, alchimie, histoire, langues, philosophie, ingénierie, arts, musique), observatoire astronomique dôme 50m, laboratoires alchimiques sécurisés. Vous avez grandi quartier professeurs—parents érudits bibliothécaires archives secrètes. Enfance intellectuelle intense : lectures quotidiennes 4h, débats philosophiques dîners familiaux, accès bibliothèque restreinte 10 ans (privilège rarissime), observations télescope astronomique nuits claires, cours magistraux amphithéâtres 500 places. Vie urbaine studieuse : tavernes débats passionnés, duels intellectuels publics, examens finaux stressants suicides étudiants. Dangers : sectes académiques rivalités mortelles, expériences magiques catastrophiques, espionnage industriel grimoires, burn-out intellectuel fréquent.',
+      defining_moment: 'À 14 ans, découvert erreur mathématique théorème fondamental enseigné 300 ans. Vous avez présenté preuve correction congrès académique—professeurs débattent 8h, validation finale unanime. Recteur nomma vous "Prodige Érudis"—admission université 14 ans (record absolu), bourse complète 10 ans.',
+      worldview_shaped: 'Savoir pouvoir absolu transcendant richesse/noblesse. Erreurs intellectuelles corrigibles humblement, ignorance volontaire impardonnable. Débat contradictoire forge vérité—consensus paresseux stérilise pensée. Livres anciens trésors inestimables valant cathédrales. Éducation universelle droit fondamental, pas privilège élitiste.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { intelligence: 2, wisdom: 2 },
+      mechanical_traits: [
+        {
+          name: 'Prodige Académique Reconnu',
+          desc: '+5 Arcana/History/Religion (au choix, expertise faculté), +5 Investigation (recherches académiques), +1d20 jets apprentissage compétences nouvelles (méthodologie universitaire), accès bibliothèque 500.000 volumes',
+          effect: '+5 Academic Skill, +5 Investigation, +1d20 Learning',
+          game_effect: 'Érudition légendaire + apprentissage accéléré'
+        },
+        {
+          name: 'Bourse Universitaire Complète',
+          desc: 'Admission université 14 ans (record), bourse 10 ans couvrant scolarité/logement/livres (valeur 10.000 PO totale), réseau professeurs 50+ érudits influents, accès archives secrètes niveau 3/5',
+          effect: 'University Scholarship, Archive Access',
+          game_effect: 'Éducation gratuite + réseau académique étendu'
+        },
+        {
+          name: 'Correcteur Théorème Historique',
+          desc: '+3 Logic (mathématiques/philosophie), +3 Persuasion (débats intellectuels), célébrité académique (reconnaissance universités 20 nations), +2 jets Intelligence (confiance intellectuelle)',
+          effect: '+3 Logic, +3 Persuasion, Fame',
+          game_effect: 'Réputation savant + raisonnement supérieur'
+        }
+      ],
+      reputation: [
+        { factionId: 'universite_erudis', delta: 18, reason: 'Prodige record, correcteur théorème, fils bibliothécaires' },
+        { factionId: 'academies_royaume', delta: 12, reason: 'Célébrité intellectuelle, correction historique' },
+        { factionId: 'bibliothecaires', delta: 10, reason: 'Famille établie, respect archives sacrées' },
+        { factionId: 'anti_intellectuels', delta: -6, reason: 'Irritation élitisme perçu, jalousie éducation' }
+      ],
+      items: [
+        { itemId: 'university_badge_scholar', quantity: 1, reason: 'Insigne étudiant prodige (accès campus illimité, réductions 50% librairies)' },
+        { itemId: 'rare_books_collection', quantity: 5, reason: 'Collection 5 livres rares (valeur 200 PO chacun, sujets variés)' },
+        { itemId: 'research_notes_theorem', quantity: 1, reason: 'Notes recherche correction théorème (preuve originale, patrimoine intellectuel)' },
+        { itemId: 'archive_key_level3', quantity: 1, reason: 'Clé archives secrètes niveau 3 (accès manuscrits anciens restreints)' }
+      ],
+      skills: [
+        { skillId: 'arcana', bonus: 5, reason: 'Études faculté magie arcan, observations expériences quotidiennes' },
+        { skillId: 'investigation', bonus: 5, reason: 'Méthodologie recherche universitaire, bibliothèque explorations' },
+        { skillId: 'history', bonus: 3, reason: 'Lectures massives archives, correction théorème historique' },
+        { skillId: 'persuasion', bonus: 3, reason: 'Débats académiques, présentation congrès, défense thèses' }
+      ],
+      gold: 400,
+      languages: ['Commun', 'Latin Académique', 'Langues Anciennes (3 dialectes)', 'Notation Mathématique Universelle'],
+      tags: ['urban', 'scholarly', 'intellectual', 'prestigious', 'bookish', 'prodigy']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'academiciens': 'Admiration profonde prodige, mentorat offert (+18 disposition)',
+        'etudiants': 'Fascination envieuse, demandes tutorat (+10 disposition, -3 jalousie)',
+        'bibliothecaires': 'Respect familial, accès privilégié facilité (+12 disposition)',
+        'anti_intellectuels': 'Irritation élitisme, moqueries "tête trop grosse" (-8 disposition)',
+        'nobles': 'Respect mérite intellectuel, propositions patronage (+8 disposition)'
+      },
+      first_impression: '« Université Érudis millénaire ?! Prodige 14 ans admission record... Correction théorème 300 ans enseigné ?! Génie certifié. »',
+      long_term_perception: 'Savant prodige célèbre. Certains admirent intellect supérieur, d\'autres jalousent succès précoce. Perçu brillant, studieux, humble corrections, socialement maladroit.'
+    },
+    tags: ['urban', 'scholarly', 'intellectual', 'prestigious'],
+    incompatible_with: []
+  },
+
+  {
+    id: 'birth_loc_port_peche',
+    stage: 'birth',
+    category: 'location',
+    label: 'Port de Pêche Côtier',
+    desc: 'Né ville portuaire 12.000 habitants vivant pêche hauturière océan impitoyable, vie rude fertile.',
+    detailed_lore: {
+      backstory: 'Havre-Flots : port pêche 12.000 habitants côte Nord océan Tempêtes, 800 bateaux pêche (chalutiers 20m, barques 6m). Économie pêche 100% : thons, morues, harengs, crabes géants, pieuvres, parfois léviathans mineurs accidentels. Vous avez grandi cabane quais puant poisson—parents armateurs chalutier familial "Écume Salée". Enfance maritime dure : embarquements pêche 8 ans (mousse nettoyage ponts), tempêtes océaniques terrifiantes vagues 15m, nuits 3 jours haute mer, apprentissage navigation étoiles/courants, découpe poissons dès 6 ans. Communauté solidaire : partage prises disettes, sauvetages mer fraternels, fêtes retour pêche miraculeuse, superstitions marins (jamais siffler bord, femmes portent malheur ancienne croyance abolie). Dangers : naufrages tempêtes (50 morts/an), pirates côtiers, créatures marines hostiles, hypothermie eaux glacées, dettes usuriers armateurs ruinés.',
+      defining_moment: 'À 13 ans, tempête cataclysmique coula 30 bateaux—chalutier familial survécut grâce votre navigation instinctive (lecture nuages/vents héritée grand-père). Vous avez guidé 8 bateaux port dans brouillard zéro-visibilité phare éteint. Guilde Pêcheurs nomma vous "Étoile Havre"—navigateur prodige, capitaine certifié 13 ans.',
+      worldview_shaped: 'Océan mère nourricière cruelle—donne poissons mais noie imprudents quotidien. Solidarité marins survie absolue—jamais abandonner naufragés. Superstitions marins sagesses ancestrales déguisées, pas ignorances. Tempêtes enseignent humilité face forces nature titanesques. Travail manuel honnête vaut diplômes dorés inutiles.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { strength: 2, constitution: 2 },
+      mechanical_traits: [
+        {
+          name: 'Étoile Havre Navigateur',
+          desc: '+5 Navigation (maritime), +5 Survival (océan), +1d20 prédire météo marine 48h avance (lecture nuages/vents/marées), capitaine certifié jeune (commande équipages 20+ marins)',
+          effect: '+5 Navigation, +5 Survival, +1d20 Weather Predict',
+          game_effect: 'Maîtrise mer totale + instinct tempêtes'
+        },
+        {
+          name: 'Pêcheur Hauturier Aguerri',
+          desc: '+5 Athletics (manœuvres navales), +3 Animal Handling (poissons/dauphins), résistance mal mer immunité, endurance froid marin (hypothermie résistance 75%), maîtrise filets/harpons',
+          effect: '+5 Athletics, +3 Animal Handling',
+          game_effect: 'Endurance maritime + techniques pêche'
+        },
+        {
+          name: 'Héritier Chalutier Familial',
+          desc: 'Propriété chalutier "Écume Salée" 20m (valeur 2000 PO, revenu pêche 80 PO/mois), équipage 6 marins loyaux famille, réseau guilde pêcheurs 40 ports côtiers',
+          effect: 'Ship Ownership, Crew',
+          game_effect: 'Patrimoine naval + revenu passif'
+        }
+      ],
+      reputation: [
+        { factionId: 'pecheurs_cote', delta: 15, reason: 'Étoile Havre héros, sauveteur tempête, famille établie' },
+        { factionId: 'guilde_marins', delta: 12, reason: 'Capitaine certifié record, compétence navigation' },
+        { factionId: 'marchands_poisson', delta: 8, reason: 'Commerce prises régulier, partenariat familial' },
+        { factionId: 'pirates_cote', delta: -6, reason: 'Défense bateaux pêche, opposition piraterie' }
+      ],
+      items: [
+        { itemId: 'fishing_boat_chalutier', quantity: 1, reason: 'Chalutier "Écume Salée" 20m (6 marins, 50 tonnes capacité, 2000 PO valeur)' },
+        { itemId: 'navigation_sextant_quality', quantity: 1, reason: 'Sextant navigation qualité (précision ±1km, laiton gravé familial)' },
+        { itemId: 'fishing_nets_reinforced', quantity: 10, reason: 'Filets pêche renforcés (charge 500kg chacun, réparation facile)' },
+        { itemId: 'sailors_lucky_charm', quantity: 1, reason: 'Porte-bonheur marin grand-père (dent requin, +1 jets sauvegarder mer)' }
+      ],
+      skills: [
+        { skillId: 'navigation', bonus: 5, reason: 'Navigation océanique quotidienne depuis 8 ans, instinct météo' },
+        { skillId: 'survival', bonus: 5, reason: 'Vie haute mer hostile, tempêtes, autonomie alimentaire poisson' },
+        { skillId: 'athletics', bonus: 5, reason: 'Manœuvres navales physiques, hissage voiles, combat vagues' },
+        { skillId: 'animal_handling', bonus: 3, reason: 'Pêche techniques diverses, interaction faune marine' }
+      ],
+      gold: 500,
+      languages: ['Commun', 'Cant Marins (jargon maritime)', 'Signes Main Navires (communication distance)', 'Superstitions Océan (folklore)'],
+      tags: ['coastal', 'maritime', 'hardworking', 'seafaring', 'prosperous', 'communal']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'pecheurs': 'Fraternité profonde maritime, loyauté inconditionnelle (+18 disposition)',
+        'marins': 'Respect compétence navigation, demandes équipage (+12 disposition)',
+        'marchands': 'Intérêt commercial prises, partenariats proposés (+10 disposition)',
+        'pirates': 'Méfiance défenseur, évitement prudent raids (-8 disposition)',
+        'citadins_continentaux': 'Admiration courage océanique, incompréhension vie (+6 disposition)'
+      },
+      first_impression: '« Port Havre-Flots ! Étoile Havre navigateur 13 ans... Sauvetage tempête 8 bateaux héroïque. Propriétaire chalutier jeune impressionnant. »',
+      long_term_perception: 'Capitaine pêcheur héroïque. Certains admirent courage maritime, d\'autres envient prospérité familiale. Perçu travailleur, solidaire, instinctif, rude manières.'
+    },
+    tags: ['coastal', 'maritime', 'hardworking', 'seafaring'],
+    incompatible_with: []
+  },
+
+  {
+    id: 'birth_loc_marche_frontiere',
+    stage: 'birth',
+    category: 'location',
+    label: 'Marché Frontalier Cosmopolite',
+    desc: 'Né ville frontière 18.000 habitants carrefour commercial 5 nations, mélange cultures intense.',
+    detailed_lore: {
+      backstory: 'Pont-Cinq-Rois : ville frontière exactement intersection 5 royaumes (traité 200 ans zone neutre commerciale). Population 18.000 habitants cosmopolite : 30% humains, 20% elfes, 15% nains, 10% halfelins, 25% races diverses. Langues 12+ parlées rues quotidien. Marché permanent 500 étals : épices Orient exotiques, fourrures Nord arctiques, soieries Sud précieuses, métaux nains légendaires, gemmes elfes enchantées, herbes rares, esclaves (légal zone grise), mercenaires, informations espionnage. Vous avez grandi échoppe parents marchands textiles multiculturels—mère elfe Sud, père humain Nord. Enfance cosmopolite unique : apprentissage 6 langues simultanément, négociations commerciales dès 7 ans, exposition 20 cultures culinaires/religieuses/vestimentaires, festivals 5 nations célébrés, mais tensions raciales sporadiques émeutes. Économie 100% commerce : taxes passage 5% génèrent 100.000 PO/an ville. Dangers : espionnage 5 nations constant, assassinats politiques discrets, contrebande armes/drogues/artefacts, gangs territoriaux violents.',
+      defining_moment: 'À 14 ans, crise diplomatique menaça fermeture marché (guerre imminente 2 royaumes). Vous avez négocié compromis audacieux assemblée 5 ambassadeurs (bilinguisme parfait, connaissance protocoles culturels, proposition économique équitable)—guerre évitée, marché sauvé. Conseil Ville nomma vous "Médiateur Prodige"—citoyenneté honoraire 5 nations simultanée (privilège unique historique).',
+      worldview_shaped: 'Diversité culturelle richesse inestimable, pas menace. Commerce unit nations mieux traités militaires fragiles. Langues multiples ouvrent mondes invisibles monolingues. Compromis intelligent vaut victoires pyrrhiques. Identité multiculturelle force, pas confusion loyauté.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { charisma: 2, intelligence: 2 },
+      mechanical_traits: [
+        {
+          name: 'Médiateur Cinq Nations',
+          desc: '+5 Persuasion (négociations interculturelles), +5 Insight (lecture cultures diverses), +1d20 Diplomacy (conflits internationaux), citoyenneté honoraire 5 nations (libre passage frontières, protection diplomatique)',
+          effect: '+5 Persuasion, +5 Insight, +1d20 Diplomacy',
+          game_effect: 'Expertise diplomatique + statut unique'
+        },
+        {
+          name: 'Polyglotte Naturel',
+          desc: '+6 langues parlées couramment (total 8+), +3 Deception (mensonges multiculturels crédibles), avantage jets compréhension langues inconnues (racines communes identifiées), réseau contacts 5 nations 200+ marchands',
+          effect: '+6 Languages, +3 Deception',
+          game_effect: 'Communication universelle + réseau international'
+        },
+        {
+          name: 'Héritier Commerce Multiculturel',
+          desc: 'Propriété échoppe textiles familiale (valeur 1500 PO, revenu 70 PO/mois), +20% profits commerce interculturel (connaissance marchés 5 nations), accès contrebande légale zone grise',
+          effect: 'Shop Ownership, Trade Bonus',
+          game_effect: 'Patrimoine commercial + avantage économique'
+        }
+      ],
+      reputation: [
+        { factionId: 'marchands_pont_cinq', delta: 15, reason: 'Médiateur Prodige, héros crise diplomatique, famille établie' },
+        { factionId: 'ambassades_5_nations', delta: 12, reason: 'Citoyenneté honoraire unique, respect diplomatie' },
+        { factionId: 'guildes_commerce', delta: 10, reason: 'Expertise négoce interculturel, réseaux étendus' },
+        { factionId: 'nationalistes_puristes', delta: -8, reason: 'Irritation mélange culturel, suspicion loyautés multiples' }
+      ],
+      items: [
+        { itemId: 'citizenship_papers_5nations', quantity: 5, reason: 'Papiers citoyenneté 5 nations (passage libre frontières, protection diplomatique unique)' },
+        { itemId: 'trade_ledger_multicultural', quantity: 1, reason: 'Registre commerce contacts 200+ marchands 5 nations (réseau précieux)' },
+        { itemId: 'exotic_goods_samples', quantity: 10, reason: 'Échantillons marchandises exotiques (épices, soieries, gemmes, 500 PO valeur totale)' },
+        { itemId: 'translation_dictionary_12languages', quantity: 1, reason: 'Dictionnaire 12 langues polyglotte (référence commerciale, 80 PO valeur)' }
+      ],
+      skills: [
+        { skillId: 'persuasion', bonus: 5, reason: 'Négociations commerciales quotidiennes depuis 7 ans, médiation' },
+        { skillId: 'insight', bonus: 5, reason: 'Lecture comportements 20 cultures, détection mensonges interculturels' },
+        { skillId: 'deception', bonus: 3, reason: 'Commerce zone grise, dissimulation origines marchandises' },
+        { skillId: 'history', bonus: 3, reason: 'Connaissance 5 nations histoires/cultures, traités diplomatiques' }
+      ],
+      gold: 600,
+      languages: ['Commun', 'Elfique', 'Nain', 'Halfelin', 'Langue Orientale', 'Dialecte Nordique', 'Cant Marchands (universel)', 'Signes Commerce (international)'],
+      tags: ['urban', 'cosmopolitan', 'diplomatic', 'multilingual', 'prosperous', 'neutral']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'marchands_internationaux': 'Respect compétence, partenariats privilégiés (+15 disposition)',
+        'diplomates': 'Admiration médiation unique, demandes consultations (+12 disposition)',
+        'voyageurs': 'Gratitude guidage culturel, traductions offertes (+10 disposition)',
+        'nationalistes': 'Méfiance loyauté floue, hostilité identitaire (-10 disposition)',
+        'espions': 'Intérêt contacts multiples, propositions recrutement (+8 disposition)'
+      },
+      first_impression: '« Pont-Cinq-Rois cosmopolite ! Médiateur 14 ans guerre évitée... Citoyenneté 5 nations simultanée ?! Polyglotte 8 langues incroyable. »',
+      long_term_perception: 'Diplomate marchand multiculturel. Certains admirent ouverture cosmopolite, d\'autres suspectent loyautés divisées. Perçu charmant, intelligent, riche, apatride identitaire.'
+    },
+    tags: ['urban', 'cosmopolitan', 'diplomatic', 'multilingual'],
+    incompatible_with: []
+  },
+
+  {
+    id: 'birth_loc_ville_thermale',
+    stage: 'birth',
+    category: 'location',
+    label: 'Ville Thermale Curative',
+    desc: 'Né station thermale 8.000 habitants sources chaudes curatives miraculeuses, tourisme santé prospère.',
+    detailed_lore: {
+      backstory: 'Thermes Auréliane : ville thermale construite sources géothermiques naturelles jaillissant 45°C, composition minérale unique (soufre, magnésium, calcium) guérissant maladies chroniques. Fondée il y a 400 ans découverte sources, devenue destination santé aristocratie 30 nations. Population 8.000 habitants : médecins hydrothérapeutes 300, masseurs/soigneurs 500, hôteliers luxe, artisans souvenirs, guides touristiques. Vous avez grandi hôtel thermal familial "Vapeurs Bienfaisantes"—parents propriétaires établissement 50 chambres. Enfance unique : baignades quotidiennes bassins thermaux (peau parfaite impuretés nulles), observation guérisons miraculeuses (paralysés remarchant, lépreux guéris, aveugles recouvraient vue partielle), apprentissage hydrothérapie 10 ans, massage thérapeutique, diététique curative. Clientèle riche : nobles, marchands prospères, vétérans guerre, malades désespérés. Atmosphère paisible relaxante : jardins zen méditation, musiques douces permanentes, interdiction violences stricte.',
+      defining_moment: 'À 12 ans, enfant noble mourant fièvre incurable médecins abandonnèrent. Vous avez préparé traitement thermal expérimental (bains alternés chaud/froid, infusion herbes locales, massage drainage lymphatique)—enfant guérit miraculeusement 5 jours. Duc père récompensa vous bourse 1000 PO + titre "Thaumaturge Thermes Auréliane".',
+      worldview_shaped: 'Guérison naturelle supérieure potions chimiques artificielles. Eau chaude minérale cadeau divin humanité souffrante. Repos relaxation partie intégrante santé, pas luxe paresseux. Richesse justifiée si finance santé publique accessible. Beauté extérieure reflète santé intérieure harmonieuse.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { wisdom: 2, charisma: 2 },
+      mechanical_traits: [
+        {
+          name: 'Thaumaturge Thermal Certifié',
+          desc: '+5 Medicine (hydrothérapie), +1d20 soigner maladies chroniques (traitement thermal 7 jours requis), connaissance 30 pathologies curables sources, réseau médecins 20 nations',
+          effect: '+5 Medicine, +1d20 Chronic Disease Cure',
+          game_effect: 'Expertise curative thermale + guérisons rares'
+        },
+        {
+          name: 'Héritier Hôtel Thermal',
+          desc: 'Propriété hôtel "Vapeurs Bienfaisantes" 50 chambres (valeur 5000 PO, revenu 150 PO/mois), personnel 12 employés loyaux, accès sources privées illimité, clientèle aristocratique établie',
+          effect: 'Hotel Ownership, Passive Income',
+          game_effect: 'Patrimoine thermal + richesse passive'
+        },
+        {
+          name: 'Peau Parfaite Thermale',
+          desc: '+2 CHA (beauté naturelle bains quotidiens), résistance maladies peau 90% (immunité acné/eczéma/psoriasis), guérison blessures ×1.5 vitesse (régénération thermale), aura santé rayonnante',
+          effect: '+2 CHA, Disease Resist, Fast Healing',
+          game_effect: 'Beauté surnaturelle + santé visible'
+        }
+      ],
+      reputation: [
+        { factionId: 'medecins_thermaux', delta: 15, reason: 'Thaumaturge certifié, guérison noble miraculeuse' },
+        { factionId: 'aristocratie', delta: 12, reason: 'Service thermal famille respectée, clientèle fidèle' },
+        { factionId: 'malades_chroniques', delta: 18, reason: 'Espoir guérison, réputation thaumaturge' },
+        { factionId: 'medecins_traditionnels', delta: -4, reason: 'Rivalité méthodes alternatives, jalousie succès' }
+      ],
+      items: [
+        { itemId: 'thermal_water_vials', quantity: 20, reason: 'Fioles eau thermale Auréliane (soigne 1d4 HP + maladie mineure chacune, 30 PO)' },
+        { itemId: 'massage_oils_medicinal', quantity: 10, reason: 'Huiles massage médicinales (relaxation musculaire, 20 PO chacune)' },
+        { itemId: 'hotel_deed_thermal', quantity: 1, reason: 'Titre propriété hôtel 50 chambres (patrimoine familial, revenu passif)' },
+        { itemId: 'duke_reward_medal', quantity: 1, reason: 'Médaille duc reconnaissance (symbole prestige, +5 disp nobles)' }
+      ],
+      skills: [
+        { skillId: 'medicine', bonus: 5, reason: 'Hydrothérapie quotidienne, observation guérisons, formation soigneurs' },
+        { skillId: 'persuasion', bonus: 5, reason: 'Service clientèle aristocratique, négociations tarifs, diplomatie' },
+        { skillId: 'insight', bonus: 3, reason: 'Diagnostic pathologies observation, empathie malades' },
+        { skillId: 'nature', bonus: 3, reason: 'Connaissance herbes médicinales locales, propriétés minérales' }
+      ],
+      gold: 700,
+      languages: ['Commun', 'Latin Médical', 'Protocoles Aristocratiques (4 nations)', 'Terminologie Hydrothérapie'],
+      tags: ['urban', 'healing', 'prosperous', 'peaceful', 'beautiful', 'aristocratic']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'malades': 'Espoir désespéré, vénération thaumaturge (+20 disposition)',
+        'medecins': 'Respect compétence alternative, collaboration offerte (+10 disposition, -4 rivaux)',
+        'nobles': 'Gratitude services famille, fidélité clientèle (+12 disposition)',
+        'pauvres': 'Envie soins inaccessibles, amertume inégalités (-6 disposition)',
+        'beautés': 'Jalousie peau parfaite, demandes secrets beauté (+8 disposition, -5 envie)'
+      },
+      first_impression: '« Thermes Auréliane curatives ! Peau parfaite rayonnante... Thaumaturge 12 ans guérison noble miraculeuse ?! Beauté santé incarnée. »',
+      long_term_perception: 'Guérisseur thermal prospère. Certains admirent talents curatifs, d\'autres jalousent richesse/beauté. Perçu charitable malades, élégant, serein, privilégié.'
+    },
+    tags: ['urban', 'healing', 'prosperous', 'peaceful'],
+    incompatible_with: []
+  },
+
+  {
+    id: 'birth_loc_cite_souterraine',
+    stage: 'birth',
+    category: 'location',
+    label: 'Cité Souterraine Naine',
+    desc: 'Né métropole souterraine 25.000 habitants creusée roche vivante, merveille ingénierie millénaire.',
+    detailed_lore: {
+      backstory: 'Karak-Azur (Forteresse Saphir) : cité souterraine naine 25.000 habitants creusée montagne 12 niveaux profondeur 800m. Fondée il y a 2000 ans clan Barbe-Pierre, capitale minière saphirs/mithril. Architecture titanesque : halls colonnades 50m hauteur plafond, ponts suspendus gouffres 200m, forges géantes 24h/24, aqueducs gravitaires ingénieux, éclairage cristaux luminescents bleutés. Population 90% nains, 10% humains/gnomes tolérés. Vous avez grandi quartier forgerons—famille armuriers réputés 15 générations. Enfance souterraine totale : jamais vu ciel avant 18 ans, apprentissage forge 6 ans (marteaux 5kg quotidien), lecture pierre instinctive (détection failles/minerais), éducation histoire clan 2000 ans mémoire orale, consommation bière naine quotidienne dès 10 ans (tradition). Société rigide : castes hiérarchisées strictes (nobles-forgerons-mineurs-marchands), honneur ancestral sacré, rancunes clan duraient siècles, femmes barbes respectées guerrières. Dangers : effondrements tunnels, créatures Profond (gobelins, trolls), gaz toxiques méthane, isolement claustrophobie.',
+      defining_moment: 'À 15 ans, séisme magnitude 7 effondra niveau 8—300 nains piégés ténèbres. Vous avez conçu système étaiement innovant bois/acier (génie précoce), dirigé sauvetage 120h continus—tous sauvés miraculeux. Roi Barbe-Pierre accorda vous titre "Maître-Ingénieur" 15 ans (plus jeune historique) + hache runique ancestrale.',
+      worldview_shaped: 'Pierre éternelle fiable, surface éphémère dangereuse. Honneur ancestral dépasse vie individuelle insignifiante. Forge art sacré transformant minerai brut beauté fonctionnelle. Isolement souterrain protège décadence surface. Bière naine lubrifiant social civilisation.'
+    },
+    effects: {
+      // ========== STATS D100 (×2) ==========
+      stats: { constitution: 2, intelligence: 2 },
+      mechanical_traits: [
+        {
+          name: 'Maître-Ingénieur Karak-Azur',
+          desc: '+5 Engineering (architecture/mécanique), +1d20 construire structures souterraines (tunnels, ponts, forteresses), vision ténèbres parfaite 60m (yeux adaptés), détection failles pierre 95% précision',
+          effect: '+5 Engineering, +1d20 Underground Build, Darkvision 60m',
+          game_effect: 'Génie architectural + sens pierre légendaire'
+        },
+        {
+          name: 'Forgeron Armurier Lignée',
+          desc: '+5 Smithing (armes/armures), maîtrise forge runique basique, créer équipement qualité supérieure (+1 dégâts/AC), réseau guildes forgerons 30 cités naines',
+          effect: '+5 Smithing, Runic Basics, Quality Gear',
+          game_effect: 'Artisanat légendaire + équipement supérieur'
+        },
+        {
+          name: 'Hache Runique Ancestrale',
+          desc: 'Hache guerre runique "Fend-Roc" (2d8+2, +3 vs créatures souterraines, indestructible, héritage royal Barbe-Pierre), +10 HP (endurance forge quotidienne), résistance poison/alcool 75%',
+          effect: 'Runic Axe 2d8+2, +10 HP',
+          game_effect: 'Arme légendaire + vitalité naine'
+        }
+      ],
+      reputation: [
+        { factionId: 'nains_karak_azur', delta: 18, reason: 'Maître-Ingénieur record, sauveteur séisme, lignée réputée' },
+        { factionId: 'guildes_forgerons', delta: 15, reason: 'Artisan prodige, hache runique royale portée' },
+        { factionId: 'roi_barbe_pierre', delta: 12, reason: 'Faveur royale accordée, titre honorifique jeune' },
+        { factionId: 'elfes_surface', delta: -8, reason: 'Mépris réciproque ancestral nains/elfes millénaire' }
+      ],
+      items: [
+        { itemId: 'runic_axe_fend_roc', quantity: 1, reason: 'Hache runique "Fend-Roc" (2d8+2, +3 vs souterrain, royale)' },
+        { itemId: 'master_engineer_badge', quantity: 1, reason: 'Insigne Maître-Ingénieur (autorité chantiers, respect universel nains)' },
+        { itemId: 'smithing_tools_masterwork', quantity: 1, reason: 'Outils forge chef-d\'œuvre (qualité supérieure garantie, 300 PO valeur)' },
+        { itemId: 'clan_genealogy_scroll', quantity: 1, reason: 'Parchemin généalogie clan 15 générations (honneur ancestral, 200 PO)' }
+      ],
+      skills: [
+        { skillId: 'engineering', bonus: 5, reason: 'Conception étaiement innovant, architecture souterraine quotidienne' },
+        { skillId: 'smithing', bonus: 5, reason: 'Forge armurier familiale 15 générations, apprentissage intensif' },
+        { skillId: 'history', bonus: 3, reason: 'Mémoire orale clan 2000 ans, culture naine approfondie' },
+        { skillId: 'survival', bonus: 3, reason: 'Vie souterraine hostile, navigation tunnels, dangers Profond' }
+      ],
+      gold: 800,
+      languages: ['Commun', 'Nain (dialecte Karak-Azur)', 'Khuzdul Ancien (runes)', 'Cant Forgerons (technique)'],
+      tags: ['underground', 'dwarven', 'engineering', 'smithing', 'legendary', 'honored']
+    },
+    social_impacts: {
+      npc_reactions: {
+        'nains': 'Respect profond maître jeune, fraternité clan (+20 disposition)',
+        'forgerons': 'Admiration artisanat, demandes apprentissage (+15 disposition)',
+        'humains_surface': 'Fascination cité souterraine, incompréhension culture (+6 disposition)',
+        'elfes': 'Mépris ancestral réciproque, hostilité culturelle (-12 disposition)',
+        'créatures_profond': 'Haine nains, attaques instinctives (-20 disposition)'
+      },
+      first_impression: '« Karak-Azur légendaire ! Maître-Ingénieur 15 ans record... Hache runique royale Fend-Roc ?! Sauvetage 300 nains héroïque. Honneur clan. »',
+      long_term_perception: 'Ingénieur-forgeron légendaire. Certains admirent génie précoce, d\'autres intimident stature naine. Perçu honorable, têtu, artisan parfait, isolé culturellement surface.'
+    },
+    tags: ['underground', 'dwarven', 'engineering', 'smithing'],
+    incompatible_with: []
+  }
 ];

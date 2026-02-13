@@ -16,6 +16,7 @@ export const HUDHeader = ({
     audioVolume,
     onVolumeChange,
     onToggleCodex,
+    onToggleDMPanel,
     tension = 0
 }) => {
     return (
@@ -79,6 +80,11 @@ export const HUDHeader = ({
                 {onToggleCodex && (
                     <button onClick={onToggleCodex} className="hud-btn codex-btn">
                         📖 CODEX
+                    </button>
+                )}
+                {onToggleDMPanel && isGM && (
+                    <button onClick={onToggleDMPanel} className="hud-btn dm-panel-btn" title="Interface Maître du Jeu (Claude Opus)">
+                        🎭 MJ
                     </button>
                 )}
                 <button
