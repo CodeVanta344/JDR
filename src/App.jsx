@@ -636,11 +636,13 @@ export default function App() {
     };
 
     const getTimeLabel = () => {
-        const { hour } = gameTime;
-        if (hour >= 5 && hour < 8) return "Aube";
-        if (hour >= 8 && hour < 18) return "Journée";
-        if (hour >= 18 && hour < 21) return "Crépuscule";
-        return "Nuit";
+        const { hour, minute } = gameTime;
+        if (hour >= 5 && hour < 8) return `Aube (${hour}h${minute.toString().padStart(2, '0')})`;
+        if (hour >= 8 && hour < 12) return `Matin (${hour}h${minute.toString().padStart(2, '0')})`;
+        if (hour >= 12 && hour < 14) return `Midi (${hour}h${minute.toString().padStart(2, '0')})`;
+        if (hour >= 14 && hour < 18) return `Après-midi (${hour}h${minute.toString().padStart(2, '0')})`;
+        if (hour >= 18 && hour < 21) return `Crépuscule (${hour}h${minute.toString().padStart(2, '0')})`;
+        return `Nuit (${hour}h${minute.toString().padStart(2, '0')})`;
     };
 
     const getOverlayColor = () => {
