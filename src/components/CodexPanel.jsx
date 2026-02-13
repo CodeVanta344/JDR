@@ -5,7 +5,8 @@ import { ALCHEMY } from '../lore/professions/craft/alchemy';
 import { MINING } from '../lore/professions/gather/mining';
 import { GUILDES } from '../lore/factions/index';
 import { LEGENDARY_WEAPONS } from '../lore/legendary-items';
-import { MARKETS } from '../lore/economy-system';
+// TODO: Re-enable when MARKETS migrated to new economy-system.ts
+// import { MARKETS } from '../lore/economy-system';
 import './CodexPanel.css';
 
 // type CodexTab = 'professions' | 'factions' | 'legendary_items' | 'world_events' | 'economy';
