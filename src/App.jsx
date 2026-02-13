@@ -1414,6 +1414,9 @@ export default function App() {
                     history: messages.map(m => ({ role: m.role, content: m.content })),
                     sessionId: session.id,
                     playerId: character?.id,
+                    gameTime: gameTime,
+                    timeLabel: getTimeLabel(),
+                    weather: weather,
                     playerProfile: {
                         name: character.name,
                         class: character.class,
@@ -1792,6 +1795,7 @@ export default function App() {
                     context: isStagnation ? "GM_STAGNATION_RECOVERY" : "GM_PROACTIVE_INITIATIVE",
                     gameTime: gameTime,
                     timeLabel: getTimeLabel(),
+                    weather: weather,
                     tension: 100, // Trigger happened at max tension
                     gamePhase: gamePhase,
                     playerProfile: {
@@ -1805,6 +1809,21 @@ export default function App() {
             });
 
             if (aiResponse) {
+                // Handle world updates (weather, time)
+                if (aiResponse.worldUpdate) {
+                    if (aiResponse.worldUpdate.weather) {
+                        console.log('[Proactive GM] Weather update:', aiResponse.worldUpdate.weather);
+                        setWeather(aiResponse.worldUpdate.weather);
+                        // Sync to world_state
+                        if (session?.host_id === profile?.id) {
+                            await supabase.from('world_state').upsert({ 
+                                key: 'weather', 
+                                value: aiResponse.worldUpdate.weather 
+                            });
+                        }
+                    }
+                }
+                
                 if (aiResponse.world_event) {
                     addToChronicle(aiResponse.world_event);
                     setMessages(prev => [...prev, {
@@ -2107,6 +2126,21 @@ export default function App() {
             });
 
             if (aiResponse) {
+                // Handle world updates (weather, time)
+                if (aiResponse.worldUpdate) {
+                    if (aiResponse.worldUpdate.weather) {
+                        console.log('[NPC] Weather update:', aiResponse.worldUpdate.weather);
+                        setWeather(aiResponse.worldUpdate.weather);
+                        // Sync to world_state
+                        if (session?.host_id === profile?.id) {
+                            await supabase.from('world_state').upsert({ 
+                                key: 'weather', 
+                                value: aiResponse.worldUpdate.weather 
+                            });
+                        }
+                    }
+                }
+                
                 // Trigger handling synced with handleSubmit
                 if (aiResponse.reward && aiResponse.reward.xp) {
                     handleExperienceGain(aiResponse.reward.xp, aiResponse.reward.reason);
@@ -2226,6 +2260,7 @@ export default function App() {
                     context: "WORLD_INTERACTION",
                     gameTime: gameTime,
                     timeLabel: getTimeLabel(),
+                    weather: weather,
                     playerProfile: {
                         name: character.name,
                         class: character.class,
@@ -2247,6 +2282,21 @@ export default function App() {
             });
 
             if (aiResponse) {
+                // Handle world updates (weather, time)
+                if (aiResponse.worldUpdate) {
+                    if (aiResponse.worldUpdate.weather) {
+                        console.log('[GM] Weather update:', aiResponse.worldUpdate.weather);
+                        setWeather(aiResponse.worldUpdate.weather);
+                        // Sync to world_state
+                        if (session?.host_id === profile?.id) {
+                            await supabase.from('world_state').upsert({ 
+                                key: 'weather', 
+                                value: aiResponse.worldUpdate.weather 
+                            });
+                        }
+                    }
+                }
+                
                 if (aiResponse.world_event) {
                     addToChronicle(aiResponse.world_event);
                     setMessages(prev => [...prev, {

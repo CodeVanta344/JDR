@@ -594,7 +594,50 @@ const RULES: string[] = [
     `  A l'inverse, un debutant niveau 2 NE DOIT PAS reussir des taches heroiques sans effort exceptionnel.`,
 
     // 4. Time & dynamism
-    `TEMPS & DYNAMISME: Le monde AVANCE. Si les joueurs attendent/dorment, quelque chose DOIT se passer (embuscade, reve, meteo, decouverte). NE BOUCLE PAS SUR LA MEME DESCRIPTION.`,
+    `TEMPS & DYNAMISME: Le monde AVANCE. Si les joueurs attendent/dorment, quelque chose DOIT se passer (embuscade, reve, meteo, decouverte). NE BOUCLE PAS SUR LA MEME DESCRIPTION.\n` +
+    `\n` +
+    `=== CHANGEMENTS METEOROLOGIQUES (REGLE IMPORTANTE) ===\n` +
+    `METEO ACTUELLE: ${weatherDesc}\n` +
+    `\n` +
+    `QUAND modifier la meteo:\n` +
+    `- Si le joueur ATTEND plusieurs heures (repos, sommeil, voyage long)\n` +
+    `- Si une journee complete s'ecoule dans la narration\n` +
+    `- Si le contexte narratif suggere un changement (tension montante = orage, aube = brouillard dissipe)\n` +
+    `\n` +
+    `COMMENT modifier la meteo:\n` +
+    `1. INCLUS dans ta narration: "La meteo change. Le ciel devient [nuageux/orageux/degage/brumeux]..."\n` +
+    `2. AJOUTE dans le champ "worldUpdate" de ta reponse JSON:\n` +
+    `   {\n` +
+    `     "worldUpdate": {\n` +
+    `       "weather": "rain" // ou "clear", "clouds", "storm", "snow", "fog", "wind"\n` +
+    `     }\n` +
+    `   }\n` +
+    `\n` +
+    `CODES METEO DISPONIBLES:\n` +
+    `- "clear" = Ciel degage, soleil\n` +
+    `- "clouds" = Nuageux, couvert\n` +
+    `- "rain" = Pluie (malus Perception -2, chemins boueux)\n` +
+    `- "storm" = Orage violent (malus Perception -5, risque foudre, impossible voler)\n` +
+    `- "snow" = Neige (malus Deplacement -1 case, froid)\n` +
+    `- "fog" = Brouillard (malus Perception -3, visibilite 2 cases)\n` +
+    `- "wind" = Vents forts (malus Tir -2, difficulte voler)\n` +
+    `\n` +
+    `IMPACTS MECANIQUES DE LA METEO (A APPLIQUER):\n` +
+    `- Pluie/Orage: Tests de Perception plus difficiles (+1 complexite), chemins glissants\n` +
+    `- Neige: Deplacement reduit, froid (risque hypothermie si camp sans feu)\n` +
+    `- Brouillard: Visibilite limitee, embuscades plus faciles pour ennemis\n` +
+    `- Vent: Tir a l'arc/arbalete penalise, vol difficile/impossible\n` +
+    `- Orage: Risque de foudre si armure metallique, impossible de voler\n` +
+    `\n` +
+    `EXEMPLES CONCRETS:\n` +
+    `- Joueur: "Je monte la garde toute la nuit"\n` +
+    `  MJ: "Au fil des heures, le ciel se couvre. Vers minuit, les premieres gouttes tombent..." {"worldUpdate": {"weather": "rain"}}\n` +
+    `\n` +
+    `- Joueur: "On voyage pendant 2 jours vers le nord"\n` +
+    `  MJ: "Le deuxieme jour, un vent glacial se leve. Des flocons commencent a tourbillonner..." {"worldUpdate": {"weather": "snow"}}\n` +
+    `\n` +
+    `- Joueur: "Je me reveille a l'aube"\n` +
+    `  MJ: "L'aube perce enfin. Le brouillard nocturne se dissipe, revelant un ciel azur..." {"worldUpdate": {"weather": "clear"}}\n`,
 
     // 4b. NO REPETITION (CRITICAL)
     `INTERDICTION DE REPETITION (REGLE CRITIQUE):\n` +
@@ -1642,9 +1685,24 @@ function generateMerchantItems(avgLevel: number): any[] {
 
 // ─── PROMPT BUILDER ──────────────────────────────────────────────────
 
+// Weather translation helper
+function getWeatherDescription(weatherCode: string): string {
+    const weatherMap: Record<string, string> = {
+        'clear': '☀️ Ciel dégagé, temps clair',
+        'clouds': '☁️ Nuageux, ciel couvert',
+        'rain': '🌧️ Pluie battante, chemins boueux',
+        'storm': '⛈️ Orage violent, éclairs et tonnerre',
+        'snow': '❄️ Neige tombante, froid glacial',
+        'fog': '🌫️ Brouillard épais, visibilité réduite',
+        'wind': '💨 Vents forts, rafales puissantes',
+    };
+    return weatherMap[weatherCode] || '☀️ Temps normal';
+}
+
 function buildSystemPrompt(opts: {
     gamePhase: string;
     timeLabel: string;
+    weather: string;
     partyList: string;
     playerInfo: string;
     context: string;
@@ -1653,15 +1711,16 @@ function buildSystemPrompt(opts: {
     partyDetails?: any[];
     playerBackstoryContext?: string;
 }): string {
-    const { gamePhase, timeLabel, partyList, playerInfo, context, lore, historyStr, partyDetails, playerBackstoryContext } = opts;
+    const { gamePhase, timeLabel, weather, partyList, playerInfo, context, lore, historyStr, partyDetails, playerBackstoryContext } = opts;
 
     const sections: string[] = [];
 
-    // Identity
+    // Identity & World State
+    const weatherDesc = getWeatherDescription(weather);
     sections.push(
         `TU ES LE MAITRE DU JEU (MJ) d'un RPG Dark Fantasy "Miroir des Ombres".`,
         `TON BUT: Simuler un monde coherent, dangereux et reactif. NE SOIS PAS COMPLAISANT.`,
-        `PHASE ACTUELLE: ${gamePhase} | HEURE: ${timeLabel}`,
+        `PHASE ACTUELLE: ${gamePhase} | HEURE: ${timeLabel} | METEO: ${weatherDesc}`,
     );
 
     // CRITICAL: Clear distinction between Players and NPCs
@@ -1752,6 +1811,7 @@ Deno.serve(async (req: Request) => {
         const context = body.context || "";
         const gamePhase = body.gamePhase || "INTRO";
         const timeLabel = body.timeLabel || "Inconnu";
+        const currentWeather = body.weather || "clear";
 
         // ── Env check ──
         const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
@@ -1850,7 +1910,7 @@ Deno.serve(async (req: Request) => {
 
         // ── Build system prompt ──
         const prompt = buildSystemPrompt({
-            gamePhase, timeLabel, partyList, playerInfo, context, lore, historyStr, partyDetails, playerBackstoryContext,
+            gamePhase, timeLabel, weather: currentWeather, partyList, playerInfo, context, lore, historyStr, partyDetails, playerBackstoryContext,
         });
 
         // ── IDEMPOTENCY CHECK (START_ADVENTURE) ──
