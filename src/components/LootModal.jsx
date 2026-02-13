@@ -64,7 +64,7 @@ export const LootModal = ({ loot, onCollect, onClose }) => {
                     ))}
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                    <button className="btn-gold" style={{ flex: 1 }} onClick={() => onCollect(items)}>TOUT RÉCUPÉRER</button>
+                    <button className="btn-gold" style={{ flex: 1 }} onClick={() => onCollect(items, gold)}>TOUT RÉCUPÉRER</button>
                     <button className="btn-secondary" style={{ flex: 1 }} onClick={onClose}>LAISSER</button>
                 </div>
             </div>

@@ -16,6 +16,7 @@ import { ALL_NPCS } from './npcs';
 import { ALL_QUESTS } from './quests';
 import { ALL_ITEMS } from './items-catalog';
 import { ALL_LOCATIONS } from './world-map';
+import { SKILL_MECHANICS } from './skills-mechanics';
 
 // Import des expansions
 import { EXPANDED_NPCS_BATCH_1 } from './npcs-expansion-1';
@@ -423,5 +424,6 @@ export default {
   registry: GlobalLoreRegistry,
   search: GlobalLoreSearch,
   initialize: initializeLoreSystem,
-  stats: getLoreStats
+  stats: getLoreStats,
+  skillMechanics: SKILL_MECHANICS
 };

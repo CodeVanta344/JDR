@@ -18,21 +18,28 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
         ranged: { label: 'Distance', icon: '🏹', category: 'Combat' },
         magic: { label: 'Magie', icon: '✨', category: 'Combat' },
         defense: { label: 'Défense', icon: '🛡️', category: 'Combat' },
+        tactics: { label: 'Tactique', icon: '♟️', category: 'Combat' },
         // Social
         persuasion: { label: 'Persuasion', icon: '🤝', category: 'Social' },
         intimidation: { label: 'Intimidation', icon: '💀', category: 'Social' },
         deception: { label: 'Tromperie', icon: '🎭', category: 'Social' },
         insight: { label: 'Perspicacité', icon: '👁️', category: 'Social' },
+        animal_handling: { label: 'Dressage', icon: '🐴', category: 'Social' },
         // Exploration
         investigation: { label: 'Investigation', icon: '🔍', category: 'Exploration' },
         perception: { label: 'Perception', icon: '👂', category: 'Exploration' },
         survival: { label: 'Survie', icon: '🏕️', category: 'Exploration' },
         stealth: { label: 'Discrétion', icon: '👣', category: 'Exploration' },
+        athletics: { label: 'Athlétisme', icon: '🏃', category: 'Exploration' },
+        acrobatics: { label: 'Acrobatie', icon: '🤸', category: 'Exploration' },
         // Crafting
         smithing: { label: 'Forge', icon: '🔨', category: 'Artisanat' },
         alchemy: { label: 'Alchimie', icon: '🧪', category: 'Artisanat' },
         enchanting: { label: 'Enchantement', icon: '🔮', category: 'Artisanat' },
         cooking: { label: 'Cuisine', icon: '🍳', category: 'Artisanat' },
+        engineering: { label: 'Ingénierie', icon: '⚙️', category: 'Artisanat' },
+        leatherworking: { label: 'Tannerie', icon: '🧵', category: 'Artisanat' },
+        carpentry: { label: 'Menuiserie', icon: '🪚', category: 'Artisanat' },
         // Gathering
         mining: { label: 'Minage', icon: '⛏️', category: 'Récolte' },
         herbalism: { label: 'Herboristerie', icon: '🌿', category: 'Récolte' },
@@ -43,8 +50,11 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
         history: { label: 'Histoire', icon: '📚', category: 'Savoir' },
         religion: { label: 'Religion', icon: '⚖️', category: 'Savoir' },
         nature: { label: 'Nature', icon: '🌳', category: 'Savoir' },
-        // Fallback
-        tactics: { label: 'Tactique', icon: '♟️', category: 'Combat' },
+        medicine: { label: 'Médecine', icon: '💊', category: 'Savoir' },
+        // Performance & Arts
+        performance: { label: 'Performance', icon: '🎭', category: 'Arts' },
+        sleight_of_hand: { label: 'Prestidigitation', icon: '🤹', category: 'Arts' },
+        // Fallback aliases
         knowledge_history: { label: 'Histoire', icon: '📚', category: 'Savoir' },
         knowledge_religion: { label: 'Religion', icon: '⚖️', category: 'Savoir' },
         chosen_skill: { label: 'Spécialité', icon: '⭐', category: 'Autre' }
@@ -99,7 +109,12 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
     // Robust Ability Lookup
     const getClassAbilities = () => {
         if (!character?.class) return [];
-        const classData = CLASSES[character.class.split(' ')[0]] || CLASSES[character.class];
+
+        // Normalize lookup by lowercasing the search term and checking keys
+        const baseClassName = character.class.split(' ')[0];
+        const actualKey = Object.keys(CLASSES).find(k => k.toLowerCase() === baseClassName.toLowerCase());
+        const classData = actualKey ? CLASSES[actualKey] : (CLASSES[character.class] || null);
+
         if (!classData) return [];
 
         const playerAbilities = [...(character.abilities || []), ...(character.spells || [])];
@@ -136,19 +151,19 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
 
     return (
         <aside className="character-sheet" style={{
-            position: 'fixed', left: '1rem', top: '1rem', bottom: '1rem', width: '310px',
-            background: 'rgba(10,10,15,0.95)', border: '1px solid var(--glass-border)', borderRadius: '8px',
-            display: 'flex', flexDirection: 'column', color: '#fff', backdropFilter: 'blur(10px)', zIndex: 100,
-            pointerEvents: 'auto'
+            position: 'fixed', left: '1.2rem', top: '1.2rem', bottom: '1.2rem', width: '360px',
+            background: 'rgba(10,10,15,0.95)', border: '1px solid var(--glass-border)', borderRadius: '12px',
+            display: 'flex', flexDirection: 'column', color: '#fff', backdropFilter: 'blur(15px)', zIndex: 100,
+            pointerEvents: 'auto', boxShadow: '0 0 30px rgba(0,0,0,0.5)'
         }}>
             {/* Header */}
-            <div className="sheet-header" style={{ padding: '1.2rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                <div style={{ width: '55px', height: '55px', borderRadius: '50%', overflow: 'hidden', border: '2px solid var(--gold-primary)', background: '#000', boxShadow: '0 0 10px rgba(212,175,55,0.2)' }}>
+            <div className="sheet-header" style={{ padding: '1.5rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', gap: '1.2rem', alignItems: 'center' }}>
+                <div style={{ width: '65px', height: '65px', borderRadius: '50%', overflow: 'hidden', border: '2.5px solid var(--gold-primary)', background: '#000', boxShadow: '0 0 15px rgba(212,175,55,0.3)' }}>
                     <img src={character.portrait_url || 'https://placehold.co/60'} alt="Portrait" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
                 <div>
-                    <div style={{ fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--gold-primary)', letterSpacing: '0.5px' }}>{character.name}</div>
-                    <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>{character.class} - NIV. {character.level}</div>
+                    <div style={{ fontWeight: '900', fontSize: '1.3rem', color: 'var(--gold-primary)', letterSpacing: '0.8px', textTransform: 'uppercase' }}>{character.name}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px', fontWeight: 'bold', marginTop: '2px' }}>{character.class} - NIV. {character.level}</div>
                 </div>
             </div>
 
@@ -163,10 +178,10 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
                         style={{
-                            flex: 1, padding: '0.9rem 0', background: activeTab === tab.id ? 'rgba(212, 175, 55, 0.08)' : 'transparent',
+                            flex: 1, padding: '1rem 0', background: activeTab === tab.id ? 'rgba(212, 175, 55, 0.12)' : 'transparent',
                             border: 'none', borderBottom: activeTab === tab.id ? '2px solid var(--gold-primary)' : '2px solid transparent',
                             color: activeTab === tab.id ? 'var(--gold-primary)' : 'var(--text-muted)',
-                            fontSize: '0.7rem', fontWeight: 'bold', cursor: 'pointer', letterSpacing: '1px',
+                            fontSize: '0.8rem', fontWeight: '900', cursor: 'pointer', letterSpacing: '1.5px',
                             transition: 'all 0.2s'
                         }}
                     >
@@ -176,32 +191,42 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
             </div>
 
             {/* Content */}
-            <div className="sheet-content" style={{ flex: 1, overflowY: 'auto', padding: '1.2rem', scrollbarWidth: 'thin' }}>
+            <div className="sheet-content" style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: '1.2rem',
+                scrollbarWidth: 'thin',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'flex-start',
+                alignItems: 'stretch'
+            }}>
                 {activeTab === 'stats' && (
                     <div className="animate-fade-in">
                         <div className="vitals-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.8rem', marginBottom: '1.2rem' }}>
-                            <div className="vital-box" style={{ background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '6px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>VITALITÉ (PV)</span>
-                                <span style={{ fontSize: '1.2rem', fontWeight: '900', color: '#54a0ff' }}>{character.hp}</span>
+                            <div className="vital-box" style={{ background: 'rgba(255,255,255,0.03)', padding: '0.9rem', borderRadius: '8px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px', fontWeight: 'bold', letterSpacing: '0.5px' }}>PV</span>
+                                <span style={{ fontSize: '1.4rem', fontWeight: '900', color: '#54a0ff' }}>{character.hp}</span>
                             </div>
-                            <div className="vital-box" style={{ background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '6px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>ARMURE (CA)</span>
-                                <span style={{ fontSize: '1.2rem', fontWeight: '900', color: 'var(--gold-primary)' }}>{totalAC()}</span>
+                            <div className="vital-box" style={{ background: 'rgba(255,255,255,0.03)', padding: '0.9rem', borderRadius: '8px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px', fontWeight: 'bold', letterSpacing: '0.5px' }}>CA</span>
+                                <span style={{ fontSize: '1.4rem', fontWeight: '900', color: 'var(--gold-primary)' }}>{totalAC()}</span>
                             </div>
-                            <div className="vital-box" style={{ background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '6px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>ATTAQUE (ATK)</span>
-                                <span style={{ fontSize: '1.2rem', fontWeight: '900', color: '#ff6b6b' }}>{totalATK()}</span>
+                            <div className="vital-box" style={{ background: 'rgba(255,255,255,0.03)', padding: '0.9rem', borderRadius: '8px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px', fontWeight: 'bold', letterSpacing: '0.5px' }}>ATK</span>
+                                <span style={{ fontSize: '1.4rem', fontWeight: '900', color: '#ff6b6b' }}>{totalATK()}</span>
                             </div>
-                            <div className="vital-box" style={{ background: 'rgba(212,175,55,0.05)', padding: '0.75rem', borderRadius: '6px', textAlign: 'center', border: '1px solid var(--gold-dim)' }}>
-                                <span style={{ fontSize: '0.6rem', color: 'var(--gold-dim)', display: 'block', marginBottom: '2px' }}>ÉCLATS (OR)</span>
-                                <span style={{ fontSize: '1.2rem', fontWeight: '900', color: 'var(--gold-primary)' }}>{character.gold || 0}</span>
+                            <div className="vital-box" style={{ background: 'rgba(212,175,55,0.08)', padding: '0.9rem', borderRadius: '8px', textAlign: 'center', border: '1px solid var(--gold-dim)' }}>
+                                <span style={{ fontSize: '0.65rem', color: 'var(--gold-dim)', display: 'block', marginBottom: '4px', fontWeight: 'bold', letterSpacing: '0.5px' }}>ÉCLATS</span>
+                                <span style={{ fontSize: '1.4rem', fontWeight: '900', color: 'var(--gold-primary)' }}>{character.gold || 0}</span>
                             </div>
                         </div>
 
                         {/* Resource Bar */}
                         {(() => {
-                            const manaClasses = ["Mage", "Clerc", "Paladin", "Druide", "Barde"];
-                            const isMana = manaClasses.includes(character.class.split(' ')[0]);
+                            const baseClassName = (character.class || "").split(' ')[0].toLowerCase();
+                            const manaClasses = ["mage", "clerc", "paladin", "druide", "barde"];
+                            const isMana = manaClasses.includes(baseClassName);
                             const resourceLabel = isMana ? "ÉNERGIE ARCANIQUE" : "ENDURANCE";
                             const resourceColor = isMana ? "#48dbfb" : "var(--gold-primary)";
                             const percent = Math.min(100, Math.max(0, (character.resource / (character.max_resource || 100)) * 100));
@@ -219,22 +244,22 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                             );
                         })()}
 
-                        <h4 style={{ fontSize: '0.7rem', color: 'var(--gold-dim)', marginBottom: '0.8rem', textTransform: 'uppercase', letterSpacing: '1.5px', borderBottom: '1px solid rgba(212,175,55,0.1)', paddingBottom: '4px' }}>Caractéristiques</h4>
-                        <div className="attributes-list" style={{ display: 'grid', gap: '4px' }}>
+                        <h4 style={{ fontSize: '0.8rem', color: 'var(--gold-dim)', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '2px', borderBottom: '1px solid rgba(212,175,55,0.1)', paddingBottom: '6px' }}>Caractéristiques</h4>
+                        <div className="attributes-list" style={{ display: 'grid', gap: '6px' }}>
                             {Object.entries(character.stats || {})
                                 .filter(([key]) => key !== 'mechanic')
                                 .map(([key, val]) => {
                                     const bonus = getStatBonus(key);
                                     const total = val + bonus;
                                     return (
-                                        <div key={key} title={statNames[key]?.desc} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0.8rem', background: 'rgba(255,255,255,0.02)', borderRadius: '4px', border: '1px solid transparent', transition: 'border-color 0.2s' }} onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(212,175,55,0.2)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'transparent'}>
+                                        <div key={key} title={statNames[key]?.desc} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.8rem 1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '6px', border: '1px solid transparent', transition: 'all 0.2s', boxShadow: 'inset 0 0 10px rgba(0,0,0,0.2)' }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(212,175,55,0.3)'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }} onMouseLeave={e => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}>
                                             <div>
-                                                <span style={{ textTransform: 'uppercase', fontSize: '0.75rem', color: '#fff', fontWeight: '900', display: 'block' }}>{key}</span>
-                                                <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>{statNames[key]?.full}</span>
+                                                <span style={{ textTransform: 'uppercase', fontSize: '0.85rem', color: '#fff', fontWeight: '900', display: 'block', letterSpacing: '0.5px' }}>{key}</span>
+                                                <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>{statNames[key]?.full}</span>
                                             </div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                                                <span style={{ fontWeight: '900', color: '#fff', fontSize: '1.1rem' }}>{total}</span>
-                                                <span style={{ color: 'var(--gold-primary)', fontSize: '0.8rem', fontWeight: 'bold' }}>({modStr(total)})</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                                                <span style={{ fontWeight: '900', color: '#fff', fontSize: '1.25rem' }}>{total}</span>
+                                                <span style={{ color: 'var(--gold-primary)', fontSize: '0.9rem', fontWeight: 'bold' }}>({modStr(total)})</span>
                                             </div>
                                         </div>
                                     );
@@ -243,24 +268,24 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
 
                         {/* Traits et Aptitudes LifePath */}
                         {character.mechanical_traits && character.mechanical_traits.length > 0 && (
-                            <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(212,175,55,0.05)', borderRadius: '8px', border: '1px solid rgba(212,175,55,0.2)' }}>
-                                <h4 style={{ fontSize: '0.7rem', color: 'var(--gold-primary)', marginBottom: '0.8rem', textTransform: 'uppercase', letterSpacing: '1.5px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <div style={{ marginTop: '1.8rem', padding: '1.5rem', background: 'rgba(212,175,55,0.06)', borderRadius: '12px', border: '1px solid rgba(212,175,55,0.25)', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
+                                <h4 style={{ fontSize: '0.8rem', color: 'var(--gold-primary)', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '0.6rem', fontWeight: '900' }}>
                                     <span>✨</span>
                                     <span>Aptitudes Spéciales</span>
                                 </h4>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                                     {character.mechanical_traits.map((trait, idx) => (
-                                        <div key={idx} style={{ padding: '0.7rem', background: 'rgba(0,0,0,0.3)', borderRadius: '6px', border: '1px solid rgba(212,175,55,0.15)' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
-                                                <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--gold-primary)' }}>{trait.name}</span>
+                                        <div key={idx} style={{ padding: '0.9rem', background: 'rgba(0,0,0,0.4)', borderRadius: '8px', border: '1px solid rgba(212,175,55,0.2)', transition: 'transform 0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateX(5px)'} onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                                                <span style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--gold-primary)', letterSpacing: '0.5px' }}>{trait.name}</span>
                                                 {trait.effect && (
-                                                    <span style={{ fontSize: '0.7rem', color: '#4cd137', fontWeight: '600', padding: '2px 6px', background: 'rgba(76,209,55,0.1)', borderRadius: '3px' }}>
+                                                    <span style={{ fontSize: '0.75rem', color: '#4cd137', fontWeight: '700', padding: '3px 8px', background: 'rgba(76,209,55,0.15)', borderRadius: '4px', border: '1px solid rgba(76,209,55,0.2)' }}>
                                                         {trait.effect}
                                                     </span>
                                                 )}
                                             </div>
                                             {trait.desc && (
-                                                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0, lineHeight: '1.4' }}>
+                                                <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.95)', margin: 0, lineHeight: '1.6', letterSpacing: '0.2px' }}>
                                                     {trait.desc}
                                                 </p>
                                             )}
@@ -272,9 +297,9 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
 
                         {/* Compétences acquises */}
                         {character.skill_bonuses && character.skill_bonuses.length > 0 && (
-                            <div style={{ marginTop: '1.2rem', padding: '1.2rem', background: 'rgba(84,160,255,0.03)', borderRadius: '10px', border: '1px solid rgba(84,160,255,0.15)' }}>
-                                <h4 style={{ fontSize: '0.75rem', color: '#54a0ff', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                                    <span style={{ fontSize: '1rem' }}>🎯</span>
+                            <div style={{ marginTop: '1.5rem', padding: '1.5rem', background: 'rgba(84,160,255,0.05)', borderRadius: '12px', border: '1px solid rgba(84,160,255,0.2)', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
+                                <h4 style={{ fontSize: '0.85rem', color: '#54a0ff', marginBottom: '1.2rem', textTransform: 'uppercase', letterSpacing: '2.5px', display: 'flex', alignItems: 'center', gap: '0.8rem', fontWeight: '900' }}>
+                                    <span style={{ fontSize: '1.2rem' }}>🎯</span>
                                     <span>Compétences Maîtrisées</span>
                                 </h4>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.4rem' }}>
@@ -322,7 +347,15 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                 )}
 
                 {activeTab === 'equip' && (
-                    <div className="sheet-gallery-view" style={{ animation: 'fadeIn 0.4s ease-out' }}>
+                    <div style={{
+                        display: 'block',
+                        width: '100%',
+                        animation: 'fadeIn 0.4s ease-out',
+                        border: '1px solid rgba(255,255,255,0.05)',
+                        background: 'rgba(0,0,0,0.1)',
+                        borderRadius: '8px',
+                        padding: '0.5rem'
+                    }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                             <h4 style={{ fontSize: '0.7rem', color: 'var(--gold-dim)', margin: 0, textTransform: 'uppercase', letterSpacing: '1.5px' }}>Besace & Equipement</h4>
                             {onTradeClick && (
@@ -445,7 +478,7 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                                             </div>
                                         )}
                                     </div>
-                                    <p style={{ fontSize: '0.85rem', color: '#ccd1d9', margin: 0, lineHeight: '1.5', fontStyle: 'italic' }}>"{ability.desc}"</p>
+                                    <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.9)', margin: 0, lineHeight: '1.6', fontStyle: 'italic', letterSpacing: '0.2px' }}>"{ability.desc}"</p>
                                     {(ability.heal || ability.resource || ability.range || ability.dice || ability.scaling) && (
                                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
                                             {ability.dice && (

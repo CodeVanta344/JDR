@@ -217,6 +217,23 @@ export default function App() {
         }
     }, [adventureStarted, fetchData]);
 
+    // --- PLAYER STATE POLLING FALLBACK ---
+    useEffect(() => {
+        if (!session?.id || !adventureStarted) return;
+
+        const pollPlayerState = async () => {
+            const { data: pData } = await supabase.from('players').select('*').eq('session_id', session.id);
+            if (pData) {
+                setPlayers(pData);
+                const pc = pData.find(p => p.user_id === profile?.id);
+                if (pc) setCharacter(pc);
+            }
+        };
+
+        const interval = setInterval(pollPlayerState, 15000); // Polling every 15s
+        return () => clearInterval(interval);
+    }, [session?.id, adventureStarted, profile?.id]);
+
     // --- REAL-TIME MESSAGE SUBSCRIPTION ---
     useEffect(() => {
         if (!session?.id) return;
@@ -2801,10 +2818,10 @@ export default function App() {
                 activeLoot && (
                     <LootModal
                         loot={activeLoot}
-                        onCollect={(items) => {
+                        onCollect={(items, goldAmount) => {
                             triggerSFX('gold');
                             const newInventory = [...(character.inventory || []), ...items.map(i => ({ ...i, equipped: false }))];
-                            const newGold = (character.gold || 0) + (activeLoot.gold || 0);
+                            const newGold = (character.gold || 0) + (goldAmount || activeLoot.gold || 0);
                             handleUpdateInventory(newInventory, newGold);
                             setActiveLoot(null);
                         }}
