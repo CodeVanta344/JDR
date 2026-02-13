@@ -274,8 +274,20 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                                 </button>
                             )}
                         </div>
-                        <div style={{ display: 'grid', gap: '0.8rem' }}>
-                            {(character.inventory || []).map((item, i) => {
+                        {/* DEBUG: Log inventory */}
+                        {console.log('[CharacterSheet] Inventory:', character.inventory, 'Count:', character.inventory?.length)}
+                        
+                        {(!character.inventory || character.inventory.length === 0) ? (
+                            <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#666' }}>
+                                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎒</div>
+                                <div style={{ fontSize: '0.9rem', color: '#888' }}>Inventaire vide</div>
+                                <div style={{ fontSize: '0.75rem', color: '#666', marginTop: '0.5rem' }}>
+                                    Trouvez des objets en explorant le monde
+                                </div>
+                            </div>
+                        ) : (
+                            <div style={{ display: 'grid', gap: '0.8rem' }}>
+                                {character.inventory.map((item, i) => {
                                 const equipped = item.equipped;
                                 const isConsumable = (item.stats && (item.stats.heal || item.stats.resource || item.stats.hp)) ||
                                     ['consumable', 'potion', 'scroll'].includes(item.type?.toLowerCase());
@@ -335,12 +347,8 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                                     </div>
                                 );
                             })}
-                            {(!character.inventory || character.inventory.length === 0) && (
-                                <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem', padding: '3rem 1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', border: '1px dashed rgba(255,255,255,0.1)' }}>
-                                    La besace est vide... pour le moment.
-                                </div>
-                            )}
                         </div>
+                        )}
                     </div>
                 )}
 

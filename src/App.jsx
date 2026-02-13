@@ -984,7 +984,7 @@ export default function App() {
             // 5. Trigger Adventure Start (AI Intro)
             // Force start to bypass locks and checks
             setTimeout(() => {
-                handleStartAdventure(true);
+                handleStartAdventure(true, sessionData, [charData]);
             }, 500);
 
         } catch (e) {
@@ -1097,7 +1097,7 @@ export default function App() {
 
             // 5. Force Start Adventure (Wait slightly for state sync if needed, but we pass true)
             setTimeout(() => {
-                handleStartAdventure(true);
+                handleStartAdventure(true, sessionData, [charData]);
             }, 500);
 
         } catch (e) {
@@ -1353,24 +1353,33 @@ export default function App() {
         }
     }, [session, players, profile]);
 
-    const handleStartAdventure = async (force = false) => {
-        console.log("handleStartAdventure called", { force, session: session?.id, playersLen: players.length });
-        if (!session || players.length < 1) {
+    const handleStartAdventure = async (force = false, passedSession = null, passedPlayers = null) => {
+        const activeSession = passedSession || session;
+        const activePlayers = passedPlayers || players;
+        const activeCharacter = (passedPlayers && passedPlayers[0]) || character;
+
+        console.log("handleStartAdventure called", {
+            force,
+            session: activeSession?.id,
+            playersLen: activePlayers.length
+        });
+
+        if (!activeSession || activePlayers.length < 1) {
             console.error("Start aborted: No session or no players");
             return;
         }
-        if (!force && STARTING_LOCKS.has(session.id)) {
+        if (!force && STARTING_LOCKS.has(activeSession.id)) {
             console.warn("Start aborted: Locked");
             return;
         }
 
-        const lastStartAttempt = sessionStorage.getItem(`start_attempt_${session.id}`);
+        const lastStartAttempt = sessionStorage.getItem(`start_attempt_${activeSession.id}`);
         const now = Date.now();
         if (!force && lastStartAttempt && (now - parseInt(lastStartAttempt) < 10000)) {
             console.log("Start attempt debounced");
             return;
         }
-        if (!force) sessionStorage.setItem(`start_attempt_${session.id}`, now.toString());
+        if (!force) sessionStorage.setItem(`start_attempt_${activeSession.id}`, now.toString());
 
         // Additional safety: check if GM intro already exists (role is 'system' or 'assistant')
         // We look for a message that is sufficiently long to be an intro, excluding the trigger marker itself
@@ -1387,21 +1396,21 @@ export default function App() {
             return;
         }
 
-        STARTING_LOCKS.add(session.id);
+        STARTING_LOCKS.add(activeSession.id);
         setLoading(true);
 
         // Forced Start: Immediate UI feedback
         if (force) {
             setAdventureStarted(true);
             // Ensure session is marked as started
-            await supabase.from('sessions').update({ is_started: true }).eq('id', session.id);
+            await supabase.from('sessions').update({ is_started: true }).eq('id', activeSession.id);
             setSession(prev => ({ ...prev, is_started: true }));
             // Inject start marker if missing
             const hasMarker = messages.some(m => m.content && m.content.includes("START_ADVENTURE_TRIGGERED"));
             if (!hasMarker) {
                 const { error } = await supabase.from('messages').insert({
-                    id: session.id,
-                    session_id: session.id,
+                    id: activeSession.id,
+                    session_id: activeSession.id,
                     role: 'system',
                     content: "(MEMOIRE:SYSTEM) START_ADVENTURE_TRIGGERED"
                 });
@@ -1411,8 +1420,8 @@ export default function App() {
 
         try {
             // Mark session as started in DB (redundant if forced but safe)
-            if (!session.is_started) {
-                await supabase.from('sessions').update({ is_started: true }).eq('id', session.id);
+            if (!activeSession.is_started) {
+                await supabase.from('sessions').update({ is_started: true }).eq('id', activeSession.id);
                 setSession(prev => ({ ...prev, is_started: true }));
             }
 
@@ -1421,21 +1430,21 @@ export default function App() {
                 body: {
                     action: "START_ADVENTURE",
                     history: messages.map(m => ({ role: m.role, content: m.content })),
-                    sessionId: session.id,
-                    playerId: character?.id,
+                    sessionId: activeSession.id,
+                    playerId: activeCharacter?.id,
                     gameTime: gameTime,
                     timeLabel: getTimeLabel(),
                     weather: weather,
                     playerProfile: {
-                        name: character.name,
-                        class: character.class,
-                        level: character.level,
-                        stats: character.stats,
-                        backstory: character.backstory
+                        name: activeCharacter.name,
+                        class: activeCharacter.class,
+                        level: activeCharacter.level,
+                        stats: activeCharacter.stats,
+                        backstory: activeCharacter.backstory
                     },
                     gamePhase: gamePhase,
                     lore: { context: WORLD_CONTEXT, bestiary: { ...BESTIARY, ...BESTIARY_EXTENDED }, classes: CLASSES, npcs: NPC_TEMPLATES, quests: QUEST_HOOKS, locations: TAVERNS_AND_LOCATIONS, rumors: RUMORS_AND_GOSSIP, encounters: RANDOM_ENCOUNTERS, myths: WORLD_MYTHS_EXTENDED, legendaryItems: LEGENDARY_ITEMS, history: WORLD_HISTORY, factions: FACTION_LORE, calendar: CULTURAL_LORE },
-                    playerGroup: players.map(p => ({
+                    playerGroup: activePlayers.map(p => ({
                         name: p.name,
                         class: p.class,
                         backstory: p.backstory
