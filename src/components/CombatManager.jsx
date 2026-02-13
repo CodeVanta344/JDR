@@ -182,6 +182,12 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
     const [selectedAction, setSelectedAction] = useState(null);
     const [shake, setShake] = useState(false);
     const [flash, setFlash] = useState(false);
+    
+    // Track if AI has already played this turn to prevent duplicate actions
+    const aiTurnExecutedRef = useRef({ turnIndex: -1, actorId: null });
+    
+    // Track last attack to prevent rapid duplicates
+    const lastAttackRef = useRef({ timestamp: 0, actorId: null, targetId: null });
     const [animatingId, setAnimatingId] = useState(null);
     const [shakingId, setShakingId] = useState(null);
     const [damagePopups, setDamagePopups] = useState([]);
@@ -880,6 +886,17 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
         const authorized = freshActor.isEnemy || canAct;
         if (!authorized) return;
 
+        // PROTECTION : Empêcher les attaques multiples rapides (< 500ms)
+        const now = Date.now();
+        if (freshActor.isEnemy && 
+            lastAttackRef.current.actorId === freshActor.id && 
+            lastAttackRef.current.targetId === target.id &&
+            now - lastAttackRef.current.timestamp < 500) {
+            console.log('[executeAttack] Blocked duplicate attack from', freshActor.name, 'to', target.name);
+            return;
+        }
+        lastAttackRef.current = { timestamp: now, actorId: freshActor.id, targetId: target.id };
+
         // SÉCURITÉ : Empêcher de s'attaquer soi-même avec des attaques offensives
         if (!action.friendly && target.id === freshActor.id) {
             addLog({ role: 'system', content: `❌ **${freshActor.name}** ne peut pas s'attaquer soi-même !` });
@@ -1214,6 +1231,16 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
 
     useEffect(() => {
         if (combatState === 'active' && currentActor && currentActor.isEnemy && !currentActor.hasActed) {
+            // PROTECTION: Empêcher l'IA de rejouer si elle a déjà joué ce tour
+            if (aiTurnExecutedRef.current.turnIndex === currentTurnIndex && 
+                aiTurnExecutedRef.current.actorId === currentActor.id) {
+                console.log('[AI] Already executed turn for', currentActor.name, 'at turn', currentTurnIndex);
+                return;
+            }
+            
+            // Marquer immédiatement pour éviter les doubles exécutions
+            aiTurnExecutedRef.current = { turnIndex: currentTurnIndex, actorId: currentActor.id };
+            
             const timer = setTimeout(async () => {
                 const currentCombatants = combatantsRef.current;
                 const freshActor = currentCombatants.find(u => u.id === currentActor.id);
