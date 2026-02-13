@@ -242,39 +242,43 @@ export const SOCIAL_STATUSES: LifeChoice[] = [
       worldview_shaped: 'La foi guide, la raison suit. Le divin transcende le mortel. Servir les dieux, c\'est servir l\'humanité.'
     },
     effects: {
-      stats: { wisdom: 2 },
+      stats: { wisdom: 4, charisma: 2 },  // ×2
       mechanical_traits: [
         {
           name: 'Béni des Dieux',
-          desc: '+2 Religion et Médecine, bonus lancer sorts divins',
-          game_effect: 'Synergie cléric/paladin'
+          desc: '+5 Religion, +3 Médecine, +1d20 jets sorts divins',
+          effect: '+5 Religion, +3 Médecine',  // ×2.5
+          game_effect: 'Synergie cléric/paladin, bonus lanceur divin'
         }
       ],
       reputation: [
-        { factionId: 'eglises', delta: 6, reason: 'Famille sacerdotale' },
-        { factionId: 'cultes_interdits', delta: -5, reason: 'Ennemi doctrinaire' }
+        { factionId: 'eglises', delta: 6, reason: 'Famille sacerdotale reconnue' },
+        { factionId: 'cultes_interdits', delta: -5, reason: 'Ennemi doctrinaire orthodoxe' }
       ],
       items: [
-        { itemId: 'holy_symbol', quantity: 1, reason: 'Symbole familial' },
-        { itemId: 'prayer_book', quantity: 1, reason: 'Livre de prières' }
+        { itemId: 'holy_symbol', quantity: 1, reason: 'Symbole familial béni' },
+        { itemId: 'prayer_book', quantity: 1, reason: 'Livre prières annotées générations' },
+        { itemId: 'blessed_water', quantity: 3, reason: 'Eau bénite réserve temple' }
       ],
       skills: [
-        { skillId: 'religion', bonus: 2, reason: 'Éducation théologique' },
-        { skillId: 'medicine', bonus: 1, reason: 'Soins aux fidèles' }
+        { skillId: 'religion', bonus: 5, reason: 'Éducation théologique approfondie' },  // ×2.5
+        { skillId: 'medicine', bonus: 3, reason: 'Soins malades pèlerins quotidiens' },  // ×2.5
+        { skillId: 'insight', bonus: 3, reason: 'Lecture âmes confessions' }
       ],
-      languages: ['Commun', 'Langue Sacrée'],
-      tags: ['religious', 'devout', 'educated', 'spiritual']
+      languages: ['Commun', 'Langue Sacrée', 'Langue Ancienne'],
+      tags: ['religious', 'devout', 'educated', 'spiritual', 'healer']
     },
     social_impacts: {
       npc_reactions: {
-        'croyants': 'Respect pieux',
-        'athées': 'Méfiance',
-        'hérétiques': 'Hostilité'
+        'croyants': 'Respect pieux immédiat (+6 disposition)',
+        'athées': 'Méfiance intellectuelle',
+        'hérétiques': 'Hostilité doctrinale',
+        'malades': 'Espoir (vous êtes guérisseur potentiel)'
       },
-      first_impression: '« Que les dieux vous gardent, enfant de la foi. »'
+      first_impression: '« Que les dieux vous gardent, enfant béni de la foi. Votre lignée sacerdotale honore notre temple. »'
     },
     tags: ['religious', 'devout', 'educated'],
-    incompatible_with: ['birth_status_paria', 'birth_status_criminel']
+    incompatible_with: ['birth_status_paria', 'birth_status_criminel', 'birth_status_heretique']
   },
 
   {
@@ -289,28 +293,38 @@ export const SOCIAL_STATUSES: LifeChoice[] = [
       worldview_shaped: 'Personne ne te fait de cadeaux. La loi protège les riches, pas les faibles. La survie justifie tout.'
     },
     effects: {
-      stats: { dexterity: 2 },
-      stats_penalty: { charisma: 1 },
+      stats: { dexterity: 4, constitution: 2 },  // ×2
+      stats_penalty: { charisma: 2 },  // Pénalité sociale ×2
       mechanical_traits: [
         {
-          name: 'Instinct de Survie',
-          desc: '+3 Discrétion et Escamotage, sens du danger',
-          game_effect: 'Bonus roublard'
+          name: 'Instinct de Survie Urbaine',
+          desc: '+8 Discrétion, +5 Escamotage, sens danger urbain, +1d20 éviter embuscades',
+          effect: '+8 Stealth, +5 Sleight of Hand',  // ×2.5
+          game_effect: 'Maître infiltration urbaine + pickpocket expert'
+        },
+        {
+          name: 'Cicatrices des Rues',
+          desc: 'Résistance faim/froid, dort n\'importe où, détecte mensonges (survie)',
+          effect: 'Endurance urbaine',
+          game_effect: 'Avantage survie ville, détection pièges sociaux'
         }
       ],
       reputation: [
-        { factionId: 'guilde_voleurs', delta: 3, reason: 'Reconnu comme ancien des rues' },
-        { factionId: 'autorites', delta: -2, reason: 'Suspect par défaut' }
+        { factionId: 'guilde_voleurs', delta: 3, reason: 'Reconnu ancien des rues respecté' },
+        { factionId: 'autorites', delta: -2, reason: 'Suspect par défaut profil criminel' },
+        { factionId: 'orphelins', delta: 5, reason: 'Héros pour autres démunis' }
       ],
       items: [
-        { itemId: 'lockpicks', quantity: 1, reason: 'Outils de survie' }
+        { itemId: 'lockpicks', quantity: 1, reason: 'Outils survie volés/gagnés' },
+        { itemId: 'street_map', quantity: 1, reason: 'Carte mentale ruelles/égouts' }
       ],
       skills: [
-        { skillId: 'stealth', bonus: 3, reason: 'Éviter les gardes' },
-        { skillId: 'sleight_of_hand', bonus: 2, reason: 'Vol à la tire' }
+        { skillId: 'stealth', bonus: 8, reason: 'Éviter gardes patrouilles quotidiennes' },  // ×2.5
+        { skillId: 'sleight_of_hand', bonus: 5, reason: 'Vol tire survie depuis enfance' },  // ×2.5
+        { skillId: 'perception', bonus: 5, reason: 'Vigilance permanente danger rue' }
       ],
-      languages: ['Commun', 'Argot des Rues'],
-      tags: ['orphan', 'street', 'survivor', 'outcast']
+      languages: ['Commun', 'Argot des Rues', 'Langage Signes Voleurs'],
+      tags: ['orphan', 'street', 'survivor', 'outcast', 'rogue']
     },
     social_impacts: {
       npc_reactions: {
