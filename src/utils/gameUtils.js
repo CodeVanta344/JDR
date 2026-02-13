@@ -1,11 +1,17 @@
 import { CLASSES } from '../lore';
-import { 
-    BIRTH_LOCATIONS, SOCIAL_STATUSES, OMENS,
-    FAMILIES, EDUCATIONS, TRAUMAS,
-    TRAININGS, EXPLOITS, ENCOUNTERS,
-    PROFESSIONS, MOTIVATIONS, CONNECTIONS,
-    accumulateEffects
-} from '../lore/character-creation/lifepath';
+import { accumulateEffects } from '../lore/character-creation/lifepath';
+import { BIRTH_LOCATIONS } from '../lore/character-creation/lifepath/birth/locations';
+import { SOCIAL_STATUSES } from '../lore/character-creation/lifepath/birth/social-status';
+import { OMENS } from '../lore/character-creation/lifepath/birth/omens';
+import { FAMILIES } from '../lore/character-creation/lifepath/childhood/families';
+import { EDUCATIONS } from '../lore/character-creation/lifepath/childhood/education';
+import { TRAUMAS } from '../lore/character-creation/lifepath/childhood/traumas';
+import { TRAININGS } from '../lore/character-creation/lifepath/adolescence/training';
+import { EXPLOITS } from '../lore/character-creation/lifepath/adolescence/exploits';
+import { ENCOUNTERS } from '../lore/character-creation/lifepath/adolescence/encounters';
+import { PROFESSIONS } from '../lore/character-creation/lifepath/young-adult/professions';
+import { MOTIVATIONS } from '../lore/character-creation/lifepath/young-adult/motivations';
+import { CONNECTIONS } from '../lore/character-creation/lifepath/young-adult/connections';
 import { ITEMS_BY_ID } from '../lore/items-catalog';
 
 /**
