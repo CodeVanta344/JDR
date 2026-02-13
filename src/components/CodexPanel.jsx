@@ -26,7 +26,7 @@ import './CodexPanel.css';
 const WORLD_RULES = {
   "Progression de Niveau": Object.entries(LEVEL_THRESHOLDS).slice(0, 10).map(([lvl, xp]) => `Niveau ${lvl}: ${xp} XP`),
   "Seuils de Difficulté (d100)": Object.entries(DIFFICULTY_THRESHOLDS).map(([key, val]) => `${key}: DC ${val}`),
-  "Catégories d'Armures": Object.entries(EQUIPMENT_RULES.armor_categories).map(([cat, data]) => `${data.label}: ${data.description}`)
+  "Catégories d'Armures": Object.entries(EQUIPMENT_RULES.armor_categories).map(([cat, data]) => `${data.label}: ${data.desc}`)
 };
 
 // Consolidated Legendary Items

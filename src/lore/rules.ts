@@ -34,28 +34,28 @@ export const LEVEL_THRESHOLDS: Record<number, number> = {
 export const EQUIPMENT_RULES = {
   armor_categories: {
     light: {
-      label: "Armure legere",
-      examples: ["Robe", "Vetements", "Costume", "Tunique"],
+      label: "Armure légère",
+      examples: ["Robe", "Vêtements", "Costume", "Tunique"],
       ac_range: [0, 2] as [number, number],      // Ancien système
       ac_range_d100: [20, 26] as [number, number], // Nouveau : 20 + (0-2)×3
       penalty: null,
-      desc: "Aucune restriction. Bonus DEX complet a la CA."
+      desc: "Aucune restriction. Bonus DEX complet à la CA."
     },
     medium: {
-      label: "Armure intermediaire",
-      examples: ["Cuir", "Cuir cloute", "Peau", "Brigandine", "Ecailles"],
+      label: "Armure intermédiaire",
+      examples: ["Cuir", "Cuir clouté", "Peau", "Brigandine", "Écailles"],
       ac_range: [2, 4] as [number, number],      // Ancien
       ac_range_d100: [26, 32] as [number, number], // Nouveau : 20 + (2-4)×3
       penalty: { max_dex_bonus: 2, max_dex_bonus_d100: 5 },
-      desc: "Bonus DEX a la CA limite a +5 max (systeme d100)."
+      desc: "Bonus DEX à la CA limité à +5 max (système d100)."
     },
     heavy: {
       label: "Armure lourde",
-      examples: ["Cotte de mailles", "Plates", "Harnois", "Plate complete"],
+      examples: ["Cotte de mailles", "Plates", "Harnois", "Plate complète"],
       ac_range: [4, 8] as [number, number],      // Ancien
       ac_range_d100: [32, 44] as [number, number], // Nouveau : 20 + (4-8)×3
       penalty: { no_dex_bonus: true, stealth_disadvantage: true, speed_penalty: -1 },
-      desc: "Pas de bonus DEX. Desavantage en Discretion. -1 vitesse."
+      desc: "Pas de bonus DEX. Désavantage en Discrétion. -1 vitesse."
     }
   },
   weapon_categories: {
