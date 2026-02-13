@@ -12,6 +12,44 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
         level: { full: "Niveau", desc: "Puissance acquise" }
     };
 
+    const SKILL_INFO = {
+        // Combat
+        melee: { label: 'Mêlée', icon: '⚔️', category: 'Combat' },
+        ranged: { label: 'Distance', icon: '🏹', category: 'Combat' },
+        magic: { label: 'Magie', icon: '✨', category: 'Combat' },
+        defense: { label: 'Défense', icon: '🛡️', category: 'Combat' },
+        // Social
+        persuasion: { label: 'Persuasion', icon: '🤝', category: 'Social' },
+        intimidation: { label: 'Intimidation', icon: '💀', category: 'Social' },
+        deception: { label: 'Tromperie', icon: '🎭', category: 'Social' },
+        insight: { label: 'Perspicacité', icon: '👁️', category: 'Social' },
+        // Exploration
+        investigation: { label: 'Investigation', icon: '🔍', category: 'Exploration' },
+        perception: { label: 'Perception', icon: '👂', category: 'Exploration' },
+        survival: { label: 'Survie', icon: '🏕️', category: 'Exploration' },
+        stealth: { label: 'Discrétion', icon: '👣', category: 'Exploration' },
+        // Crafting
+        smithing: { label: 'Forge', icon: '🔨', category: 'Artisanat' },
+        alchemy: { label: 'Alchimie', icon: '🧪', category: 'Artisanat' },
+        enchanting: { label: 'Enchantement', icon: '🔮', category: 'Artisanat' },
+        cooking: { label: 'Cuisine', icon: '🍳', category: 'Artisanat' },
+        // Gathering
+        mining: { label: 'Minage', icon: '⛏️', category: 'Récolte' },
+        herbalism: { label: 'Herboristerie', icon: '🌿', category: 'Récolte' },
+        fishing: { label: 'Pêche', icon: '🎣', category: 'Récolte' },
+        hunting: { label: 'Chasse', icon: '🏹', category: 'Récolte' },
+        // Knowledge
+        arcana: { label: 'Arcanes', icon: '📜', category: 'Savoir' },
+        history: { label: 'Histoire', icon: '📚', category: 'Savoir' },
+        religion: { label: 'Religion', icon: '⚖️', category: 'Savoir' },
+        nature: { label: 'Nature', icon: '🌳', category: 'Savoir' },
+        // Fallback
+        tactics: { label: 'Tactique', icon: '♟️', category: 'Combat' },
+        knowledge_history: { label: 'Histoire', icon: '📚', category: 'Savoir' },
+        knowledge_religion: { label: 'Religion', icon: '⚖️', category: 'Savoir' },
+        chosen_skill: { label: 'Spécialité', icon: '⭐', category: 'Autre' }
+    };
+
     const modStr = (val) => {
         const mod = Math.floor((val - 10) / 2);
         return mod >= 0 ? `+${mod}` : `${mod}`;
@@ -234,20 +272,39 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
 
                         {/* Compétences acquises */}
                         {character.skill_bonuses && character.skill_bonuses.length > 0 && (
-                            <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(84,160,255,0.05)', borderRadius: '8px', border: '1px solid rgba(84,160,255,0.2)' }}>
-                                <h4 style={{ fontSize: '0.7rem', color: '#54a0ff', marginBottom: '0.6rem', textTransform: 'uppercase', letterSpacing: '1.5px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span>🎯</span>
+                            <div style={{ marginTop: '1.2rem', padding: '1.2rem', background: 'rgba(84,160,255,0.03)', borderRadius: '10px', border: '1px solid rgba(84,160,255,0.15)' }}>
+                                <h4 style={{ fontSize: '0.75rem', color: '#54a0ff', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                    <span style={{ fontSize: '1rem' }}>🎯</span>
                                     <span>Compétences Maîtrisées</span>
                                 </h4>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                                    {character.skill_bonuses.map((skill, idx) => {
-                                        const label = typeof skill === 'string' ? skill : (skill.skillId || 'Compétence');
-                                        return (
-                                            <div key={idx} style={{ padding: '0.4rem 0.7rem', background: 'rgba(84,160,255,0.1)', borderRadius: '4px', border: '1px solid rgba(84,160,255,0.3)' }}>
-                                                <span style={{ fontSize: '0.7rem', color: '#54a0ff', fontWeight: '600' }}>{label}</span>
-                                            </div>
-                                        );
-                                    })}
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.4rem' }}>
+                                    {(() => {
+                                        // Deduplicate and map skills
+                                        const skills = character.skill_bonuses.map(s => typeof s === 'string' ? s : s.skillId);
+                                        const uniqueSkills = [...new Set(skills)];
+
+                                        return uniqueSkills.map((skillId, idx) => {
+                                            const info = SKILL_INFO[skillId] || { label: skillId, icon: '▪️', category: 'Inconnu' };
+                                            return (
+                                                <div key={idx} style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'space-between',
+                                                    padding: '0.45rem 0.8rem',
+                                                    background: 'rgba(84,160,255,0.08)',
+                                                    borderRadius: '6px',
+                                                    border: '1px solid rgba(84,160,255,0.2)',
+                                                    transition: 'all 0.2s ease'
+                                                }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                                        <span style={{ fontSize: '0.9rem' }}>{info.icon}</span>
+                                                        <span style={{ fontSize: '0.75rem', color: '#fff', fontWeight: 'bold', textTransform: 'uppercase' }}>{info.label}</span>
+                                                    </div>
+                                                    <span style={{ fontSize: '0.6rem', color: 'rgba(84,160,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{info.category}</span>
+                                                </div>
+                                            );
+                                        });
+                                    })()}
                                 </div>
                             </div>
                         )}

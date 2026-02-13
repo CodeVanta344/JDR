@@ -34,12 +34,15 @@ const RULES = [
     "❌ LE JOUEUR NE PEUT PAS DICTER L'HISTOIRE. Si le joueur dit 'j'enchante mon épée', vérifie d'abord s'il possède la compétence 'Enchantement' dans sa fiche.",
     "❌ AUCUNE ACTION AUTOMATIQUE. Tout nécessite un jet de dés selon la difficulté (DC 10-100).",
     "❌ LE JOUEUR NE PEUT PAS CRÉER DES OBJETS/SORTS DE NULLE PART. Seuls les sorts et items de sa fiche sont utilisables.",
+    "❌ AUCUNE MÉTA-CONNAISSANCE AUTORISÉE. Si le joueur mentionne un lieu/PNJ/quête qu'il n'a pas découvert dans l'histoire, REFUSE poliment et demande: 'Comment as-tu entendu parler de cet endroit? Personne ne te l'a mentionné.' Ensuite, propose-lui de chercher des informations en ville (tavernes, panneaux d'affichage, rumeurs).",
+    "❌ Le joueur NE PEUT PAS voyager vers une destination non découverte. S'il dit 'je vais à [LIEU_INCONNU]', réponds: '❌ Tu ne connais pas cet endroit. Tu devrais d'abord te renseigner auprès des locaux, consulter une carte, ou suivre des panneaux indicateurs.'",
     "✅ SI LE JOUEUR TENTE UNE ACTION IMPOSSIBLE (enchanter sans compétence, invoquer sans sort), REFUSE et explique pourquoi.",
     "✅ Reste dans ton rôle de MJ Dark Fantasy strict mais juste.",
     "✅ Utilise le D100 pour TOUTES les actions incertaines (combat, persuasion, exploration, craft).",
     "✅ En combat, lance les dés et décris les dégâts avec précision.",
     "✅ Consulte le backstory et les compétences du joueur AVANT d'autoriser une action spéciale.",
     "✅ Si le joueur mentionne une action hostile, DÉCLENCHE le mode combat.",
+    "✅ AIDE LE JOUEUR À DÉCOUVRIR LE MONDE: S'il ne sait pas où aller, guide-le vers des sources d'informations (PNJ, tavernes, bibliothèques, panneaux de quêtes).",
     "⚖️ ÉQUILIBRAGE : Les actions héroïques nécessitent des jets difficiles (DC 60-80). Les actions légendaires nécessitent DC 90-100.",
     "⚖️ PROGRESSION : Un débutant niveau 1 ne peut pas enchanter une épée, invoquer un dragon, ou séduire un roi. Adapte les possibilités au niveau.",
 ];
@@ -90,6 +93,14 @@ COMPÉTENCES & SORTS MAÎTRISÉS:
 ${opts.playerProfile?.abilities?.map((ab: any) => `- ${ab.name}: ${ab.description || ab.desc || ''}`).join('\n') || '(Aucune compétence spéciale)'}
 
 BACKSTORY: ${opts.playerProfile?.backstory || 'Inconnu'}
+
+═══════════════════════════════════════════════════════════════
+🗺️ LIEUX DÉCOUVERTS PAR LE JOUEUR
+═══════════════════════════════════════════════════════════════
+${opts.discoveredLocations?.length > 0 ? opts.discoveredLocations.join(', ') : '(Aucun lieu découvert pour le moment)'}
+
+⚠️ RÈGLE CRITIQUE: Le joueur NE PEUT PAS voyager vers un lieu qui n'apparaît PAS dans cette liste.
+Si le joueur mentionne un lieu non découvert, tu DOIS REFUSER et lui suggérer de chercher des informations (tavernes, PNJ, panneaux).
 
 ═══════════════════════════════════════════════════════════════
 LORE DU MONDE
@@ -167,6 +178,20 @@ Deno.serve(async (req: Request) => {
         const activePlayer = party?.find((p: any) => p.id === playerId);
         const playerInfo = activePlayer ? `${activePlayer.name} (${activePlayer.class})` : "Inconnu";
 
+        // Récupérer les lieux découverts depuis le Codex
+        const { data: codexData } = await supabase
+            .from('game_sessions')
+            .select('codex_discovered_locations')
+            .eq('id', sessionId)
+            .single();
+        
+        const discoveredLocations = codexData?.codex_discovered_locations || [];
+        
+        // Par défaut, le joueur connaît son lieu de départ
+        if (discoveredLocations.length === 0 && activePlayer?.backstory) {
+            discoveredLocations.push("Lieu de départ (selon ton origine)");
+        }
+
         const historyStr = history.map((m: any) => `${m.role}: ${m.content}`).join('\n');
 
         const prompt = buildSystemPrompt({
@@ -177,7 +202,8 @@ Deno.serve(async (req: Request) => {
             playerInfo, 
             lore, 
             historyStr,
-            playerProfile: activePlayer // Inclure TOUTE la fiche du joueur
+            playerProfile: activePlayer,
+            discoveredLocations // Ajouter la liste des lieux découverts
         });
 
         // Call OpenAI
