@@ -46,7 +46,7 @@ export const LifePathWizard: React.FC<Props> = ({ onComplete, onUpdate, onCancel
 
   // Mapping étapes -> sous-étapes COMPLET
   const subStepsMap: Record<WizardStep, string[]> = {
-    birth: ['location', 'socialStatus', 'omen'],
+    birth: ['location', 'status', 'omen'],
     childhood: ['family', 'education', 'trauma'],
     adolescence: ['training', 'exploit', 'encounter'],
     youngAdult: ['profession', 'motivation', 'connection']
@@ -54,7 +54,7 @@ export const LifePathWizard: React.FC<Props> = ({ onComplete, onUpdate, onCancel
 
   const subStepLabels: Record<string, string> = {
     location: 'Lieu de Naissance',
-    socialStatus: 'Statut Social',
+    status: 'Statut Social',
     omen: 'Augure',
     family: 'Famille',
     education: 'Éducation',
@@ -106,7 +106,7 @@ export const LifePathWizard: React.FC<Props> = ({ onComplete, onUpdate, onCancel
           const { BIRTH_LOCATIONS } = await import('../../lore/character-creation/lifepath/birth/locations');
           fetched = BIRTH_LOCATIONS;
           break;
-        case 'socialStatus':
+        case 'status':
           const { SOCIAL_STATUSES } = await import('../../lore/character-creation/lifepath/birth/social-status');
           fetched = SOCIAL_STATUSES;
           break;

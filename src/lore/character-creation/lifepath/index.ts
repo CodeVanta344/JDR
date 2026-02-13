@@ -15,20 +15,28 @@ import type {
 
 // ===== FONCTION CALCUL CUMULATIF =====
 export function accumulateEffects(selection: LifepathSelection): AccumulatedEffects {
-  // SIMPLIFIÉ : Collecter 4 choix (1 par étape)
+  // Collecter TOUS les choix (12 sous-catégories possibles)
   const allChoices: LifeChoice[] = [];
 
-  // Birth - Origines
+  // Birth - Origines (3 sous-catégories)
   if (selection.birth.location) allChoices.push(selection.birth.location);
+  if (selection.birth.status) allChoices.push(selection.birth.status);
+  if (selection.birth.omen) allChoices.push(selection.birth.omen);
 
-  // Childhood - Enfance
+  // Childhood - Enfance (3 sous-catégories)
   if (selection.childhood.family) allChoices.push(selection.childhood.family);
+  if (selection.childhood.education) allChoices.push(selection.childhood.education);
+  if (selection.childhood.trauma) allChoices.push(selection.childhood.trauma);
 
-  // Adolescence - Formation
+  // Adolescence - Formation (3 sous-catégories)
   if (selection.adolescence.training) allChoices.push(selection.adolescence.training);
+  if (selection.adolescence.exploit) allChoices.push(selection.adolescence.exploit);
+  if (selection.adolescence.encounter) allChoices.push(selection.adolescence.encounter);
 
-  // Young Adult - Profession
+  // Young Adult - Profession (3 sous-catégories)
   if (selection.youngAdult.profession) allChoices.push(selection.youngAdult.profession);
+  if (selection.youngAdult.motivation) allChoices.push(selection.youngAdult.motivation);
+  if (selection.youngAdult.connection) allChoices.push(selection.youngAdult.connection);
 
   // Initialiser résultat
   const final_stats: Record<StatKey, number> = {
@@ -166,19 +174,19 @@ function generateNarrativeSummary(choices: LifeChoice[]): string {
 // ===== HELPER : VÉRIFIER SÉLECTION COMPLÈTE =====
 export function isLifepathComplete(selection: Partial<LifepathSelection>): selection is LifepathSelection {
   return !!(
-    // Phase 1
+    // Phase 1 - Birth
     selection.birth?.location &&
-    selection.birth?.socialStatus &&
+    selection.birth?.status &&
     selection.birth?.omen &&
-    // Phase 2
+    // Phase 2 - Childhood
     selection.childhood?.family &&
     selection.childhood?.education &&
     selection.childhood?.trauma &&
-    // Phase 3
+    // Phase 3 - Adolescence
     selection.adolescence?.training &&
     selection.adolescence?.exploit &&
     selection.adolescence?.encounter &&
-    // Phase 4
+    // Phase 4 - Young Adult
     selection.youngAdult?.profession &&
     selection.youngAdult?.motivation &&
     selection.youngAdult?.connection
