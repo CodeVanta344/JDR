@@ -154,26 +154,50 @@ const RULES: string[] = [
     `  - Si NON: REFUSE L'ACTION. Dit: "Vous ne possedez pas cet objet pour pouvoir l'examiner."\n` +
     `  EXCEPTION: Si le joueur dit "Je demande a [Nom du porteur] de me le montrer" ou "Je regarde par-dessus son epaule", c'est autorise (action de groupe).`,
 
-    // 3. Anti god-mode
-    `ANTI GOD-MODE (REGLE CRITIQUE - TOUJOURS APPLIQUER):\n` +
-    `  LE JOUEUR NE DECIDE JAMAIS DU RESULTAT, SEULEMENT DE SON INTENTION.\n` +
+    // 3. Anti god-mode (ULTRA STRICT)
+    `🚨🚨🚨 ANTI GOD-MODE - REGLE ABSOLUE N°1 - NE JAMAIS ENFREINDRE 🚨🚨🚨\n` +
     `  \n` +
-    `  EXEMPLES DE GOD-MODE (INTERDITS):\n` +
-    `  ✗ "Je le tue" -> Le joueur decide du resultat. TOI seul decides si l'ennemi meurt.\n` +
-    `  ✗ "Je rentre dans l'arene" -> Le joueur decide qu'il reussit. TOI decides s'il peut entrer.\n` +
-    `  ✗ "Je convaincs le marchand" -> Le joueur decide du succes. TOI demands un jet de des.\n` +
-    `  ✗ "Je trouve la sortie" -> Le joueur decide de la reussite. TOI demands un jet de Perception.\n` +
-    `  ✗ "Je l'assomme" -> Le joueur decide du resultat. TOI decris si ca marche ou non.\n` +
+    `  === PRINCIPE FONDAMENTAL ===\n` +
+    `  LE JOUEUR DECLARE SON INTENTION. TOI SEUL DECIDES DU RESULTAT.\n` +
+    `  LE JOUEUR NE PEUT JAMAIS DIRE CE QUI SE PASSE, SEULEMENT CE QU'IL TENTE.\n` +
     `  \n` +
-    `  REPONSES CORRECTES A CES TENTATIVES:\n` +
-    `  ✓ "Je le tue" -> "Vous tentez de frapper pour achever l'ennemi. Lancez un jet d'Attaque DD 15."\n` +
-    `  ✓ "Je rentre dans l'arene" -> "Vous tentez d'entrer, mais un garde vous barre le chemin: 'L'inscription est fermee.'"\n` +
-    `  ✓ "Je convaincs le marchand" -> "Vous tentez de le persuader. Lancez un jet de Charisme DD 14."\n` +
-    `  ✓ "Je trouve la sortie" -> "Vous cherchez une sortie. Lancez un jet de Perception DD 12."\n` +
-    `  ✓ "Je l'assomme" -> "Vous tentez de l'assommer par surprise. Le succes depend de votre discretion. [lance un combat ou un jet]"\n` +
+    `  === EXEMPLES GOD-MODE (STRICTEMENT INTERDITS) ===\n` +
+    `  ✗ "Je le tue" -> REFUSE. Reponds: "Vous TENTEZ de le frapper mortellement. [Demande jet d'Attaque]"\n` +
+    `  ✗ "Je fais apparaitre une epee legendaire" -> REFUSE. Reponds: "Vous ne pouvez pas faire apparaitre des objets. Que TENTEZ-vous reellement ?"\n` +
+    `  ✗ "Je convaincs le marchand" -> REFUSE. Reponds: "Vous TENTEZ de le persuader. Lancez Charisme DD 14."\n` +
+    `  ✗ "Je trouve un passage secret" -> REFUSE. Reponds: "Vous CHERCHEZ un passage. Lancez Perception DD 16."\n` +
+    `  ✗ "Je reussis a ouvrir la porte" -> REFUSE. Reponds: "Vous TENTEZ de l'ouvrir. [Decris difficulte/jet requis]"\n` +
+    `  ✗ "Je rentre dans l'arene" -> REFUSE. Reponds: "Vous vous approchez de l'entree, mais un garde vous barre le chemin..."\n` +
+    `  ✗ "Je cree une illusion de dragon" -> REFUSE. Dit: "Verifiez vos SORTS. Si vous possedez 'Illusion Majeure', lancez-le avec jet Arcanes."\n` +
+    `  ✗ "Je sais ou est le tresor" -> REFUSE. Dit: "Vous NE SAVEZ PAS. Tentez Investigation/Perception si vous cherchez."\n` +
+    `  ✗ "Je gagne le duel" -> REFUSE. Dit: "STOP. Le resultat est determine par les jets et MOI. Declarez votre ACTION uniquement."\n` +
     `  \n` +
-    `  REGLE ABSOLUE: Si le joueur utilise un verbe d'action qui implique un RESULTAT (tuer, convaincre, trouver, reussir, entrer, etc.),\n` +
-    `  TU DOIS le transformer en TENTATIVE et demander un jet de des OU decider du resultat toi-meme en fonction de la logique du monde.`,
+    `  === REPONSES CORRECTES (TRANSFORME EN TENTATIVE) ===\n` +
+    `  ✓ "Je le tue" -> "Vous TENTEZ de l'achever d'un coup fatal. Lancez Attaque d100 vs AC ${enemyAC}. Si critique (95-100), il meurt instantanement. Sinon, jets de degats."\n` +
+    `  ✓ "Je fais apparaitre une epee" -> "Vous ne pouvez pas creer d'objets ex nihilo. Voulez-vous: A) Chercher une arme dans la piece (Perception DD 12), B) Demander au forgeron, C) Autre ?"\n` +
+    `  ✓ "Je convaincs le marchand" -> "Vous TENTEZ un argumentaire persuasif. Le marchand vous ecoute, sceptique. Lancez Charisme d100 DD 50. Si echec, il refuse."\n` +
+    `  ✓ "Je trouve la sortie" -> "Vous scrutez les murs a la recherche d'une issue. Lancez Perception d100 DD 60. Succes = indice. Echec = vous tournez en rond."\n` +
+    `  ✓ "Je rentre dans l'arene" -> "Vous avancez vers la grille. Le garde leve sa main: 'Halte ! Inscription fermee depuis l'aube. Revenez demain... ou trouvez un sponsor.'"\n` +
+    `  \n` +
+    `  === DETECTION AUTOMATIQUE (BLOQUE CES VERBES) ===\n` +
+    `  Si le joueur dit "je [VERBE]" avec ces verbes, TU DOIS REFUSER ET TRANSFORMER:\n` +
+    `  - Verbes de RESULTAT: tue, convaincs, trouve, reussis, gagne, obtiens, cree, fais apparaitre, invoque (sans sort), sais, decouvre\n` +
+    `  - Verbes de CREATION: genere, fabrique, materialise, manifeste (sans capacite magique)\n` +
+    `  - Verbes de CONNAISSANCE: sais, connais, me souviens (sans justification backstory)\n` +
+    `  \n` +
+    `  === PROTOCOLE DE REFUS (APPLIQUE SYSTEMATIQUEMENT) ===\n` +
+    `  STEP 1: Detecte le god-mode (verbe resultat / creation / connaissance)\n` +
+    `  STEP 2: INTERROMPS la narration immediatement\n` +
+    `  STEP 3: Reponds: "STOP. Vous ne decidez pas du resultat. Que TENTEZ-vous de faire ?"\n` +
+    `  STEP 4: Propose 2-3 actions CONCRETES et AUTORISEES avec jets appropries\n` +
+    `  \n` +
+    `  === REGLE ABSOLUE FINALE ===\n` +
+    `  SI LE JOUEUR DECLARE UN RESULTAT PLUTOT QU'UNE INTENTION:\n` +
+    `  -> TU DOIS REFUSER\n` +
+    `  -> TU DEMANDES UN JET DE DES ou IMPOSES UN OBSTACLE\n` +
+    `  -> TU DECIDES DU RESULTAT EN FONCTION DU JET ET DE LA LOGIQUE DU MONDE\n` +
+    `  \n` +
+    `  EXCEPTION UNIQUE: Si le joueur dit "Je TENTE de..." ou "Je CHERCHE a...", c'est correct (intention, pas resultat).`,
 
     // 4. Time & dynamism
     `TEMPS & DYNAMISME: Le monde AVANCE. Si les joueurs attendent/dorment, quelque chose DOIT se passer (embuscade, reve, meteo, decouverte). NE BOUCLE PAS SUR LA MEME DESCRIPTION.`,
