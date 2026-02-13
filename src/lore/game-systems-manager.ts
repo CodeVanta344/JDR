@@ -3,7 +3,6 @@
 // Coordonne tous les systèmes de jeu (métiers, factions, économie, etc.)
 // ============================================================
 
-import { globalEconomy } from './economy-system';
 import { worldEventManager } from './world-events';
 import type { Profession } from './professions';
 import type { Faction } from './factions';
@@ -271,16 +270,24 @@ export class GameSystemsManager {
 
   /**
    * Obtenir prix d'un item dans une ville
+   * TODO: Intégrer avec nouveau système economy-system.ts
    */
   getItemPrice(itemId: string, cityId: string, isBuying: boolean): number {
-    return globalEconomy.calculatePrice(itemId, cityId, isBuying);
+    // TEMPORARY: Prix fixes
+    const basePrices: Record<string, number> = {
+      'iron_ore': 10,
+      'health_potion': 50,
+      'sword_short': 120
+    };
+    return basePrices[itemId] || 100;
   }
 
   /**
    * Simuler voyage commercial
+   * TODO: Intégrer avec nouveau système economy-system.ts
    */
   simulateTradeRoute(fromCity: string, toCity: string, itemId: string, quantity: number) {
-    return globalEconomy.simulateTradeRun(fromCity, toCity, itemId, quantity);
+    return { profit: quantity * 5, risk: 'low' };
   }
 
   // ============================================================
@@ -306,10 +313,10 @@ export class GameSystemsManager {
   advanceDay(days: number = 1): void {
     this.gameState.current_day += days;
     
-    // Mise à jour économie
-    for (let i = 0; i < days; i++) {
-      globalEconomy.dailyUpdate();
-    }
+    // TODO: Mise à jour économie avec nouveau système economy-system.ts
+    // for (let i = 0; i < days; i++) {
+    //   globalEconomy.dailyUpdate();
+    // }
 
     // Progression événements mondiaux
     this.gameState.world_events_active.forEach(eventId => {
