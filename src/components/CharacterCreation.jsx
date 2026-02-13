@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { CLASSES, CLASS_CATEGORIES, ENRICHED_BACKSTORIES, getBackstoriesForClass, formatBackstoryForGM, LOCATION_BACKGROUNDS, BIRTH_ORIGINS, CHILDHOOD_EVENTS, ADOLESCENCE_PATHS } from '../lore';
+import { ITEMS_BY_ID } from '../lore/items-catalog';
 import { MagicBackground } from './MagicBackground';
 import { LifePathWizard } from './character-creation/LifePathWizard';
 import './CharacterCreation.css';
@@ -9,6 +10,27 @@ const rollAttribute = () => {
     const rolls = Array.from({ length: 4 }, () => Math.floor(Math.random() * 6) + 1);
     rolls.sort((a, b) => a - b);
     return rolls.slice(1).reduce((a, b) => a + b, 0);
+};
+
+// Utility: Convert lifepath itemIds to full item objects
+const resolveLifepathItems = (lifepathItems) => {
+    if (!lifepathItems || lifepathItems.length === 0) return [];
+    
+    return lifepathItems.map(({ itemId, quantity, reason }) => {
+        const itemDef = ITEMS_BY_ID[itemId];
+        if (!itemDef) {
+            console.warn(`[CharacterCreation] Item "${itemId}" not found in catalog`);
+            return null;
+        }
+        
+        // Return full item object with quantity
+        return {
+            ...itemDef,
+            quantity: quantity || 1,
+            equipped: false,
+            lifepathReason: reason // Keep reason for lore
+        };
+    }).filter(Boolean); // Remove nulls
 };
 
 const STAT_LABELS = {
@@ -233,7 +255,7 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
             maxHp: (clsData.hitDie || 8) + 10 + (Math.floor((finalStats.con - 10) / 2) * 2),
             resource: 100,
             max_resource: 100,
-            inventory: [...selectedEquipment, ...(lifepathData?.items || [])],
+            inventory: [...selectedEquipment, ...resolveLifepathItems(lifepathData?.items)],
             portrait_url: portraitUrl || classPortraits[selectedClass],
             backstory: lifepathData?.adult?.label || selectedBackstory?.label,
             life_path: lifePathRecord,
