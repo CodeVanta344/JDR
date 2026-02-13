@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carte d'Aethelgard - Style Warhammer III</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,700;1,400&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Crimson Text', serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1410 50%, #2a1f14 100%);
+            color: #d4af37;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1920px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            background: radial-gradient(ellipse at center, rgba(212,175,55,0.1) 0%, transparent 70%);
+            position: relative;
+        }
+        
+        h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 5rem;
+            font-weight: 900;
+            color: #d4af37;
+            text-shadow: 0 0 20px #ffd700, 0 0 40px #8b6914, 2px 2px 4px #000;
+            letter-spacing: 8px;
+            margin-bottom: 10px;
+            animation: glow 3s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { text-shadow: 0 0 20px #ffd700, 0 0 40px #8b6914, 2px 2px 4px #000; }
+            to { text-shadow: 0 0 30px #ffd700, 0 0 60px #d4af37, 2px 2px 6px #000; }
+        }
+        
+        .subtitle {
+            font-size: 1.5rem;
+            font-style: italic;
+            color: #cd853f;
+            text-shadow: 1px 1px 2px #000;
+        }
+        
+        .map-container {
+            position: relative;
+            background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMmExZjE0IiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=');
+            border: 8px solid #8b6914;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.8), 0 10px 50px rgba(0,0,0,0.5);
+            margin: 40px auto;
+            max-width: 1400px;
+            padding: 40px;
+        }
+        
+        .region {
+            position: relative;
+            margin: 30px 0;
+            padding: 30px;
+            border: 3px solid;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            transition: all 0.4s ease;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        }
+        
+        .region:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(212,175,55,0.3);
+        }
+        
+        .region::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: 10px;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+        
+        .region:hover::before {
+            opacity: 1;
+        }
+        
+        /* Styles par région */
+        .frozen-north {
+            background: linear-gradient(135deg, rgba(44,62,80,0.3), rgba(93,173,226,0.2));
+            border-color: #5dade2;
+        }
+        
+        .northern-kingdoms {
+            background: linear-gradient(135deg, rgba(30,70,32,0.3), rgba(82,183,136,0.2));
+            border-color: #52b788;
+        }
+        
+        .highlands {
+            background: linear-gradient(135deg, rgba(90,71,51,0.3), rgba(139,115,85,0.2));
+            border-color: #8b7355;
+        }
+        
+        .coast {
+            background: linear-gradient(135deg, rgba(26,84,144,0.3), rgba(52,152,219,0.2));
+            border-color: #3498db;
+        }
+        
+        .desert {
+            background: linear-gradient(135deg, rgba(139,105,20,0.3), rgba(212,175,55,0.2));
+            border-color: #d4af37;
+        }
+        
+        .swamp {
+            background: linear-gradient(135deg, rgba(26,61,26,0.3), rgba(106,153,78,0.2));
+            border-color: #6a994e;
+        }
+        
+        .volcanic {
+            background: linear-gradient(135deg, rgba(100,30,22,0.3), rgba(192,57,43,0.2));
+            border-color: #c0392b;
+        }
+        
+        .region-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .region-title {
+            font-family: 'Cinzel', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px #000;
+        }
+        
+        .danger-level {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        
+        .safe { background: linear-gradient(135deg, #52b788, #2d6a4f); }
+        .moderate { background: linear-gradient(135deg, #cd853f, #8b6914); }
+        .dangerous { background: linear-gradient(135deg, #f39c12, #e67e22); }
+        .deadly { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+        .extreme { background: linear-gradient(135deg, #5dade2, #2980b9); }
+        
+        .region-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .region-info {
+            color: #d4af37;
+            line-height: 1.8;
+        }
+        
+        .region-stats {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 3px solid #d4af37;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(212,175,55,0.2);
+        }
+        
+        .stat-label {
+            font-weight: 700;
+            color: #ffd700;
+        }
+        
+        .stat-value {
+            color: #cd853f;
+        }
+        
+        .city {
+            background: rgba(212,175,55,0.1);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border: 2px solid #8b6914;
+            transition: all 0.3s;
+        }
+        
+        .city:hover {
+            background: rgba(212,175,55,0.2);
+            transform: translateX(5px);
+        }
+        
+        .city-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #ffd700;
+            margin-bottom: 8px;
+        }
+        
+        .city-icon {
+            font-size: 1.5rem;
+            margin-right: 10px;
+        }
+        
+        .features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .feature-badge {
+            padding: 4px 12px;
+            background: rgba(139,105,20,0.3);
+            border: 1px solid #d4af37;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            color: #f39c12;
+        }
+        
+        .routes {
+            margin-top: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, rgba(42,31,20,0.5), rgba(26,20,16,0.5));
+            border: 2px solid #8b6914;
+            border-radius: 10px;
+        }
+        
+        .route-title {
+            font-family: 'Cinzel', serif;
+            font-size: 2rem;
+            color: #d4af37;
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 2px 2px 4px #000;
+        }
+        
+        .route {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            margin: 10px 0;
+            background: rgba(212,175,55,0.05);
+            border-left: 4px solid #d4af37;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        
+        .route:hover {
+            background: rgba(212,175,55,0.15);
+            transform: translateX(10px);
+        }
+        
+        .route-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .route-arrow {
+            font-size: 2rem;
+            color: #d4af37;
+        }
+        
+        .route-details {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9rem;
+            color: #cd853f;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            margin-top: 60px;
+            border-top: 2px solid #8b6914;
+        }
+        
+        .quote {
+            font-size: 1.5rem;
+            font-style: italic;
+            color: #d4af37;
+            text-shadow: 1px 1px 3px #000;
+            margin-bottom: 20px;
+        }
+        
+        .seal {
+            width: 80px;
+            height: 80px;
+            margin: 20px auto;
+            border: 3px solid #d4af37;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            background: radial-gradient(circle, #1a1410, #0a0a0a);
+            box-shadow: 0 0 20px rgba(212,175,55,0.5);
+        }
+        
+        @media (max-width: 768px) {
+            h1 { font-size: 3rem; }
+            .region-content { grid-template-columns: 1fr; }
+            .route { flex-direction: column; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚔ AETHELGARD ⚔</h1>
+            <p class="subtitle">"Royaume des Légendes Oubliées"</p>
+        </header>
+
+        <div class="map-container">
+            <!-- TERRES GELÉES DU NORD -->
+            <div class="region frozen-north">
+                <div class="region-header">
+                    <h2 class="region-title">❄ TERRES GELÉES DU NORD</h2>
+                    <span class="danger-level extreme">☠ NIVEAU 30-40+ • EXTRÊME</span>
+                </div>
+                <div class="region-content">
+                    <div class="region-info">
+                        <p><strong>Climat :</strong> Toundra glaciale éternelle, tempêtes de neige perpétuelles, températures -30°C à -10°C</p>
+                        <p><strong>Habitants :</strong> Barbares du Nord, géants de glace, dragons blancs, chasseurs de mammouths</p>
+                        <p><strong>Dangers :</strong> Blizzards mortels, avalanches, créatures gelées, hypothermie, famine</p>
+                        <p><strong>Ressources :</strong> Fourrures rares, cristaux de glace magiques, ivoire de mammouth, mithril gelé</p>
+                    </div>
+                    <div class="region-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">🌡️ Température</span>
+                            <span class="stat-value">-30°C</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">⚔️ Niveau suggéré</span>
+                            <span class="stat-value">30-40+</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">👥 Population</span>
+                            <span class="stat-value">~10,000</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">🎲 Difficulté</span>
+                            <span class="stat-value">DC 80-100</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="city">
+                    <div class="city-name">
+                        <span class="city-icon">⛰️</span>Frostholm - Forteresse de Glace
+                    </div>
+                    <p>Bastion des barbares contre les dragons blancs. Population : 5,000</p>
+                    <div class="features">
+                        <span class="feature-badge">🔥 Forge de Glace</span>
+                        <span class="feature-badge">⛪ Temple du Vent Hurlant</span>
+                        <span class="feature-badge">💎 Mines de Cristal</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROYAUMES DU NORD -->
+            <div class="region northern-kingdoms">
+                <div class="region-header">
+                    <h2 class="region-title">🏰 ROYAUMES DU NORD</h2>
+                    <span class="danger-level safe">🛡️ NIVEAU 1-10 • SÛR</span>
+                </div>
+                <div class="region-content">
+                    <div class="region-info">
+                        <p><strong>Climat :</strong> Plaines tempérées verdoyantes, collines fertiles, forêts clairsemées</p>
+                        <p><strong>Habitants :</strong> Humains, semi-elfes, chevaliers, marchands, fermiers</p>
+                        <p><strong>Dangers :</strong> Bandits occasionnels, gobelins des collines, loups sauvages</p>
+                        <p><strong>Ressources :</strong> Blé, bétail, fer, artisanat de luxe, commerce international</p>
+                    </div>
+                    <div class="region-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">🌡️ Température</span>
+                            <span class="stat-value">5-25°C</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">⚔️ Niveau suggéré</span>
+                            <span class="stat-value">1-10</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">👥 Population</span>
+                            <span class="stat-value">~300,000</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">🎲 Difficulté</span>
+                            <span class="stat-value">DC 10-30</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="city">
+                    <div class="city-name">
+                        <span class="city-icon">👑</span>AETHELGARD - Capitale du Royaume
+                    </div>
+                    <p>Siège du pouvoir royal, centre culturel et militaire. Population : 150,000</p>
+                    <div class="features">
+                        <span class="feature-badge">🏰 Palais Royal</span>
+                        <span class="feature-badge">🔮 Académie Arcane</span>
+                        <span class="feature-badge">⛪ Temple de la Lumière</span>
+                        <span class="feature-badge">⚔️ Arène du Champion</span>
+                        <span class="feature-badge">🗡️ Quartier des Ombres</span>
+                    </div>
+                </div>
+                <div class="city">
+                    <div class="city-name">
+                        <span class="city-icon">🌲</span>Forêt d'Émeraude
+                    </div>
+                    <p>Forêt mystique habitée par les elfes. Niv 5-15</p>
+                    <div class="features">
+                        <span class="feature-badge">🌿 Temples Elfiques</span>
+                        <span class="feature-badge">🧙 Druides</span>
+                        <span class="feature-badge">🐺 Loups-garous</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HAUTES TERRES CENTRALES -->
+            <div class="region highlands">
+                <div class="region-header">
+                    <h2 class="region-title">🏔️ HAUTES TERRES CENTRALES</h2>
+                    <span class="danger-level moderate">⚠️ NIVEAU 10-20 • MOYEN</span>
+                </div>
+                <div class="region-content">
+                    <div class="region-info">
+                        <p><strong>Climat :</strong> Montagnes escarpées, grottes profondes, sommets enneigés</p>
+                        <p><strong>Habitants :</strong> Nains, griffons, géants des montagnes, aigles géants</p>
+                        <p><strong>Dangers :</strong> Avalanches, éboulements, trolls des cavernes, wyvernes</p>
+                        <p><strong>Ressources :</strong> Minerais précieux (fer, or, mithril), pierres précieuses</p>
+                    </div>
+                    <div class="region-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">🌡️ Température</span>
+                            <span class="stat-value">-5 à 15°C</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">⚔️ Niveau suggéré</span>
+                            <span class="stat-value">10-20</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">👥 Population</span>
+                            <span class="stat-value">~60,000</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">🎲 Difficulté</span>
+                            <span class="stat-value">DC 40-60</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="city">
+                    <div class="city-name">
+                        <span class="city-icon">⚒️</span>Forgefer (Ironforge) - Cité Naine
+                    </div>
+                    <p>Forteresse millénaire creusée dans la montagne. Population : 50,000</p>
+                    <div class="features">
+                        <span class="feature-badge">⚒️ Grandes Forges</span>
+                        <span class="feature-badge">💎 Mine de Mithril</span>
+                        <span class="feature-badge">👴 Halls des Ancêtres</span>
+                        <span class="feature-badge">🛡️ Armurerie Légendaire</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CÔTE OUEST -->
+            <div class="region coast">
+                <div class="region-header">
+                    <h2 class="region-title">🌊 CÔTE OUEST</h2>
+                    <span class="danger-level safe">⚓ NIVEAU 3-12 • MODÉRÉ</span>
+                </div>
+                <div class="region-content">
+                    <div class="region-info">
+                        <p><strong>Climat :</strong> Côtes maritimes, falaises spectaculaires, plages dorées</p>
+                        <p><strong>Habitants :</strong> Marins, pirates, pêcheurs, marchands maritimes</p>
+                        <p><strong>Dangers :</strong> Tempêtes marines, créatures des profondeurs, pirates</p>
+                        <p><strong>Ressources :</strong> Poissons, sel, épices importées, soie, perles</p>
+                    </div>
+                    <div class="region-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">🌡️ Température</span>
+                            <span class="stat-value">15-30°C</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">⚔️ Niveau suggéré</span>
+                            <span class="stat-value">3-12</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">👥 Population</span>
+                            <span class="stat-value">~100,000</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">🎲 Difficulté</span>
+                            <span class="stat-value">DC 20-45</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="city">
+                    <div class="city-name">
+                        <span class="city-icon">⚓</span>Port d'Azur - Cité Portuaire
+                    </div>
+                    <p>Hub commercial maritime international. Population : 80,000</p>
+                    <div class="features">
+                        <span class="feature-badge">🏪 Grand Marché</span>
+                        <span class="feature-badge">⛵ Chantier Naval</span>
+                        <span class="feature-badge">🍺 Taverne du Kraken</span>
+                        <span class="feature-badge">🏴‍☠️ Guilde des Corsaires</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DÉSERT DE L'EST -->
+            <div class="region desert">
+                <div class="region-header">
+                    <h2 class="region-title">🏜️ DÉSERT DE L'EST</h2>
+                    <span class="danger-level dangerous">☠️ NIVEAU 15-25 • DANGEREUX</span>
+                </div>
+                <div class="region-content">
+                    <div class="region-info">
+                        <p><strong>Climat :</strong> Désert aride, dunes infinies, tempêtes de sable mortelles</p>
+                        <p><strong>Habitants :</strong> Nomades, génies, sphinx, scorpions géants, serpents du sable</p>
+                        <p><strong>Dangers :</strong> Déshydratation, tempêtes, créatures venimeuses, mirages</p>
+                        <p><strong>Ressources :</strong> Épices rares, verre magique, reliques anciennes, gemmes du désert</p>
+                    </div>
+                    <div class="region-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">🌡️ Température</span>
+                            <span class="stat-value">35-50°C</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">⚔️ Niveau suggéré</span>
+                            <span class="stat-value">15-25</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">👥 Population</span>
+                            <span class="stat-value">~40,000</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">🎲 Difficulté</span>
+                            <span class="stat-value">DC 60-75</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="city">
+                    <div class="city-name">
+                        <span class="city-icon">🏛️</span>Zharash - Cité du Désert
+                    </div>
+                    <p>Oasis fortifiée, carrefour des caravanes. Population : 30,000</p>
+                    <div class="features">
+                        <span class="feature-badge">🏛️ Palais du Sultan</span>
+                        <span class="feature-badge">🧞 Puits des Génies</span>
+                        <span class="feature-badge">🌶️ Marché aux Épices</span>
+                        <span class="feature-badge">🐪 Caravansérail</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MARAIS DU SUD -->
+            <div class="region swamp">
+                <div class="region-header">
+                    <h2 class="region-title">🐊 MARAIS DU SUD</h2>
+                    <span class="danger-level deadly">💀 NIVEAU 20-30 • TRÈS DANGEREUX</span>
+                </div>
+                <div class="region-content">
+                    <div class="region-info">
+                        <p><strong>Climat :</strong> Marécages toxiques, brumes perpétuelles, humidité extrême</p>
+                        <p><strong>Habitants :</strong> Hommes-lézards, trolls, nécromanciens, spectres, zombies</p>
+                        <p><strong>Dangers :</strong> Maladies mortelles, eaux empoisonnées, morts-vivants, fièvres</p>
+                        <p><strong>Ressources :</strong> Herbes toxiques, reliques nécromantiques, champignons rares</p>
+                    </div>
+                    <div class="region-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">🌡️ Température</span>
+                            <span class="stat-value">20-35°C</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">⚔️ Niveau suggéré</span>
+                            <span class="stat-value">20-30</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">👥 Population</span>
+                            <span class="stat-value">~15,000</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">🎲 Difficulté</span>
+                            <span class="stat-value">DC 70-90</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="city">
+                    <div class="city-name">
+                        <span class="city-icon">💀</span>Marécage Noir - Zone Maudite
+                    </div>
+                    <p>Temples engloutis, tombes anciennes, présence nécromantique</p>
+                    <div class="features">
+                        <span class="feature-badge">☠️ Temples Maudits</span>
+                        <span class="feature-badge">🧟 Nécropole</span>
+                        <span class="feature-badge">🐊 Trolls des Marais</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TERRES VOLCANIQUES -->
+            <div class="region volcanic">
+                <div class="region-header">
+                    <h2 class="region-title">🌋 TERRES VOLCANIQUES</h2>
+                    <span class="danger-level deadly">🔥 NIVEAU 25-35+ • MORTEL</span>
+                </div>
+                <div class="region-content">
+                    <div class="region-info">
+                        <p><strong>Climat :</strong> Volcans actifs, rivières de lave, cendres perpétuelles, chaleur extrême</p>
+                        <p><strong>Habitants :</strong> Dragons rouges, élémentaires de feu, salamandres, cultistes</p>
+                        <p><strong>Dangers :</strong> Éruptions, lave, chaleur mortelle, gaz toxiques, dragons</p>
+                        <p><strong>Ressources :</strong> Obsidienne magique, gemmes de feu, cœurs de magma</p>
+                    </div>
+                    <div class="region-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">🌡️ Température</span>
+                            <span class="stat-value">40-80°C</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">⚔️ Niveau suggéré</span>
+                            <span class="stat-value">25-35+</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">👥 Population</span>
+                            <span class="stat-value">~2,000</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">🎲 Difficulté</span>
+                            <span class="stat-value">DC 85-100</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="city">
+                    <div class="city-name">
+                        <span class="city-icon">🔥</span>Pic du Magma - Forteresse du Feu
+                    </div>
+                    <p>Culte élémentaire, portail vers le plan du Feu</p>
+                    <div class="features">
+                        <span class="feature-badge">🔥 Temple du Feu</span>
+                        <span class="feature-badge">🐉 Antre du Dragon</span>
+                        <span class="feature-badge">💎 Mines d'Obsidienne</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROUTES COMMERCIALES -->
+            <div class="routes">
+                <h3 class="route-title">🛤️ ROUTES COMMERCIALES MAJEURES</h3>
+                
+                <div class="route">
+                    <div class="route-info">
+                        <span>👑 Aethelgard</span>
+                        <span class="route-arrow">→</span>
+                        <span>⚓ Port d'Azur</span>
+                    </div>
+                    <div class="route-details">
+                        <span>📏 200 km</span>
+                        <span>⏱️ 40h</span>
+                        <span class="danger-level safe">Facile</span>
+                    </div>
+                </div>
+
+                <div class="route">
+                    <div class="route-info">
+                        <span>👑 Aethelgard</span>
+                        <span class="route-arrow">→</span>
+                        <span>⚒️ Forgefer</span>
+                    </div>
+                    <div class="route-details">
+                        <span>📏 120 km</span>
+                        <span>⏱️ 24h</span>
+                        <span class="danger-level moderate">Moyen</span>
+                    </div>
+                </div>
+
+                <div class="route">
+                    <div class="route-info">
+                        <span>⚒️ Forgefer</span>
+                        <span class="route-arrow">→</span>
+                        <span>🏜️ Zharash</span>
+                    </div>
+                    <div class="route-details">
+                        <span>📏 400 km</span>
+                        <span>⏱️ 80h</span>
+                        <span class="danger-level dangerous">Difficile</span>
+                    </div>
+                </div>
+
+                <div class="route">
+                    <div class="route-info">
+                        <span>👑 Aethelgard</span>
+                        <span class="route-arrow">→</span>
+                        <span>🌲 Forêt d'Émeraude</span>
+                    </div>
+                    <div class="route-details">
+                        <span>📏 60 km</span>
+                        <span>⏱️ 12h</span>
+                        <span class="danger-level moderate">Moyen</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p class="quote">"Que les braves s'élèvent, car les ténèbres guettent aux frontières."</p>
+            <div class="seal">
+                <span>👑</span>
+            </div>
+            <p style="color: #8b6914; font-size: 0.9rem;">Roi Aldric III, Souverain d'Aethelgard</p>
+            <p style="color: #cd853f; font-size: 0.85rem; margin-top: 20px;">An 1247 de l'Ère du Royaume</p>
+        </footer>
+    </div>
+</body>
+</html>
