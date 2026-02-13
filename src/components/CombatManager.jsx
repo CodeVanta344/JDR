@@ -1318,13 +1318,28 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
 
     const UnitCard = ({ unit, style = {} }) => {
         const isCurrent = unit.id === currentActor?.id;
-        const isTargetable = selectedAction && (unit.isEnemy !== currentActor?.isEnemy) && unit.hp > 0;
+        
+        // Déterminer si l'unité est ciblable selon le type de sort
+        let isTargetable = false;
+        if (selectedAction && unit.hp > 0) {
+            const isOffensive = !selectedAction.friendly; // Par défaut les sorts sont offensifs
+            const isFriendly = selectedAction.friendly === true; // Sorts de soin/buff explicitement marqués
+            
+            if (isFriendly) {
+                // Sort allié : cibler son propre camp (et potentiellement soi-même)
+                isTargetable = (unit.isEnemy === currentActor?.isEnemy);
+            } else {
+                // Sort offensif : cibler le camp opposé
+                isTargetable = (unit.isEnemy !== currentActor?.isEnemy);
+            }
+        }
+        
         const isJumping = animatingId === unit.id;
 
         return (
             <div id={`unit-${unit.id}`}
                 onClick={() => isTargetable && isLocalPlayerTurn && executeAttack(unit, selectedAction)}
-                className={`unit-card ${isCurrent ? 'active-turn' : ''} ${isTargetable ? 'targetable' : ''}`}
+                className={`unit-card ${isCurrent ? 'active-turn' : ''} ${isTargetable ? (selectedAction.friendly ? 'targetable-friendly' : 'targetable') : ''}`}
                 style={{
                     left: style.left,
                     top: style.top,
@@ -1563,7 +1578,12 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                                         let highlight = null;
                                         if (selectedAction) {
                                             if (dist <= (selectedAction.range || 1) && dist > 0) {
-                                                highlight = { color: 'rgba(212, 175, 55, 0.15)', border: '1px solid rgba(212, 175, 55, 0.3)', glow: 'rgba(212, 175, 55, 0.2)' };
+                                                // Vert pour sorts alliés (soin/buff), doré pour sorts offensifs
+                                                if (selectedAction.friendly) {
+                                                    highlight = { color: 'rgba(74, 222, 128, 0.15)', border: '1px solid rgba(74, 222, 128, 0.3)', glow: 'rgba(74, 222, 128, 0.2)' };
+                                                } else {
+                                                    highlight = { color: 'rgba(212, 175, 55, 0.15)', border: '1px solid rgba(212, 175, 55, 0.3)', glow: 'rgba(212, 175, 55, 0.2)' };
+                                                }
                                             }
                                         } else if (canMove && dist <= currentActor.currentPM && dist > 0) {
                                             highlight = { color: 'rgba(0, 150, 255, 0.08)', border: '1px dashed rgba(0, 150, 255, 0.4)', glow: 'rgba(0, 150, 255, 0.1)' };

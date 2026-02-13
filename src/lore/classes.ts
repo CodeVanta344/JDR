@@ -341,9 +341,9 @@ export const CLASSES: Record<string, Class> = {
             }
         ],
         initial_ability_options: [
-            { name: "Mot de Guérison", cost: 15, cooldown: 2, level: 1, dice: "1d4", scaling: "wis", range: 6, type: "Lumière", actionType: "Action Bonus", flavor: "Une simple syllabe du Crystal Céleste suffit à refermer les plaies et à redonner espoir aux cœurs vaillants.", desc: "Soin rapide à distance.", vfx: "heal_gold" },
+            { name: "Mot de Guérison", cost: 15, cooldown: 2, level: 1, dice: "1d4", scaling: "wis", range: 6, type: "Lumière", actionType: "Action Bonus", flavor: "Une simple syllabe du Crystal Céleste suffit à refermer les plaies et à redonner espoir aux cœurs vaillants.", desc: "Soin rapide à distance.", vfx: "heal_gold", friendly: true },
             { name: "Flamme Sacrée", cost: 10, cooldown: 0, level: 1, dice: "1d8", scaling: "wis", range: 8, type: "Radieux", actionType: "Action", flavor: "Une colonne de feu blanc descend des cieux pour purifier ceux qui s'opposent à la volonté divine.", desc: "La cible ne bénéficie d'aucun bonus de couvert.", vfx: "holy_fire" },
-            { name: "Bénédiction", cost: 20, cooldown: 4, level: 1, range: 4, type: "Bénédiction", actionType: "Action", flavor: "Vous tracez un symbole sacré dans l'air, insufflant une fraction de la puissance du Crystal en vos alliés.", desc: "Donne +1d4 aux jets d'attaque de 3 alliés.", vfx: "bless_glow" }
+            { name: "Bénédiction", cost: 20, cooldown: 4, level: 1, range: 4, type: "Bénédiction", actionType: "Action", flavor: "Vous tracez un symbole sacré dans l'air, insufflant une fraction de la puissance du Crystal en vos alliés.", desc: "Donne +1d4 aux jets d'attaque de 3 alliés.", vfx: "bless_glow", friendly: true }
         ],
         subclasses: {
             "guerre": { label: "Domaine de Guerre", desc: "Combattant divin.", details: { style: "Offensif", feature: "Frappe Divine : Vos attaques d'armes infligent 1d8 dégâts radiants bonus." } },
@@ -469,7 +469,7 @@ export const CLASSES: Record<string, Class> = {
         },
         abilities: [],
         unlockables: [
-            { name: "Soins Naturels", cost: 15, cooldown: 3, level: 3, heal: "1d8", scaling: "wis", range: 2, desc: "Soigne un allié à 2 cases d'1d8 + Sagesse." },
+            { name: "Soins Naturels", cost: 15, cooldown: 3, level: 3, heal: "1d8", scaling: "wis", range: 2, desc: "Soigne un allié à 2 cases d'1d8 + Sagesse.", friendly: true },
             { name: "Passif Terrain", cost: 0, cooldown: 0, level: 4, desc: "Ignore les terrains difficiles (Passif)." },
             { name: "Tir de Barrage", cost: 30, cooldown: 3, level: 5, dice: "2d8", scaling: "dex", range: 4, desc: "Tire sur toutes les cibles dans un cône de 4 cases." },
             { name: "Camouflage", cost: 20, cooldown: 4, level: 6, desc: "+10 Discrétion si immobile." },
@@ -516,8 +516,8 @@ export const CLASSES: Record<string, Class> = {
             }
         ],
         initial_ability_options: [
-            { name: "Inspiration Bardique", cost: 10, cooldown: 2, level: 1, type: "Soutien", actionType: "Action Bonus", flavor: "Une mélodie épique qui ravive la flamme dans le cœur de vos compagnons et les pousse au-delà de leurs limites.", desc: "Donne un bonus de +1d6 au prochain jet d'un allié.", vfx: "note_gold" },
-            { name: "Mot de Guérison", cost: 15, cooldown: 2, level: 1, dice: "1d4", scaling: "cha", range: 6, type: "Sonore", actionType: "Action Bonus", flavor: "Un chant doux et apaisant qui calme les douleurs les plus vives et redonne la force de se battre.", desc: "Soin rapide par le chant.", vfx: "heal_pink" },
+            { name: "Inspiration Bardique", cost: 10, cooldown: 2, level: 1, type: "Soutien", actionType: "Action Bonus", flavor: "Une mélodie épique qui ravive la flamme dans le cœur de vos compagnons et les pousse au-delà de leurs limites.", desc: "Donne un bonus de +1d6 au prochain jet d'un allié.", vfx: "note_gold", friendly: true },
+            { name: "Mot de Guérison", cost: 15, cooldown: 2, level: 1, dice: "1d4", scaling: "cha", range: 6, type: "Sonore", actionType: "Action Bonus", flavor: "Un chant doux et apaisant qui calme les douleurs les plus vives et redonne la force de se battre.", desc: "Soin rapide par le chant.", vfx: "heal_pink", friendly: true },
             { name: "Moquerie Vicieuse", cost: 8, cooldown: 0, level: 1, dice: "1d4", scaling: "cha", range: 8, type: "Psychique", actionType: "Action", flavor: "Une insulte si cinglante qu'elle s'enracine dans l'esprit de l'adversaire, le faisant douter de ses propres forces.", desc: "La cible a un désavantage sur son prochain jet d'attaque.", vfx: "mock_purple" }
         ],
         subclasses: {
@@ -587,8 +587,8 @@ export const CLASSES: Record<string, Class> = {
         abilities: [],
         unlockables: [
             { name: "Croissance d'Épines", cost: 25, cooldown: 4, level: 2, range: 6, desc: "Zone de terrain difficile et dégâts." },
-            { name: "Peau d'Écorce", cost: 15, cooldown: 5, level: 3, desc: "Fixe la CA à 16 pendant 1 minute." },
-            { name: "Vague de Soin", cost: 30, cooldown: 4, level: 4, dice: "2d8", scaling: "wis", range: 4, desc: "Soigne en zone (Rayon : 2 cases)." },
+            { name: "Peau d'Écorce", cost: 15, cooldown: 5, level: 3, desc: "Fixe la CA à 16 pendant 1 minute.", friendly: true },
+            { name: "Vague de Soin", cost: 30, cooldown: 4, level: 4, dice: "2d8", scaling: "wis", range: 4, desc: "Soigne en zone (Rayon : 2 cases).", friendly: true },
             { name: "Appel de la Foudre", cost: 40, cooldown: 2, level: 5, dice: "3d10", scaling: "wis", range: 12, desc: "Frappe de foudre répétable pendant 10 tours." },
             { name: "Invoquer des Animaux", cost: 50, cooldown: 10, level: 6, desc: "Appelle des esprits fées en forme d'animaux." },
             { name: "Éclair de Vie", cost: 35, cooldown: 3, level: 7, dice: "5d6", range: 6, desc: "Dégâts de foudre et soin de moitié." },

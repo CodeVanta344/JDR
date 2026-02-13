@@ -112,7 +112,13 @@ export function accumulateEffects(selection: LifepathSelection): AccumulatedEffe
     skills,
     languages: Array.from(languages),
     narrative_summary,
-    tags: Array.from(tags)
+    tags: Array.from(tags),
+
+    // Choix principaux pour UI
+    origin: selection.birth.location,
+    childhood: selection.childhood.trauma || selection.childhood.family, // Trauma often defines the "event" label
+    adolescence: selection.adolescence.training || selection.adolescence.exploit,
+    adult: selection.youngAdult.profession || selection.youngAdult.motivation
   };
 }
 

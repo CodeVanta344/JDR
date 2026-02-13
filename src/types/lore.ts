@@ -127,6 +127,12 @@ export interface AccumulatedEffects {
   languages: string[];
   narrative_summary: string;
   tags: string[];
+
+  // Choix principaux pour affichage UI
+  origin?: LifeChoice;      // Birth Location
+  childhood?: LifeChoice;   // Childhood Trauma/Event
+  adolescence?: LifeChoice; // Adolescence Training
+  adult?: LifeChoice;       // Young Adult Profession
 }
 
 // ===== HÉROS LÉGENDAIRES =====
