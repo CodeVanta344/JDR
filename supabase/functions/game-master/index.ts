@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, PUT, DELETE',
 };
 
 // ─── HELPERS ─────────────────────────────────────────────────────────
@@ -22,70 +23,122 @@ function summarizeLore(lore: any): string {
 
     const parts: string[] = [];
 
-    // World context (always first, full text)
-    if (lore.context) parts.push("MONDE:\n" + lore.context);
+    // === SECTION 1: MONDE & CONTEXTE (PRIORITE MAXIMALE) ===
+    if (lore.context) parts.push("=== MONDE AETHELGARD ===\n" + lore.context);
 
-    // Factions
+    // === SECTION 2: HISTOIRE & MYTHOLOGIE ===
+    if (lore.history) {
+        parts.push("\n=== HISTOIRE DU MONDE ===\n" + (typeof lore.history === 'string' ? lore.history : JSON.stringify(lore.history).substring(0, 2000)));
+    }
+
+    if (lore.myths && Array.isArray(lore.myths)) {
+        const mythLines = lore.myths.slice(0, 8).map((m: any) =>
+            `• "${m.title}": ${m.story?.substring(0, 150) || ''}...`
+        );
+        if (mythLines.length) parts.push("\n=== MYTHES & LEGENDES ===\n" + mythLines.join('\n'));
+    }
+
+    // === SECTION 3: FACTIONS & POLITIQUE ===
     if (lore.factions) {
         const factionStr = typeof lore.factions === 'string'
             ? lore.factions
             : JSON.stringify(lore.factions);
-        parts.push("FACTIONS: " + factionStr.substring(0, 800));
+        parts.push("\n=== FACTIONS MAJEURES ===\n" + factionStr.substring(0, 1500));
     }
 
-    // NPC Templates — extract names and greetings for quick reference
-    if (lore.npcs) {
-        const npcLines: string[] = [];
-        for (const [role, list] of Object.entries(lore.npcs)) {
-            if (Array.isArray(list)) {
-                (list as any[]).forEach((n: any) => {
-                    npcLines.push(`[${role}] ${n.name} (${n.region || '?'}): "${n.greeting || ''}" Secret: ${n.secret || 'aucun'}`);
-                });
-            }
+    // === SECTION 4: GEOGRAPHIE & LOCATIONS ===
+    // Birth Locations (40 locations système création personnage)
+    if (lore.birthLocations) {
+        const birthLines: string[] = [];
+        if (Array.isArray(lore.birthLocations)) {
+            lore.birthLocations.slice(0, 10).forEach((loc: any) => {
+                birthLines.push(`• ${loc.name} (${loc.biome}): ${loc.description?.substring(0, 80) || ''}... [Traits: ${loc.traits?.mechanical?.map((t: any) => t.name).join(', ') || 'N/A'}]`);
+            });
         }
-        if (npcLines.length) parts.push("PNJ DISPONIBLES:\n" + npcLines.join('\n'));
+        if (birthLines.length) parts.push("\n=== BIRTH LOCATIONS (échantillon 10/40) ===\n" + birthLines.join('\n') + "\n[NOTE: 40 locations au total avec bonus/malus mécaniques spécifiques]");
     }
 
-    // Quest Hooks — titles + desc per region
-    if (lore.quests) {
-        const questLines: string[] = [];
-        for (const [region, list] of Object.entries(lore.quests)) {
-            if (Array.isArray(list)) {
-                (list as any[]).forEach((q: any) => {
-                    questLines.push(`[${region}] Niv.${q.level} "${q.title}" (${q.type}): ${q.desc}`);
-                });
-            }
-        }
-        if (questLines.length) parts.push("QUETES:\n" + questLines.join('\n'));
-    }
-
-    // Locations — taverns, shops, landmarks
+    // Locations générales (tavernes, shops, landmarks)
     if (lore.locations) {
         const locLines: string[] = [];
         for (const [type, list] of Object.entries(lore.locations)) {
             if (Array.isArray(list)) {
-                (list as any[]).forEach((l: any) => {
-                    locLines.push(`[${type}] ${l.name} (${l.region}): ${l.desc}`);
+                (list as any[]).slice(0, 5).forEach((l: any) => {
+                    locLines.push(`[${type}] ${l.name} (${l.region || 'région inconnue'}): ${l.desc?.substring(0, 60) || ''}`);
                 });
             }
         }
-        if (locLines.length) parts.push("LIEUX:\n" + locLines.join('\n'));
+        if (locLines.length) parts.push("\n=== LIEUX IMPORTANTS ===\n" + locLines.join('\n'));
     }
 
-    // Rumors
+    // === SECTION 5: CLASSES & SYSTEME D100 ===
+    if (lore.classes) {
+        const classLines: string[] = [];
+        for (const [className, classData] of Object.entries(lore.classes as any)) {
+            const desc = (classData as any).description?.substring(0, 80) || '';
+            classLines.push(`• ${className}: ${desc}...`);
+        }
+        if (classLines.length) parts.push("\n=== CLASSES DISPONIBLES ===\n" + classLines.join('\n') + "\n[SYSTÈME: d100, Stats ×2 (max 20), Skills ×2.5 (max 100), HP ×5, Critique 95-100, Échec critique 1-5]");
+    }
+
+    // === SECTION 6: PNJ TEMPLATES ===
+    if (lore.npcs) {
+        const npcLines: string[] = [];
+        for (const [role, list] of Object.entries(lore.npcs)) {
+            if (Array.isArray(list)) {
+                (list as any[]).slice(0, 3).forEach((n: any) => {
+                    npcLines.push(`[${role}] ${n.name} (${n.region || 'itinérant'}): "${n.greeting || '...'}" | Secret: ${n.secret || 'aucun'}`);
+                });
+            }
+        }
+        if (npcLines.length) parts.push("\n=== PNJ TEMPLATES (échantillon) ===\n" + npcLines.join('\n'));
+    }
+
+    // === SECTION 7: QUETES ===
+    if (lore.quests) {
+        const questLines: string[] = [];
+        for (const [region, list] of Object.entries(lore.quests)) {
+            if (Array.isArray(list)) {
+                (list as any[]).slice(0, 4).forEach((q: any) => {
+                    questLines.push(`[${region}] Niv.${q.level} "${q.title}" (${q.type || 'standard'}): ${q.desc?.substring(0, 70) || ''}...`);
+                });
+            }
+        }
+        if (questLines.length) parts.push("\n=== QUETES DISPONIBLES (échantillon) ===\n" + questLines.join('\n'));
+    }
+
+    // === SECTION 8: BESTIAIRE ===
+    if (lore.bestiary) {
+        const beastLines: string[] = [];
+        const entries = Object.entries(lore.bestiary).slice(0, 15);
+        entries.forEach(([key, b]: [string, any]) => {
+            beastLines.push(`• ${b.name || key} (CR ${b.cr || '?'}, HP ${b.hp || '?'}, AC ${b.ac || '?'}): ${b.desc?.substring(0, 60) || ''}...`);
+        });
+        if (beastLines.length) parts.push("\n=== BESTIAIRE (échantillon 15) ===\n" + beastLines.join('\n') + "\n[NOTE: 200+ créatures au total]");
+    }
+
+    // === SECTION 9: ITEMS LEGENDAIRES ===
+    if (lore.legendaryItems && Array.isArray(lore.legendaryItems)) {
+        const itemLines = lore.legendaryItems.slice(0, 8).map((i: any) =>
+            `• ${i.name} (${i.rarity || 'Légendaire'}): ${i.lore?.substring(0, 100) || ''}... [Pouvoir: ${i.power?.substring(0, 50) || 'mystérieux'}]`
+        );
+        if (itemLines.length) parts.push("\n=== ARTEFACTS LEGENDAIRES (échantillon) ===\n" + itemLines.join('\n'));
+    }
+
+    // === SECTION 10: RUMEURS ===
     if (lore.rumors) {
         const rumorLines: string[] = [];
         for (const [region, list] of Object.entries(lore.rumors)) {
             if (Array.isArray(list)) {
-                (list as any[]).slice(0, 3).forEach((r: any) => {
-                    rumorLines.push(`[${region}] "${r.rumor}" (${r.truth ? 'vrai' : 'faux'})`);
+                (list as any[]).slice(0, 2).forEach((r: any) => {
+                    rumorLines.push(`[${region}] "${r.rumor}" (${r.truth ? '✓ Vrai' : '✗ Faux'})`);
                 });
             }
         }
-        if (rumorLines.length) parts.push("RUMEURS:\n" + rumorLines.join('\n'));
+        if (rumorLines.length) parts.push("\n=== RUMEURS CIRCULANTES ===\n" + rumorLines.join('\n'));
     }
 
-    // Encounters — one per category for flavor
+    // === SECTION 11: RENCONTRES ALEATOIRES ===
     if (lore.encounters) {
         const encLines: string[] = [];
         for (const [cat, list] of Object.entries(lore.encounters)) {
@@ -94,44 +147,24 @@ function summarizeLore(lore: any): string {
                 encLines.push(`[${cat}] ${typeof sample === 'string' ? sample : sample.desc || JSON.stringify(sample)}`);
             }
         }
-        if (encLines.length) parts.push("RENCONTRES (exemples):\n" + encLines.join('\n'));
+        if (encLines.length) parts.push("\n=== RENCONTRES ALEATOIRES (exemples) ===\n" + encLines.join('\n'));
     }
 
-    // Bestiary — compact list
-    if (lore.bestiary) {
-        const beastLines = Object.entries(lore.bestiary).map(([key, b]: [string, any]) =>
-            `${b.name || key} (CR ${b.cr || '?'}): ${b.desc || ''}`
-        );
-        if (beastLines.length) parts.push("BESTIAIRE:\n" + beastLines.join('\n'));
-    }
-
-    // Legendary Items
-    if (lore.legendaryItems && Array.isArray(lore.legendaryItems)) {
-        const itemLines = lore.legendaryItems.map((i: any) =>
-            `${i.name} (${i.rarity}): ${i.lore?.substring(0, 80) || ''}...`
-        );
-        if (itemLines.length) parts.push("ARTEFACTS LEGENDAIRES:\n" + itemLines.join('\n'));
-    }
-
-    // Myths
-    if (lore.myths && Array.isArray(lore.myths)) {
-        const mythLines = lore.myths.map((m: any) =>
-            `"${m.title}": ${m.story?.substring(0, 100) || ''}...`
-        );
-        if (mythLines.length) parts.push("MYTHES:\n" + mythLines.join('\n'));
-    }
-
-    // Chronicle (session-specific events)
+    // === SECTION 12: CHRONIQUE SESSION ===
     if (lore.chronicle && Array.isArray(lore.chronicle) && lore.chronicle.length > 0) {
-        const chronicleLines = lore.chronicle.slice(-5).map((c: any) =>
+        const chronicleLines = lore.chronicle.slice(-8).map((c: any) =>
             `[${c.type || 'event'}] ${c.description || JSON.stringify(c)}`
         );
-        parts.push("CHRONIQUE RECENTE:\n" + chronicleLines.join('\n'));
+        parts.push("\n=== CHRONIQUE SESSION (derniers événements) ===\n" + chronicleLines.join('\n'));
     }
 
-    // Classes — compact
-    if (lore.classes) {
-        parts.push("CLASSES: " + JSON.stringify(lore.classes).substring(0, 600));
+    // === SECTION 13: METIERS & ECONOMIE ===
+    if (lore.professions) {
+        parts.push("\n=== METIERS DISPONIBLES ===\nCraft: Forge, Alchimie, Enchantement, Cuisine\nRécolte: Minage, Herboristerie, Pêche, Chasse\n[Progression: Apprenti -> Compagnon -> Maître -> Grand Maître]");
+    }
+
+    if (lore.economy) {
+        parts.push("\n=== SYSTEME ECONOMIQUE ===\nPrix dynamiques entre villes, commerce inter-cités, taxes factionnelles\nMonnaies: Pièces Cuivre (1 PC), Argent (10 PC), Or (100 PC), Platine (1000 PC)");
     }
 
     return parts.join('\n\n');
@@ -197,7 +230,7 @@ const RULES: string[] = [
     `  Un ivrogne a une table voisine ricane: 'Eh, le gamin croit qu'il est l'Elu ! T'as meme jamais vu une lame enchantee de ta vie, pas vrai ?'\n` +
     `  Le tavernier soupire. 'Si c'etait si facile, on serait tous des heros. Tu veux une VRAIE arme ? Va voir le forgeron. Ou trouve un sponsor pour l'arene.'\n` +
     `  \n` +
-    `  [REALITE: Vous etes niveau ${playerLevel}, vous ne possedez AUCUN sort de creation. Les epees legendaires sont portees par des heros de niveau 10+ ayant accompli des quetes epiques. Vous n'en avez jamais vu une en vrai.]\n` +
+    `  [REALITE: Vous etes niveau {{PLAYER_LEVEL}}, vous ne possedez AUCUN sort de creation. Les epees legendaires sont portees par des heros de niveau 10+ ayant accompli des quetes epiques. Vous n'en avez jamais vu une en vrai.]\n` +
     `  \n` +
     `  Actions REELLES possibles:\n` +
     `  A) Chercher une arme COMMUNE dans la taverne (Perception DD 40)\n` +
@@ -213,7 +246,7 @@ const RULES: string[] = [
     `  \n` +
     `  Le tavernier eclate de rire. 'Ah ! On a un comedien ce soir !' Quelques clients applaudissent, pensant a un spectacle. Un garde a l'entree secoue la tete: 'Trop de biere, celui-la.'\n` +
     `  \n` +
-    `  [REALITE: Vous etes niveau ${playerLevel}, roturier sans titre ni fortune. Le roi actuel est Aldric III, protege par 500 gardes royaux et des mages de guerre. Vous ne connaissez meme pas l'etiquette de cour.]\n` +
+    `  [REALITE: Vous etes niveau {{PLAYER_LEVEL}}, roturier sans titre ni fortune. Le roi actuel est Aldric III, protege par 500 gardes royaux et des mages de guerre. Vous ne connaissez meme pas l'etiquette de cour.]\n` +
     `  \n` +
     `  Si vous voulez du POUVOIR, commencez par:\n` +
     `  A) Rejoindre une faction influente (Guilde Marchands, Ordre Chevaliers)\n` +
@@ -230,9 +263,9 @@ const RULES: string[] = [
     `  \n` +
     `  Ses yeux ambres, grands comme des boucliers, se plissent. Un souffle chaud balaye votre visage. Il penche legerement la tete, presque amuse, comme un chat observant une souris pretentieuse.\n` +
     `  \n` +
-    `  'Courageux... ou stupide ?' gronde une voix profonde qui fait vibrer vos os. Une griffe, longue comme votre corps entier, tapote le sol pres de vous. 'Les heros de niveau 15 meurent en tentant. Toi, petit niveau ${playerLevel}... tu n'es qu'une collation.'\n` +
+    `  'Courageux... ou stupide ?' gronde une voix profonde qui fait vibrer vos os. Une griffe, longue comme votre corps entier, tapote le sol pres de vous. 'Les heros de niveau 15 meurent en tentant. Toi, petit niveau {{PLAYER_LEVEL}}... tu n'es qu'une collation.'\n` +
     `  \n` +
-    `  [REALITE: Dragon Ancien = 450 HP, ATK 90, AC 22. Votre ATK max = ${playerAttack}. Meme avec critique parfait (95-100), vous infligez ~20 degats. Il vous tue en 1 coup.]\n` +
+    `  [REALITE: Dragon Ancien = 450 HP, ATK 90, AC 22. Votre ATK max = {{PLAYER_ATTACK}}. Meme avec critique parfait (95-100), vous infligez ~20 degats. Il vous tue en 1 coup.]\n` +
     `  \n` +
     `  Le dragon n'attaque pas encore (il est curieux). Options REALISTES:\n` +
     `  A) FUIR immediatement (Athletisme DD 60, sinon souffle mortel)\n` +
@@ -1358,7 +1391,18 @@ function buildSystemPrompt(opts: {
 
     // Rules (auto-numbered)
     sections.push("\nREGLES ABSOLUES:");
-    RULES.forEach((rule, i) => sections.push(`${i + 1}. ${rule}`));
+
+    // Calculate average party stats for rule context
+    const playerCount = partyDetails?.length || 1;
+    const avgLevel = Math.max(1, Math.round((partyDetails?.reduce((sum: number, p: any) => sum + (p.level || 1), 0) || 1) / playerCount));
+    const estAttack = avgLevel + 4; // Estimate
+
+    RULES.forEach((rule, i) => {
+        const specializedRule = rule
+            .replace(/{{PLAYER_LEVEL}}/g, String(avgLevel))
+            .replace(/{{PLAYER_ATTACK}}/g, String(estAttack));
+        sections.push(`${i + 1}. ${specializedRule}`);
+    });
 
     // Phase directives
     const directive = PHASE_DIRECTIVES[gamePhase] || PHASE_DIRECTIVES.EXPLORATION;
