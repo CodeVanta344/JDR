@@ -49,11 +49,11 @@ export function initializeLoreSystem(): void {
     console.log('[Lore] Système déjà initialisé, skip.');
     return;
   }
-  
+
   console.log('[Lore] Initialisation du système de lore...');
-  
+
   const startTime = performance.now();
-  
+
   // Enregistrement des factions
   console.log(`[Lore] Enregistrement de ${ALL_FACTIONS.length} factions...`);
   ALL_FACTIONS.forEach(faction => {
@@ -66,7 +66,7 @@ export function initializeLoreSystem(): void {
       data: faction
     });
   });
-  
+
   // Enregistrement des métiers
   console.log(`[Lore] Enregistrement de ${ALL_PROFESSIONS.length} métiers...`);
   ALL_PROFESSIONS.forEach(profession => {
@@ -79,7 +79,7 @@ export function initializeLoreSystem(): void {
       data: profession
     });
   });
-  
+
   // Enregistrement des ressources
   console.log(`[Lore] Enregistrement de ${ALL_RESOURCES.length} ressources...`);
   ALL_RESOURCES.forEach(resource => {
@@ -92,7 +92,7 @@ export function initializeLoreSystem(): void {
       data: resource
     });
   });
-  
+
   // Enregistrement des recettes
   console.log(`[Lore] Enregistrement de ${ALL_RECIPES.length} recettes...`);
   ALL_RECIPES.forEach(recipe => {
@@ -105,7 +105,7 @@ export function initializeLoreSystem(): void {
       data: recipe
     });
   });
-  
+
   // Enregistrement des créatures
   console.log(`[Lore] Enregistrement de ${ALL_CREATURES.length} créatures...`);
   ALL_CREATURES.forEach(creature => {
@@ -118,7 +118,7 @@ export function initializeLoreSystem(): void {
       data: creature
     });
   });
-  
+
   // Enregistrement des créatures Expansion Batch 1
   console.log(`[Lore] Enregistrement de ${EXPANDED_BESTIARY_BATCH_1.length} créatures (Expansion Batch 1)...`);
   EXPANDED_BESTIARY_BATCH_1.forEach(creature => {
@@ -131,7 +131,7 @@ export function initializeLoreSystem(): void {
       data: creature
     });
   });
-  
+
   // Enregistrement des créatures Expansion Batch 2
   console.log(`[Lore] Enregistrement de ${EXPANDED_BESTIARY_BATCH_2.length} créatures (Expansion Batch 2)...`);
   EXPANDED_BESTIARY_BATCH_2.forEach(creature => {
@@ -144,14 +144,14 @@ export function initializeLoreSystem(): void {
       data: creature
     });
   });
-  
+
   // Enregistrement des NPCs
   console.log(`[Lore] Enregistrement de ${ALL_NPCS.length} NPCs...`);
   ALL_NPCS.forEach(npc => {
     const tags = [npc.role, npc.personality, npc.region];
     if (npc.faction) tags.push(npc.faction);
     if (npc.isHostile) tags.push('hostile');
-    
+
     GlobalLoreRegistry.register({
       id: npc.id,
       name: npc.name,
@@ -161,14 +161,14 @@ export function initializeLoreSystem(): void {
       data: npc
     });
   });
-  
+
   // Enregistrement des NPCs Expansion Batch 1
   console.log(`[Lore] Enregistrement de ${EXPANDED_NPCS_BATCH_1.length} NPCs (Expansion Batch 1)...`);
   EXPANDED_NPCS_BATCH_1.forEach(npc => {
     const tags = [npc.role, npc.personality, npc.region];
     if (npc.faction) tags.push(npc.faction);
     if (npc.isHostile) tags.push('hostile');
-    
+
     GlobalLoreRegistry.register({
       id: npc.id,
       name: npc.name,
@@ -178,14 +178,14 @@ export function initializeLoreSystem(): void {
       data: npc
     });
   });
-  
+
   // Enregistrement des NPCs Expansion Batch 2
   console.log(`[Lore] Enregistrement de ${EXPANDED_NPCS_BATCH_2.length} NPCs (Expansion Batch 2)...`);
   EXPANDED_NPCS_BATCH_2.forEach(npc => {
     const tags = [npc.role, npc.personality, npc.region];
     if (npc.faction) tags.push(npc.faction);
     if (npc.isHostile) tags.push('hostile');
-    
+
     GlobalLoreRegistry.register({
       id: npc.id,
       name: npc.name,
@@ -195,13 +195,13 @@ export function initializeLoreSystem(): void {
       data: npc
     });
   });
-  
+
   // Enregistrement des quêtes
   console.log(`[Lore] Enregistrement de ${ALL_QUESTS.length} quêtes...`);
   ALL_QUESTS.forEach(quest => {
     const tags = [quest.type, quest.category, quest.region, quest.questGiver, `level-${quest.suggestedLevel}`];
     if (quest.prerequisites?.faction) tags.push(quest.prerequisites.faction.id);
-    
+
     GlobalLoreRegistry.register({
       id: quest.id,
       name: quest.name,
@@ -211,13 +211,13 @@ export function initializeLoreSystem(): void {
       data: quest
     });
   });
-  
+
   // Enregistrement des quêtes Arc "Les Sceaux Brisés"
   console.log(`[Lore] Enregistrement de ${ARC_SEALED_ONES_QUESTS.length} quêtes (Arc Épique 1)...`);
   ARC_SEALED_ONES_QUESTS.forEach(quest => {
     const tags = [quest.type, quest.category, quest.region, quest.questGiver, `level-${quest.suggestedLevel}`, 'arc-sealed-ones'];
     if (quest.prerequisites?.faction) tags.push(quest.prerequisites.faction.id);
-    
+
     GlobalLoreRegistry.register({
       id: quest.id,
       name: quest.name,
@@ -227,14 +227,14 @@ export function initializeLoreSystem(): void {
       data: quest
     });
   });
-  
+
   // Enregistrement des items
   console.log(`[Lore] Enregistrement de ${ALL_ITEMS.length} items...`);
   ALL_ITEMS.forEach(item => {
     const tags = [item.type, item.rarity];
     if (item.category) tags.push(item.category);
     if (item.requirements?.class) tags.push(...item.requirements.class);
-    
+
     GlobalLoreRegistry.register({
       id: item.id,
       name: item.name,
@@ -244,19 +244,19 @@ export function initializeLoreSystem(): void {
       data: item
     });
   });
-  
+
   // Enregistrement des locations
   console.log(`[Lore] Enregistrement de ${ALL_LOCATIONS.length} lieux...`);
   ALL_LOCATIONS.forEach(location => {
     const tags = [
-      location.type, 
-      location.biome, 
-      location.region, 
+      location.type,
+      location.biome,
+      location.region,
       location.dangerLevel,
       `level-${location.suggestedLevel}`
     ];
     if (location.controlledBy) tags.push(location.controlledBy);
-    
+
     GlobalLoreRegistry.register({
       id: location.id,
       name: location.name,
@@ -266,13 +266,13 @@ export function initializeLoreSystem(): void {
       data: location
     });
   });
-  
+
   const endTime = performance.now();
   const totalEntities = GlobalLoreRegistry.getAll().length;
   const totalCreatures = ALL_CREATURES.length + EXPANDED_BESTIARY_BATCH_1.length + EXPANDED_BESTIARY_BATCH_2.length;
   const totalNPCs = ALL_NPCS.length + EXPANDED_NPCS_BATCH_1.length + EXPANDED_NPCS_BATCH_2.length;
   const totalQuests = ALL_QUESTS.length + ARC_SEALED_ONES_QUESTS.length;
-  
+
   console.log(`[Lore] ✅ Système de lore initialisé en ${(endTime - startTime).toFixed(2)}ms`);
   console.log(`[Lore] 📊 Total: ${totalEntities} entités enregistrées`);
   console.log(`[Lore] - Factions: ${ALL_FACTIONS.length}`);
@@ -284,7 +284,7 @@ export function initializeLoreSystem(): void {
   console.log(`[Lore] - Quêtes: ${totalQuests} (Base: ${ALL_QUESTS.length}, Arc Épique 1: ${ARC_SEALED_ONES_QUESTS.length})`);
   console.log(`[Lore] - Items: ${ALL_ITEMS.length}`);
   console.log(`[Lore] - Lieux: ${ALL_LOCATIONS.length}`);
-  
+
   // Validation (optionnel en développement)
   if (process.env.NODE_ENV === 'development') {
     const issues = GlobalLoreRegistry.validate();
@@ -294,7 +294,7 @@ export function initializeLoreSystem(): void {
       console.log('[Lore] ✅ Validation d\'intégrité réussie');
     }
   }
-  
+
   // Marquer comme initialisé
   isInitialized = true;
 }
@@ -316,6 +316,7 @@ export * from './npcs';
 export * from './quests';
 export * from './items-catalog';
 export * from './world-map';
+export * from './classes';
 
 // Re-export des expansions
 export * from './npcs-expansion-1';
@@ -339,7 +340,8 @@ export {
   EXPANDED_NPCS_BATCH_2,
   EXPANDED_BESTIARY_BATCH_1,
   EXPANDED_BESTIARY_BATCH_2,
-  ARC_SEALED_ONES_QUESTS
+  ARC_SEALED_ONES_QUESTS,
+  CLASSES
 };
 
 // ============================================================================
@@ -393,11 +395,11 @@ export function searchLore(query: string) {
 export function getLoreStats() {
   const all = GlobalLoreRegistry.getAll();
   const byType: Record<string, number> = {};
-  
+
   all.forEach(entity => {
     byType[entity.type] = (byType[entity.type] || 0) + 1;
   });
-  
+
   return {
     total: all.length,
     byType,

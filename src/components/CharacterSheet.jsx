@@ -284,7 +284,6 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                                                     </span>
                                                 )}
                                             </div>
-                                            {/* Description removed as requested */}
                                         </div>
                                     ))}
                                 </div>
@@ -473,9 +472,8 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                                                 {ability.cost} RES
                                             </div>
                                         )}
-                                    </div>
-                                    {/* Description removed as requested */}
-                                    {(ability.heal || ability.resource || ability.range || ability.dice || ability.scaling) && (
+                                            </div>
+                                        </div>
                                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
                                             {ability.dice && (
                                                 <span style={{ fontSize: '0.65rem', color: '#fff', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.2)' }}>
@@ -486,39 +484,41 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                                             {ability.resource && <span style={{ fontSize: '0.65rem', color: '#48dbfb', background: 'rgba(72,219,251,0.1)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(72,219,251,0.2)' }}>⚡ RES: +{ability.resource}</span>}
                                             {ability.range && <span style={{ fontSize: '0.65rem', color: '#f39c12', background: 'rgba(243,156,18,0.1)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(243,156,18,0.2)' }}>🎯 PORTÉE: {ability.range}m</span>}
                                         </div>
-                                    )}
-                                    {ability.cooldown > 0 && (
-                                        <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '8px', textAlign: 'right' }}>
-                                            ⏳ RECHARGE: {ability.cooldown} TOURS
-                                        </div>
-                                    )}
+                            )}
+                            {ability.cooldown > 0 && (
+                                <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '8px', textAlign: 'right' }}>
+                                    ⏳ RECHARGE: {ability.cooldown} TOURS
                                 </div>
-                            ))}
+                            )}
                         </div>
+                            ))}
+                    </div>
                     </div>
                 )}
 
 
-            </div>
+        </div>
 
-            {/* Footer */}
-            <div className="sheet-footer" style={{ padding: '1rem', borderTop: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.3)' }}>
-                <button
-                    onClick={onToggleSettings}
-                    style={{ width: '100%', padding: '0.8rem', background: 'transparent', border: '1px solid var(--glass-border)', color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer', borderRadius: '6px', transition: 'all 0.2s', letterSpacing: '1px' }}
-                    onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = 'var(--text-muted)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--glass-border)'; }}
-                >
-                    SANCTUAIRE (PARAMÈTRES)
-                </button>
-            </div>
+            {/* Footer */ }
+    <div className="sheet-footer" style={{ padding: '1rem', borderTop: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.3)' }}>
+        <button
+            onClick={onToggleSettings}
+            style={{ width: '100%', padding: '0.8rem', background: 'transparent', border: '1px solid var(--glass-border)', color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer', borderRadius: '6px', transition: 'all 0.2s', letterSpacing: '1px' }}
+            onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = 'var(--text-muted)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--glass-border)'; }}
+        >
+            SANCTUAIRE (PARAMÈTRES)
+        </button>
+    </div>
 
-            {enlargedImage && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '2rem' }} onClick={() => setEnlargedImage(null)}>
-                    <img src={enlargedImage} style={{ maxWidth: '90%', maxHeight: '90%', borderRadius: '8px', border: '2px solid var(--gold-primary)' }} />
-                    <div style={{ position: 'absolute', top: '1rem', right: '1rem', color: '#fff', fontSize: '2rem', cursor: 'pointer' }}>×</div>
-                </div>
-            )}
-        </aside>
+    {
+        enlargedImage && (
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '2rem' }} onClick={() => setEnlargedImage(null)}>
+                <img src={enlargedImage} style={{ maxWidth: '90%', maxHeight: '90%', borderRadius: '8px', border: '2px solid var(--gold-primary)' }} />
+                <div style={{ position: 'absolute', top: '1rem', right: '1rem', color: '#fff', fontSize: '2rem', cursor: 'pointer' }}>×</div>
+            </div>
+        )
+    }
+        </aside >
     );
 };
