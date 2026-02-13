@@ -145,38 +145,41 @@ export const SOCIAL_STATUSES: LifeChoice[] = [
       worldview_shaped: 'Un travail bien fait est sa propre récompense. Les mains créent ce que l\'esprit conçoit. Le talent se gagne, pas par la naissance, mais par la sueur.'
     },
     effects: {
-      stats: { dexterity: 1, intelligence: 1 },
+      stats: { dexterity: 2, intelligence: 2 },  // ×2
       mechanical_traits: [
         {
           name: 'Maître Héritier',
-          desc: '+2 à un métier d\'artisanat au choix, outils de maître offerts',
-          game_effect: 'Bonus crafting spécialisé'
+          desc: '+5 à un métier d\'artisanat au choix, outils de maître offerts, +10% qualité crafting',
+          effect: '+5 Crafting (spécialité)',  // ×2.5
+          game_effect: 'Bonus crafting spécialisé + qualité supérieure'
         }
       ],
       reputation: [
         { factionId: 'guilde_artisans', delta: 5, reason: 'Fils/Fille de Maître' }
       ],
       items: [
-        { itemId: 'masterwork_tools', quantity: 1, reason: 'Héritage familial' },
-        { itemId: 'crafting_manual', quantity: 1, reason: 'Recueil de techniques' }
+        { itemId: 'masterwork_tools', quantity: 1, reason: 'Héritage familial (qualité exceptionnelle)' },
+        { itemId: 'crafting_manual', quantity: 1, reason: 'Recueil techniques secrètes' },
+        { itemId: 'raw_materials', quantity: 3, reason: 'Stock matériaux premium' }
       ],
       skills: [
-        { skillId: 'crafting_choice', bonus: 2, reason: 'Apprentissage familial' },
-        { skillId: 'appraisal', bonus: 1, reason: 'Évaluation matériaux' }
+        { skillId: 'crafting_choice', bonus: 5, reason: 'Apprentissage familial intensif' },  // ×2.5
+        { skillId: 'appraisal', bonus: 3, reason: 'Évaluation matériaux expertise' }  // ×2.5
       ],
-      languages: ['Commun'],
-      tags: ['artisan', 'skilled', 'urban', 'practical']
+      languages: ['Commun', 'Langue du Métier'],
+      tags: ['artisan', 'skilled', 'urban', 'practical', 'craftsman']
     },
     social_impacts: {
       npc_reactions: {
-        'artisans': 'Respect professionnel',
-        'nobles': 'Indifférence',
-        'aventuriers': 'Intérêt (équipement)'
+        'artisans': 'Respect professionnel immédiat (+5 disposition)',
+        'nobles': 'Indifférence polie (sauf si besoin équipement)',
+        'aventuriers': 'Intérêt commercial (équipement de qualité)',
+        'marchands': 'Respect mutuel, affaires possibles'
       },
-      first_impression: '« Votre famille fait du beau travail. Pourriez-vous réparer ça ? »'
+      first_impression: '« Votre famille fait du magnifique travail. Pourriez-vous me créer quelque chose ? »'
     },
     tags: ['artisan', 'skilled', 'urban'],
-    incompatible_with: []
+    incompatible_with: ['birth_status_esclave', 'birth_status_nobility']
   },
 
   {
@@ -191,27 +194,29 @@ export const SOCIAL_STATUSES: LifeChoice[] = [
       worldview_shaped: 'La terre ne ment pas. Le travail honnête nourrit le corps et l\'âme. Les nobles parlent, les paysans font.'
     },
     effects: {
-      stats: { constitution: 2 },
+      stats: { constitution: 4 },  // ×2
       mechanical_traits: [
         {
           name: 'Robustesse Paysanne',
-          desc: '+5 PV maximum, résistance faim/soif',
-          effect: '+5 HP',
-          game_effect: 'Endurance accrue'
+          desc: '+25 PV maximum, résistance faim/soif, endurance marathonienne',
+          effect: '+25 HP',  // ×5
+          game_effect: 'Endurance exceptionnelle, survie prolongée conditions dures'
         }
       ],
       reputation: [
-        { factionId: 'peuple', delta: 5, reason: 'Issu du peuple' }
+        { factionId: 'peuple', delta: 5, reason: 'Authentiquement issu du peuple' }
       ],
       items: [
-        { itemId: 'wooden_tool', quantity: 1, reason: 'Outil agricole' }
+        { itemId: 'wooden_tool', quantity: 1, reason: 'Outil agricole familial usé' },
+        { itemId: 'dried_rations', quantity: 5, reason: 'Provisions rustiques' }
       ],
       skills: [
-        { skillId: 'survival', bonus: 2, reason: 'Vie rurale dure' },
-        { skillId: 'animal_handling', bonus: 1, reason: 'Bétail familial' }
+        { skillId: 'survival', bonus: 5, reason: 'Vie rurale difficile quotidienne' },  // ×2.5
+        { skillId: 'animal_handling', bonus: 3, reason: 'Bétail familial depuis enfance' },  // ×2.5
+        { skillId: 'farming', bonus: 5, reason: 'Expertise agriculture' }
       ],
-      languages: ['Commun'],
-      tags: ['rural', 'humble', 'resilient', 'commoner']
+      languages: ['Commun', 'Dialecte Rural'],
+      tags: ['rural', 'humble', 'resilient', 'commoner', 'hardy']
     },
     social_impacts: {
       npc_reactions: {
