@@ -12,13 +12,28 @@ export const DiceChallengeModal = ({
     onClose,
     onRollStart
 }) => {
-    const { stat, label, dc = 50, dice = 'd100' } = challenge;
     const [rolled, setRolled] = useState(false);
     const [isRolling, setIsRolling] = useState(false);
     const [rolls, setRolls] = useState([]); // Array of { type, value, completed }
     const [totalNatural, setTotalNatural] = useState(0);
     const [modifier, setModifier] = useState(0);
     const [showOutcome, setShowOutcome] = useState(false);
+
+    // Progressive Dice Logic based on character level
+    const charLevel = playerStats?.level || 1;
+    const {
+        dieType,
+        multiplier,
+        critSuccessThreshold,
+        critFailThreshold
+    } = React.useMemo(() => {
+        if (charLevel <= 5) return { dieType: 'd20', multiplier: 5, critSuccessThreshold: 20, critFailThreshold: 1 };
+        if (charLevel <= 10) return { dieType: 'd50', multiplier: 2, critSuccessThreshold: 48, critFailThreshold: 3 };
+        if (charLevel <= 15) return { dieType: 'd75', multiplier: 1.33, critSuccessThreshold: 73, critFailThreshold: 3 };
+        return { dieType: 'd100', multiplier: 1, critSuccessThreshold: 95, critFailThreshold: 5 };
+    }, [charLevel]);
+
+    const { stat, label, dc = 50 } = challenge;
 
     // Calculate modifier from player stats
     React.useEffect(() => {
@@ -29,40 +44,17 @@ export const DiceChallengeModal = ({
         }
     }, [playerStats, stat]);
 
-    const parseDiceFormula = (formula) => {
-        const parts = formula.toLowerCase().replace(/\s+/g, '').split('+');
-        const diceList = [];
-
-        parts.forEach(part => {
-            const match = part.match(/(\d+)?d(\d+)/);
-            if (match) {
-                const count = parseInt(match[1]) || 1;
-                const sides = `d${match[2]}`;
-                for (let i = 0; i < count; i++) {
-                    diceList.push({ type: sides, value: null, completed: false });
-                }
-            } else if (!isNaN(part)) {
-                // Fixed bonus in formula (e.g. 1d20 + 5)
-                // We'll handle this as a virtual modifier for now
-            }
-        });
-
-        return diceList.length > 0 ? diceList : [{ type: 'd100', value: null, completed: false }];
-    };
-
     const handleRoll = () => {
         if (rolled || isRolling) return;
 
-        const initialDice = parseDiceFormula(dice);
         setIsRolling(true);
         if (onRollStart) onRollStart();
 
-        const newDice = initialDice.map(d => ({
-            ...d,
-            value: Math.floor(Math.random() * parseInt(d.type.substring(1))) + 1
-        }));
-
-        setRolls(newDice);
+        setRolls([{
+            type: dieType,
+            value: Math.floor(Math.random() * parseInt(dieType.substring(1))) + 1,
+            completed: false
+        }]);
     };
 
     const handleDieComplete = (index) => {
@@ -70,12 +62,13 @@ export const DiceChallengeModal = ({
             const updated = [...prev];
             updated[index].completed = true;
 
-            // Trigger check for all complete
             const allDone = updated.every(d => d.completed);
             if (allDone) {
-                const sum = updated.reduce((acc, d) => acc + d.value, 0);
+                const natRoll = updated[0].value;
+                const finalNatural = natRoll * multiplier;
+
                 setTimeout(() => {
-                    setTotalNatural(sum);
+                    setTotalNatural(finalNatural);
                     setIsRolling(false);
                     setRolled(true);
                     setShowOutcome(true);
@@ -86,12 +79,14 @@ export const DiceChallengeModal = ({
     };
 
     const getOutcome = () => {
-        const total = totalNatural + modifier;
-        const isD100 = rolls.length === 1 && rolls[0].type === 'd100';
+        if (rolls.length === 0) return { status: 'UNKNOWN', label: '', color: '#fff' };
 
-        // D100 Crit Thresholds: 95-100 Success, 1-5 Failure
-        if (isD100 && rolls[0].value >= 95) return { status: 'CRITICAL_SUCCESS', label: 'RÉUSSITE CRITIQUE !', color: '#ffd700' };
-        if (isD100 && rolls[0].value <= 5) return { status: 'CRITICAL_FAILURE', label: 'ÉCHEC CRITIQUE...', color: '#ff4444' };
+        const natValue = rolls[0].value; // The raw roll before multiplier
+        const total = totalNatural + modifier;
+
+        // Progressive Crit Logic
+        if (natValue >= critSuccessThreshold) return { status: 'CRITICAL_SUCCESS', label: 'RÉUSSITE CRITIQUE !', color: '#ffd700' };
+        if (natValue <= critFailThreshold) return { status: 'CRITICAL_FAILURE', label: 'ÉCHEC CRITIQUE...', color: '#ff4444' };
 
         if (total >= dc) return { status: 'SUCCESS', label: 'SUCCÈS !', color: '#4caf50' };
         return { status: 'FAILURE', label: 'ÉCHEC', color: '#ff8800' };
@@ -104,7 +99,7 @@ export const DiceChallengeModal = ({
             modifier,
             total: totalNatural + modifier,
             outcome: outcome.status,
-            dice,
+            dice: dieType,
             dc,
             stat,
             rolls: rolls.map(r => ({ type: r.type, value: r.value }))

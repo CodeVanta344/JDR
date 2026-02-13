@@ -89,7 +89,7 @@ const DiceMesh = ({ type, color }) => {
         );
     }
 
-    // D100 Logic
+    // D100 Logic (Aether Tier)
     if (type === 'd100') {
         return (
             <mesh castShadow receiveShadow>
@@ -97,6 +97,28 @@ const DiceMesh = ({ type, color }) => {
                 <GemMaterial color={color} />
                 <DiceFaceText value="100" position={[0, 0, 1.25]} rotation={[0, 0, 0]} color="#FFD700" scale={0.7} />
                 <DiceFaceText value="1" position={[0, 0, -1.25]} rotation={[0, Math.PI, 0]} color="#ff4444" scale={0.7} />
+            </mesh>
+        );
+    }
+
+    // D75 Logic (Gold Tier) - Using sphere for non-standard die
+    if (type === 'd75') {
+        return (
+            <mesh castShadow receiveShadow>
+                <sphereGeometry args={[1.2, 32, 32]} />
+                <GemMaterial color={color} />
+                <DiceFaceText value="D75" position={[0, 0, 1.3]} rotation={[0, 0, 0]} color="#FFD700" scale={0.6} />
+            </mesh>
+        );
+    }
+
+    // D50 Logic (Silver Tier) - Using sphere for non-standard die
+    if (type === 'd50') {
+        return (
+            <mesh castShadow receiveShadow>
+                <sphereGeometry args={[1.2, 32, 32]} />
+                <GemMaterial color={color} />
+                <DiceFaceText value="D50" position={[0, 0, 1.3]} rotation={[0, 0, 0]} color="white" scale={0.6} />
             </mesh>
         );
     }
@@ -144,12 +166,14 @@ export const Dice3D = ({ type = 'd20', value, onComplete, autoRoll = true }) => 
 
     const diceColor = useMemo(() => {
         switch (type) {
-            case 'd20': return '#FFD700'; // Gold
-            case 'd100': return '#7b2ff7'; // Aether Purple
-            case 'd12': return '#a3c2ff'; // Blueish
-            case 'd10': return '#ff8da1'; // Reddish
-            case 'd8': return '#c4a3ff';  // Purple
-            case 'd6': return '#98ff98';  // Green
+            case 'd20': return '#cd7f32'; // Bronze (Novice)
+            case 'd50': return '#c0c0c0'; // Silver (Exp)
+            case 'd75': return '#ffd700'; // Gold (Veteran)
+            case 'd100': return '#7b2ff7'; // Aether Purple (Master)
+            case 'd12': return '#a3c2ff';
+            case 'd10': return '#ff8da1';
+            case 'd8': return '#c4a3ff';
+            case 'd6': return '#98ff98';
             default: return '#FFD700';
         }
     }, [type]);
