@@ -451,6 +451,15 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
 
                 {activeTab === 'abilities' && (
                     <div className="animate-fade-in sheet-list-view">
+                        {knownAbilities.length === 0 && (
+                            <div style={{ color: '#ff6b6b', background: 'rgba(50,0,0,0.8)', padding: '10px', border: '1px solid red', fontSize: '0.8rem', marginBottom: '10px' }}>
+                                <strong>DEBUG: Aucune aptitude trouvée.</strong><br />
+                                Classe perso: "{character.class}"<br />
+                                Base Class: "{character.class?.split(' ')[0]}"<br />
+                                CLASSES Loaded: {CLASSES ? Object.keys(CLASSES).length : 'NON'}<br />
+                                Keys: {CLASSES ? Object.keys(CLASSES).join(', ') : ''}
+                            </div>
+                        )}
                         <h4 style={{ fontSize: '0.7rem', color: 'var(--gold-dim)', marginBottom: '1.2rem', textTransform: 'uppercase', letterSpacing: '1.5px' }}>Aptitudes Connues</h4>
                         <div style={{ display: 'grid', gap: '1rem' }}>
                             {knownAbilities.map((ability, i) => (
