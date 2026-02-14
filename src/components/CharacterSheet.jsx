@@ -1,5 +1,6 @@
 import React from 'react';
 import { CLASSES } from '../lore';
+import { resolveCharacterAbilities } from '../utils/characterUtils';
 
 export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onToggleSettings, onConsume, onLevelUpClick, onTradeClick }) => {
     const statNames = {
@@ -122,63 +123,7 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
     const [activeTab, setActiveTab] = React.useState('stats');
     const [enlargedImage, setEnlargedImage] = React.useState(null);
 
-    // Robust Ability Lookup
-    const getClassAbilities = () => {
-        if (!character?.class) {
-            console.warn("[CharacterSheet] No character class defined.");
-            return [];
-        }
-
-        // Try to find the class key within the character.class string
-        // This handles cases like "Zal-Khar (Guerrier)" or "Guerrier (Berserker)" or "rôdeur (voie standard)"
-        const fullClassName = character.class.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        const actualKey = Object.keys(CLASSES).find(key => {
-            const normalizedKey = key.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            return fullClassName.includes(normalizedKey);
-        });
-
-        const classData = actualKey ? CLASSES[actualKey] : null;
-
-        const rawAbilities = character.abilities || [];
-        const rawSpells = character.spells || [];
-        const playerAbilitiesList = [...rawAbilities, ...rawSpells].filter(Boolean);
-
-        console.log(`[CharacterSheet] Class: "${character.class}" (Matched: "${actualKey || 'None'}"), Player Abilities:`, playerAbilitiesList);
-
-        if (!classData) {
-            console.warn(`[CharacterSheet] No class data found for: "${character.class}". Using raw player abilities.`);
-            // Fallback: If no class data, just return what the player has as objects
-            return playerAbilitiesList.map(s => (typeof s === 'string' ? { name: s, desc: "Aptitude apprise", level: 1, cost: 0 } : s));
-        }
-
-        let baseAbilities = [];
-        if (playerAbilitiesList.length > 0) {
-            baseAbilities = playerAbilitiesList.map(s => {
-                if (typeof s === 'string') {
-                    const fromInitial = (classData.initial_ability_options || []).find(a => a.name === s);
-                    const fromUnlockables = (classData.unlockables || []).find(u => u.name === s);
-                    return fromInitial || fromUnlockables || { name: s, desc: "Aptitude apprise", level: 1, cost: 0 };
-                }
-                return s;
-            }).filter(Boolean);
-        } else {
-            // Last resort fallback to initial class abilities if character record has NO abilities array
-            console.warn(`[CharacterSheet] Player has NO record of abilities. Falling back to class defaults.`);
-            baseAbilities = classData.initial_ability_options || classData.abilities || [];
-        }
-
-        const currentLevel = character.level || 1;
-        const unlocked = (classData.unlockables || []).filter(u => u && u.level <= currentLevel);
-
-        const all = [...baseAbilities, ...unlocked].filter(i => i && i.name);
-        const uniqueAbilities = Array.from(new Map(all.map(item => [item.name, item])).values());
-
-        console.log(`[CharacterSheet] Final Resolved Abilities for ${character.name}:`, uniqueAbilities);
-        return uniqueAbilities;
-    };
-
-
-    const knownAbilities = getClassAbilities();
+    const knownAbilities = resolveCharacterAbilities(character);
 
     // Utility to check if item is equippable
     const isEquippable = (item) => {

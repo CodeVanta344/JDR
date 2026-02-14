@@ -2721,7 +2721,7 @@ export default function App() {
                             showHelper={showHelper}
                             onToggleCodex={() => setShowCodex(!showCodex)}
                             onToggleDMPanel={() => setShowDMPanel(!showDMPanel)}
-                            onDebugCombat={handleDebugCombat}
+                            onDebugCombat={handleTestCombat}
                             connStatus={connStatus}
                             isGM={session && profile && session.gm_id === profile.id}
                             audioEnabled={audioEnabled}

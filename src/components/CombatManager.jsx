@@ -12,6 +12,8 @@ import {
     formatCombatLogD100
 } from '../utils/combat-d100';
 import { getModifier, getProficiencyBonus } from '../lore/rules';
+import TurnTracker from './TurnTracker';
+import { resolveCharacterAbilities } from '../utils/characterUtils';
 import './CombatManager.css';
 
 const DamagePopup = ({ amount, onDone }) => {
@@ -161,13 +163,13 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
 
     // Track last attack to prevent rapid duplicates
     const lastAttackRef = useRef({ timestamp: 0, actorId: null, targetId: null });
-    
+
     // CLEANUP FIX: Centralized timeout management
     const timeoutsRef = useRef([]);
     const addTimeout = useCallback((timeoutId) => {
         timeoutsRef.current.push(timeoutId);
     }, []);
-    
+
     const [animatingId, setAnimatingId] = useState(null);
     const [shakingId, setShakingId] = useState(null);
     const [damagePopups, setDamagePopups] = useState([]);
@@ -1654,294 +1656,297 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
 
     return (
         <div className="combat-manager-viewport">
-            {/* Overlay for game status */}
-            <div className={`modal-overlay ${shake ? 'shake' : ''} ${flash ? 'flash-red' : ''}`} style={{ position: 'fixed', inset: 0, zIndex: 1200, background: 'black', display: 'flex', flexDirection: 'column' }}>
-                {combatState === 'finished' && !combatants.some(u => !u.isEnemy && u.hp > 0) && <GameOverScreen />}
-                <div style={{ height: '80px', padding: '0 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.7)', borderBottom: '1px solid var(--gold-dim)' }}>
+            {/* --- LEFT SIDEBAR (Controls & Stats) --- */}
+            <div className="combat-sidebar">
+                {/* Character Summary */}
+                {currentActor && (
+                    <div className="character-summary">
+                        <div className="char-header">
+                            <img src={currentActor.portrait_url || 'https://placehold.co/150'} className="char-portrait-large" alt="" />
+                            <div className="char-info">
+                                <div className="char-name">{currentActor.name}</div>
+                                <div className="char-class">{currentActor.class || 'Combattant'}</div>
+                            </div>
+                        </div>
+
+                        <div className="char-stats-grid">
+                            <div className="stat-box">
+                                <span className="stat-value stat-hp">{currentActor.hp}/{currentActor.maxHp}</span>
+                                <span className="stat-label">Santé</span>
+                            </div>
+                            <div className="stat-box">
+                                <span className="stat-value stat-res">{currentActor.resource}/{currentActor.maxResource}</span>
+                                <span className="stat-label">Mana/Endu</span>
+                            </div>
+                            <div className="stat-box">
+                                <span className="stat-value stat-ac">{currentActor.ac}</span>
+                                <span className="stat-label">Armure</span>
+                            </div>
+                            <div className="stat-box">
+                                <span className="stat-value stat-pm">{currentActor.currentPM}</span>
+                                <span className="stat-label">Mouvement</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {isLocalPlayerTurn ? (
+                    <>
+                        {/* ABILITIES SECTION */}
+                        <div className="sidebar-section">
+                            <div className="sidebar-label">CAPACITÉS & SORTS</div>
+                            <div className="abilities-grid">
+                                {[{ name: 'Attaque', desc: 'Attaque de base rapide', range: 2 }, ...resolveCharacterAbilities(currentActor)].map((s, i) => (
+                                    <AbilityCard key={i} ability={s} />
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* ITEMS SECTION */}
+                        <div className="sidebar-section">
+                            <div className="sidebar-label">INVENTAIRE RAPIDE ({currentActor.inventory?.filter(item => (item.stats && (item.stats.heal || item.stats.resource || item.stats.hp)) || ['consumable', 'potion', 'scroll'].includes(item.type?.toLowerCase())).length || 0})</div>
+                            <div className="items-grid">
+                                {currentActor.inventory?.filter(item => (item.stats && (item.stats.heal || item.stats.resource || item.stats.hp)) || ['consumable', 'potion', 'scroll'].includes(item.type?.toLowerCase())).length > 0 ? (
+                                    currentActor.inventory
+                                        .filter(item => (item.stats && (item.stats.heal || item.stats.resource || item.stats.hp)) || ['consumable', 'potion', 'scroll'].includes(item.type?.toLowerCase()))
+                                        .map((item, idx) => (
+                                            <div
+                                                key={`item-${idx}`}
+                                                onClick={() => !currentActor.hasActed && executeUseItem(item)}
+                                                className={`item-slot-premium ${currentActor.hasActed ? 'disabled' : ''}`}
+                                            >
+                                                <div className="item-glass-layer" />
+                                                <div className="item-title">{item.name}</div>
+                                                <div className="item-footer-hint">UTILISER</div>
+                                            </div>
+                                        ))
+                                ) : (
+                                    <div className="item-slot-premium empty">
+                                        <div className="item-glass-layer" />
+                                        <span className="empty-label">VIDE</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* ACTIONS SECTION */}
+                        <div className="sidebar-section" style={{ marginTop: 'auto', borderBottom: 'none' }}>
+                            <div className="sidebar-label">FIN DU TOUR</div>
+                            <button onClick={nextTurn} className="end-turn-premium">
+                                <div className="end-turn-glow" />
+                                <div className="end-turn-content">
+                                    <span className="end-turn-icon">⌛</span>
+                                    <span className="end-turn-text">Finir le Tour</span>
+                                </div>
+                            </button>
+                        </div>
+                    </>
+                ) : (
+                    <div className="sidebar-section">
+                        <div className="waiting-turn-aura" style={{ fontSize: '1rem', color: 'var(--combat-gold)', letterSpacing: '1px', textAlign: 'center', padding: '20px 0' }}>
+                            {currentActor?.isEnemy ? (
+                                <span>⚔️ L'ENNEMI PRÉPARE SON ACTION...</span>
+                            ) : (
+                                <span>⏳ ATTENTE DE {currentActor?.name?.toUpperCase()}...</span>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* --- RIGHT MAIN VIEW (Arena + Overlays) --- */}
+            <div className="combat-viewer-container">
+                {/* Global Overlay Elements */}
+                <div className={`modal-overlay ${shake ? 'shake' : ''} ${flash ? 'flash-red' : ''}`} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1200 }}>
+                    {combatState === 'finished' && !combatants.some(u => !u.isEnemy && u.hp > 0) && <GameOverScreen />}
+                </div>
+
+                {/* Top Bar Overlay */}
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '60px', padding: '0 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(to bottom, rgba(0,0,0,0.8), transparent)', zIndex: 1100 }}>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ color: 'var(--gold-primary)', letterSpacing: '2px', fontSize: '1.1rem', fontWeight: 'bold' }}>COMBAT : ROUND {round}</span>
-                        <span style={{ fontSize: '0.8rem', color: '#888' }}>{combatants.filter(u => u.hp > 0).length} combattants en lice</span>
+                        <span style={{ color: 'var(--gold-primary)', letterSpacing: '2px', fontSize: '1rem', fontWeight: 'bold' }}>ROUND {round}</span>
                     </div>
                     {combatants.length > 0 && <TurnTracker combatants={combatants} currentTurnIndex={currentTurnIndex} />}
-                    <button onClick={() => onCombatEnd({ victory: false, flight: true })} style={{ color: '#ff4444', background: 'transparent', border: '1px solid #ff4444', padding: '6px 16px', borderRadius: '4px', cursor: 'pointer' }}>FUIR</button>
+                    <button onClick={() => onCombatEnd({ victory: false, flight: true })} style={{ color: '#ff4444', background: 'rgba(0,0,0,0.5)', border: '1px solid #ff4444', padding: '4px 12px', borderRadius: '4px', cursor: 'pointer', pointerEvents: 'auto' }}>FUIR</button>
                 </div>
-                <div className="combat-viewer-container">
-                    <div className="combat-arena">
-                        <div className="arena-background-plane" />
 
-                        <div className="arena-grid-container">
-                            {/* Vertical Lines */}
-                            {Array.from({ length: arenaConfig.blocksX + 1 }).map((_, i) => {
-                                const tiles = i - Math.floor(arenaConfig.blocksX / 2);
-                                const isMajor = tiles % 5 === 0;
-                                const isCenter = tiles === 0;
-                                const edgePercent = (i / arenaConfig.blocksX) * 100;
-                                return (
-                                    <div key={`v-${i}`} className={`grid-line-y ${isCenter ? 'center' : (isMajor ? 'major' : '')}`} style={{ left: `${edgePercent}%` }}>
-                                        {isMajor && (
-                                            <div className="grid-coord-label x-axis">
-                                                {tiles}
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })}
+                {/* The Arena */}
+                <div className="combat-arena">
+                    <div className="arena-background-plane" />
 
-                            {/* Horizontal Lines */}
-                            {Array.from({ length: arenaConfig.blocksY + 1 }).map((_, i) => {
-                                const tiles = i - Math.floor(arenaConfig.blocksY / 2);
-                                const isMajor = tiles % 5 === 0;
-                                const isCenter = tiles === 0;
-                                const edgePercent = (i / arenaConfig.blocksY) * 100;
-                                return (
-                                    <div key={`h-${i}`} className={`grid-line-x ${isCenter ? 'center' : (isMajor ? 'major' : '')}`} style={{ top: `${edgePercent}%` }}>
-                                        {isMajor && tiles !== 0 && (
-                                            <div className="grid-coord-label y-axis">
-                                                {tiles}
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
+                    <div className="arena-grid-container">
+                        {/* Vertical Lines */}
+                        {Array.from({ length: arenaConfig.blocksX + 1 }).map((_, i) => {
+                            const tiles = i - Math.floor(arenaConfig.blocksX / 2);
+                            const isMajor = tiles % 5 === 0;
+                            const isCenter = tiles === 0;
+                            const edgePercent = (i / arenaConfig.blocksX) * 100;
+                            return (
+                                <div key={`v-${i}`} className={`grid-line-y ${isCenter ? 'center' : (isMajor ? 'major' : '')}`} style={{ left: `${edgePercent}%` }}>
+                                    {isMajor && (
+                                        <div className="grid-coord-label x-axis">
+                                            {tiles}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
 
-                        {/* Range Illumination (Tactical Squares) */}
-                        {(selectedAction || canMove) && isLocalPlayerTurn && currentActor && (
-                            <>
-                                {Array.from({ length: arenaConfig.blocksY }).map((_, yIdx) => {
-                                    const y = yIdx - Math.floor(arenaConfig.blocksY / 2);
-                                    return Array.from({ length: arenaConfig.blocksX }).map((_, xIdx) => {
-                                        const x = xIdx - Math.floor(arenaConfig.blocksX / 2);
-                                        const dx = x - currentActor.posX;
-                                        const dy = y - currentActor.posY;
-                                        // Use BFS reachability instead of Chebyshev for movement range
-                                        let highlight = null;
-                                        if (selectedAction) {
-                                            const chebyshevDist = Math.max(Math.abs(dx), Math.abs(dy));
-                                            if (chebyshevDist <= (selectedAction.range || 1) && chebyshevDist > 0) {
-                                                if (selectedAction.friendly) {
-                                                    highlight = { color: 'rgba(74, 222, 128, 0.15)', border: '1px solid rgba(74, 222, 128, 0.3)', glow: 'rgba(74, 222, 128, 0.2)' };
-                                                } else {
-                                                    highlight = { color: 'rgba(212, 175, 55, 0.15)', border: '1px solid rgba(212, 175, 55, 0.3)', glow: 'rgba(212, 175, 55, 0.2)' };
-                                                }
-                                            }
-                                        } else if (canMove) {
-                                            const manhattanDist = Math.abs(dx) + Math.abs(dy);
-                                            if (manhattanDist <= currentActor.currentPM && manhattanDist > 0) {
-                                                highlight = { color: 'rgba(0, 150, 255, 0.08)', border: '1px dashed rgba(0, 150, 255, 0.4)', glow: 'rgba(0, 150, 255, 0.1)' };
+                        {/* Horizontal Lines */}
+                        {Array.from({ length: arenaConfig.blocksY + 1 }).map((_, i) => {
+                            const tiles = i - Math.floor(arenaConfig.blocksY / 2);
+                            const isMajor = tiles % 5 === 0;
+                            const isCenter = tiles === 0;
+                            const edgePercent = (i / arenaConfig.blocksY) * 100;
+                            return (
+                                <div key={`h-${i}`} className={`grid-line-x ${isCenter ? 'center' : (isMajor ? 'major' : '')}`} style={{ top: `${edgePercent}%` }}>
+                                    {isMajor && tiles !== 0 && (
+                                        <div className="grid-coord-label y-axis">
+                                            {tiles}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Range Illumination (Tactical Squares) */}
+                    {(selectedAction || canMove) && isLocalPlayerTurn && currentActor && (
+                        <>
+                            {Array.from({ length: arenaConfig.blocksY }).map((_, yIdx) => {
+                                const y = yIdx - Math.floor(arenaConfig.blocksY / 2);
+                                return Array.from({ length: arenaConfig.blocksX }).map((_, xIdx) => {
+                                    const x = xIdx - Math.floor(arenaConfig.blocksX / 2);
+                                    const dx = x - currentActor.posX;
+                                    const dy = y - currentActor.posY;
+                                    // Use BFS reachability instead of Chebyshev for movement range
+                                    let highlight = null;
+                                    if (selectedAction) {
+                                        const chebyshevDist = Math.max(Math.abs(dx), Math.abs(dy));
+                                        if (chebyshevDist <= (selectedAction.range || 1) && chebyshevDist > 0) {
+                                            if (selectedAction.friendly) {
+                                                highlight = { color: 'rgba(74, 222, 128, 0.15)', border: '1px solid rgba(74, 222, 128, 0.3)', glow: 'rgba(74, 222, 128, 0.2)' };
+                                            } else {
+                                                highlight = { color: 'rgba(212, 175, 55, 0.15)', border: '1px solid rgba(212, 175, 55, 0.3)', glow: 'rgba(212, 175, 55, 0.2)' };
                                             }
                                         }
-
-                                        if (highlight) {
-                                            const pX = getPosPercent(x);
-                                            const pY = getPosPercent(y, true);
-                                            return (
-                                                <div
-                                                    key={`highlight-${x}-${y}`}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        left: `${pX}%`,
-                                                        top: `${pY}%`,
-                                                        width: `${100 / arenaConfig.blocksX}%`,
-                                                        height: `${100 / arenaConfig.blocksY}%`,
-                                                        background: highlight.color,
-                                                        border: highlight.border,
-                                                        boxShadow: `inset 0 0 15px ${highlight.glow}`,
-                                                        transform: 'translate(-50%, -50%)',
-                                                        zIndex: 1,
-                                                        pointerEvents: 'none',
-                                                        transition: 'all 0.4s'
-                                                    }}
-                                                />
-                                            );
+                                    } else if (canMove) {
+                                        const manhattanDist = Math.abs(dx) + Math.abs(dy);
+                                        if (manhattanDist <= currentActor.currentPM && manhattanDist > 0) {
+                                            highlight = { color: 'rgba(0, 150, 255, 0.08)', border: '1px dashed rgba(0, 150, 255, 0.4)', glow: 'rgba(0, 150, 255, 0.1)' };
                                         }
-                                        return null;
-                                    });
-                                })}
+                                    }
 
-                                {/* Interaction Layer (Click to move / Hover Path) - DISABLED (MOVED TO TOP) */}
-                                {false && isLocalPlayerTurn && canMove && !selectedAction && (
-                                    <>
-                                        {Array.from({ length: arenaConfig.blocksY }).map((_, yIdx) => {
-                                            const y = yIdx - Math.floor(arenaConfig.blocksY / 2);
-                                            return Array.from({ length: arenaConfig.blocksX }).map((_, xIdx) => {
-                                                const x = xIdx - Math.floor(arenaConfig.blocksX / 2);
-                                                const dx = x - currentActor.posX;
-                                                const dy = y - currentActor.posY;
+                                    if (highlight) {
+                                        const pX = getPosPercent(x);
+                                        const pY = getPosPercent(y, true);
+                                        return (
+                                            <div
+                                                key={`highlight-${x}-${y}`}
+                                                style={{
+                                                    position: 'absolute',
+                                                    left: `${pX}%`,
+                                                    top: `${pY}%`,
+                                                    width: `${100 / arenaConfig.blocksX}%`,
+                                                    height: `${100 / arenaConfig.blocksY}%`,
+                                                    background: highlight.color,
+                                                    border: highlight.border,
+                                                    boxShadow: `inset 0 0 15px ${highlight.glow}`,
+                                                    transform: 'translate(-50%, -50%)',
+                                                    zIndex: 1,
+                                                    pointerEvents: 'none',
+                                                    transition: 'all 0.4s'
+                                                }}
+                                            />
+                                        );
+                                    }
+                                    return null;
+                                });
+                            })}
 
-                                                // Character tile click to toggle planning
-                                                if (dx === 0 && dy === 0) {
-                                                    const pX = getPosPercent(x);
-                                                    const pY = getPosPercent(y, true);
-                                                    return (
-                                                        <div
-                                                            key={`char-interactive-${x}-${y}`}
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                if (plannedPath.length > 0) {
-                                                                    executePathMovement(plannedPath[plannedPath.length - 1][0], plannedPath[plannedPath.length - 1][1], plannedPath);
-                                                                    setPlannedPath([]);
-                                                                    setIsPathPlanning(false);
-                                                                } else {
-                                                                    setIsPathPlanning(!isPathPlanning);
-                                                                }
-                                                            }}
-                                                            style={{
-                                                                position: 'absolute',
-                                                                left: `${pX}%`,
-                                                                top: `${pY}%`,
-                                                                width: `${100 / arenaConfig.blocksX}%`,
-                                                                height: `${100 / arenaConfig.blocksY}%`,
-                                                                transform: 'translate(-50%, -50%)',
-                                                                cursor: 'pointer',
-                                                                zIndex: 15,
-                                                                pointerEvents: 'auto'
-                                                            }}
-                                                        />
-                                                    );
-                                                }
+                            {/* Interaction Layer (Click to move / Hover Path) - MOVED TO TOP */}
+                            {isLocalPlayerTurn && canMove && !selectedAction && (
+                                <div className="interaction-layer-container" style={{ position: 'absolute', inset: 0, zIndex: 1000, pointerEvents: 'none' }}>
+                                    {Array.from({ length: arenaConfig.blocksY }).map((_, yIdx) => {
+                                        const y = yIdx - Math.floor(arenaConfig.blocksY / 2);
+                                        return Array.from({ length: arenaConfig.blocksX }).map((_, xIdx) => {
+                                            const x = xIdx - Math.floor(arenaConfig.blocksX / 2);
+                                            const dx = x - currentActor.posX;
+                                            const dy = y - currentActor.posY;
 
-                                                const dist = Math.abs(dx) + Math.abs(dy); // Use Manhattan for cardinal movement
-                                                if (dist > (currentActor.currentPM || 0)) return null;
-
+                                            // Character tile click to toggle planning
+                                            if (dx === 0 && dy === 0) {
                                                 const pX = getPosPercent(x);
                                                 const pY = getPosPercent(y, true);
-                                                const isHovered = hoveredTile?.x === x && hoveredTile?.y === y;
-
-                                                // Calculate path from current actor position or from last planned step
-                                                const startPoint = plannedPath.length > 0 ? { x: plannedPath[plannedPath.length - 1][0], y: plannedPath[plannedPath.length - 1][1] } : { x: currentActor.posX, y: currentActor.posY };
-                                                const pmLeft = currentActor.currentPM - (plannedPath.length);
-
-                                                const segmentPath = isHovered && pmLeft > 0 ? findPath(startPoint.x, startPoint.y, x, y, pmLeft) : null;
-                                                const fullPreviewPath = [...plannedPath, ...(segmentPath || [])];
-
                                                 return (
-                                                    <React.Fragment key={`interactive-${x}-${y}`}>
-                                                        {/* Actual Clickable Area */}
-                                                        <div
-                                                            onMouseEnter={() => setHoveredTile({ x, y })}
-                                                            onMouseLeave={() => setHoveredTile(null)}
-                                                            onClick={() => {
-                                                                if (isPathPlanning) {
-                                                                    if (segmentPath) {
-                                                                        setPlannedPath(prev => [...prev, ...segmentPath]);
-                                                                    }
-                                                                } else {
-                                                                    executePathMovement(x, y);
-                                                                }
-                                                            }}
-                                                            style={{
-                                                                position: 'absolute',
-                                                                left: `${pX}%`,
-                                                                top: `${pY}%`,
-                                                                width: `${100 / arenaConfig.blocksX}%`,
-                                                                height: `${100 / arenaConfig.blocksY}%`,
-                                                                transform: 'translate(-50%, -50%)',
-                                                                cursor: 'pointer',
-                                                                zIndex: 10,
-                                                                pointerEvents: 'auto',
-                                                                background: isPathPlanning && plannedPath.some(p => p[0] === x && p[1] === y) ? 'rgba(212, 175, 55, 0.1)' : 'transparent'
-                                                            }}
-                                                        />
-                                                        {/* Path Dots */}
-                                                        {fullPreviewPath.length > 0 && (isHovered || isPathPlanning) && fullPreviewPath.map((step, sIdx) => (
+                                                    <div
+                                                        key={`char-interactive-${x}-${y}`}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            console.log('[DEBUG] Character Click - isPathPlanning:', isPathPlanning, 'plannedPath:', plannedPath.length);
+                                                            if (plannedPath.length > 0) {
+                                                                executePathMovement(plannedPath[plannedPath.length - 1][0], plannedPath[plannedPath.length - 1][1], plannedPath);
+                                                            } else {
+                                                                setIsPathPlanning(!isPathPlanning);
+                                                            }
+                                                        }}
+                                                        style={{
+                                                            position: 'absolute',
+                                                            left: `${pX}%`,
+                                                            top: `${pY}%`,
+                                                            width: `${100 / arenaConfig.blocksX}%`,
+                                                            height: `${100 / arenaConfig.blocksY}%`,
+                                                            transform: 'translate(-50%, -50%)',
+                                                            cursor: 'pointer',
+                                                            zIndex: 1002,
+                                                            pointerEvents: 'auto'
+                                                        }}
+                                                    >
+                                                        {plannedPath.length > 0 && (
                                                             <div
-                                                                key={`path-dot-${x}-${y}-${sIdx}`}
-                                                                style={{
-                                                                    position: 'absolute',
-                                                                    left: `${getPosPercent(step[0])}%`,
-                                                                    top: `${getPosPercent(step[1], true)}%`,
-                                                                    width: '6px',
-                                                                    height: '6px',
-                                                                    background: sIdx < plannedPath.length ? 'var(--combat-gold)' : 'rgba(212, 175, 55, 0.6)',
-                                                                    borderRadius: '50%',
-                                                                    transform: 'translate(-50%, -50%)',
-                                                                    boxShadow: '0 0 10px var(--combat-gold)',
-                                                                    zIndex: 5,
-                                                                    pointerEvents: 'none',
-                                                                    opacity: 0.8
+                                                                className="confirm-move-badge"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    console.log('[DEBUG] Confirm Badge Clicked via inner handler');
+                                                                    if (plannedPath.length > 0) {
+                                                                        executePathMovement(plannedPath[plannedPath.length - 1][0], plannedPath[plannedPath.length - 1][1], plannedPath);
+                                                                    }
                                                                 }}
-                                                            />
-                                                        ))}
-                                                    </React.Fragment>
+                                                            >
+                                                                CONFIRMER
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 );
-                                            });
-                                        })}
-                                    </>
-                                )}
-                            </>
-                        )}
+                                            }
 
-                        {/* Arena Decor */}
-                        {decor.map(d => (
-                            <div key={d.id} style={{
-                                position: 'absolute',
-                                left: `${getPosPercent(d.posX)}%`,
-                                top: `${getPosPercent(d.posY, true)}%`,
-                                width: `${d.size}px`,
-                                height: `${d.size}px`,
-                                background: d.color,
-                                boxShadow: `0 0 30px ${d.color}`,
-                                opacity: 0.5,
-                                borderRadius: d.name === 'Éclat de Vide' ? '20% 80%' : '8px',
-                                transform: 'translate(-50%, -50%) rotate(45deg)',
-                                pointerEvents: 'none',
-                                border: '2px solid rgba(255,255,255,0.15)',
-                                zIndex: 4
-                            }}>
-                                <div style={{ position: 'absolute', bottom: '-20px', width: '100%', textAlign: 'center', fontSize: '0.55rem', color: 'rgba(255,255,255,0.5)', fontWeight: 'bold', transform: 'rotate(-45deg)' }}>{d.name}</div>
-                            </div>
-                        ))}
+                                            const dist = Math.abs(dx) + Math.abs(dy); // Use Manhattan for cardinal movement
+                                            if (dist > (currentActor.currentPM || 0)) return null;
 
-                        {/* Arena Units (2D Positioning with smooth animation) */}
-                        <div style={{ position: 'absolute', inset: 0, zIndex: 10 }}>
-                            {combatants.map((u, index) => {
-                                // Check if this unit is currently animating
-                                const isAnimating = movingUnit && movingUnit.id === u.id;
-                                const displayX = isAnimating ? movingUnit.animX : u.posX;
-                                const displayY = isAnimating ? movingUnit.animY : u.posY;
-
-                                const x = getPosPercent(displayX);
-                                const y = getPosPercent(displayY, true);
-                                return <UnitCard key={u.id} unit={u} style={{
-                                    left: `${x}%`,
-                                    top: `${y}%`,
-                                    transition: isAnimating ? 'none' : 'left 0.8s cubic-bezier(0.4, 0, 0.2, 1), top 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
-                                }} />;
-                            })}
-                        </div>
-
-                        {/* Planning Instruction HUD */}
-                        {isLocalPlayerTurn && isPathPlanning && (
-                            <div className="planning-instruction">
-                                Cliquez pour tracer <span>•</span> Cliquez sur vous pour confirmer
-                            </div>
-                        )}
-
-                        {/* Interaction Layer (Click to move / Hover Path) - MOVED TO TOP */}
-                        {isLocalPlayerTurn && canMove && !selectedAction && (
-                            <div className="interaction-layer-container" style={{ position: 'absolute', inset: 0, zIndex: 1000, pointerEvents: 'none' }}>
-                                {Array.from({ length: arenaConfig.blocksY }).map((_, yIdx) => {
-                                    const y = yIdx - Math.floor(arenaConfig.blocksY / 2);
-                                    return Array.from({ length: arenaConfig.blocksX }).map((_, xIdx) => {
-                                        const x = xIdx - Math.floor(arenaConfig.blocksX / 2);
-                                        const dx = x - currentActor.posX;
-                                        const dy = y - currentActor.posY;
-
-                                        // Character tile click to toggle planning
-                                        if (dx === 0 && dy === 0) {
                                             const pX = getPosPercent(x);
                                             const pY = getPosPercent(y, true);
+                                            const isHovered = hoveredTile?.x === x && hoveredTile?.y === y;
+
+                                            // Calculate path from current actor position or from last planned step
+                                            const startPoint = plannedPath.length > 0 ? { x: plannedPath[plannedPath.length - 1][0], y: plannedPath[plannedPath.length - 1][1] } : { x: currentActor.posX, y: currentActor.posY };
+                                            const pmLeft = currentActor.currentPM - (plannedPath.length);
+
+                                            const segmentPath = isHovered && pmLeft > 0 ? findPath(startPoint.x, startPoint.y, x, y, pmLeft) : null;
+                                            const fullPreviewPath = [...plannedPath, ...(segmentPath || [])];
+
                                             return (
                                                 <div
-                                                    key={`char-interactive-${x}-${y}`}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        console.log('[DEBUG] Character Click - isPathPlanning:', isPathPlanning, 'plannedPath:', plannedPath.length);
-                                                        if (plannedPath.length > 0) {
-                                                            executePathMovement(plannedPath[plannedPath.length - 1][0], plannedPath[plannedPath.length - 1][1], plannedPath);
+                                                    key={`interactive-${x}-${y}`}
+                                                    onMouseEnter={() => setHoveredTile({ x, y })}
+                                                    onMouseLeave={() => setHoveredTile(null)}
+                                                    onClick={() => {
+                                                        console.log('[DEBUG] Tile Click:', x, y, 'isPathPlanning:', isPathPlanning);
+                                                        if (isPathPlanning) {
+                                                            if (segmentPath) {
+                                                                setPlannedPath(prev => [...prev, ...segmentPath]);
+                                                            }
                                                         } else {
-                                                            setIsPathPlanning(!isPathPlanning);
+                                                            executePathMovement(x, y);
                                                         }
                                                     }}
                                                     style={{
@@ -1952,227 +1957,124 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                                                         height: `${100 / arenaConfig.blocksY}%`,
                                                         transform: 'translate(-50%, -50%)',
                                                         cursor: 'pointer',
-                                                        zIndex: 1002,
-                                                        pointerEvents: 'auto'
-                                                    }}
-                                                >
-                                                    {plannedPath.length > 0 && (
-                                                        <div className="confirm-move-badge">CONFIRMER</div>
-                                                    )}
-                                                </div>
-                                            );
-                                        }
-
-                                        const dist = Math.abs(dx) + Math.abs(dy); // Use Manhattan for cardinal movement
-                                        if (dist > (currentActor.currentPM || 0)) return null;
-
-                                        const pX = getPosPercent(x);
-                                        const pY = getPosPercent(y, true);
-                                        const isHovered = hoveredTile?.x === x && hoveredTile?.y === y;
-
-                                        // Calculate path from current actor position or from last planned step
-                                        const startPoint = plannedPath.length > 0 ? { x: plannedPath[plannedPath.length - 1][0], y: plannedPath[plannedPath.length - 1][1] } : { x: currentActor.posX, y: currentActor.posY };
-                                        const pmLeft = currentActor.currentPM - (plannedPath.length);
-
-                                        const segmentPath = isHovered && pmLeft > 0 ? findPath(startPoint.x, startPoint.y, x, y, pmLeft) : null;
-                                        const fullPreviewPath = [...plannedPath, ...(segmentPath || [])];
-
-                                        return (
-                                            <div
-                                                key={`interactive-${x}-${y}`}
-                                                onMouseEnter={() => setHoveredTile({ x, y })}
-                                                onMouseLeave={() => setHoveredTile(null)}
-                                                onClick={() => {
-                                                    console.log('[DEBUG] Tile Click:', x, y, 'isPathPlanning:', isPathPlanning);
-                                                    if (isPathPlanning) {
-                                                        if (segmentPath) {
-                                                            setPlannedPath(prev => [...prev, ...segmentPath]);
-                                                        }
-                                                    } else {
-                                                        executePathMovement(x, y);
-                                                    }
-                                                }}
-                                                style={{
-                                                    position: 'absolute',
-                                                    left: `${pX}%`,
-                                                    top: `${pY}%`,
-                                                    width: `${100 / arenaConfig.blocksX}%`,
-                                                    height: `${100 / arenaConfig.blocksY}%`,
-                                                    transform: 'translate(-50%, -50%)',
-                                                    cursor: 'pointer',
-                                                    zIndex: 1001,
-                                                    pointerEvents: 'auto',
-                                                    background: isPathPlanning && plannedPath.some(p => p[0] === x && p[1] === y) ? 'rgba(212, 175, 55, 0.1)' : 'transparent'
-                                                }}
-                                            />
-                                        );
-                                    });
-                                })}
-
-                                {/* Centralized Path Preview (to avoid duplication per tile) */}
-                                {(hoveredTile || (isPathPlanning && plannedPath.length > 0)) && (() => {
-                                    const startPoint = plannedPath.length > 0 ? { x: plannedPath[plannedPath.length - 1][0], y: plannedPath[plannedPath.length - 1][1] } : { x: currentActor.posX, y: currentActor.posY };
-                                    const pmLeft = currentActor.currentPM - (plannedPath.length);
-                                    const segmentPath = hoveredTile && pmLeft > 0 ? findPath(startPoint.x, startPoint.y, hoveredTile.x, hoveredTile.y, pmLeft) : null;
-                                    const fullPreviewPath = [...plannedPath, ...(segmentPath || [])];
-
-                                    return fullPreviewPath.map((step, sIdx) => {
-                                        const isLastStep = sIdx === fullPreviewPath.length - 1;
-                                        return (
-                                            <React.Fragment key={`path-preview-${sIdx}`}>
-                                                <div
-                                                    className="path-dot-animated"
-                                                    style={{
-                                                        position: 'absolute',
-                                                        left: `${getPosPercent(step[0])}%`,
-                                                        top: `${getPosPercent(step[1], true)}%`,
-                                                        width: '8px',
-                                                        height: '8px',
-                                                        background: sIdx < plannedPath.length ? 'var(--combat-gold)' : 'rgba(212, 175, 55, 0.8)',
-                                                        borderRadius: '50%',
-                                                        transform: 'translate(-50%, -50%)',
-                                                        boxShadow: '0 0 10px var(--combat-gold)',
-                                                        zIndex: 1005,
-                                                        pointerEvents: 'none'
+                                                        zIndex: 1001,
+                                                        pointerEvents: 'auto',
+                                                        background: isPathPlanning && plannedPath.some(p => p[0] === x && p[1] === y) ? 'rgba(212, 175, 55, 0.1)' : 'transparent'
                                                     }}
                                                 />
-                                                <div className="path-cost-label" style={{
-                                                    left: `${getPosPercent(step[0])}%`,
-                                                    top: `${getPosPercent(step[1], true)}%`
-                                                }}>
-                                                    -{sIdx + 1} PM
-                                                </div>
+                                            );
+                                        });
+                                    })}
 
-                                                {isLastStep && (
-                                                    <div className="character-ghost" style={{
+                                    {/* Centralized Path Preview (to avoid duplication per tile) */}
+                                    {(hoveredTile || (isPathPlanning && plannedPath.length > 0)) && (() => {
+                                        const startPoint = plannedPath.length > 0 ? { x: plannedPath[plannedPath.length - 1][0], y: plannedPath[plannedPath.length - 1][1] } : { x: currentActor.posX, y: currentActor.posY };
+                                        const pmLeft = currentActor.currentPM - (plannedPath.length);
+                                        const segmentPath = hoveredTile && pmLeft > 0 ? findPath(startPoint.x, startPoint.y, hoveredTile.x, hoveredTile.y, pmLeft) : null;
+                                        const fullPreviewPath = [...plannedPath, ...(segmentPath || [])];
+
+                                        return fullPreviewPath.map((step, sIdx) => {
+                                            const isLastStep = sIdx === fullPreviewPath.length - 1;
+                                            return (
+                                                <React.Fragment key={`path-preview-${sIdx}`}>
+                                                    <div
+                                                        className="path-dot-animated"
+                                                        style={{
+                                                            position: 'absolute',
+                                                            left: `${getPosPercent(step[0])}%`,
+                                                            top: `${getPosPercent(step[1], true)}%`,
+                                                            width: '8px',
+                                                            height: '8px',
+                                                            background: sIdx < plannedPath.length ? 'var(--combat-gold)' : 'rgba(212, 175, 55, 0.8)',
+                                                            borderRadius: '50%',
+                                                            transform: 'translate(-50%, -50%)',
+                                                            boxShadow: '0 0 10px var(--combat-gold)',
+                                                            zIndex: 1005,
+                                                            pointerEvents: 'none'
+                                                        }}
+                                                    />
+                                                    <div className="path-cost-label" style={{
                                                         left: `${getPosPercent(step[0])}%`,
                                                         top: `${getPosPercent(step[1], true)}%`
                                                     }}>
-                                                        <div className="unit-portrait-wrapper">
-                                                            <img src={currentActor.portrait_url} className="unit-portrait" alt="" />
-                                                        </div>
+                                                        -{sIdx + 1} PM
                                                     </div>
-                                                )}
-                                            </React.Fragment>
-                                        );
-                                    });
-                                })()}
-                            </div>
-                        )}
-                    </div>
-                    <div style={{
-                        width: '350px',
-                        flexBasis: '350px',
-                        flexShrink: 0,
-                        background: 'linear-gradient(to right, rgba(0,0,0,0.95), rgba(15,15,25,0.95))',
-                        padding: '2rem 1.5rem',
-                        overflowY: 'auto',
-                        borderLeft: '1px solid rgba(212, 175, 55, 0.2)',
-                        backdropFilter: 'blur(20px)',
-                        boxShadow: '-10px 0 30px rgba(0,0,0,0.5)',
-                        display: 'flex', flexDirection: 'column', gap: '15px',
-                        scrollbarWidth: 'thin',
-                        scrollbarColor: 'var(--gold-dark) transparent'
-                    }}>
-                        <div style={{ color: 'var(--gold-light)', fontSize: '0.8rem', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '10px', fontWeight: 'bold', borderBottom: '1px solid rgba(212, 175, 55, 0.2)', paddingBottom: '5px' }}>Journal de Combat</div>
-                        {logs.map((l, i) => {
-                            const isImpact = l.content.includes('💥') || l.content.includes('💀');
-                            const isVictory = l.content.includes('🏆');
-                            const isSystem = l.role === 'system';
-                            return (
-                                <div key={i} style={{
-                                    marginBottom: '0.8rem',
-                                    fontSize: isVictory ? '1.2rem' : (isImpact ? '0.98rem' : '0.92rem'),
-                                    color: isVictory ? 'var(--gold-primary)' : (isImpact ? '#fff' : 'rgba(255,255,255,0.7)'),
-                                    borderLeft: isVictory ? '4px solid var(--gold-primary)' : (isImpact ? '3px solid #ff4444' : '2px solid rgba(255,255,255,0.2)'),
-                                    padding: '8px 12px',
-                                    background: isImpact ? 'linear-gradient(to right, rgba(255,0,0,0.15), transparent)' : (isVictory ? 'linear-gradient(to right, rgba(212, 175, 55, 0.1), transparent)' : 'transparent'),
-                                    borderRadius: '0 8px 8px 0',
-                                    boxShadow: isImpact ? '0 4px 15px rgba(255,0,0,0.1)' : 'none',
-                                    animation: isImpact ? 'shakeLog 0.4s ease-in-out' : 'none'
-                                }}>
-                                    <div style={{ fontSize: '0.7rem', color: isVictory ? 'var(--gold-light)' : 'rgba(255,255,255,0.4)', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
-                                        <span>{isSystem ? 'SYSTEME' : 'ACTION'}</span>
-                                        <span>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                    </div>
-                                    <div dangerouslySetInnerHTML={{ __html: l.content.replace(/\*\*(.*?)\*\*/g, '<b style="color: var(--gold-light)">$1</b>') }} />
+
+                                                    {isLastStep && (
+                                                        <div className="character-ghost" style={{
+                                                            left: `${getPosPercent(step[0])}%`,
+                                                            top: `${getPosPercent(step[1], true)}%`
+                                                        }}>
+                                                            <div className="unit-portrait-wrapper">
+                                                                <img src={currentActor.portrait_url} className="unit-portrait" alt="" />
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </React.Fragment>
+                                            );
+                                        });
+                                    })()}
                                 </div>
-                            );
-                        })}
-                        <div ref={logEndRef} />
-                    </div>
-                    {rollOverlay && <RollOverlay {...rollOverlay} />}
-                    {remoteAction && <RemoteActionOverlay action={remoteAction} onComplete={() => setRemoteAction(null)} />}
-                </div>
-
-                <div className="combat-footer">
-                    {isLocalPlayerTurn ? (
-                        <>
-
-                            {/* ABILITIES SECTION */}
-                            <div className="hud-section" style={{ alignItems: 'flex-start' }}>
-                                <div className="hud-label" style={{ marginLeft: '10px' }}>CAPACITÉS & SORTS</div>
-                                <div className="abilities-container" style={{ width: '100%', overflowX: 'auto', scrollbarWidth: 'none' }}>
-                                    {[{ name: 'Attaque', desc: 'Attaque de base rapide', range: 2 }, ...(currentActor.spells || currentActor.abilities || [])].map((s, i) => (
-                                        <AbilityCard key={i} ability={typeof s === 'string' ? { name: s, range: 2 } : s} />
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* ITEMS SECTION */}
-                            <div className="hud-section">
-                                <div className="hud-label">SACS</div>
-                                <div className="inventory-slots-container">
-                                    {currentActor.inventory?.filter(item => (item.stats && (item.stats.heal || item.stats.resource || item.stats.hp)) || ['consumable', 'potion', 'scroll'].includes(item.type?.toLowerCase())).length > 0 ? (
-                                        currentActor.inventory
-                                            .filter(item => (item.stats && (item.stats.heal || item.stats.resource || item.stats.hp)) || ['consumable', 'potion', 'scroll'].includes(item.type?.toLowerCase()))
-                                            .map((item, idx) => (
-                                                <div
-                                                    key={`item-${idx}`}
-                                                    onClick={() => !currentActor.hasActed && executeUseItem(item)}
-                                                    className={`item-slot-premium ${currentActor.hasActed ? 'disabled' : ''}`}
-                                                >
-                                                    <div className="item-glass-layer" />
-                                                    <div className="item-title">{item.name}</div>
-                                                    <div className="item-footer-hint">UTILISER</div>
-                                                </div>
-                                            ))
-                                    ) : (
-                                        <div className="item-slot-premium empty">
-                                            <div className="item-glass-layer" />
-                                            <span className="empty-label">VIDE</span>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* END TURN SECTION */}
-                            <div className="hud-section">
-                                <div className="hud-label">ACTIONS</div>
-                                <button onClick={nextTurn} className="end-turn-premium">
-                                    <div className="end-turn-glow" />
-                                    <div className="end-turn-content">
-                                        <span className="end-turn-icon">⌛</span>
-                                        <span className="end-turn-text">Finir le Tour</span>
-                                    </div>
-                                </button>
-                            </div>
-                        </>
-                    ) : (
-                        <div className="waiting-turn-aura" style={{ fontSize: '1.2rem', color: 'var(--combat-gold)', letterSpacing: '2px' }}>
-                            {currentActor?.isEnemy ? (
-                                <span>⚔️ L'ENNEMI PRÉPARE SON ACTION...</span>
-                            ) : (
-                                <span>⏳ ATTENTE DE {currentActor?.name?.toUpperCase()}...</span>
                             )}
-                        </div>
+                        </>
                     )}
-                    {combatState === 'finished' && (
-                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.8)', zIndex: 20000 }}>
-                            <button onClick={onCombatEnd} className="btn-gold" style={{ padding: '1.5rem 5rem', fontSize: '1.5rem', boxShadow: '0 0 50px var(--combat-gold)', borderRadius: '12px' }}>RETOUR AU MONDE</button>
+
+                    {/* Arena Decor */}
+                    {decor.map(d => (
+                        <div key={d.id} style={{
+                            position: 'absolute',
+                            left: `${getPosPercent(d.posX)}%`,
+                            top: `${getPosPercent(d.posY, true)}%`,
+                            width: `${d.size}px`,
+                            height: `${d.size}px`,
+                            background: d.color,
+                            boxShadow: `0 0 30px ${d.color}`,
+                            opacity: 0.5,
+                            borderRadius: d.name === 'Éclat de Vide' ? '20% 80%' : '8px',
+                            transform: 'translate(-50%, -50%) rotate(45deg)',
+                            pointerEvents: 'none',
+                            border: '2px solid rgba(255,255,255,0.15)',
+                            zIndex: 4
+                        }}>
+                            <div style={{ position: 'absolute', bottom: '-20px', width: '100%', textAlign: 'center', fontSize: '0.55rem', color: 'rgba(255,255,255,0.5)', fontWeight: 'bold', transform: 'rotate(-45deg)' }}>{d.name}</div>
+                        </div>
+                    ))}
+
+                    {/* Arena Units (2D Positioning with smooth animation) */}
+                    <div style={{ position: 'absolute', inset: 0, zIndex: 10 }}>
+                        {combatants.map((u, index) => {
+                            // Check if this unit is currently animating
+                            const isAnimating = movingUnit && movingUnit.id === u.id;
+                            const displayX = isAnimating ? movingUnit.animX : u.posX;
+                            const displayY = isAnimating ? movingUnit.animY : u.posY;
+
+                            const x = getPosPercent(displayX);
+                            const y = getPosPercent(displayY, true);
+                            return <UnitCard key={u.id} unit={u} style={{
+                                left: `${x}%`,
+                                top: `${y}%`,
+                                transition: isAnimating ? 'none' : 'left 0.8s cubic-bezier(0.4, 0, 0.2, 1), top 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                            }} />;
+                        })}
+                    </div>
+
+                    {/* Planning Instruction HUD */}
+                    {isLocalPlayerTurn && isPathPlanning && (
+                        <div className="planning-instruction">
+                            Cliquez pour tracer <span>•</span> Cliquez sur vous pour confirmer
                         </div>
                     )}
                 </div>
+
+                {/* Overlays that shouldn't be covered by Arena */}
+                {rollOverlay && <RollOverlay {...rollOverlay} />}
+                {remoteAction && <RemoteActionOverlay action={remoteAction} onComplete={() => setRemoteAction(null)} />}
+
+                {combatState === 'finished' && (
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.8)', zIndex: 20000 }}>
+                        <button onClick={onCombatEnd} className="btn-gold" style={{ padding: '1.5rem 5rem', fontSize: '1.5rem', boxShadow: '0 0 50px var(--combat-gold)', borderRadius: '12px' }}>RETOUR AU MONDE</button>
+                    </div>
+                )}
             </div>
         </div>
     );
