@@ -16,6 +16,12 @@ import { CraftingHandler } from './handlers/CraftingHandler.js';
 import { MemoryManager } from './MemoryManager.js';
 import { NarrativeGenerator } from './narrative/NarrativeGenerator.js';
 
+// ===== NOUVEAUX SYSTÈMES AVANCÉS =====
+import EventGenerator from './EventGenerator.js';
+import KarmaManager from './KarmaManager.js';
+import NPCPersonalitySystem from './NPCPersonalitySystem.js';
+import DialogueExpansion from './DialogueExpansion.js';
+
 // ═══════════════════════════════════════════════════════════════════════
 // 🎯 GAME MASTER ENGINE - Classe principale
 // ═══════════════════════════════════════════════════════════════════════
@@ -27,6 +33,9 @@ export class GMEngine {
       llmConfidenceThreshold: 0.6,
       enableMemory: true,
       enableConsequences: true,
+      enableEvents: true,        // Nouveaux : événements dynamiques
+      enableKarma: true,          // Nouveau : système de karma
+      enableNPCPersonality: true, // Nouveau : IA des PNJ
       ...config
     };
 
@@ -34,6 +43,12 @@ export class GMEngine {
     this.intentDetector = new IntentDetector();
     this.memoryManager = new MemoryManager();
     this.narrativeGenerator = new NarrativeGenerator();
+
+    // ===== NOUVEAUX SYSTÈMES AVANCÉS =====
+    this.eventGenerator = new EventGenerator();
+    this.karmaManager = new KarmaManager();
+    this.npcPersonalitySystem = new NPCPersonalitySystem();
+    this.dialogueExpansion = new DialogueExpansion();
 
     // Handlers spécialisés
     this.handlers = {
@@ -279,8 +294,63 @@ export class GMEngine {
       ruleBasedPercentage: `${ruleBasedPercentage}%`,
       llmPercentage: `${llmPercentage}%`,
       averageResponseTime: `${this.stats.averageResponseTime.toFixed(0)}ms`,
-      estimatedCostSavings: this.stats.ruleBasedActions * 0.002 // $0.002 par appel LLM évité
+      estimatedCostSavings: this.stats.ruleBasedActions * 0.002, // $0.002 par appel LLM évité
+      
+      // Nouvelles stats
+      karmaReport: this.config.enableKarma ? this.karmaManager.getFullReport() : null,
+      activeEvents: this.config.enableEvents ? this.eventGenerator.activeWorldEvents : [],
+      npcCount: this.config.enableNPCPersonality ? this.npcPersonalitySystem.npcs.size : 0
     };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // 🌟 NOUVELLES MÉTHODES - SYSTÈMES AVANCÉS
+  // ═══════════════════════════════════════════════════════════════════════
+
+  // ENREGISTRER UNE ACTION POUR LE KARMA
+  recordKarmaAction(actionType, actionData) {
+    if (!this.config.enableKarma) return null;
+    return this.karmaManager.recordAction({ type: actionType, ...actionData });
+  }
+
+  // GÉNÉRER DES ÉVÉNEMENTS DYNAMIQUES
+  generateRandomEvents(context) {
+    if (!this.config.enableEvents) return [];
+    return this.eventGenerator.generateEvent(context);
+  }
+
+  // METTRE À JOUR LES ÉVÉNEMENTS ACTIFS
+  updateActiveEvents(gameTime) {
+    if (!this.config.enableEvents) return;
+    this.eventGenerator.updateActiveEvents(gameTime);
+  }
+
+  // RÉCUPÉRER LES EFFETS DES ÉVÉNEMENTS ACTIFS
+  getActiveEventEffects() {
+    if (!this.config.enableEvents) return {};
+    return this.eventGenerator.getActiveEffects();
+  }
+
+  // CRÉER UN PNJ AVEC PERSONNALITÉ
+  createNPC(id, name, archetype, customTraits = {}) {
+    if (!this.config.enableNPCPersonality) return null;
+    return this.npcPersonalitySystem.createNPC(id, name, archetype, customTraits);
+  }
+
+  // INTERAGIR AVEC UN PNJ
+  interactWithNPC(npcId, interactionData) {
+    if (!this.config.enableNPCPersonality) return null;
+    return this.npcPersonalitySystem.recordInteraction(npcId, interactionData);
+  }
+
+  // RÉCUPÉRER UN DIALOGUE CONTEXTUEL ÉTENDU
+  getContextualDialogue(category, subcategory, context = {}) {
+    return this.dialogueExpansion.getContextualDialogue(category, subcategory, context);
+  }
+
+  // RÉCUPÉRER UNE RUMEUR
+  getRumor(type = 'local') {
+    return this.dialogueExpansion.getRumor(type);
   }
 
   reset() {
@@ -291,6 +361,11 @@ export class GMEngine {
       averageResponseTime: 0
     };
     this.memoryManager.clear();
+    
+    // Réinitialiser les nouveaux systèmes
+    if (this.config.enableEvents) this.eventGenerator.reset();
+    if (this.config.enableKarma) this.karmaManager.reset();
+    if (this.config.enableNPCPersonality) this.npcPersonalitySystem.reset();
   }
 }
 
