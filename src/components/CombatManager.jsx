@@ -161,6 +161,13 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
 
     // Track last attack to prevent rapid duplicates
     const lastAttackRef = useRef({ timestamp: 0, actorId: null, targetId: null });
+    
+    // CLEANUP FIX: Centralized timeout management
+    const timeoutsRef = useRef([]);
+    const addTimeout = useCallback((timeoutId) => {
+        timeoutsRef.current.push(timeoutId);
+    }, []);
+    
     const [animatingId, setAnimatingId] = useState(null);
     const [shakingId, setShakingId] = useState(null);
     const [damagePopups, setDamagePopups] = useState([]);
@@ -224,6 +231,18 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
             supabase.removeChannel(channel);
         };
     }, [sessionId, combatState, logs.length]);
+
+    // CLEANUP FIX: Clear all timeouts on unmount
+    useEffect(() => {
+        return () => {
+            console.log('[CombatManager] Cleanup: Clearing all pending timeouts');
+            timeoutsRef.current.forEach(clearTimeout);
+            timeoutsRef.current = [];
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
+            }
+        };
+    }, []);
 
     useEffect(() => {
         logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -1124,11 +1143,12 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                     }
 
                     addLog({ role: 'system', content: `🎲 **${roll}**(+${modifier}) vs **${threshold}** AC | 💥 **${currentActor.name}** touche **${target.name}** pour ${damage} dégâts !` });
-                    setTimeout(() => {
+                    const timeoutId = setTimeout(() => {
                         setAnimatingId(null); setShakingId(null);
                         // CRITICAL FIX: Finish turn for ALL actors after attack, not just enemies
                         finishTurn();
                     }, 600);
+                    addTimeout(timeoutId);
                 }, 250);
             } else {
                 if (onVFX) onVFX('spark', cx, cy, '#ffff00');

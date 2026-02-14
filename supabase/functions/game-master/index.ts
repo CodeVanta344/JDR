@@ -491,8 +491,9 @@ function getLocationDetails(locationName: string, loreStr: string): any {
     // Parse basique pour extraire les données de structure du lore
     // Si le lore contient des données JSON, on les extrait
     try {
-        // Le lore devrait contenir les définitions de locations
-        const locationMatch = loreStr.match(new RegExp(`"name":\\s*"${locationName}"[^}]+services[^}]+}`, 'i'));
+        // SECURITY FIX: Échapper les caractères spéciaux regex pour éviter SyntaxError
+        const escapedName = locationName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const locationMatch = loreStr.match(new RegExp(`"name":\\s*"${escapedName}"[^}]+services[^}]+}`, 'i'));
         if (locationMatch) {
             const servicesMatch = locationMatch[0].match(/"services":\s*({[^}]+})/);
             if (servicesMatch) {
