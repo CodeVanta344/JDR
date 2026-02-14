@@ -29,6 +29,14 @@ import EconomyManager from './EconomyManager.js';
 import LocationGenerator from './LocationGenerator.js';
 import ActionComboSystem from './ActionComboSystem.js';
 
+// ===== SYSTÈMES LÉGENDAIRES v4.0 =====
+import AIDirector from './AIDirector.js';
+import WorldSimulation from './WorldSimulation.js';
+import DynamicStorytelling from './DynamicStorytelling.js';
+import AdvancedCombatAI from './AdvancedCombatAI.js';
+import FactionWarfare from './FactionWarfare.js';
+import KnowledgeGraph from './KnowledgeGraph.js';
+
 // ═══════════════════════════════════════════════════════════════════════
 // 🎯 GAME MASTER ENGINE - Classe principale
 // ═══════════════════════════════════════════════════════════════════════
@@ -53,6 +61,14 @@ export class GMEngine {
       enableLocations: true,
       enableCombos: true,
       
+      // v4.0 LEGENDARY SYSTEMS
+      enableAIDirector: true,
+      enableWorldSimulation: true,
+      enableDynamicStorytelling: true,
+      enableAdvancedCombatAI: true,
+      enableFactionWarfare: true,
+      enableKnowledgeGraph: true,
+      
       ...config
     };
 
@@ -73,6 +89,22 @@ export class GMEngine {
     this.economyManager = new EconomyManager();
     this.locationGenerator = new LocationGenerator();
     this.actionComboSystem = new ActionComboSystem();
+    
+    // ===== SYSTÈMES LÉGENDAIRES v4.0 =====
+    this.aiDirector = this.config.enableAIDirector ? new AIDirector(config.aiDirector) : null;
+    this.worldSimulation = this.config.enableWorldSimulation ? new WorldSimulation(config.worldSimulation) : null;
+    this.dynamicStorytelling = this.config.enableDynamicStorytelling ? new DynamicStorytelling(config.storytelling) : null;
+    this.advancedCombatAI = this.config.enableAdvancedCombatAI ? new AdvancedCombatAI(config.combatAI) : null;
+    this.factionWarfare = this.config.enableFactionWarfare ? new FactionWarfare(config.factionWarfare) : null;
+    this.knowledgeGraph = this.config.enableKnowledgeGraph ? new KnowledgeGraph(config.knowledgeGraph) : null;
+    
+    // Démarrer les simulations automatiques
+    if (this.worldSimulation) {
+      this.worldSimulation.startSimulation();
+    }
+    if (this.factionWarfare) {
+      this.factionWarfare.startWarSimulation();
+    }
 
     // Handlers spécialisés
     this.handlers = {
@@ -520,6 +552,297 @@ export class GMEngine {
     this.actionComboSystem.resetCombo();
   }
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // 🎭 V4.0 LEGENDARY SYSTEMS - AI DIRECTOR
+  // ═══════════════════════════════════════════════════════════════════════
+
+  analyzePlayerBehavior(playerId) {
+    if (!this.aiDirector) return null;
+    return this.aiDirector.analyzePlayerBehavior(playerId);
+  }
+
+  adjustDifficulty(playerId, context = {}) {
+    if (!this.aiDirector) return { multiplier: 1.0, adjustments: {} };
+    return this.aiDirector.adjustDifficulty(playerId, context);
+  }
+
+  generatePersonalizedContent(playerId, contentType, context = {}) {
+    if (!this.aiDirector) return null;
+    return this.aiDirector.generatePersonalizedContent(playerId, contentType, context);
+  }
+
+  predictPlayerAction(playerId, context = {}) {
+    if (!this.aiDirector) return null;
+    return this.aiDirector.predictPlayerAction(playerId, context);
+  }
+
+  recordCombatForAI(playerId, combatData) {
+    if (!this.aiDirector) return;
+    this.aiDirector.recordCombatEvent(playerId, combatData);
+  }
+
+  getPlayerSummary(playerId) {
+    if (!this.aiDirector) return null;
+    return this.aiDirector.getPlayerSummary(playerId);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // 🌍 V4.0 LEGENDARY SYSTEMS - WORLD SIMULATION
+  // ═══════════════════════════════════════════════════════════════════════
+
+  getWorldTime() {
+    if (!this.worldSimulation) return null;
+    return this.worldSimulation.getWorldState();
+  }
+
+  addNPCToWorld(npcData) {
+    if (!this.worldSimulation) return null;
+    return this.worldSimulation.addNPC(npcData);
+  }
+
+  addCityToWorld(cityData) {
+    if (!this.worldSimulation) return null;
+    return this.worldSimulation.addCity(cityData);
+  }
+
+  getNPCState(npcId) {
+    if (!this.worldSimulation) return null;
+    return this.worldSimulation.getNPCState(npcId);
+  }
+
+  getCityState(cityId) {
+    if (!this.worldSimulation) return null;
+    return this.worldSimulation.getCityState(cityId);
+  }
+
+  getCurrentWeather() {
+    if (!this.worldSimulation) return null;
+    return this.worldSimulation.getCurrentWeather();
+  }
+
+  getGlobalEconomy() {
+    if (!this.worldSimulation) return null;
+    return this.worldSimulation.getGlobalEconomy();
+  }
+
+  fastForwardTime(hours) {
+    if (!this.worldSimulation) return;
+    this.worldSimulation.fastForward(hours);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // 📖 V4.0 LEGENDARY SYSTEMS - DYNAMIC STORYTELLING
+  // ═══════════════════════════════════════════════════════════════════════
+
+  generateStory(context = {}) {
+    if (!this.dynamicStorytelling) return null;
+    return this.dynamicStorytelling.generateStory(context);
+  }
+
+  progressStory(storyId, playerAction) {
+    if (!this.dynamicStorytelling) return null;
+    return this.dynamicStorytelling.progressStory(storyId, playerAction);
+  }
+
+  getActiveStories() {
+    if (!this.dynamicStorytelling) return [];
+    return this.dynamicStorytelling.getActiveStories();
+  }
+
+  getRecurringCharacters() {
+    if (!this.dynamicStorytelling) return [];
+    return this.dynamicStorytelling.getRecurringCharacters();
+  }
+
+  getNarrativeContext() {
+    if (!this.dynamicStorytelling) return null;
+    return this.dynamicStorytelling.getNarrativeContext();
+  }
+
+  generateStorySummary(storyId) {
+    if (!this.dynamicStorytelling) return null;
+    return this.dynamicStorytelling.generateStorySummary(storyId);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // ⚔️ V4.0 LEGENDARY SYSTEMS - ADVANCED COMBAT AI
+  // ═══════════════════════════════════════════════════════════════════════
+
+  analyzePlayerCombatPatterns(playerId, combat) {
+    if (!this.advancedCombatAI) return null;
+    return this.advancedCombatAI.analyzePlayerPatterns(playerId, combat);
+  }
+
+  selectCombatFormation(units, enemyFormation, context) {
+    if (!this.advancedCombatAI) return null;
+    return this.advancedCombatAI.selectFormation(units, enemyFormation, context);
+  }
+
+  decideCombatStrategy(units, enemies, context) {
+    if (!this.advancedCombatAI) return null;
+    return this.advancedCombatAI.decideStrategy(units, enemies, context);
+  }
+
+  decideUnitAction(unit, allies, enemies, strategy, context) {
+    if (!this.advancedCombatAI) return null;
+    return this.advancedCombatAI.decideUnitAction(unit, allies, enemies, strategy, context);
+  }
+
+  coordinateTeam(units, enemies, strategy) {
+    if (!this.advancedCombatAI) return [];
+    return this.advancedCombatAI.coordinateTeam(units, enemies, strategy);
+  }
+
+  learnFromCombat(combatResult) {
+    if (!this.advancedCombatAI) return;
+    this.advancedCombatAI.learnFromCombat(combatResult);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // ⚔️ V4.0 LEGENDARY SYSTEMS - FACTION WARFARE
+  // ═══════════════════════════════════════════════════════════════════════
+
+  createFaction(data) {
+    if (!this.factionWarfare) return null;
+    return this.factionWarfare.createFaction(data);
+  }
+
+  createTerritory(data) {
+    if (!this.factionWarfare) return null;
+    return this.factionWarfare.createTerritory(data);
+  }
+
+  declareWar(attackerId, defenderId, reason) {
+    if (!this.factionWarfare) return false;
+    return this.factionWarfare.declareWar(attackerId, defenderId, reason);
+  }
+
+  negotiatePeace(factionId1, factionId2, terms) {
+    if (!this.factionWarfare) return false;
+    return this.factionWarfare.negotiatePeace(factionId1, factionId2, terms);
+  }
+
+  getGeopoliticalState() {
+    if (!this.factionWarfare) return null;
+    return this.factionWarfare.getGeopoliticalState();
+  }
+
+  getRecentBattles(limit = 10) {
+    if (!this.factionWarfare) return [];
+    return this.factionWarfare.getRecentBattles(limit);
+  }
+
+  applyPlayerInfluenceToBattle(battleId, factionId, influence) {
+    if (!this.factionWarfare) return;
+    this.factionWarfare.applyPlayerInfluence(battleId, factionId, influence);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // 🧠 V4.0 LEGENDARY SYSTEMS - KNOWLEDGE GRAPH
+  // ═══════════════════════════════════════════════════════════════════════
+
+  addKnowledgeNode(data) {
+    if (!this.knowledgeGraph) return null;
+    return this.knowledgeGraph.addNode(data);
+  }
+
+  addKnowledgeEdge(fromId, toId, relationType, properties) {
+    if (!this.knowledgeGraph) return null;
+    return this.knowledgeGraph.addEdge(fromId, toId, relationType, properties);
+  }
+
+  findKnowledge(criteria) {
+    if (!this.knowledgeGraph) return [];
+    return this.knowledgeGraph.findNodes(criteria);
+  }
+
+  traverseKnowledge(startNodeId, relationTypes, depth) {
+    if (!this.knowledgeGraph) return [];
+    return this.knowledgeGraph.traverse(startNodeId, relationTypes, depth);
+  }
+
+  findKnowledgePath(fromId, toId, relationTypes) {
+    if (!this.knowledgeGraph) return null;
+    return this.knowledgeGraph.findPath(fromId, toId, relationTypes);
+  }
+
+  queryKnowledge(pattern) {
+    if (!this.knowledgeGraph) return [];
+    return this.knowledgeGraph.query(pattern);
+  }
+
+  performInferences() {
+    if (!this.knowledgeGraph) return 0;
+    return this.knowledgeGraph.performInferences();
+  }
+
+  suggestContent(contextNodeId, suggestionType) {
+    if (!this.knowledgeGraph) return [];
+    return this.knowledgeGraph.suggestContent(contextNodeId, suggestionType);
+  }
+
+  getContradictions(severity) {
+    if (!this.knowledgeGraph) return [];
+    return this.knowledgeGraph.getContradictions(severity);
+  }
+
+  exportKnowledgeGraph() {
+    if (!this.knowledgeGraph) return null;
+    return this.knowledgeGraph.export();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // 📊 STATISTIQUES
+  // ═══════════════════════════════════════════════════════════════════════
+
+  getStats() {
+    const baseStats = { ...this.stats };
+    
+    if (this.config.enableEvents) {
+      baseStats.events = this.eventGenerator.stats;
+    }
+    if (this.config.enableKarma) {
+      baseStats.karma = this.karmaManager.stats;
+    }
+    if (this.config.enableNPCPersonality) {
+      baseStats.npcAI = this.npcPersonalitySystem.stats;
+    }
+    if (this.config.enableQuests) {
+      baseStats.quests = this.questGenerator.getStats();
+    }
+    if (this.config.enableRelationships) {
+      baseStats.relationships = this.npcRelationshipGraph.getStats();
+    }
+    if (this.config.enableEconomy) {
+      baseStats.economy = this.economyManager.getStats();
+    }
+    if (this.config.enableCombos) {
+      baseStats.combos = this.actionComboSystem.getStats();
+    }
+    
+    // v4.0 LEGENDARY SYSTEMS
+    if (this.aiDirector) {
+      baseStats.aiDirector = this.aiDirector.getStats();
+    }
+    if (this.worldSimulation) {
+      baseStats.worldSimulation = this.worldSimulation.getStats();
+    }
+    if (this.dynamicStorytelling) {
+      baseStats.storytelling = this.dynamicStorytelling.getStats();
+    }
+    if (this.advancedCombatAI) {
+      baseStats.combatAI = this.advancedCombatAI.getStats();
+    }
+    if (this.factionWarfare) {
+      baseStats.factionWarfare = this.factionWarfare.getStats();
+    }
+    if (this.knowledgeGraph) {
+      baseStats.knowledgeGraph = this.knowledgeGraph.getStats();
+    }
+    
+    return baseStats;
+  }
+
   reset() {
     this.stats = {
       totalActions: 0,
@@ -538,6 +861,14 @@ export class GMEngine {
     if (this.config.enableQuests) this.questGenerator.reset();
     if (this.config.enableRelationships) this.npcRelationshipGraph.reset();
     if (this.config.enableEconomy) this.economyManager.reset();
+    
+    // Réinitialiser v4.0 LEGENDARY SYSTEMS
+    if (this.aiDirector) this.aiDirector.reset();
+    if (this.worldSimulation) this.worldSimulation.reset();
+    if (this.dynamicStorytelling) this.dynamicStorytelling.reset();
+    if (this.advancedCombatAI) this.advancedCombatAI.reset();
+    if (this.factionWarfare) this.factionWarfare.reset();
+    if (this.knowledgeGraph) this.knowledgeGraph.reset();
   }
 }
 
