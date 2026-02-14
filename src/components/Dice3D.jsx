@@ -29,7 +29,7 @@ const D20_FACES = [
 ];
 
 // Simplified Text Component
-const DiceFaceText = ({ value, position, rotation, color = "white", scale = 1 }) => (
+const DiceFaceText = ({ value, position, rotation, color = "#222", scale = 1 }) => (
     <Text
         position={position}
         rotation={rotation}
@@ -37,7 +37,7 @@ const DiceFaceText = ({ value, position, rotation, color = "white", scale = 1 })
         color={color}
         anchorX="center"
         anchorY="middle"
-        font="https://unpkg.com/@fontsource/cinzel@5.0.8/files/cinzel-latin-400-normal.woff" // Fallback to unpkg if local fails
+        font="https://unpkg.com/@fontsource/cinzel@5.0.8/files/cinzel-latin-700-normal.woff" // Thicker font
         characters="0123456789"
     >
         {value}
@@ -45,70 +45,132 @@ const DiceFaceText = ({ value, position, rotation, color = "white", scale = 1 })
 );
 
 // --- MATERIALS ---
-const GemMaterial = ({ color }) => (
+const MetalMaterial = ({ color, flatShading = false }) => (
     <meshStandardMaterial
         color={color}
-        roughness={0.1}
-        metalness={0.6}
-        emissive={color}
-        emissiveIntensity={0.2}
+        roughness={0.3}
+        metalness={1}
+        flatShading={flatShading}
+        envMapIntensity={1.5}
     />
 );
 
 const GoldInlayMaterial = <meshStandardMaterial color="#FFD700" metalness={1} roughness={0.2} />;
 
+// --- D10 GEOMETRY DATA ---
+const createD10Geometry = (radius) => {
+    // Pentagonal Trapezohedron approximation
+    const vertices = [];
+    const h = radius * 1.2;
+    const r = radius;
+    const offset = Math.PI / 5;
+
+    // Poles
+    vertices.push(0, h, 0); // 0: Top
+    vertices.push(0, -h, 0); // 1: Bottom
+
+    // Upper ring
+    for (let i = 0; i < 5; i++) {
+        const phi = (i * 2 * Math.PI) / 5;
+        vertices.push(r * Math.cos(phi), 0.2 * h, r * Math.sin(phi));
+    }
+    // Lower ring
+    for (let i = 0; i < 5; i++) {
+        const phi = (i * 2 * Math.PI) / 5 + offset;
+        vertices.push(r * Math.cos(phi), -0.2 * h, r * Math.sin(phi));
+    }
+
+    const indices = [
+        // Top cap
+        0, 2, 3, 0, 3, 4, 0, 4, 5, 0, 5, 6, 0, 6, 2,
+        // Bottom cap
+        1, 8, 7, 1, 9, 8, 1, 10, 9, 1, 11, 10, 1, 7, 11,
+        // Middle band (triangles connecting rings)
+        2, 7, 3, 3, 7, 8, 3, 8, 4, 4, 8, 9, 4, 9, 5, 5, 9, 10, 5, 10, 6, 6, 10, 11, 6, 11, 2, 2, 11, 7
+    ];
+
+    const geo = new THREE.PolyhedronGeometry(vertices, indices, radius, 0);
+    return geo;
+};
+
 // --- DICE MESH COMPONENT ---
 const DiceMesh = ({ type, color, resultValue, isSettled }) => {
-    const radius = 1.3;
+    const radius = 0.75; // Base radius for all dice
 
-    // Position of the "Result" face - always on top [0, radius, 0] or front [0, 0, radius]
-    // We'll use [0, 0, radius] (front) and rotate the group to show it
+    const d10Geometry = useMemo(() => createD10Geometry(radius), [radius]);
+
+    // Geometry selection based on type
+    let geometry;
+    let flatShading = false;
+    let textOffset = radius + 0.05;
+
+    switch (type) {
+        case 'd4':
+            geometry = <tetrahedronGeometry args={[radius, 0]} />;
+            textOffset = radius * 0.4; // Text sits deeper on D4 surface
+            break;
+        case 'd6':
+            // Perfect Cube for D6
+            const boxSize = radius * 1.1;
+            geometry = <boxGeometry args={[boxSize, boxSize, boxSize]} />;
+            textOffset = (boxSize / 2) + 0.02;
+            break;
+        case 'd8':
+            geometry = <octahedronGeometry args={[radius, 0]} />;
+            textOffset = radius * 0.6;
+            break;
+        case 'd10':
+            geometry = d10Geometry;
+            flatShading = true;
+            textOffset = radius * 0.7;
+            break;
+        case 'd12':
+            geometry = <dodecahedronGeometry args={[radius, 0]} />;
+            textOffset = radius * 0.85;
+            break;
+        case 'd20':
+            geometry = <icosahedronGeometry args={[radius, 0]} />;
+            textOffset = radius * 0.9;
+            break;
+        case 'd100':
+        case 'd75':
+        case 'd50':
+            // High-poly sphere but with flat shading to show facets
+            geometry = <icosahedronGeometry args={[radius, 2]} />;
+            flatShading = true;
+            textOffset = radius * 0.95;
+            break;
+        default:
+            geometry = <icosahedronGeometry args={[radius, 0]} />;
+    }
+
+    const isCritSuccess = resultValue === 20 || (type === 'd100' && resultValue >= 95) || (type === 'd10' && resultValue === 10);
+    const isCritFail = resultValue === 1 || (type === 'd100' && resultValue <= 5) || (type === 'd10' && resultValue === 0);
+
     const resultFace = (
         <DiceFaceText
             value={resultValue}
-            position={[0, 0, radius + 0.05]}
+            position={[0, 0, textOffset]}
             rotation={[0, 0, 0]}
-            color={resultValue === 1 ? "#ff4444" : (resultValue >= 18 || resultValue === 100 ? "#FFD700" : "white")}
-            scale={1.2}
+            color={isCritFail ? "#ff0000" : (isCritSuccess ? "#FFD700" : "#222")}
+            scale={type === 'd10' ? 0.7 : 0.8}
         />
     );
 
-    // D20 Logic
-    if (type === 'd20') {
-        return (
-            <mesh castShadow receiveShadow>
-                <icosahedronGeometry args={[radius, 0]} />
-                <GemMaterial color={color} />
-                {resultFace}
-                {/* Decorative faces to fill the shape */}
-                <DiceFaceText value="1" position={[-0.8, -0.8, -1]} rotation={[0, Math.PI, 0]} color="#444" scale={0.5} />
-                <DiceFaceText value="20" position={[0.8, 0.8, -1]} rotation={[0, Math.PI, 0]} color="#444" scale={0.5} />
-            </mesh>
-        );
-    }
-
-    // D100 Logic (Aether Tier)
-    if (type === 'd100') {
-        return (
-            <mesh castShadow receiveShadow>
-                <sphereGeometry args={[radius, 32, 32]} />
-                <GemMaterial color={color} />
-                {resultFace}
-                <DiceFaceText value="100" position={[0, -radius, 0]} rotation={[Math.PI / 2, 0, 0]} color="#444" scale={0.6} />
-            </mesh>
-        );
-    }
-
-    // Default Fallback
     return (
-        <mesh castShadow receiveShadow>
-            {type === 'd12' ? <dodecahedronGeometry args={[radius, 0]} /> :
-                type === 'd10' ? <octahedronGeometry args={[radius, 0]} /> :
-                    type === 'd8' ? <octahedronGeometry args={[radius, 0]} /> :
-                        type === 'd4' ? <tetrahedronGeometry args={[radius, 0]} /> :
-                            <icosahedronGeometry args={[radius, 0]} />}
-            <GemMaterial color={color} />
+        <mesh castShadow receiveShadow geometry={type === 'd10' ? geometry : undefined}>
+            {type !== 'd10' && geometry}
+            <MetalMaterial color={color} flatShading={flatShading} />
             {resultFace}
+            {isSettled && (
+                <Sparkles
+                    count={isCritSuccess ? 30 : 10}
+                    scale={1.2}
+                    size={isCritSuccess ? 3 : 1.5}
+                    speed={0.5}
+                    color={isCritSuccess ? "#FFD700" : color}
+                />
+            )}
         </mesh>
     );
 };
@@ -141,35 +203,29 @@ export const Dice3D = ({ type = 'd20', value, onComplete, autoRoll = true }) => 
     const rollTimeRef = useRef(0);
 
     const diceColor = useMemo(() => {
-        switch (type) {
-            case 'd20': return '#cd7f32'; // Bronze (Novice)
-            case 'd50': return '#c0c0c0'; // Silver (Exp)
-            case 'd75': return '#ffd700'; // Gold (Veteran)
-            case 'd100': return '#7b2ff7'; // Aether Purple (Master)
-            case 'd12': return '#a3c2ff';
-            case 'd10': return '#ff8da1';
-            case 'd8': return '#c4a3ff';
-            case 'd6': return '#98ff98';
-            default: return '#FFD700';
-        }
+        // Metallic colors inspired by the reference image (Antique Silver/Pewter)
+        return '#bbbbbb';
     }, [type]);
+
+    const [collisionCount, setCollisionCount] = useState(0);
 
     useEffect(() => {
         if (autoRoll) {
-            // Strong initial throw
+            // "Hand thrown" feel: Gentle downward and inward velocity
             setVelocity({
-                x: (Math.random() - 0.5) * 0.8,
-                y: (Math.random() * 0.5) + 0.2,
-                z: (Math.random() - 0.5) * 0.8
+                x: (Math.random() - 0.5) * 0.4,
+                y: -0.2 - (Math.random() * 0.3), // Initial downward shove
+                z: -0.3 - (Math.random() * 0.4)  // Throwing "into" the screen
             });
             setRotationVel({
-                x: Math.random() * 10,
-                y: Math.random() * 10,
-                z: Math.random() * 10
+                x: (Math.random() - 0.5) * 20,
+                y: (Math.random() - 0.5) * 20,
+                z: (Math.random() - 0.5) * 20
             });
+            setCollisionCount(0);
             rollTimeRef.current = 0;
         }
-    }, [autoRoll]);
+    }, [autoRoll, type]);
 
     useFrame((state, delta) => {
         if (!groupRef.current || !isRolling) return;
@@ -178,10 +234,10 @@ export const Dice3D = ({ type = 'd20', value, onComplete, autoRoll = true }) => 
         const time = rollTimeRef.current;
 
         // Physics Simulation
-        if (time < 3.0) { // Slightly longer roll for gravity to settle
+        if (time < 3.5) { // Slightly longer roll for "heavier" feel
             // Decay
-            const damping = 0.992; // Less dampening for more bounces
-            const gravity = 0.015;
+            const damping = 0.99; // Less damping = slides/rolls longer
+            const gravity = 0.025;  // Heavier gravity
 
             setVelocity(v => {
                 let ny = v.y - gravity;
@@ -191,15 +247,27 @@ export const Dice3D = ({ type = 'd20', value, onComplete, autoRoll = true }) => 
                 // Floor bounce (Y = -1.5 as board surface)
                 if (groupRef.current.position.y < -1.5) {
                     groupRef.current.position.y = -1.5;
-                    ny = Math.abs(ny) * 0.45; // Bounce energy loss
-                    nx *= 0.8; // Friction on bounce
-                    nz *= 0.8;
+
+                    // Only bounce if falling fast enough
+                    if (Math.abs(ny) > 0.05) {
+                        ny = Math.abs(ny) * 0.4; // Controlled bounce
+                        setCollisionCount(c => c + 1);
+                    } else {
+                        ny = 0;
+                    }
+
+                    nx *= 0.7; // Slide friction
+                    nz *= 0.7;
                 }
 
                 return { x: nx, y: ny, z: nz };
             });
 
-            setRotationVel(v => ({ x: v.x * damping, y: v.y * damping, z: v.z * damping }));
+            setRotationVel(v => ({
+                x: v.x * damping,
+                y: v.y * damping,
+                z: v.z * damping
+            }));
 
             // Apply Move
             groupRef.current.position.x += velocity.x;
@@ -212,17 +280,28 @@ export const Dice3D = ({ type = 'd20', value, onComplete, autoRoll = true }) => 
             groupRef.current.rotation.z += rotationVel.z * delta;
 
         } else if (isRolling) {
-            // Settle and Snap rotation to target the camera
-            // We want the face at [0, 0, radius] to point towards the camera [0, 8, 12]
-            // For simplicity, we'll just snap it to a fixed "winning" rotation
-            groupRef.current.rotation.set(-0.5, 0, 0); // Slight tilt to face camera
-            setIsRolling(false);
-            if (onComplete) onComplete(value);
+            // Settle and Interpolate rotation to target the camera
+            const targetRotation = new THREE.Euler(-0.5, 0, 0);
+
+            // Smoothly lerp rotation and position for final snap
+            groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, targetRotation.x, 0.1);
+            groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, targetRotation.y, 0.1);
+            groupRef.current.rotation.z = THREE.MathUtils.lerp(groupRef.current.rotation.z, targetRotation.z, 0.1);
+
+            groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, -1.5, 0.1);
+
+            // Once close enough, finish
+            if (Math.abs(groupRef.current.rotation.x - targetRotation.x) < 0.01) {
+                groupRef.current.rotation.set(-0.5, 0, 0);
+                groupRef.current.position.y = -1.5;
+                setIsRolling(false);
+                if (onComplete) onComplete(value);
+            }
         }
     });
 
     return (
-        <group ref={groupRef} position={[0, 5, 0]}> {/* Even higher start */}
+        <group ref={groupRef} position={[0, 10, 0]}> {/* Higher start for "falling" effect */}
             <DiceMesh type={type} color={diceColor} resultValue={value} isSettled={!isRolling} />
             <MagicParticles isRolling={isRolling} color={diceColor} />
             <pointLight distance={5} intensity={isRolling ? 1.5 : 0.8} color={diceColor} />
@@ -233,16 +312,27 @@ export const Dice3D = ({ type = 'd20', value, onComplete, autoRoll = true }) => 
 // --- DICE BOARD OVERLAY ---
 export const DiceOverlay = ({ diceRolls = [], onAllComplete }) => {
     const [completedCount, setCompletedCount] = useState(0);
+    const [showFinalResults, setShowFinalResults] = useState(false);
 
-    const handleComplete = () => {
-        setCompletedCount(prev => {
-            const next = prev + 1;
-            if (next === diceRolls.length && onAllComplete) {
-                setTimeout(onAllComplete, 1000);
-            }
-            return next;
-        });
-    };
+    const totalNatural = useMemo(() => {
+        return diceRolls.reduce((acc, roll) => acc + (roll.value || 0), 0);
+    }, [diceRolls]);
+
+    const isCritSuccess = useMemo(() => {
+        if (diceRolls.length === 1) {
+            const r = diceRolls[0];
+            return r.value === 20 || (r.type === 'd100' && r.value >= 95);
+        }
+        return false;
+    }, [diceRolls]);
+
+    const isCritFail = useMemo(() => {
+        if (diceRolls.length === 1) {
+            const r = diceRolls[0];
+            return r.value === 1 || (r.type === 'd100' && r.value <= 5);
+        }
+        return false;
+    }, [diceRolls]);
 
     if (diceRolls.length === 0) return null;
 
@@ -251,8 +341,8 @@ export const DiceOverlay = ({ diceRolls = [], onAllComplete }) => {
             position: 'fixed',
             inset: 0,
             zIndex: 11000,
-            pointerEvents: 'none', // Allow clicking through to UI
-            background: 'rgba(0,0,0,0.1)' // Very subtle dim
+            pointerEvents: 'none',
+            background: 'rgba(0,0,0,0.1)'
         }}>
             <Canvas shadows gl={{ antialias: true, alpha: true }}>
                 <PerspectiveCamera makeDefault position={[0, 10, 15]} fov={35} />
@@ -267,19 +357,56 @@ export const DiceOverlay = ({ diceRolls = [], onAllComplete }) => {
                     <meshStandardMaterial transparent opacity={0.2} color="#000" />
                 </mesh>
 
-                {diceRolls.map((roll, i) => (
-                    <group key={i} position={[(i - (diceRolls.length - 1) / 2) * 3, 0, 0]}>
-                        <Dice3D
-                            type={roll.type}
-                            value={roll.value}
-                            onComplete={handleComplete}
-                            autoRoll={true}
-                        />
-                    </group>
-                ))}
+                {(() => {
+                    const expandedDice = diceRolls.flatMap((roll, i) => {
+                        if (roll.type === 'd100') {
+                            const finalTens = roll.value === 100 ? "00" : (Math.floor(roll.value / 10) * 10);
+                            const finalUnits = roll.value % 10;
+                            return [
+                                { type: 'd10', value: finalTens, key: `${i}-tens`, offset: -1.7 },
+                                { type: 'd10', value: finalUnits, key: `${i}-units`, offset: 1.7 }
+                            ];
+                        }
+                        return [{ ...roll, key: i, offset: 0 }];
+                    });
+
+                    const totalDiceCount = expandedDice.length;
+                    const onDiceComplete = () => {
+                        setCompletedCount(prev => {
+                            const next = prev + 1;
+                            if (next === totalDiceCount) {
+                                setShowFinalResults(true);
+                                if (onAllComplete) {
+                                    setTimeout(onAllComplete, 1500);
+                                }
+                            }
+                            return next;
+                        });
+                    };
+
+                    return expandedDice.map((d, idx) => (
+                        <group key={d.key} position={[((idx - (totalDiceCount - 1) / 2) * 5) + d.offset, 0, 0]}>
+                            <Dice3D type={d.type} value={d.value} onComplete={onDiceComplete} autoRoll={true} />
+                        </group>
+                    ));
+                })()}
 
                 <OrbitControls enableZoom={false} enablePan={false} maxPolarAngle={Math.PI / 2.2} />
             </Canvas>
+
+            {/* Results UI Overlay */}
+            {showFinalResults && (
+                <div className="dice-result-overlay">
+                    <div className="dice-result-card">
+                        <span className="dice-result-label">Résultat Naturel</span>
+                        <div className={`dice-result-val ${isCritSuccess ? 'dice-crit-success' : ''} ${isCritFail ? 'dice-crit-fail' : ''}`}>
+                            {totalNatural}
+                        </div>
+                        {isCritSuccess && <span className="dice-result-label dice-crit-success">Réussite Critique !</span>}
+                        {isCritFail && <span className="dice-result-label dice-crit-fail">Échec Critique...</span>}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

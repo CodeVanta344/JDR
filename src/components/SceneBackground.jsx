@@ -6,10 +6,32 @@ export const SceneBackground = ({ currentImage }) => {
     const [activeLayer, setActiveLayer] = useState(1);
     const [transitioning, setTransitioning] = useState(false);
 
-    const fallbackImage = 'https://w0.peakpx.com/wallpaper/243/662/HD-wallpaper-dark-fantasy-castle-dark-fantasy-landscape-mystical.jpg';
+    const fallbackImage = 'https://okanuafsmkuzyuyqibpu.supabase.co/storage/v1/object/public/assets/Aethelgard_Map_v3.png';
 
     useEffect(() => {
-        const nextImage = currentImage || fallbackImage;
+        let rawImage = currentImage || fallbackImage;
+
+        // Robust URL Processing
+        let nextImage;
+        if (typeof rawImage === 'string') {
+            // If it's a relative path starting with slash, it might be a public asset or a missing full URL
+            if (rawImage.startsWith('/') && !rawImage.startsWith('//')) {
+                // If the file looks like a Supabase asset name (has spaces or specific pattern), 
+                // but lacks the full URL, we should treat it carefully.
+                // However, there's a logic in App.jsx that might pass just the filename.
+                // Assuming everything should eventually be a valid URL:
+                nextImage = rawImage.replace(/ /g, '_');
+            } else if (!rawImage.startsWith('http') && !rawImage.startsWith('data:')) {
+                // Handle cases where only filename is passed
+                const supabaseBase = 'https://okanuafsmkuzyuyqibpu.supabase.co/storage/v1/object/public/assets/';
+                nextImage = `${supabaseBase}${rawImage.replace(/ /g, '_')}`;
+            } else {
+                // It's a full URL, just sanitize spaces for browser safety
+                nextImage = rawImage.replace(/ /g, '_');
+            }
+        } else {
+            nextImage = rawImage;
+        }
 
         // If the new image is the same as the one currently showing, do nothing
         const currentlyShowing = activeLayer === 1 ? bg1 : bg2;

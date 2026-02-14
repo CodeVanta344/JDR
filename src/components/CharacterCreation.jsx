@@ -179,11 +179,10 @@ export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImag
     };
 
     const rollAll = async () => {
+        if (rollingStat) return;
         const stats = Object.keys(attributes);
         for (let stat of stats) {
-            if (attributes[stat] === 0) {
-                await rollStatPromise(stat);
-            }
+            await rollStatPromise(stat);
         }
     };
 
@@ -680,7 +679,15 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                                         </div>
                                         <div className="wizard-footer">
                                             <button className="btn-secondary" onClick={() => setStep(5)}>← Retour</button>
-                                            <button className="btn-primary" onClick={() => setStep(7)} disabled={!allRolled}>Finaliser les Caractéristiques →</button>
+                                            <button
+                                                className="btn-medieval btn-epic-roll"
+                                                onClick={rollAll}
+                                                disabled={isRolling}
+                                                style={{ margin: '0 1rem' }}
+                                            >
+                                                {isRolling ? '⚡ LANÇAGE...' : '✨ TOUT LANCER'}
+                                            </button>
+                                            <button className="btn-primary" onClick={() => setStep(7)} disabled={!allRolled || isRolling}>Finaliser les Caractéristiques →</button>
                                         </div>
                                     </>
                                 )}

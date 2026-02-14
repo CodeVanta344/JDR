@@ -1995,4 +1995,29 @@
 
 .subclass-card.selected .feature-label {
     color: var(--gold-primary);
+    color: var(--gold-primary);
+}
+
+.btn-epic-roll {
+    background: linear-gradient(135deg, #d4af37 0%, #fbeea8 50%, #d4af37 100%);
+    color: #000 !important;
+    font-weight: 800;
+    border: 2px solid #8a6d3b;
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+    transition: all 0.3s ease;
+    min-width: 180px;
+}
+
+.btn-epic-roll:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 25px rgba(212, 175, 55, 0.6);
+    filter: brightness(1.1);
+}
+
+.btn-epic-roll:disabled {
+    opacity: 0.7;
+    background: #444;
+    color: #888 !important;
+    cursor: wait;
+    transform: none;
 }

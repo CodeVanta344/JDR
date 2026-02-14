@@ -14,12 +14,28 @@ export function SessionLobby({ onJoin, onCreate, onQuickStart, onSoloAdventure, 
                         color: '#fff',
                         letterSpacing: 'clamp(5px, 2vw, 18px)',
                         textShadow: '0 0 60px rgba(229,192,109,0.3)',
-                        marginBottom: '0.5rem',
-                        fontFamily: 'var(--font-display)'
+                        marginBottom: '0.1rem',
+                        fontFamily: 'var(--font-display)',
+                        position: 'relative',
+                        display: 'inline-block'
                     }}>
                         AETHELGARD
+                        <span style={{
+                            position: 'absolute',
+                            top: '10%',
+                            right: '-40px',
+                            fontSize: '0.8rem',
+                            padding: '2px 8px',
+                            background: 'var(--gold-primary)',
+                            color: '#000',
+                            borderRadius: '4px',
+                            letterSpacing: '2px',
+                            fontWeight: 'bold',
+                            transform: 'rotate(15deg)',
+                            boxShadow: '0 0 15px rgba(212, 175, 55, 0.4)'
+                        }}>ALPHA</span>
                     </h1>
-                    <div style={{ width: '150px', height: '2px', background: 'linear-gradient(90deg, transparent, var(--gold-primary), transparent)', margin: '1.5rem auto' }}></div>
+                    <div style={{ width: '150px', height: '2px', background: 'linear-gradient(90deg, transparent, var(--gold-primary), transparent)', margin: '1rem auto' }}></div>
                     <p style={{ fontStyle: 'italic', color: 'var(--text-secondary)', letterSpacing: '4px', fontSize: '1rem', opacity: 0.8 }}>Le Serment de l'Aube Éclatée</p>
                 </header>
 
@@ -228,19 +244,26 @@ export function SessionLobby({ onJoin, onCreate, onQuickStart, onSoloAdventure, 
                     )}
                 </main>
 
-                <footer style={{ marginTop: '5rem', opacity: 0.4, fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                    &copy; 2026 AETHELGARD ENGINE • STABLE RELEASE 1.2
+                <footer style={{
+                    marginTop: '5rem',
+                    opacity: 0.7,
+                    fontSize: '0.7rem',
+                    color: 'var(--gold-primary)',
+                    textShadow: '0 2px 4px rgba(0,0,0,0.8)'
+                }}>
+                    <div style={{ marginBottom: '0.5rem', letterSpacing: '2px', textTransform: 'uppercase' }}>Produceur RL • Level Designer AL</div>
+                    &copy; 2026 AETHELGARD ENGINE • VERSION 0.1.0-ALPHA
                 </footer>
             </div>
             {/* Immersive effects */}
             <div className="bg-animation" style={{
                 position: 'absolute',
                 inset: 0,
-                backgroundImage: 'url("https://w0.peakpx.com/wallpaper/243/662/HD-wallpaper-dark-fantasy-castle-dark-fantasy-landscape-mystical.jpg")',
-                backgroundSize: 'cover',
+                backgroundImage: 'url("/aethelgard_map_menu.jpg")',
+                backgroundSize: '80% auto',
                 backgroundPosition: 'center',
-                opacity: 0.2,
-                filter: 'grayscale(0.6) brightness(0.5)'
+                opacity: 0.5,
+                filter: 'brightness(0.6) saturate(1.2)'
             }}></div>
             <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%)', zIndex: 1 }}></div>
             <div className="fog-overlay" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)', zIndex: 2 }}></div>

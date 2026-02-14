@@ -8,6 +8,13 @@ const WaitingRoom = ({ players, character, onToggleReady, onStart, loading, sess
 
     return (
         <div className="creation-overlay" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="creation-bg" style={{
+                backgroundImage: 'url("/aethelgard_map_menu.jpg")',
+                backgroundSize: '80% auto',
+                backgroundPosition: 'center',
+                opacity: 0.4,
+                zIndex: -1
+            }}></div>
             <div className="stone-panel ornate-border" style={{
                 maxWidth: '700px',
                 width: '90%',

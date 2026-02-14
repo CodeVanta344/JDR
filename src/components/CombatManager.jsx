@@ -38,39 +38,6 @@ const DamagePopup = ({ amount, onDone }) => {
     );
 };
 
-const TurnTracker = ({ combatants, currentTurnIndex }) => {
-    // Show current and next 7 combatants
-    const sequence = [];
-    for (let i = 0; i < 8; i++) {
-        const idx = (currentTurnIndex + i) % combatants.length;
-        if (combatants[idx].hp > 0) sequence.push(combatants[idx]);
-    }
-
-    return (
-        <div className="turn-tracker">
-            {sequence.map((u, i) => {
-                const isCurrent = i === 0;
-                return (
-                    <div
-                        key={`${u.id}-${i}`}
-                        className={`turn-actor-card ${isCurrent ? 'current' : ''} ${u.isEnemy ? 'enemy' : ''}`}
-                    >
-                        <img src={u.portrait_url} className="turn-actor-portrait" alt="" />
-                        {isCurrent && (
-                            <div className="turn-focus-badge">
-                                TOUR
-                            </div>
-                        )}
-                        {u.isEnemy && !isCurrent && (
-                            <div className="turn-enemy-pip" />
-                        )}
-                    </div>
-                );
-            })}
-        </div>
-    );
-};
-
 
 
 const RemoteActionOverlay = ({ action, onComplete }) => {
@@ -148,7 +115,7 @@ const RemoteActionOverlay = ({ action, onComplete }) => {
     );
 };
 
-export const CombatManager = ({ arenaConfig = { blocksX: 25, blocksY: 25, shapeType: 'STANDARD' }, players, currentUserId, initialEnemies, syncedCombatState, onUpdateCombatState, onCombatEnd, onLogAction, onHPChange, onResourceChange, onConsumeItem, onGameOver, onRewards, onVFX, onSFX, sessionId }) => {
+export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeType: 'STANDARD' }, players, currentUserId, initialEnemies, syncedCombatState, onUpdateCombatState, onCombatEnd, onLogAction, onHPChange, onResourceChange, onConsumeItem, onGameOver, onRewards, onVFX, onSFX, sessionId }) => {
     // ROBUST USER ID MATCHING - Try multiple methods (MEMOIZED with stable comparison)
     const myPlayer = useMemo(() => {
         if (!players || !currentUserId) return null;
@@ -200,6 +167,9 @@ export const CombatManager = ({ arenaConfig = { blocksX: 25, blocksY: 25, shapeT
     const [rollOverlay, setRollOverlay] = useState(null);
     const [cooldowns, setCooldowns] = useState({});
     const [logs, setLogs] = useState([]);
+    const [hoveredTile, setHoveredTile] = useState(null);
+    const [plannedPath, setPlannedPath] = useState([]);
+    const [isPathPlanning, setIsPathPlanning] = useState(false);
     const [decor, setDecor] = useState([]);
     const [remoteAction, setRemoteAction] = useState(null); // { attackerName, abilityName, roll, modifier, targetName, threshold, success, damage, id }
     const [movingUnit, setMovingUnit] = useState(null); // { id, path: [{x, y}], currentStep: 0 }
@@ -287,16 +257,35 @@ export const CombatManager = ({ arenaConfig = { blocksX: 25, blocksY: 25, shapeT
                 return; // Skip sync while unit is animating to avoid overwriting intermediate positions
             }
 
+            // CRITICAL PROTECTION: If we receive an empty combatants list, IGNORE it (it's likely a blink during update)
+            if (!syncedCombatState.combatants || syncedCombatState.combatants.length === 0) {
+                console.warn('[SYNC] Received empty combatants list - IGNORING to prevent turn skip/crash');
+                return;
+            }
+
             console.log(`[Combat Sync] ====== RECEIVING SYNCED STATE ======`);
             console.log(`[Combat Sync] Combatants count: ${syncedCombatState.combatants?.length}`);
-            syncedCombatState.combatants?.forEach((c, i) => {
-                console.log(`[Combat Sync] [${i}] name: ${c.name}, isEnemy: ${c.isEnemy}, user_id: ${c.user_id}`);
+
+            // ... (rest of the logging)
+            lastSyncRef.current = syncedCombatState.updatedAt || Date.now();
+
+            // Use functional update to ensure we don't overwrite if state is already further ahead
+            setCombatants(prev => {
+                // If local state has moved ahead significantly (e.g. animation finished but not synced yet), be careful
+                return syncedCombatState.combatants;
             });
 
-            lastSyncRef.current = syncedCombatState.updatedAt || Date.now();
-            setCombatants(syncedCombatState.combatants || []);
             setRound(syncedCombatState.round || 1);
-            setCurrentTurnIndex(syncedCombatState.turnIndex || 0);
+
+            // Only update turn index if it changed - prevents UI flickers
+            setCurrentTurnIndex(prev => {
+                if (syncedCombatState.turnIndex !== undefined && syncedCombatState.turnIndex !== prev) {
+                    console.log(`[Combat Sync] Turn changing: ${prev} -> ${syncedCombatState.turnIndex}`);
+                    return syncedCombatState.turnIndex;
+                }
+                return prev;
+            });
+
             setCombatState('active');
             if (syncedCombatState.decor) setDecor(syncedCombatState.decor);
 
@@ -658,11 +647,29 @@ export const CombatManager = ({ arenaConfig = { blocksX: 25, blocksY: 25, shapeT
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [combatState, players?.length, initialEnemies?.length, syncedCombatState]); // Use lengths instead of arrays to avoid unnecessary re-inits
 
+    const [isInitializing, setIsInitializing] = useState(true);
+
+    // Initialisation grace period
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsInitializing(false);
+            console.log("[CombatManager] Initialization period ended.");
+        }, 2000);
+        return () => clearTimeout(timer);
+    }, []);
+
     // CHECK VICTORY / DEFEAT
     useEffect(() => {
+        if (isInitializing) return;
+
         if (combatState === 'active' && combatants.length > 0) {
             const enemiesAlive = combatants.filter(u => u.isEnemy && u.hp > 0);
             const playersAlive = combatants.filter(u => !u.isEnemy && u.hp > 0);
+
+            console.log(`[Combat Check] Enemies alive: ${enemiesAlive.length}, Players alive: ${playersAlive.length}`);
+            combatants.forEach(c => {
+                console.log(` - Combatant: ${c.name} (isEnemy: ${c.isEnemy}, hp: ${c.hp}/${c.maxHp}, user_id: ${c.user_id})`);
+            });
 
             if (enemiesAlive.length === 0) {
                 setCombatState('finished');
@@ -676,11 +683,12 @@ export const CombatManager = ({ arenaConfig = { blocksX: 25, blocksY: 25, shapeT
                 }, 5000);
                 return () => clearTimeout(timer);
             } else if (playersAlive.length === 0) {
+                console.warn("[CombatManager] GAME OVER TRIGGERED: No players alive.");
                 setCombatState('finished');
                 onGameOver();
             }
         }
-    }, [combatants, combatState, onRewards, onCombatEnd, onGameOver, onLogAction]);
+    }, [combatants, combatState, onRewards, onCombatEnd, onGameOver, onLogAction, isInitializing]);
 
     const currentActor = combatants[currentTurnIndex];
 
@@ -774,61 +782,75 @@ export const CombatManager = ({ arenaConfig = { blocksX: 25, blocksY: 25, shapeT
         animationFrameRef.current = requestAnimationFrame(animate);
     };
 
-    const executeMove = (direction) => {
-        console.log(`[executeMove] Called with direction: ${direction}, canMove: ${canMove}`);
-        const currentCombatants = combatantsRef.current;
-        const freshActor = currentCombatants.find(u => u.id === currentActor.id);
-        if (!freshActor) {
-            console.log(`[executeMove] ABORT: freshActor not found`);
-            return;
+    const findPath = (startX, startY, targetX, targetY, maxDist) => {
+        const queue = [[startX, startY, []]];
+        const visited = new Set([`${startX},${startY}`]);
+
+        while (queue.length > 0) {
+            const [x, y, path] = queue.shift();
+
+            if (x === targetX && y === targetY) return path;
+            if (path.length >= maxDist) continue;
+
+            // Cardinal neighbors only for movement (Dofus-style)
+            const neighbors = [
+                [x, y - 1], [x, y + 1], [x - 1, y], [x + 1, y]
+            ];
+
+            for (const [nx, ny] of neighbors) {
+                const key = `${nx},${ny}`;
+                if (!visited.has(key) && isTileValid(nx, ny) && !isTileOccupied(nx, ny, currentActor.id)) {
+                    visited.add(key);
+                    queue.push([nx, ny, [...path, [nx, ny]]]);
+                }
+            }
+        }
+        return null; // No path found within range
+    };
+
+    const executePathMovement = async (destX, destY, providedPath = null) => {
+        if (!isLocalPlayerTurn || !canMove || !currentActor) return;
+
+        // Ensure we target a valid, unoccupied tile (only if not using provided path)
+        if (!providedPath) {
+            if (!isTileValid(destX, destY) || isTileOccupied(destX, destY, currentActor.id)) return;
         }
 
-        const authorized = freshActor.isEnemy || canMove;
-        console.log(`[executeMove] freshActor: ${freshActor.name}, isEnemy: ${freshActor.isEnemy}, authorized: ${authorized}, currentPM: ${freshActor.currentPM}`);
-        if (!authorized || freshActor.currentPM <= 0) {
-            console.log(`[executeMove] ABORT: not authorized (${authorized}) or no PM (${freshActor.currentPM})`);
-            return;
-        }
-        const moveAmount = 1; // One tile at a time
-        let dx = 0, dy = 0;
-        switch (direction) {
-            case 'up': dy = -moveAmount; break;
-            case 'down': dy = moveAmount; break;
-            case 'left': dx = -moveAmount; break;
-            case 'right': dx = moveAmount; break;
-            case 'forward': dx = freshActor.isEnemy ? -moveAmount : moveAmount; break;
-            case 'backward': dx = freshActor.isEnemy ? moveAmount : -moveAmount; break;
-        }
+        const path = providedPath || findPath(currentActor.posX, currentActor.posY, destX, destY, currentActor.currentPM || 0);
+        if (!path || path.length === 0) return;
 
-        let newFacing = freshActor.facing;
-        if (dx > 0) newFacing = 'EAST';
-        else if (dx < 0) newFacing = 'WEST';
-        else if (dy > 0) newFacing = 'SOUTH';
-        else if (dy < 0) newFacing = 'NORTH';
+        // Clear planning state
+        setIsPathPlanning(false);
+        setPlannedPath([]);
 
-        const boundsX = Math.floor(arenaConfig.blocksX / 2);
-        const boundsY = Math.floor(arenaConfig.blocksY / 2);
-        const newX = Math.max(-boundsX, Math.min(boundsX - 1, freshActor.posX + dx));
-        const newY = Math.max(-boundsY, Math.min(boundsY - 1, freshActor.posY + dy));
+        // Sequence movement steps
+        let currentX = currentActor.posX;
+        let currentY = currentActor.posY;
 
-        // Boundary & Validity Check
-        if (!isTileValid(newX, newY) || isTileOccupied(newX, newY, freshActor.id)) {
-            if (onSFX && !freshActor.isEnemy) onSFX('error');
-            return;
-        }
+        for (let i = 0; i < path.length; i++) {
+            const [nextX, nextY] = path[i];
 
-        // Only consume PM if position actually changed
-        const actualMove = (newX !== freshActor.posX || newY !== freshActor.posY);
-        if (actualMove) {
-            // Update state IMMEDIATELY (don't wait for animation)
-            const latestCombatants = combatantsRef.current;
-            const newCombatants = latestCombatants.map(u => u.id === freshActor.id ? { ...u, posX: newX, posY: newY, currentPM: u.currentPM - 1, facing: newFacing, hasMoved: true } : u);
-            setCombatants(newCombatants);
+            // Determine facing
+            let nextFacing = currentActor.facing;
+            if (nextX > currentX) nextFacing = 'EAST';
+            else if (nextX < currentX) nextFacing = 'WEST';
+            else if (nextY > currentY) nextFacing = 'SOUTH';
+            else if (nextY < currentY) nextFacing = 'NORTH';
 
-            // Sync immediately to all clients
+            // Update state for one step
+            const currentCombatants = combatantsRef.current;
+            const updatedCombatants = currentCombatants.map(u =>
+                u.id === currentActor.id
+                    ? { ...u, posX: nextX, posY: nextY, currentPM: u.currentPM - 1, facing: nextFacing, hasMoved: true }
+                    : u
+            );
+
+            setCombatants(updatedCombatants);
+
+            // Sync step
             if (onUpdateCombatState) {
                 onUpdateCombatState({
-                    combatants: newCombatants,
+                    combatants: updatedCombatants,
                     turnIndex: currentTurnIndex,
                     round,
                     active: true,
@@ -837,13 +859,23 @@ export const CombatManager = ({ arenaConfig = { blocksX: 25, blocksY: 25, shapeT
                 });
             }
 
-            // Start smooth animation AFTER state update
-            animateMovement(freshActor.id, freshActor.posX, freshActor.posY, newX, newY, () => {
-                console.log(`[executeMove] Animation complete for ${freshActor.name} at (${newX}, ${newY})`);
+            // Animate step
+            await new Promise(resolve => {
+                animateMovement(currentActor.id, currentX, currentY, nextX, nextY, resolve);
             });
 
             if (onSFX) onSFX('footstep');
+
+            currentX = nextX;
+            currentY = nextY;
         }
+    };
+
+    const executeMove = (direction) => {
+        // Keeping for generic usage or legacy, but will be bypassed by click-to-move
+        const currentCombatants = combatantsRef.current;
+        const freshActor = currentCombatants.find(u => u.id === currentActor.id);
+        if (!freshActor || !canMove || freshActor.currentPM <= 0) return;
     };
 
 
@@ -1402,17 +1434,24 @@ export const CombatManager = ({ arenaConfig = { blocksX: 25, blocksY: 25, shapeT
                 style={{
                     left: style.left,
                     top: style.top,
-                    opacity: unit.hp <= 0 ? 0 : 1,
-                    pointerEvents: unit.hp <= 0 ? 'none' : 'auto',
+                    opacity: unit.hp <= 0 ? 0.4 : 1,
+                    filter: unit.hp <= 0 ? 'grayscale(1) brightness(0.6)' : 'none',
+                    pointerEvents: unit.hp <= 0 ? 'none' : (isTargetable || (isCurrent && !selectedAction) ? 'auto' : 'none'),
                     zIndex: isCurrent ? 100 : (isJumping ? 200 : 10),
                 }}>
+
+                {/* Isometric Shadow (Ground level) */}
+                <div className="unit-card-shadow" />
+
+                {/* Physical Base (Ground level) */}
+                <div className="unit-base" />
 
                 {/* Tactical Selection Ring (pulsing) */}
                 {isCurrent && <div className="unit-selection-ring" />}
 
                 {/* Facing Indicator */}
                 <div className="unit-facing-indicator" style={{
-                    transform: `translate(-50%, -50%) rotate(${unit.facing === 'NORTH' ? 0 : (unit.facing === 'EAST' ? 90 : (unit.facing === 'SOUTH' ? 180 : 270))}deg) translateY(-65px)`,
+                    transform: `translate(-50%, -50%) rotate(${unit.facing === 'NORTH' ? 0 : (unit.facing === 'EAST' ? 90 : (unit.facing === 'SOUTH' ? 180 : 270))}deg) translateY(-55px)`,
                 }}>
                     <div className="facing-arrow" />
                 </div>
@@ -1476,13 +1515,16 @@ export const CombatManager = ({ arenaConfig = { blocksX: 25, blocksY: 25, shapeT
         const canAfford = currentActor.resource >= cost && !onCooldown;
         const isSelected = selectedAction?.name === ability.name;
 
+        // Determine type based on name or other properties (demo logic)
+        const isMagical = ability.name !== 'Attaque';
+
         return (
             <div
                 onClick={() => canAfford && isLocalPlayerTurn && setSelectedAction(ability)}
-                className={`ability-card-premium ${isSelected ? 'selected' : ''} ${!canAfford ? 'disabled' : ''}`}
+                className={`ability-card-premium ${isSelected ? 'selected' : ''} ${!canAfford ? 'disabled' : ''} ${isMagical ? 'magical' : 'physical'}`}
             >
-                {/* Visual Accent */}
-                <div className="ability-accent" />
+                <div className="ability-glass-layer" />
+                <div className="ability-border-glow" />
 
                 {onCooldown && (
                     <div className="ability-cooldown-overlay">
@@ -1491,19 +1533,28 @@ export const CombatManager = ({ arenaConfig = { blocksX: 25, blocksY: 25, shapeT
                     </div>
                 )}
 
-                <div className="ability-title">
-                    {ability.name}
+                <div className="ability-header">
+                    <span className="ability-type-tag">{isMagical ? 'MAGIQUE' : 'PHYSIQUE'}</span>
+                    <div className="ability-range-pill">
+                        <span className="range-icon">🏹</span>
+                        <span>{ability.range}m</span>
+                    </div>
                 </div>
 
-                <div className="ability-desc">
-                    {ability.desc}
+                <div className="ability-content">
+                    <div className="ability-title">{ability.name}</div>
+                    <div className="ability-desc">{ability.desc}</div>
                 </div>
 
                 <div className="ability-footer">
-                    <span className="ability-range">{ability.range}m</span>
-                    <div className="ability-cost-orb">
-                        {cost}
+                    <div className="ability-cost">
+                        <span className="cost-label">COÛT</span>
+                        <div className="cost-container">
+                            <span className="cost-value">{cost}</span>
+                            <span className="cost-unit">AÉ</span>
+                        </div>
                     </div>
+                    {isSelected && <div className="ability-active-indicator">SÉLECTIONNÉ</div>}
                 </div>
             </div>
         );
@@ -1582,29 +1633,22 @@ export const CombatManager = ({ arenaConfig = { blocksX: 25, blocksY: 25, shapeT
 
 
     return (
-        <div className={`modal-overlay ${shake ? 'shake' : ''} ${flash ? 'flash-red' : ''}`} style={{ position: 'fixed', inset: 0, zIndex: 1200, background: 'black', display: 'flex', flexDirection: 'column' }}>
-            {combatState === 'finished' && !combatants.some(u => !u.isEnemy && u.hp > 0) && <GameOverScreen />}
-            <div style={{ height: '80px', padding: '0 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.7)', borderBottom: '1px solid var(--gold-dim)' }}>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ color: 'var(--gold-primary)', letterSpacing: '2px', fontSize: '1.1rem', fontWeight: 'bold' }}>COMBAT : ROUND {round}</span>
-                    <span style={{ fontSize: '0.8rem', color: '#888' }}>{combatants.filter(u => u.hp > 0).length} combattants en lice</span>
+        <div className="combat-manager-viewport">
+            {/* Overlay for game status */}
+            <div className={`modal-overlay ${shake ? 'shake' : ''} ${flash ? 'flash-red' : ''}`} style={{ position: 'fixed', inset: 0, zIndex: 1200, background: 'black', display: 'flex', flexDirection: 'column' }}>
+                {combatState === 'finished' && !combatants.some(u => !u.isEnemy && u.hp > 0) && <GameOverScreen />}
+                <div style={{ height: '80px', padding: '0 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.7)', borderBottom: '1px solid var(--gold-dim)' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ color: 'var(--gold-primary)', letterSpacing: '2px', fontSize: '1.1rem', fontWeight: 'bold' }}>COMBAT : ROUND {round}</span>
+                        <span style={{ fontSize: '0.8rem', color: '#888' }}>{combatants.filter(u => u.hp > 0).length} combattants en lice</span>
+                    </div>
+                    {combatants.length > 0 && <TurnTracker combatants={combatants} currentTurnIndex={currentTurnIndex} />}
+                    <button onClick={() => onCombatEnd({ victory: false, flight: true })} style={{ color: '#ff4444', background: 'transparent', border: '1px solid #ff4444', padding: '6px 16px', borderRadius: '4px', cursor: 'pointer' }}>FUIR</button>
                 </div>
-                {combatants.length > 0 && <TurnTracker combatants={combatants} currentTurnIndex={currentTurnIndex} />}
-                <button onClick={() => onCombatEnd({ victory: false, flight: true })} style={{ color: '#ff4444', background: 'transparent', border: '1px solid #ff4444', padding: '6px 16px', borderRadius: '4px', cursor: 'pointer' }}>FUIR</button>
-            </div>
-            <div style={{ flex: 1, display: 'flex', position: 'relative', overflow: 'hidden', background: '#0a0a0a' }}>
-                <div style={{
-                    flex: 1,
-                    overflow: 'auto',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '80px'
-                }}>
-                    <div className="combat-arena" style={{
-                        width: `${arenaConfig.blocksX * 100}px`,
-                        height: `${arenaConfig.blocksY * 100}px`,
-                    }}>
+                <div className="combat-viewer-container">
+                    <div className="combat-arena">
+                        <div className="arena-background-plane" />
+
                         <div className="arena-grid-container">
                             {/* Vertical Lines */}
                             {Array.from({ length: arenaConfig.blocksX + 1 }).map((_, i) => {
@@ -1650,21 +1694,22 @@ export const CombatManager = ({ arenaConfig = { blocksX: 25, blocksY: 25, shapeT
                                         const x = xIdx - Math.floor(arenaConfig.blocksX / 2);
                                         const dx = x - currentActor.posX;
                                         const dy = y - currentActor.posY;
-                                        // Chebyshev distance for "tactical squares"
-                                        const dist = Math.max(Math.abs(dx), Math.abs(dy));
-
+                                        // Use BFS reachability instead of Chebyshev for movement range
                                         let highlight = null;
                                         if (selectedAction) {
-                                            if (dist <= (selectedAction.range || 1) && dist > 0) {
-                                                // Vert pour sorts alliés (soin/buff), doré pour sorts offensifs
+                                            const chebyshevDist = Math.max(Math.abs(dx), Math.abs(dy));
+                                            if (chebyshevDist <= (selectedAction.range || 1) && chebyshevDist > 0) {
                                                 if (selectedAction.friendly) {
                                                     highlight = { color: 'rgba(74, 222, 128, 0.15)', border: '1px solid rgba(74, 222, 128, 0.3)', glow: 'rgba(74, 222, 128, 0.2)' };
                                                 } else {
                                                     highlight = { color: 'rgba(212, 175, 55, 0.15)', border: '1px solid rgba(212, 175, 55, 0.3)', glow: 'rgba(212, 175, 55, 0.2)' };
                                                 }
                                             }
-                                        } else if (canMove && dist <= currentActor.currentPM && dist > 0) {
-                                            highlight = { color: 'rgba(0, 150, 255, 0.08)', border: '1px dashed rgba(0, 150, 255, 0.4)', glow: 'rgba(0, 150, 255, 0.1)' };
+                                        } else if (canMove) {
+                                            const manhattanDist = Math.abs(dx) + Math.abs(dy);
+                                            if (manhattanDist <= currentActor.currentPM && manhattanDist > 0) {
+                                                highlight = { color: 'rgba(0, 150, 255, 0.08)', border: '1px dashed rgba(0, 150, 255, 0.4)', glow: 'rgba(0, 150, 255, 0.1)' };
+                                            }
                                         }
 
                                         if (highlight) {
@@ -1693,6 +1738,117 @@ export const CombatManager = ({ arenaConfig = { blocksX: 25, blocksY: 25, shapeT
                                         return null;
                                     });
                                 })}
+
+                                {/* Interaction Layer (Click to move / Hover Path) - DISABLED (MOVED TO TOP) */}
+                                {false && isLocalPlayerTurn && canMove && !selectedAction && (
+                                    <>
+                                        {Array.from({ length: arenaConfig.blocksY }).map((_, yIdx) => {
+                                            const y = yIdx - Math.floor(arenaConfig.blocksY / 2);
+                                            return Array.from({ length: arenaConfig.blocksX }).map((_, xIdx) => {
+                                                const x = xIdx - Math.floor(arenaConfig.blocksX / 2);
+                                                const dx = x - currentActor.posX;
+                                                const dy = y - currentActor.posY;
+
+                                                // Character tile click to toggle planning
+                                                if (dx === 0 && dy === 0) {
+                                                    const pX = getPosPercent(x);
+                                                    const pY = getPosPercent(y, true);
+                                                    return (
+                                                        <div
+                                                            key={`char-interactive-${x}-${y}`}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                if (plannedPath.length > 0) {
+                                                                    executePathMovement(plannedPath[plannedPath.length - 1][0], plannedPath[plannedPath.length - 1][1], plannedPath);
+                                                                    setPlannedPath([]);
+                                                                    setIsPathPlanning(false);
+                                                                } else {
+                                                                    setIsPathPlanning(!isPathPlanning);
+                                                                }
+                                                            }}
+                                                            style={{
+                                                                position: 'absolute',
+                                                                left: `${pX}%`,
+                                                                top: `${pY}%`,
+                                                                width: `${100 / arenaConfig.blocksX}%`,
+                                                                height: `${100 / arenaConfig.blocksY}%`,
+                                                                transform: 'translate(-50%, -50%)',
+                                                                cursor: 'pointer',
+                                                                zIndex: 15,
+                                                                pointerEvents: 'auto'
+                                                            }}
+                                                        />
+                                                    );
+                                                }
+
+                                                const dist = Math.abs(dx) + Math.abs(dy); // Use Manhattan for cardinal movement
+                                                if (dist > (currentActor.currentPM || 0)) return null;
+
+                                                const pX = getPosPercent(x);
+                                                const pY = getPosPercent(y, true);
+                                                const isHovered = hoveredTile?.x === x && hoveredTile?.y === y;
+
+                                                // Calculate path from current actor position or from last planned step
+                                                const startPoint = plannedPath.length > 0 ? { x: plannedPath[plannedPath.length - 1][0], y: plannedPath[plannedPath.length - 1][1] } : { x: currentActor.posX, y: currentActor.posY };
+                                                const pmLeft = currentActor.currentPM - (plannedPath.length);
+
+                                                const segmentPath = isHovered && pmLeft > 0 ? findPath(startPoint.x, startPoint.y, x, y, pmLeft) : null;
+                                                const fullPreviewPath = [...plannedPath, ...(segmentPath || [])];
+
+                                                return (
+                                                    <React.Fragment key={`interactive-${x}-${y}`}>
+                                                        {/* Actual Clickable Area */}
+                                                        <div
+                                                            onMouseEnter={() => setHoveredTile({ x, y })}
+                                                            onMouseLeave={() => setHoveredTile(null)}
+                                                            onClick={() => {
+                                                                if (isPathPlanning) {
+                                                                    if (segmentPath) {
+                                                                        setPlannedPath(prev => [...prev, ...segmentPath]);
+                                                                    }
+                                                                } else {
+                                                                    executePathMovement(x, y);
+                                                                }
+                                                            }}
+                                                            style={{
+                                                                position: 'absolute',
+                                                                left: `${pX}%`,
+                                                                top: `${pY}%`,
+                                                                width: `${100 / arenaConfig.blocksX}%`,
+                                                                height: `${100 / arenaConfig.blocksY}%`,
+                                                                transform: 'translate(-50%, -50%)',
+                                                                cursor: 'pointer',
+                                                                zIndex: 10,
+                                                                pointerEvents: 'auto',
+                                                                background: isPathPlanning && plannedPath.some(p => p[0] === x && p[1] === y) ? 'rgba(212, 175, 55, 0.1)' : 'transparent'
+                                                            }}
+                                                        />
+                                                        {/* Path Dots */}
+                                                        {fullPreviewPath.length > 0 && (isHovered || isPathPlanning) && fullPreviewPath.map((step, sIdx) => (
+                                                            <div
+                                                                key={`path-dot-${x}-${y}-${sIdx}`}
+                                                                style={{
+                                                                    position: 'absolute',
+                                                                    left: `${getPosPercent(step[0])}%`,
+                                                                    top: `${getPosPercent(step[1], true)}%`,
+                                                                    width: '6px',
+                                                                    height: '6px',
+                                                                    background: sIdx < plannedPath.length ? 'var(--combat-gold)' : 'rgba(212, 175, 55, 0.6)',
+                                                                    borderRadius: '50%',
+                                                                    transform: 'translate(-50%, -50%)',
+                                                                    boxShadow: '0 0 10px var(--combat-gold)',
+                                                                    zIndex: 5,
+                                                                    pointerEvents: 'none',
+                                                                    opacity: 0.8
+                                                                }}
+                                                            />
+                                                        ))}
+                                                    </React.Fragment>
+                                                );
+                                            });
+                                        })}
+                                    </>
+                                )}
                             </>
                         )}
 
@@ -1734,131 +1890,272 @@ export const CombatManager = ({ arenaConfig = { blocksX: 25, blocksY: 25, shapeT
                                 }} />;
                             })}
                         </div>
-                    </div>
-                </div>
-                <div style={{
-                    width: '350px',
-                    background: 'linear-gradient(to right, rgba(0,0,0,0.95), rgba(15,15,25,0.95))',
-                    padding: '2rem 1.5rem',
-                    overflowY: 'auto',
-                    borderLeft: '1px solid rgba(212, 175, 55, 0.2)',
-                    backdropFilter: 'blur(20px)',
-                    boxShadow: '-10px 0 30px rgba(0,0,0,0.5)',
-                    display: 'flex', flexDirection: 'column', gap: '15px',
-                    scrollbarWidth: 'thin',
-                    scrollbarColor: 'var(--gold-dark) transparent'
-                }}>
-                    <div style={{ color: 'var(--gold-light)', fontSize: '0.8rem', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '10px', fontWeight: 'bold', borderBottom: '1px solid rgba(212, 175, 55, 0.2)', paddingBottom: '5px' }}>Journal de Combat</div>
-                    {logs.map((l, i) => {
-                        const isImpact = l.content.includes('💥') || l.content.includes('💀');
-                        const isVictory = l.content.includes('🏆');
-                        const isSystem = l.role === 'system';
-                        return (
-                            <div key={i} style={{
-                                marginBottom: '0.8rem',
-                                fontSize: isVictory ? '1.2rem' : (isImpact ? '0.98rem' : '0.92rem'),
-                                color: isVictory ? 'var(--gold-primary)' : (isImpact ? '#fff' : 'rgba(255,255,255,0.7)'),
-                                borderLeft: isVictory ? '4px solid var(--gold-primary)' : (isImpact ? '3px solid #ff4444' : '2px solid rgba(255,255,255,0.2)'),
-                                padding: '8px 12px',
-                                background: isImpact ? 'linear-gradient(to right, rgba(255,0,0,0.15), transparent)' : (isVictory ? 'linear-gradient(to right, rgba(212, 175, 55, 0.1), transparent)' : 'transparent'),
-                                borderRadius: '0 8px 8px 0',
-                                animation: 'slideRight 0.3s ease-out',
-                                fontFamily: isSystem ? 'monospace' : 'inherit',
-                                lineHeight: '1.4'
-                            }}>
-                                {l.content}
-                            </div>
-                        );
-                    })}
-                    <div ref={logEndRef} />
-                </div>
-                {rollOverlay && <RollOverlay {...rollOverlay} />}
-                {remoteAction && <RemoteActionOverlay action={remoteAction} onComplete={() => setRemoteAction(null)} />}
-            </div>
 
-            <div className="combat-footer">
-                {isLocalPlayerTurn ? (
-                    <div style={{ display: 'flex', gap: '2rem', width: '100%', maxWidth: '1400px', justifyContent: 'center', alignItems: 'flex-end' }}>
-                        {/* Movement Cluster */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ fontSize: '0.6rem', color: 'var(--combat-gold-dim)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>Déplacement</div>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px', background: 'rgba(255,255,255,0.05)', padding: '6px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                                <div />
-                                <button onClick={() => executeMove('up')} disabled={!canMove} className="btn-medieval" style={{ width: '36px', height: '36px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px' }}>▲</button>
-                                <div />
-                                <button onClick={() => executeMove('left')} disabled={!canMove} className="btn-medieval" style={{ width: '36px', height: '36px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px' }}>◀</button>
-                                <button onClick={() => executeMove('down')} disabled={!canMove} className="btn-medieval" style={{ width: '36px', height: '36px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px' }}>▼</button>
-                                <button onClick={() => executeMove('right')} disabled={!canMove} className="btn-medieval" style={{ width: '36px', height: '36px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px' }}>▶</button>
+                        {/* Planning Instruction HUD */}
+                        {isLocalPlayerTurn && isPathPlanning && (
+                            <div className="planning-instruction">
+                                Cliquez pour tracer <span>•</span> Cliquez sur vous pour confirmer
                             </div>
-                        </div>
+                        )}
 
-                        {/* Abilities Scroll */}
-                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', minWidth: 0 }}>
-                            <div style={{ fontSize: '0.6rem', color: 'var(--combat-gold-dim)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>Capacités & Sorts</div>
-                            <div style={{ display: 'flex', gap: '1rem', overflowX: 'auto', padding: '10px 5px 30px 5px', scrollbarWidth: 'none' }}>
-                                {[{ name: 'Attaque', desc: 'Attaque de base', range: 2 }, ...(currentActor.spells || currentActor.abilities || [])].map((s, i) => (
-                                    <AbilityCard key={i} ability={typeof s === 'string' ? { name: s, range: 2 } : s} />
-                                ))}
-                            </div>
-                        </div>
+                        {/* Interaction Layer (Click to move / Hover Path) - MOVED TO TOP */}
+                        {isLocalPlayerTurn && canMove && !selectedAction && (
+                            <div className="interaction-layer-container" style={{ position: 'absolute', inset: 0, zIndex: 1000, pointerEvents: 'none' }}>
+                                {Array.from({ length: arenaConfig.blocksY }).map((_, yIdx) => {
+                                    const y = yIdx - Math.floor(arenaConfig.blocksY / 2);
+                                    return Array.from({ length: arenaConfig.blocksX }).map((_, xIdx) => {
+                                        const x = xIdx - Math.floor(arenaConfig.blocksX / 2);
+                                        const dx = x - currentActor.posX;
+                                        const dy = y - currentActor.posY;
 
-                        {/* Items Section */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <div style={{ fontSize: '0.6rem', color: 'var(--combat-cyan)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>Consommables</div>
-                            <div style={{ display: 'flex', gap: '10px', background: 'rgba(75, 207, 250, 0.05)', padding: '10px', borderRadius: '12px', border: '1px solid rgba(75, 207, 250, 0.2)', minHeight: '130px' }}>
-                                {currentActor.inventory?.filter(item => (item.stats && (item.stats.heal || item.stats.resource || item.stats.hp)) || ['consumable', 'potion', 'scroll'].includes(item.type?.toLowerCase())).length > 0 ? (
-                                    currentActor.inventory
-                                        .filter(item => (item.stats && (item.stats.heal || item.stats.resource || item.stats.hp)) || ['consumable', 'potion', 'scroll'].includes(item.type?.toLowerCase()))
-                                        .map((item, idx) => (
+                                        // Character tile click to toggle planning
+                                        if (dx === 0 && dy === 0) {
+                                            const pX = getPosPercent(x);
+                                            const pY = getPosPercent(y, true);
+                                            return (
+                                                <div
+                                                    key={`char-interactive-${x}-${y}`}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        console.log('[DEBUG] Character Click - isPathPlanning:', isPathPlanning, 'plannedPath:', plannedPath.length);
+                                                        if (plannedPath.length > 0) {
+                                                            executePathMovement(plannedPath[plannedPath.length - 1][0], plannedPath[plannedPath.length - 1][1], plannedPath);
+                                                        } else {
+                                                            setIsPathPlanning(!isPathPlanning);
+                                                        }
+                                                    }}
+                                                    style={{
+                                                        position: 'absolute',
+                                                        left: `${pX}%`,
+                                                        top: `${pY}%`,
+                                                        width: `${100 / arenaConfig.blocksX}%`,
+                                                        height: `${100 / arenaConfig.blocksY}%`,
+                                                        transform: 'translate(-50%, -50%)',
+                                                        cursor: 'pointer',
+                                                        zIndex: 1002,
+                                                        pointerEvents: 'auto'
+                                                    }}
+                                                >
+                                                    {plannedPath.length > 0 && (
+                                                        <div className="confirm-move-badge">CONFIRMER</div>
+                                                    )}
+                                                </div>
+                                            );
+                                        }
+
+                                        const dist = Math.abs(dx) + Math.abs(dy); // Use Manhattan for cardinal movement
+                                        if (dist > (currentActor.currentPM || 0)) return null;
+
+                                        const pX = getPosPercent(x);
+                                        const pY = getPosPercent(y, true);
+                                        const isHovered = hoveredTile?.x === x && hoveredTile?.y === y;
+
+                                        // Calculate path from current actor position or from last planned step
+                                        const startPoint = plannedPath.length > 0 ? { x: plannedPath[plannedPath.length - 1][0], y: plannedPath[plannedPath.length - 1][1] } : { x: currentActor.posX, y: currentActor.posY };
+                                        const pmLeft = currentActor.currentPM - (plannedPath.length);
+
+                                        const segmentPath = isHovered && pmLeft > 0 ? findPath(startPoint.x, startPoint.y, x, y, pmLeft) : null;
+                                        const fullPreviewPath = [...plannedPath, ...(segmentPath || [])];
+
+                                        return (
                                             <div
-                                                key={`item-${idx}`}
-                                                onClick={() => !currentActor.hasActed && executeUseItem(item)}
-                                                className={`ability-card-premium ${currentActor.hasActed ? 'disabled' : ''}`}
-                                                style={{ width: '90px', height: '120px' }}
-                                            >
-                                                <div className="ability-title" style={{ fontSize: '0.6rem' }}>{item.name}</div>
-                                                <div style={{ background: 'var(--combat-cyan)', color: 'black', textAlign: 'center', borderRadius: '4px', padding: '2px', fontWeight: '900', fontSize: '0.55rem', marginTop: 'auto' }}>OBJET</div>
-                                            </div>
-                                        ))
-                                ) : (
-                                    <div style={{ width: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.2)', fontSize: '0.6rem', fontStyle: 'italic', textAlign: 'center' }}>Aucun objet</div>
-                                )}
-                            </div>
-                        </div>
+                                                key={`interactive-${x}-${y}`}
+                                                onMouseEnter={() => setHoveredTile({ x, y })}
+                                                onMouseLeave={() => setHoveredTile(null)}
+                                                onClick={() => {
+                                                    console.log('[DEBUG] Tile Click:', x, y, 'isPathPlanning:', isPathPlanning);
+                                                    if (isPathPlanning) {
+                                                        if (segmentPath) {
+                                                            setPlannedPath(prev => [...prev, ...segmentPath]);
+                                                        }
+                                                    } else {
+                                                        executePathMovement(x, y);
+                                                    }
+                                                }}
+                                                style={{
+                                                    position: 'absolute',
+                                                    left: `${pX}%`,
+                                                    top: `${pY}%`,
+                                                    width: `${100 / arenaConfig.blocksX}%`,
+                                                    height: `${100 / arenaConfig.blocksY}%`,
+                                                    transform: 'translate(-50%, -50%)',
+                                                    cursor: 'pointer',
+                                                    zIndex: 1001,
+                                                    pointerEvents: 'auto',
+                                                    background: isPathPlanning && plannedPath.some(p => p[0] === x && p[1] === y) ? 'rgba(212, 175, 55, 0.1)' : 'transparent'
+                                                }}
+                                            />
+                                        );
+                                    });
+                                })}
 
-                        {/* End Turn Button */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginLeft: '20px' }}>
-                            <div style={{ height: '14px' }} />
-                            <button
-                                onClick={nextTurn}
-                                className="btn-end-turn"
-                                style={{
-                                    padding: '1.5rem 2.5rem',
-                                    borderRadius: '12px',
-                                    cursor: 'pointer',
-                                    minWidth: '180px',
-                                    height: '140px',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '10px'
-                                }}
-                            >
-                                <span style={{ fontSize: '1.2rem' }}>⌛️</span>
-                                <span>Finir le Tour</span>
-                            </button>
+                                {/* Centralized Path Preview (to avoid duplication per tile) */}
+                                {(hoveredTile || (isPathPlanning && plannedPath.length > 0)) && (() => {
+                                    const startPoint = plannedPath.length > 0 ? { x: plannedPath[plannedPath.length - 1][0], y: plannedPath[plannedPath.length - 1][1] } : { x: currentActor.posX, y: currentActor.posY };
+                                    const pmLeft = currentActor.currentPM - (plannedPath.length);
+                                    const segmentPath = hoveredTile && pmLeft > 0 ? findPath(startPoint.x, startPoint.y, hoveredTile.x, hoveredTile.y, pmLeft) : null;
+                                    const fullPreviewPath = [...plannedPath, ...(segmentPath || [])];
+
+                                    return fullPreviewPath.map((step, sIdx) => {
+                                        const isLastStep = sIdx === fullPreviewPath.length - 1;
+                                        return (
+                                            <React.Fragment key={`path-preview-${sIdx}`}>
+                                                <div
+                                                    className="path-dot-animated"
+                                                    style={{
+                                                        position: 'absolute',
+                                                        left: `${getPosPercent(step[0])}%`,
+                                                        top: `${getPosPercent(step[1], true)}%`,
+                                                        width: '8px',
+                                                        height: '8px',
+                                                        background: sIdx < plannedPath.length ? 'var(--combat-gold)' : 'rgba(212, 175, 55, 0.8)',
+                                                        borderRadius: '50%',
+                                                        transform: 'translate(-50%, -50%)',
+                                                        boxShadow: '0 0 10px var(--combat-gold)',
+                                                        zIndex: 1005,
+                                                        pointerEvents: 'none'
+                                                    }}
+                                                />
+                                                <div className="path-cost-label" style={{
+                                                    left: `${getPosPercent(step[0])}%`,
+                                                    top: `${getPosPercent(step[1], true)}%`
+                                                }}>
+                                                    -{sIdx + 1} PM
+                                                </div>
+
+                                                {isLastStep && (
+                                                    <div className="character-ghost" style={{
+                                                        left: `${getPosPercent(step[0])}%`,
+                                                        top: `${getPosPercent(step[1], true)}%`
+                                                    }}>
+                                                        <div className="unit-portrait-wrapper">
+                                                            <img src={currentActor.portrait_url} className="unit-portrait" alt="" />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </React.Fragment>
+                                        );
+                                    });
+                                })()}
+                            </div>
+                        )}
+                    </div>
+                    <div style={{
+                        width: '350px',
+                        flexBasis: '350px',
+                        flexShrink: 0,
+                        background: 'linear-gradient(to right, rgba(0,0,0,0.95), rgba(15,15,25,0.95))',
+                        padding: '2rem 1.5rem',
+                        overflowY: 'auto',
+                        borderLeft: '1px solid rgba(212, 175, 55, 0.2)',
+                        backdropFilter: 'blur(20px)',
+                        boxShadow: '-10px 0 30px rgba(0,0,0,0.5)',
+                        display: 'flex', flexDirection: 'column', gap: '15px',
+                        scrollbarWidth: 'thin',
+                        scrollbarColor: 'var(--gold-dark) transparent'
+                    }}>
+                        <div style={{ color: 'var(--gold-light)', fontSize: '0.8rem', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '10px', fontWeight: 'bold', borderBottom: '1px solid rgba(212, 175, 55, 0.2)', paddingBottom: '5px' }}>Journal de Combat</div>
+                        {logs.map((l, i) => {
+                            const isImpact = l.content.includes('💥') || l.content.includes('💀');
+                            const isVictory = l.content.includes('🏆');
+                            const isSystem = l.role === 'system';
+                            return (
+                                <div key={i} style={{
+                                    marginBottom: '0.8rem',
+                                    fontSize: isVictory ? '1.2rem' : (isImpact ? '0.98rem' : '0.92rem'),
+                                    color: isVictory ? 'var(--gold-primary)' : (isImpact ? '#fff' : 'rgba(255,255,255,0.7)'),
+                                    borderLeft: isVictory ? '4px solid var(--gold-primary)' : (isImpact ? '3px solid #ff4444' : '2px solid rgba(255,255,255,0.2)'),
+                                    padding: '8px 12px',
+                                    background: isImpact ? 'linear-gradient(to right, rgba(255,0,0,0.15), transparent)' : (isVictory ? 'linear-gradient(to right, rgba(212, 175, 55, 0.1), transparent)' : 'transparent'),
+                                    borderRadius: '0 8px 8px 0',
+                                    boxShadow: isImpact ? '0 4px 15px rgba(255,0,0,0.1)' : 'none',
+                                    animation: isImpact ? 'shakeLog 0.4s ease-in-out' : 'none'
+                                }}>
+                                    <div style={{ fontSize: '0.7rem', color: isVictory ? 'var(--gold-light)' : 'rgba(255,255,255,0.4)', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
+                                        <span>{isSystem ? 'SYSTEME' : 'ACTION'}</span>
+                                        <span>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                    </div>
+                                    <div dangerouslySetInnerHTML={{ __html: l.content.replace(/\*\*(.*?)\*\*/g, '<b style="color: var(--gold-light)">$1</b>') }} />
+                                </div>
+                            );
+                        })}
+                        <div ref={logEndRef} />
+                    </div>
+                    {rollOverlay && <RollOverlay {...rollOverlay} />}
+                    {remoteAction && <RemoteActionOverlay action={remoteAction} onComplete={() => setRemoteAction(null)} />}
+                </div>
+
+                <div className="combat-footer">
+                    {isLocalPlayerTurn ? (
+                        <>
+
+                            {/* ABILITIES SECTION */}
+                            <div className="hud-section" style={{ alignItems: 'flex-start' }}>
+                                <div className="hud-label" style={{ marginLeft: '10px' }}>CAPACITÉS & SORTS</div>
+                                <div className="abilities-container" style={{ width: '100%', overflowX: 'auto', scrollbarWidth: 'none' }}>
+                                    {[{ name: 'Attaque', desc: 'Attaque de base rapide', range: 2 }, ...(currentActor.spells || currentActor.abilities || [])].map((s, i) => (
+                                        <AbilityCard key={i} ability={typeof s === 'string' ? { name: s, range: 2 } : s} />
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* ITEMS SECTION */}
+                            <div className="hud-section">
+                                <div className="hud-label">SACS</div>
+                                <div className="inventory-slots-container">
+                                    {currentActor.inventory?.filter(item => (item.stats && (item.stats.heal || item.stats.resource || item.stats.hp)) || ['consumable', 'potion', 'scroll'].includes(item.type?.toLowerCase())).length > 0 ? (
+                                        currentActor.inventory
+                                            .filter(item => (item.stats && (item.stats.heal || item.stats.resource || item.stats.hp)) || ['consumable', 'potion', 'scroll'].includes(item.type?.toLowerCase()))
+                                            .map((item, idx) => (
+                                                <div
+                                                    key={`item-${idx}`}
+                                                    onClick={() => !currentActor.hasActed && executeUseItem(item)}
+                                                    className={`item-slot-premium ${currentActor.hasActed ? 'disabled' : ''}`}
+                                                >
+                                                    <div className="item-glass-layer" />
+                                                    <div className="item-title">{item.name}</div>
+                                                    <div className="item-footer-hint">UTILISER</div>
+                                                </div>
+                                            ))
+                                    ) : (
+                                        <div className="item-slot-premium empty">
+                                            <div className="item-glass-layer" />
+                                            <span className="empty-label">VIDE</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* END TURN SECTION */}
+                            <div className="hud-section">
+                                <div className="hud-label">ACTIONS</div>
+                                <button onClick={nextTurn} className="end-turn-premium">
+                                    <div className="end-turn-glow" />
+                                    <div className="end-turn-content">
+                                        <span className="end-turn-icon">⌛</span>
+                                        <span className="end-turn-text">Finir le Tour</span>
+                                    </div>
+                                </button>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="waiting-turn-aura" style={{ fontSize: '1.2rem', color: 'var(--combat-gold)', letterSpacing: '2px' }}>
+                            {currentActor?.isEnemy ? (
+                                <span>⚔️ L'ENNEMI PRÉPARE SON ACTION...</span>
+                            ) : (
+                                <span>⏳ ATTENTE DE {currentActor?.name?.toUpperCase()}...</span>
+                            )}
                         </div>
-                    </div>
-                ) : (
-                    <div className="waiting-turn-aura">
-                        {currentActor?.isEnemy ? "L'ennemi réfléchit..." : `Attente de ${currentActor?.name || 'Joueur'}...`}
-                    </div>
-                )}
-                {combatState === 'finished' && (
-                    <button onClick={onCombatEnd} className="btn-gold" style={{ padding: '1rem 4rem', fontSize: '1.2rem', boxShadow: '0 0 30px var(--combat-gold)' }}>RETOUR AU MONDE</button>
-                )}
+                    )}
+                    {combatState === 'finished' && (
+                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.8)', zIndex: 20000 }}>
+                            <button onClick={onCombatEnd} className="btn-gold" style={{ padding: '1.5rem 5rem', fontSize: '1.5rem', boxShadow: '0 0 50px var(--combat-gold)', borderRadius: '12px' }}>RETOUR AU MONDE</button>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
 };
+
+export default CombatManager;

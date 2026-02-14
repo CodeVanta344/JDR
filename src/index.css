@@ -758,7 +758,7 @@ button {
 .creation-bg {
     position: absolute;
     inset: 0;
-    background-size: cover;
+    background-size: 80% auto;
     background-position: center;
     opacity: 0.4;
     transition: background-image 0.5s ease;
@@ -1739,7 +1739,7 @@ button {
 .creation-bg {
     position: absolute;
     inset: 0;
-    background-size: cover;
+    background-size: 80% auto;
     background-position: center;
     z-index: -1;
     transition: background-image 1s ease;
@@ -2124,13 +2124,20 @@ button {
 .stat-value {
     font-size: 4rem;
     font-family: var(--font-display);
-    color: var(--gold-primary);
+    color: var(--gold-light);
+    /* Brighter gold */
+    text-shadow: 0 0 15px rgba(212, 175, 55, 0.4), 0 2px 4px rgba(0, 0, 0, 0.5);
+    font-weight: 800;
 }
 
 .stat-mod {
     font-size: 1.2rem;
-    color: var(--text-secondary);
+    color: #fff;
+    /* Maximum contrast */
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
     min-height: 1.5rem;
+    font-weight: 600;
+    letter-spacing: 1px;
 }
 
 .stats-actions {

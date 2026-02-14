@@ -10,8 +10,8 @@
     justify-content: center;
     background:
         linear-gradient(rgba(10, 10, 15, 0.4), rgba(10, 10, 15, 0.7)),
-        url('/backgrounds/world_map.jpg');
-    background-size: contain;
+        url('/aethelgard_map_menu.jpg');
+    background-size: 80% auto;
     background-repeat: no-repeat;
     background-position: center;
     background-attachment: fixed;
@@ -34,8 +34,9 @@
     letter-spacing: 4px;
     text-transform: uppercase;
     margin-bottom: 0.5rem;
-    opacity: 0.8;
-    text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+    opacity: 1;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9), 0 0 10px rgba(212, 175, 55, 0.4);
+    font-weight: 600;
 }
 
 .epic-title {
@@ -246,12 +247,13 @@
 
 .info-label {
     font-family: 'IM Fell English', serif;
-    font-size: 0.75rem;
-    color: var(--gold-dim);
+    font-size: 0.9rem;
+    color: var(--gold-primary);
     text-transform: uppercase;
     letter-spacing: 2px;
     margin-bottom: 0.5rem;
-    opacity: 0.9;
+    opacity: 1;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .info-value {
@@ -259,18 +261,20 @@
     font-size: 1.5rem;
     font-weight: 600;
     color: var(--gold-light);
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
 }
 
 .code-value {
     font-family: 'Courier New', monospace;
-    font-size: 1.3rem;
-    color: #8a6d3b;
+    font-size: 1.4rem;
+    color: #fbeea8;
     letter-spacing: 3px;
-    background: rgba(139, 69, 19, 0.08);
-    padding: 0.3rem 0.8rem;
+    background: rgba(139, 69, 19, 0.15);
+    padding: 0.4rem 1rem;
     border-radius: 4px;
-    border: 1px dashed #8a6d3b;
+    border: 1px dashed var(--gold-primary);
+    font-weight: 700;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 .info-divider {

@@ -74,6 +74,7 @@ export default function App() {
     const creatingPlayerRef = useRef(false);
     const chatRef = useRef(null);
     const lastActivityRef = useRef(Date.now());
+    const hasFledRef = useRef(false);
 
     const [lastSFX, setLastSFX] = useState(null);
     const [activeVFX, setActiveVFX] = useState(null);
@@ -390,26 +391,26 @@ export default function App() {
     };
 
     const ARENA_TEMPLATES = {
-        PETITE_CHAMBRE: { blocksX: 10, blocksY: 10, shapeType: 'HALL' },
-        GRANDE_SALLE: { blocksX: 10, blocksY: 10, shapeType: 'HALL' },
-        HALL_MAJESTUEUX: { blocksX: 10, blocksY: 10, shapeType: 'HALL' },
-        COULOIR_ETROIT: { blocksX: 10, blocksY: 10, shapeType: 'CORRIDOR' },
-        TUNNEL_LONG: { blocksX: 10, blocksY: 10, shapeType: 'CORRIDOR' },
-        PONT_PIERRE: { blocksX: 10, blocksY: 10, shapeType: 'BRIDGE' },
-        PASSERELLE: { blocksX: 10, blocksY: 10, shapeType: 'BRIDGE' },
-        ARENE_CIRCULAIRE: { blocksX: 10, blocksY: 10, shapeType: 'CIRCULAR' },
-        PUITS: { blocksX: 10, blocksY: 10, shapeType: 'CIRCULAR' },
-        SALLE_TRONE: { blocksX: 10, blocksY: 10, shapeType: 'HALL' },
-        CRYPTE: { blocksX: 10, blocksY: 10, shapeType: 'HALL' },
-        BALCON: { blocksX: 10, blocksY: 10, shapeType: 'BRIDGE_H' },
-        FALAISE: { blocksX: 10, blocksY: 10, shapeType: 'BRIDGE_H' },
-        RUE: { blocksX: 10, blocksY: 10, shapeType: 'STANDARD' },
-        PLACE: { blocksX: 10, blocksY: 10, shapeType: 'CIRCULAR' },
-        CACHOT: { blocksX: 10, blocksY: 10, shapeType: 'HALL' },
-        LABORATOIRE: { blocksX: 10, blocksY: 10, shapeType: 'STANDARD' },
-        TEMPLE: { blocksX: 10, blocksY: 10, shapeType: 'STANDARD' },
-        CARREFOUR: { blocksX: 10, blocksY: 10, shapeType: 'STANDARD' },
-        VESTIBULE: { blocksX: 10, blocksY: 10, shapeType: 'STANDARD' }
+        PETITE_CHAMBRE: { blocksX: 20, blocksY: 20, shapeType: 'HALL' },
+        GRANDE_SALLE: { blocksX: 20, blocksY: 20, shapeType: 'HALL' },
+        HALL_MAJESTUEUX: { blocksX: 20, blocksY: 20, shapeType: 'HALL' },
+        COULOIR_ETROIT: { blocksX: 20, blocksY: 20, shapeType: 'CORRIDOR' },
+        TUNNEL_LONG: { blocksX: 20, blocksY: 20, shapeType: 'CORRIDOR' },
+        PONT_PIERRE: { blocksX: 20, blocksY: 20, shapeType: 'BRIDGE' },
+        PASSERELLE: { blocksX: 20, blocksY: 20, shapeType: 'BRIDGE' },
+        ARENE_CIRCULAIRE: { blocksX: 20, blocksY: 20, shapeType: 'CIRCULAR' },
+        PUITS: { blocksX: 20, blocksY: 20, shapeType: 'CIRCULAR' },
+        SALLE_TRONE: { blocksX: 20, blocksY: 20, shapeType: 'HALL' },
+        CRYPTE: { blocksX: 20, blocksY: 20, shapeType: 'HALL' },
+        BALCON: { blocksX: 20, blocksY: 20, shapeType: 'BRIDGE_H' },
+        FALAISE: { blocksX: 20, blocksY: 20, shapeType: 'BRIDGE_H' },
+        RUE: { blocksX: 20, blocksY: 20, shapeType: 'STANDARD' },
+        PLACE: { blocksX: 20, blocksY: 20, shapeType: 'CIRCULAR' },
+        CACHOT: { blocksX: 20, blocksY: 20, shapeType: 'HALL' },
+        LABORATOIRE: { blocksX: 20, blocksY: 20, shapeType: 'STANDARD' },
+        TEMPLE: { blocksX: 20, blocksY: 20, shapeType: 'STANDARD' },
+        CARREFOUR: { blocksX: 20, blocksY: 20, shapeType: 'STANDARD' },
+        VESTIBULE: { blocksX: 20, blocksY: 20, shapeType: 'STANDARD' }
     };
 
     const getArenaConfig = () => {
@@ -439,10 +440,22 @@ export default function App() {
     // Initialize Combat and broadcast to all players via world_state
     const initializeHostCombat = async (enemiesData) => {
 
-        // 1. Define Arena & Positions (Simple Logic for now, can be expanded)
-        // Enemies East, Players West
-        const playersList = players || [];
-        const arenaConfig = getArenaConfig(); // Use current context
+        // 1. Define Arena & Positions
+        const playersList = (players || []).filter(p => p.class); // Only take players with a class
+
+        // Safety: Ensure all players involved are HEALED before combat state is saved
+        const healedPlayers = playersList.map(p => {
+            const hasNoHp = p.hp === undefined || p.hp === null || p.hp <= 0;
+            if (hasNoHp) {
+                const fullHp = p.max_hp || 100;
+                // Background update
+                if (p.id === character?.id) handleHPChange(p.id, fullHp);
+                return { ...p, hp: fullHp, max_hp: fullHp };
+            }
+            return p;
+        });
+
+        const arenaConfig = getArenaConfig();
 
         // Helper to check validity
         const isTileValid = (x, y) => {
@@ -467,14 +480,24 @@ export default function App() {
             return positions;
         };
 
-        const playerPositions = generatePositions(playersList.length, false);
+        // deduplicate by user_id to avoid ghost duplicates in same session
+        const uniquePlayers = [];
+        const seenUsers = new Set();
+        healedPlayers.forEach(p => {
+            if (!seenUsers.has(p.user_id)) {
+                seenUsers.add(p.user_id);
+                uniquePlayers.push(p);
+            }
+        });
+
+        const playerPositions = generatePositions(uniquePlayers.length, false);
         const enemyPositions = generatePositions(enemiesData.length, true);
 
         const combatants = [
-            ...playersList.map((p, i) => ({
+            ...uniquePlayers.map((p, i) => ({
                 id: p.id, user_id: p.user_id, name: p.name, class: p.class,
-                hp: p.hp, maxHp: p.max_hp, resource: p.resource, maxResource: p.max_resource,
-                initiative: Math.floor(Math.random() * 20) + 1, // Reset initiative
+                hp: p.hp, maxHp: p.max_hp || 100, resource: p.resource, maxResource: p.max_resource,
+                initiative: Math.floor(Math.random() * 20) + 1,
                 isEnemy: false, portrait_url: p.portrait_url,
                 posX: playerPositions[i].x, posY: playerPositions[i].y,
                 maxPM: Math.floor(((p.stats?.dex || 10) + (p.stats?.con || 10) - 20) / 4) + 5,
@@ -518,13 +541,18 @@ export default function App() {
 
     const handleDebugCombat = () => {
         if (!session || !character) return;
+
+        // Safety: ensure character is alive
+        if (character.hp <= 0) {
+            setCharacter(prev => ({ ...prev, hp: prev.max_hp }));
+            handleHPChange(character.id, character.max_hp);
+        }
+
         const mockEnemies = [
             { id: 'debug-1', name: 'Gobelin d\'Entrainement', hp: 20, max_hp: 20, atk: 4, ac: 11, cr: 0.25 },
             { id: 'debug-2', name: 'Squelette Cible', hp: 15, max_hp: 15, atk: 3, ac: 12, cr: 0.5 }
         ];
         initializeHostCombat(mockEnemies);
-        // We don't strictly need to set mode/enemies here if the sync effect works, 
-        // but it provides immediate feedback (optimistic update)
         setCombatEnemies(mockEnemies);
         setCombatMode(true);
     };
@@ -532,11 +560,14 @@ export default function App() {
     // SYNC: Auto-enter combat when shared state is active (Multiplayer Sync)
     useEffect(() => {
         if (syncedCombatState?.active) {
-            setCombatMode(true);
-            const enemies = syncedCombatState.combatants?.filter(c => c.isEnemy) || [];
-            if (enemies.length > 0) setCombatEnemies(enemies);
+            if (!hasFledRef.current) {
+                setCombatMode(true);
+                const enemies = syncedCombatState.combatants?.filter(c => c.isEnemy) || [];
+                if (enemies.length > 0) setCombatEnemies(enemies);
+            }
         } else if (syncedCombatState && syncedCombatState.active === false) {
             setCombatMode(false);
+            hasFledRef.current = false; // Reset flee status when global combat ends
         }
     }, [syncedCombatState]);
 
@@ -1166,13 +1197,21 @@ export default function App() {
             setMessages([]);
 
             // 2. Delete the player character and related records
-            // We explicitly delete from player_titles and npc_affinities to avoid 409 Conflict
+            const isSolo = players.length <= 1;
+
             await supabase.from('player_titles').delete().eq('player_id', character.id);
             await supabase.from('npc_affinities').delete().eq('player_id', character.id);
             await supabase.from('players').delete().eq('id', character.id);
 
             setCharacter(null);
             setCombatMode(false);
+
+            if (isSolo) {
+                // If solo, go back to Main Menu entirely
+                setSession(null);
+                window.history.pushState({}, '', window.location.pathname);
+                return;
+            }
 
             // 2b. Reset narrative state & world data
             setAdventureStarted(false);
@@ -2573,6 +2612,14 @@ export default function App() {
     }, [combatEnemies, combatMode]);
 
     const handleTestCombat = () => {
+        if (!session || !character) return;
+
+        // Safety: ensure character is alive
+        if (character.hp <= 0) {
+            setCharacter(prev => ({ ...prev, hp: prev.max_hp }));
+            handleHPChange(character.id, character.max_hp);
+        }
+
         const dummyEnemies = [
             { id: 'gob1', name: 'Gobelin', hp: 20, maxHp: 20, ac: 12, x: 3, y: 3, type: 'enemy' },
             { id: 'gob2', name: 'Chef Gobelin', hp: 45, maxHp: 45, ac: 14, x: 6, y: 4, type: 'enemy' }
@@ -2714,12 +2761,22 @@ export default function App() {
                         onResourceChange={handleResourceChange}
                         onConsumeItem={handleConsumeItem}
                         onCombatEnd={async (result) => {
+                            // 1. Clear state locally IMMEDIATELY to prevent sync-induced re-entry
                             setCombatMode(false);
+                            setCombatEnemies([]);
+                            setSyncedCombatState({ active: false });
+                            setPendingCombat(null);
+                            setActiveChallenge(null);
+                            if (result?.flight) {
+                                hasFledRef.current = true;
+                            }
+
+                            // 2. Perform DB cleanup for other players if Host
                             if (session.host_id === profile.id) {
                                 supabase.from('world_state').upsert({ key: `combat_${session.id}`, value: { active: false } });
                             }
 
-                            // Ask the GM to narrate the combat outcome
+                            // 3. Ask the GM to narrate the combat outcome
                             const defeatedNames = (result?.defeatedEnemies || combatEnemies || []).map(e => e.name).join(', ');
                             let outcome = result?.victory ? 'VICTOIRE' : 'DEFAITE';
                             if (result?.flight) outcome = 'FUITE';
@@ -2748,6 +2805,31 @@ export default function App() {
                                         playerGroup: players.map(p => ({ name: p.name, class: p.class }))
                                     }
                                 });
+
+                                // 4. Process GM response for rewards and world changes
+                                if (aiResponse) {
+                                    if (aiResponse.reward?.xp) handleExperienceGain(aiResponse.reward.xp, aiResponse.reward.reason);
+                                    if (aiResponse.loot) setActiveLoot(aiResponse.loot);
+                                    if (aiResponse.item) {
+                                        const items = Array.isArray(aiResponse.item) ? aiResponse.item : [aiResponse.item];
+                                        handleUpdateInventory([...(character.inventory || []), ...items]);
+                                    }
+                                    if (aiResponse.codex_update) handleCodexUpdate(aiResponse.codex_update);
+                                    if (aiResponse.stats) handleUpdateStats(aiResponse.stats);
+
+                                    // Narrative feedback
+                                    if (aiResponse.narrative) {
+                                        const gmMsg = {
+                                            id: crypto.randomUUID(),
+                                            session_id: session.id,
+                                            role: 'assistant',
+                                            content: aiResponse.narrative,
+                                            created_at: new Date().toISOString()
+                                        };
+                                        setMessages(prev => [...prev, gmMsg]);
+                                        await supabase.from('messages').insert({ ...gmMsg, session_id: session.id });
+                                    }
+                                }
                             } catch (e) { console.error('Post-combat narrative error:', e); }
                         }}
                         onGameOver={handleGameOver}
@@ -2944,25 +3026,74 @@ export default function App() {
 
             {
                 showSettings && (
-                    <div className="settings-modal animate-fade-in" style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(10, 11, 14, 0.95)', backdropFilter: 'blur(10px)', padding: '2rem', border: '1px solid var(--gold-primary)', zIndex: 2000, minWidth: '400px', boxShadow: '0 0 50px rgba(0,0,0,0.8)' }}>
-                        <h3 style={{ color: 'var(--gold-primary)', marginBottom: '1.5rem', textAlign: 'center', letterSpacing: '3px' }}>SANCTUAIRE</h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '0.8rem', borderRadius: '4px' }}>
-                                <span style={{ color: 'var(--text-secondary)' }}>MUSIQUE & AMBIANCE</span>
-                                <button className="btn-secondary" onClick={() => {
-                                    setAudioEnabled(!audioEnabled);
-                                    if (!audioEnabled) initSpeech();
-                                }}>{audioEnabled ? 'ON' : 'OFF'}</button>
+                    <div className="settings-overlay animate-fade-in"
+                        onClick={() => setShowSettings(false)}
+                        style={{
+                            position: 'fixed',
+                            inset: 0,
+                            background: 'rgba(0, 0, 0, 0.7)',
+                            backdropFilter: 'blur(5px)',
+                            zIndex: 10000,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
+                        <div className="settings-modal"
+                            onClick={(e) => e.stopPropagation()}
+                            style={{
+                                background: 'rgba(10, 11, 14, 0.95)',
+                                padding: '2.5rem',
+                                border: '1px solid var(--gold-primary)',
+                                borderRadius: '8px',
+                                minWidth: '400px',
+                                boxShadow: '0 0 50px rgba(0,0,0,0.8)',
+                                position: 'relative'
+                            }}
+                        >
+                            <h3 style={{ color: 'var(--gold-primary)', marginBottom: '1.5rem', textAlign: 'center', letterSpacing: '3px', fontFamily: 'var(--font-display)' }}>SANCTUAIRE</h3>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 'bold', letterSpacing: '1px' }}>MUSIQUE & AMBIANCE</span>
+                                    <button
+                                        className={`btn-secondary ${audioEnabled ? 'active' : ''}`}
+                                        onClick={() => {
+                                            setAudioEnabled(!audioEnabled);
+                                            if (!audioEnabled) initSpeech();
+                                        }}
+                                        style={{ minWidth: '60px', borderColor: audioEnabled ? 'var(--gold-primary)' : 'var(--text-muted)', color: audioEnabled ? 'var(--gold-primary)' : 'var(--text-muted)' }}
+                                    >
+                                        {audioEnabled ? 'ON' : 'OFF'}
+                                    </button>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 'bold', letterSpacing: '1px' }}>NARRATEUR VOCAL (PNJ)</span>
+                                    <button
+                                        className={`btn-secondary ${voiceEnabled ? 'active' : ''}`}
+                                        onClick={() => {
+                                            setVoiceEnabled(!voiceEnabled);
+                                            if (!voiceEnabled) initSpeech();
+                                        }}
+                                        style={{ minWidth: '60px', borderColor: voiceEnabled ? 'var(--gold-primary)' : 'var(--text-muted)', color: voiceEnabled ? 'var(--gold-primary)' : 'var(--text-muted)' }}
+                                    >
+                                        {voiceEnabled ? 'ON' : 'OFF'}
+                                    </button>
+                                </div>
+                                <button
+                                    className="btn-gold"
+                                    style={{ background: 'rgba(212, 175, 55, 0.1)', marginTop: '1rem', border: '1px solid var(--gold-dim)', padding: '1rem' }}
+                                    onClick={handleLeaveSession}
+                                >
+                                    Quitter la Session
+                                </button>
+                                <button
+                                    className="btn-secondary"
+                                    onClick={() => setShowSettings(false)}
+                                    style={{ padding: '0.8rem', marginTop: '0.5rem' }}
+                                >
+                                    RETOUR AU JEU
+                                </button>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '0.8rem', borderRadius: '4px' }}>
-                                <span style={{ color: 'var(--text-secondary)' }}>NARRATEUR VOCAL (PNJ)</span>
-                                <button className="btn-secondary" onClick={() => {
-                                    setVoiceEnabled(!voiceEnabled);
-                                    if (!voiceEnabled) initSpeech();
-                                }}>{voiceEnabled ? 'ON' : 'OFF'}</button>
-                            </div>
-                            <button className="btn-gold" style={{ background: 'rgba(255,255,255,0.1)', marginTop: '1rem' }} onClick={handleLeaveSession}>Quitter la Session</button>
-                            <button className="btn-secondary" onClick={() => setShowSettings(false)}>Fermer</button>
                         </div>
                     </div>
                 )

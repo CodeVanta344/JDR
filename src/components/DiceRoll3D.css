@@ -10,7 +10,7 @@
     border-radius: 12px;
     border: 2px solid rgba(212, 175, 55, 0.3);
     margin: 1rem 0;
-    box-shadow: 
+    box-shadow:
         0 10px 40px rgba(0, 0, 0, 0.5),
         inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
@@ -40,39 +40,28 @@
 
 @keyframes diceRoll {
     0% {
-        transform: 
-            rotateX(0deg) 
-            rotateY(0deg) 
-            rotateZ(0deg) 
-            translateY(0px);
+        transform:
+            rotateX(0deg) rotateY(0deg) rotateZ(0deg) translateY(0px);
     }
+
     20% {
-        transform: 
-            rotateX(var(--rotate-x)) 
-            rotateY(var(--rotate-y)) 
-            rotateZ(var(--rotate-z)) 
-            translateY(-80px);
+        transform:
+            rotateX(var(--rotate-x)) rotateY(var(--rotate-y)) rotateZ(var(--rotate-z)) translateY(-80px);
     }
+
     60% {
-        transform: 
-            rotateX(calc(var(--rotate-x) * 1.5)) 
-            rotateY(calc(var(--rotate-y) * 1.5)) 
-            rotateZ(calc(var(--rotate-z) * 1.5)) 
-            translateY(-40px);
+        transform:
+            rotateX(calc(var(--rotate-x) * 1.5)) rotateY(calc(var(--rotate-y) * 1.5)) rotateZ(calc(var(--rotate-z) * 1.5)) translateY(-40px);
     }
+
     85% {
-        transform: 
-            rotateX(calc(var(--rotate-x) * 1.8)) 
-            rotateY(calc(var(--rotate-y) * 1.8)) 
-            rotateZ(calc(var(--rotate-z) * 1.8)) 
-            translateY(5px);
+        transform:
+            rotateX(calc(var(--rotate-x) * 1.8)) rotateY(calc(var(--rotate-y) * 1.8)) rotateZ(calc(var(--rotate-z) * 1.8)) translateY(5px);
     }
+
     100% {
-        transform: 
-            rotateX(calc(var(--rotate-x) * 2)) 
-            rotateY(calc(var(--rotate-y) * 2)) 
-            rotateZ(calc(var(--rotate-z) * 2)) 
-            translateY(0px);
+        transform:
+            rotateX(calc(var(--rotate-x) * 2)) rotateY(calc(var(--rotate-y) * 2)) rotateZ(calc(var(--rotate-z) * 2)) translateY(0px);
     }
 }
 
@@ -82,15 +71,23 @@
 }
 
 @keyframes diceBounce {
-    0%, 100% { transform: translateY(0) scale(1); }
-    50% { transform: translateY(-10px) scale(1.05); }
+
+    0%,
+    100% {
+        transform: translateY(0) scale(1);
+    }
+
+    50% {
+        transform: translateY(-10px) scale(1.05);
+    }
 }
 
 @keyframes diceGlow {
-    0% { 
+    0% {
         filter: drop-shadow(0 0 20px var(--result-color)) brightness(1.5);
     }
-    100% { 
+
+    100% {
         filter: drop-shadow(0 0 5px var(--result-color)) brightness(1);
     }
 }
@@ -111,20 +108,37 @@
     font-size: 3rem;
     font-weight: 800;
     color: var(--result-color, #d4af37);
-    text-shadow: 
+    text-shadow:
         0 0 10px var(--result-color, #d4af37),
         0 0 20px var(--result-color, #d4af37);
-    box-shadow: 
+    box-shadow:
         inset 0 0 20px rgba(0, 0, 0, 0.5),
         0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
-.dice-face-front  { transform: rotateY(0deg) translateZ(60px); }
-.dice-face-back   { transform: rotateY(180deg) translateZ(60px); }
-.dice-face-right  { transform: rotateY(90deg) translateZ(60px); }
-.dice-face-left   { transform: rotateY(-90deg) translateZ(60px); }
-.dice-face-top    { transform: rotateX(90deg) translateZ(60px); }
-.dice-face-bottom { transform: rotateX(-90deg) translateZ(60px); }
+.dice-face-front {
+    transform: rotateY(0deg) translateZ(60px);
+}
+
+.dice-face-back {
+    transform: rotateY(180deg) translateZ(60px);
+}
+
+.dice-face-right {
+    transform: rotateY(90deg) translateZ(60px);
+}
+
+.dice-face-left {
+    transform: rotateY(-90deg) translateZ(60px);
+}
+
+.dice-face-top {
+    transform: rotateX(90deg) translateZ(60px);
+}
+
+.dice-face-bottom {
+    transform: rotateX(-90deg) translateZ(60px);
+}
 
 /* ===== PARTICULES D'IMPACT ===== */
 
@@ -155,6 +169,7 @@
         transform: translate(-50%, -50%) rotate(var(--angle)) translateX(0) scale(1);
         opacity: 1;
     }
+
     100% {
         transform: translate(-50%, -50%) rotate(var(--angle)) translateX(80px) scale(0);
         opacity: 0;
@@ -170,7 +185,7 @@
     border: 2px solid var(--result-color);
     border-radius: 10px;
     padding: 1.5rem;
-    box-shadow: 
+    box-shadow:
         0 0 20px var(--result-color),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
     animation: resultFadeIn 0.5s ease-out;
@@ -181,6 +196,7 @@
         opacity: 0;
         transform: translateY(-20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -297,8 +313,15 @@
 }
 
 @keyframes verdictPulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
 }
 
 .verdict-icon {
@@ -338,6 +361,124 @@
     border-left: 1px solid rgba(212, 175, 55, 0.3);
 }
 
+/* ===== PREMIUM OVERLAY UI ===== */
+
+.dice-result-overlay {
+    position: absolute;
+    bottom: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    pointer-events: none;
+    width: 100%;
+    z-index: 12000;
+}
+
+.dice-result-card {
+    background: rgba(10, 10, 18, 0.4);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 20px;
+    padding: 2rem 4rem;
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.7),
+        0 0 30px rgba(212, 175, 55, 0.15),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: slideUpFade 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    position: relative;
+    overflow: hidden;
+}
+
+.dice-result-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg,
+            transparent 45%,
+            rgba(255, 255, 255, 0.05) 50%,
+            transparent 55%);
+    animation: glassShine 4s infinite linear;
+    pointer-events: none;
+}
+
+@keyframes glassShine {
+    0% {
+        transform: translateX(-30%) translateY(-30%);
+    }
+
+    100% {
+        transform: translateX(30%) translateY(30%);
+    }
+}
+
+.dice-result-val {
+    font-family: 'Cinzel', serif;
+    font-size: 6rem;
+    font-weight: 900;
+    line-height: 1;
+    background: linear-gradient(to bottom, #fff 30%, #ccc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.3));
+    margin: 0.5rem 0;
+}
+
+.dice-result-label {
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    letter-spacing: 4px;
+    color: #d4af37;
+    text-transform: uppercase;
+    opacity: 0.8;
+}
+
+.dice-crit-success {
+    color: #ffd700;
+    text-shadow: 0 0 40px rgba(255, 215, 0, 0.8);
+    animation: critPulse 1.5s infinite;
+}
+
+.dice-crit-fail {
+    color: #ff4444;
+    text-shadow: 0 0 40px rgba(255, 68, 68, 0.8);
+}
+
+@keyframes slideUpFade {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes critPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+        filter: brightness(1.3);
+    }
+}
+
 /* ===== RESPONSIVE ===== */
 
 @media (max-width: 768px) {
@@ -356,17 +497,34 @@
         font-size: 2.5rem;
     }
 
-    .dice-face-front, .dice-face-back, 
-    .dice-face-right, .dice-face-left, 
-    .dice-face-top, .dice-face-bottom {
+    .dice-face-front,
+    .dice-face-back,
+    .dice-face-right,
+    .dice-face-left,
+    .dice-face-top,
+    .dice-face-bottom {
         transform: rotateY(0deg) translateZ(50px);
     }
 
-    .dice-face-back { transform: rotateY(180deg) translateZ(50px); }
-    .dice-face-right { transform: rotateY(90deg) translateZ(50px); }
-    .dice-face-left { transform: rotateY(-90deg) translateZ(50px); }
-    .dice-face-top { transform: rotateX(90deg) translateZ(50px); }
-    .dice-face-bottom { transform: rotateX(-90deg) translateZ(50px); }
+    .dice-face-back {
+        transform: rotateY(180deg) translateZ(50px);
+    }
+
+    .dice-face-right {
+        transform: rotateY(90deg) translateZ(50px);
+    }
+
+    .dice-face-left {
+        transform: rotateY(-90deg) translateZ(50px);
+    }
+
+    .dice-face-top {
+        transform: rotateX(90deg) translateZ(50px);
+    }
+
+    .dice-face-bottom {
+        transform: rotateX(-90deg) translateZ(50px);
+    }
 
     .dice-result-panel {
         padding: 1rem;
