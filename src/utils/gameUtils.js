@@ -23,14 +23,14 @@ import { ITEMS_BY_ID } from '../lore/items-catalog';
 export const generateRandomCharacter = (sessionId, userId) => {
     // Helper: Pick random from array
     const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-    
+
     // Helper: Roll 4d6 drop lowest
     const roll4d6 = () => {
         const rolls = Array.from({ length: 4 }, () => Math.floor(Math.random() * 6) + 1);
         rolls.sort((a, b) => a - b);
         return rolls.slice(1).reduce((a, b) => a + b, 0);
     };
-    
+
     // Helper: Resolve item IDs to full objects
     const resolveItems = (items) => {
         if (!items) return [];
@@ -40,15 +40,15 @@ export const generateRandomCharacter = (sessionId, userId) => {
             return { ...item, quantity: quantity || 1, equipped: false, lifepathReason: reason };
         }).filter(Boolean);
     };
-    
+
     // 1. Random Class
     const classNames = Object.keys(CLASSES);
     const randomClass = pick(classNames);
     const classData = CLASSES[randomClass];
-    
+
     // 2. Random Subclass
     const randomSubclass = classData.subclasses ? pick(classData.subclasses) : null;
-    
+
     // 3. Random Lifepath Choices (12 subcategories)
     const lifepathSelection = {
         birth: {
@@ -72,10 +72,10 @@ export const generateRandomCharacter = (sessionId, userId) => {
             connection: pick(CONNECTIONS)
         }
     };
-    
+
     // 4. Accumulate Lifepath Effects
     const lifepathEffects = accumulateEffects(lifepathSelection);
-    
+
     // 5. Roll Base Attributes
     const baseStats = {
         str: roll4d6(),
@@ -85,7 +85,7 @@ export const generateRandomCharacter = (sessionId, userId) => {
         wis: roll4d6(),
         cha: roll4d6()
     };
-    
+
     // 6. Apply Lifepath Bonuses
     const finalStats = {
         str: baseStats.str + (lifepathEffects.final_stats.strength || 0),
@@ -95,7 +95,7 @@ export const generateRandomCharacter = (sessionId, userId) => {
         wis: baseStats.wis + (lifepathEffects.final_stats.wisdom || 0),
         cha: baseStats.cha + (lifepathEffects.final_stats.charisma || 0)
     };
-    
+
     // 7. Random Abilities (3 from class)
     const availableAbilities = classData.initial_ability_options || [];
     const chosenAbilities = [];
@@ -104,21 +104,21 @@ export const generateRandomCharacter = (sessionId, userId) => {
     for (let i = 0; i < abilityCount; i++) {
         chosenAbilities.push(shuffled[i]);
     }
-    
+
     // 8. Random Equipment (first equipment pack)
     const equipment = classData.equipment_packs ? classData.equipment_packs[0] || [] : [];
-    
+
     // 9. Resolve Lifepath Items
     const lifepathItems = resolveItems(lifepathEffects.items);
-    
+
     // 10. Random Name
     const names = ['Aragorn', 'Legolas', 'Gimli', 'Gandalf', 'Frodo', 'Sam', 'Boromir', 'Faramir'];
     const randomName = `${pick(names)}_${Math.floor(Math.random() * 1000)}`;
-    
+
     // 11. Calculate HP
     const conMod = Math.floor((finalStats.con - 10) / 2);
     const maxHp = (classData.hitDie || 8) + 10 + (conMod * 2);
-    
+
     return {
         session_id: sessionId,
         user_id: userId,
@@ -225,8 +225,14 @@ export const calculateMaxResource = (className, level, stats) => {
 };
 // Helper to get fully resolved ability objects from class lore
 export const resolvePlayerAbilities = (player) => {
-    const charClass = player.class?.split(' ')[0] || "Guerrier";
-    const classData = CLASSES[charClass];
+    if (!player?.class) return [];
+
+    const fullClassName = player.class.toLowerCase();
+    const actualKey = Object.keys(CLASSES).find(key =>
+        fullClassName.includes(key.toLowerCase())
+    );
+
+    const classData = actualKey ? CLASSES[actualKey] : null;
     if (!classData) return [];
 
     const baseAbilities = classData.initial_ability_options || classData.abilities || [];

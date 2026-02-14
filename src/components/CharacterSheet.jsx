@@ -110,12 +110,19 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
     const getClassAbilities = () => {
         if (!character?.class) return [];
 
-        // Normalize lookup by lowercasing the search term and checking keys
-        const baseClassName = character.class.split(' ')[0];
-        const actualKey = Object.keys(CLASSES).find(k => k.toLowerCase() === baseClassName.toLowerCase());
-        const classData = actualKey ? CLASSES[actualKey] : (CLASSES[character.class] || null);
+        // Try to find the class key within the character.class string
+        // This handles cases like "Zal-Khar (Guerrier)" or "Guerrier (Berserker)"
+        const fullClassName = character.class.toLowerCase();
+        const actualKey = Object.keys(CLASSES).find(key =>
+            fullClassName.includes(key.toLowerCase())
+        );
 
-        if (!classData) return [];
+        const classData = actualKey ? CLASSES[actualKey] : null;
+
+        if (!classData) {
+            console.warn(`[CharacterSheet] No class data found for: "${character.class}"`);
+            return [];
+        }
 
         const playerAbilities = [...(character.abilities || []), ...(character.spells || [])];
         let baseAbilities = [];
@@ -136,6 +143,7 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
         const all = [...baseAbilities, ...unlocked];
         return Array.from(new Map(all.map(item => [item.name, item])).values());
     };
+
 
     const knownAbilities = getClassAbilities();
 

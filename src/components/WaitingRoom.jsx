@@ -13,7 +13,8 @@ const WaitingRoom = ({ players, character, onToggleReady, onStart, loading, sess
                 width: '90%',
                 padding: '3rem',
                 textAlign: 'center',
-                background: 'rgba(10, 10, 15, 0.95)',
+                background: 'rgba(10, 10, 15, 0.85)',
+                backdropFilter: 'blur(12px)',
                 animation: 'fadeIn 0.8s ease-out',
                 position: 'relative'
             }}>

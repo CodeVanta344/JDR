@@ -29,13 +29,8 @@ export const LifePathWizard: React.FC<Props> = ({ onComplete, onUpdate, onCancel
   const [currentStep, setCurrentStep] = useState<WizardStep>('birth');
   const [currentSubStep, setCurrentSubStep] = useState<number>(0);
 
-  // Sélections
-  const [selection, setSelection] = useState<Partial<LifepathSelection>>({
-    birth: {},
-    childhood: {},
-    adolescence: {},
-    youngAdult: {}
-  });
+  // Sélections (simplifié - 1 choix par phase)
+  const [selection, setSelection] = useState<Partial<LifepathSelection>>({});
 
   // Options chargées
   const [options, setOptions] = useState<LifeChoice[]>([]);
@@ -44,27 +39,19 @@ export const LifePathWizard: React.FC<Props> = ({ onComplete, onUpdate, onCancel
   // Effets cumulés
   const [effects, setEffects] = useState<AccumulatedEffects | null>(null);
 
-  // Mapping étapes -> sous-étapes COMPLET
+  // Mapping étapes -> sous-étapes SIMPLIFIÉ (1 seul choix par phase)
   const subStepsMap: Record<WizardStep, string[]> = {
-    birth: ['location', 'status', 'omen'],
-    childhood: ['family', 'education', 'trauma'],
-    adolescence: ['training', 'exploit', 'encounter'],
-    youngAdult: ['profession', 'motivation', 'connection']
+    birth: ['origin'],
+    childhood: ['childhood'],
+    adolescence: ['adolescence'],
+    youngAdult: ['youngAdult']
   };
 
   const subStepLabels: Record<string, string> = {
-    location: 'Lieu de Naissance',
-    status: 'Statut Social',
-    omen: 'Augure',
-    family: 'Famille',
-    education: 'Éducation',
-    trauma: 'Événement de Jeunesse',
-    training: 'Apprentissage',
-    exploit: 'Premier Exploit',
-    encounter: 'Rencontre Marquant',
-    profession: 'Métier & Occupation',
-    motivation: 'Motivation',
-    connection: 'Relation de Passé'
+    origin: 'Origine',
+    childhood: 'Enfance',
+    adolescence: 'Adolescence',
+    youngAdult: 'Jeune Adulte'
   };
 
   // Charger options pour sous-étape actuelle
@@ -100,55 +87,35 @@ export const LifePathWizard: React.FC<Props> = ({ onComplete, onUpdate, onCancel
       const category = subStepsMap[currentStep][currentSubStep];
       let fetched: LifeChoice[] = [];
 
-      // Dynamic import selon catégorie
+      // Dynamic import selon catégorie - FUSIONNÉ (toutes les options d'une phase ensemble)
       switch (category) {
-        case 'location':
+        case 'origin':
           const { BIRTH_LOCATIONS } = await import('../../lore/character-creation/lifepath/birth/locations');
-          fetched = BIRTH_LOCATIONS;
-          break;
-        case 'status':
           const { SOCIAL_STATUSES } = await import('../../lore/character-creation/lifepath/birth/social-status');
-          fetched = SOCIAL_STATUSES;
-          break;
-        case 'omen':
           const { OMENS } = await import('../../lore/character-creation/lifepath/birth/omens');
-          fetched = OMENS;
+          // Fusionner toutes les options de naissance
+          fetched = [...BIRTH_LOCATIONS, ...SOCIAL_STATUSES, ...OMENS];
           break;
-        case 'family':
+        case 'childhood':
           const { FAMILIES } = await import('../../lore/character-creation/lifepath/childhood/families');
-          fetched = FAMILIES;
-          break;
-        case 'education':
           const { EDUCATIONS } = await import('../../lore/character-creation/lifepath/childhood/education');
-          fetched = EDUCATIONS;
-          break;
-        case 'trauma':
           const { TRAUMAS } = await import('../../lore/character-creation/lifepath/childhood/traumas');
-          fetched = TRAUMAS;
+          // Fusionner toutes les options d'enfance
+          fetched = [...FAMILIES, ...EDUCATIONS, ...TRAUMAS];
           break;
-        case 'training':
+        case 'adolescence':
           const { TRAININGS } = await import('../../lore/character-creation/lifepath/adolescence/training');
-          fetched = TRAININGS;
-          break;
-        case 'exploit':
           const { EXPLOITS } = await import('../../lore/character-creation/lifepath/adolescence/exploits');
-          fetched = EXPLOITS;
-          break;
-        case 'encounter':
           const { ENCOUNTERS } = await import('../../lore/character-creation/lifepath/adolescence/encounters');
-          fetched = ENCOUNTERS;
+          // Fusionner toutes les options d'adolescence
+          fetched = [...TRAININGS, ...EXPLOITS, ...ENCOUNTERS];
           break;
-        case 'profession':
+        case 'youngAdult':
           const { PROFESSIONS } = await import('../../lore/character-creation/lifepath/young-adult/professions');
-          fetched = PROFESSIONS;
-          break;
-        case 'motivation':
           const { MOTIVATIONS } = await import('../../lore/character-creation/lifepath/young-adult/motivations');
-          fetched = MOTIVATIONS;
-          break;
-        case 'connection':
           const { CONNECTIONS } = await import('../../lore/character-creation/lifepath/young-adult/connections');
-          fetched = CONNECTIONS;
+          // Fusionner toutes les options de jeune adulte
+          fetched = [...PROFESSIONS, ...MOTIVATIONS, ...CONNECTIONS];
           break;
         default:
           fetched = [];
@@ -164,17 +131,11 @@ export const LifePathWizard: React.FC<Props> = ({ onComplete, onUpdate, onCancel
   };
 
   const handleSelect = (choice: LifeChoice) => {
-    const category = subStepsMap[currentStep][currentSubStep] as any;
+    // Stockage simplifié : un seul choix par phase
     setSelection(prev => ({
       ...prev,
-      [currentStep]: {
-        ...prev[currentStep],
-        [category]: choice
-      }
+      [currentStep]: choice  // Stocker directement le choix, pas dans une sous-catégorie
     }));
-
-    // SIMPLIFIÉ : Plus de sous-étapes, donc on ne fait rien ici
-    // L'utilisateur clique sur "Suivant" pour passer à la phase suivante
   };
 
   const handleNext = () => {
@@ -218,8 +179,7 @@ export const LifePathWizard: React.FC<Props> = ({ onComplete, onUpdate, onCancel
     }
   };
 
-  const currentCategory = subStepsMap[currentStep][currentSubStep];
-  const currentSelection = (selection[currentStep] as any)?.[currentCategory];
+  const currentSelection = selection[currentStep] as LifeChoice | undefined;
   const canProceed = !!currentSelection;
 
   return (
@@ -250,29 +210,33 @@ export const LifePathWizard: React.FC<Props> = ({ onComplete, onUpdate, onCancel
               ))}
             </div>
 
-            {/* Sous-navigation par tabs */}
-            <div className="wizard-sub-nav">
-              {subStepsMap[currentStep].map((sub, idx) => {
-                const categoryKey = sub;
-                const isSelected = (selection[currentStep] as any)?.[categoryKey];
-                return (
-                  <button
-                    key={sub}
-                    className={`sub-nav-item ${currentSubStep === idx ? 'active' : ''} ${isSelected ? 'selected' : ''}`}
-                    onClick={() => isSelected || idx <= currentSubStep ? setCurrentSubStep(idx) : null}
-                  >
-                    {subStepLabels[sub]}
-                  </button>
-                );
-              })}
-            </div>
+            {/* Sous-navigation masquée car il n'y a plus qu'une seule option par phase */}
+            {subStepsMap[currentStep].length > 1 && (
+              <div className="wizard-sub-nav">
+                {subStepsMap[currentStep].map((sub, idx) => {
+                  const isSelected = !!selection[currentStep];
+                  return (
+                    <button
+                      key={sub}
+                      className={`sub-nav-item ${currentSubStep === idx ? 'active' : ''} ${isSelected ? 'selected' : ''}`}
+                      onClick={() => isSelected || idx <= currentSubStep ? setCurrentSubStep(idx) : null}
+                    >
+                      {subStepLabels[sub]}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             <div className="wizard-subtitle">
-              ACTE {['birth', 'childhood', 'adolescence', 'youngAdult'].indexOf(currentStep) + 1}
+              PHASE 0{['birth', 'childhood', 'adolescence', 'youngAdult'].indexOf(currentStep) + 1}
             </div>
 
             <h2 className="wizard-title">
-              {subStepLabels[currentCategory]}
+              {currentStep === 'birth' && 'NAISSANCE'}
+              {currentStep === 'childhood' && 'ENFANCE'}
+              {currentStep === 'adolescence' && 'ADOLESCENCE'}
+              {currentStep === 'youngAdult' && 'JEUNE ADULTE'}
             </h2>
           </div>
 

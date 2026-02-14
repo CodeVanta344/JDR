@@ -15,28 +15,20 @@ import type {
 
 // ===== FONCTION CALCUL CUMULATIF =====
 export function accumulateEffects(selection: LifepathSelection): AccumulatedEffects {
-  // Collecter TOUS les choix (12 sous-catégories possibles)
+  // Collecter TOUS les choix (4 phases simplifiées)
   const allChoices: LifeChoice[] = [];
 
-  // Birth - Origines (3 sous-catégories)
-  if (selection.birth.location) allChoices.push(selection.birth.location);
-  if (selection.birth.status) allChoices.push(selection.birth.status);
-  if (selection.birth.omen) allChoices.push(selection.birth.omen);
+  // Phase 1 - Naissance
+  if (selection.birth) allChoices.push(selection.birth);
 
-  // Childhood - Enfance (3 sous-catégories)
-  if (selection.childhood.family) allChoices.push(selection.childhood.family);
-  if (selection.childhood.education) allChoices.push(selection.childhood.education);
-  if (selection.childhood.trauma) allChoices.push(selection.childhood.trauma);
+  // Phase 2 - Enfance
+  if (selection.childhood) allChoices.push(selection.childhood);
 
-  // Adolescence - Formation (3 sous-catégories)
-  if (selection.adolescence.training) allChoices.push(selection.adolescence.training);
-  if (selection.adolescence.exploit) allChoices.push(selection.adolescence.exploit);
-  if (selection.adolescence.encounter) allChoices.push(selection.adolescence.encounter);
+  // Phase 3 - Adolescence
+  if (selection.adolescence) allChoices.push(selection.adolescence);
 
-  // Young Adult - Profession (3 sous-catégories)
-  if (selection.youngAdult.profession) allChoices.push(selection.youngAdult.profession);
-  if (selection.youngAdult.motivation) allChoices.push(selection.youngAdult.motivation);
-  if (selection.youngAdult.connection) allChoices.push(selection.youngAdult.connection);
+  // Phase 4 - Jeune Adulte
+  if (selection.youngAdult) allChoices.push(selection.youngAdult);
 
   // Initialiser résultat
   const final_stats: Record<StatKey, number> = {
@@ -114,11 +106,11 @@ export function accumulateEffects(selection: LifepathSelection): AccumulatedEffe
     narrative_summary,
     tags: Array.from(tags),
 
-    // Choix principaux pour UI
-    origin: selection.birth.location,
-    childhood: selection.childhood.trauma || selection.childhood.family, // Trauma often defines the "event" label
-    adolescence: selection.adolescence.training || selection.adolescence.exploit,
-    adult: selection.youngAdult.profession || selection.youngAdult.motivation
+    // Choix principaux pour UI (simplifié)
+    origin: selection.birth,
+    childhood: selection.childhood,
+    adolescence: selection.adolescence,
+    adult: selection.youngAdult
   };
 }
 
@@ -177,25 +169,13 @@ function generateNarrativeSummary(choices: LifeChoice[]): string {
   return sections.join('\n');
 }
 
-// ===== HELPER : VÉRIFIER SÉLECTION COMPLÈTE =====
+// ===== HELPER : VÉRIFIER SÉLECTION COMPLÈTE (SIMPLIFIÉ - 4 phases) =====
 export function isLifepathComplete(selection: Partial<LifepathSelection>): selection is LifepathSelection {
   return !!(
-    // Phase 1 - Birth
-    selection.birth?.location &&
-    selection.birth?.status &&
-    selection.birth?.omen &&
-    // Phase 2 - Childhood
-    selection.childhood?.family &&
-    selection.childhood?.education &&
-    selection.childhood?.trauma &&
-    // Phase 3 - Adolescence
-    selection.adolescence?.training &&
-    selection.adolescence?.exploit &&
-    selection.adolescence?.encounter &&
-    // Phase 4 - Young Adult
-    selection.youngAdult?.profession &&
-    selection.youngAdult?.motivation &&
-    selection.youngAdult?.connection
+    selection.birth &&
+    selection.childhood &&
+    selection.adolescence &&
+    selection.youngAdult
   );
 }
 

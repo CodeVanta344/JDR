@@ -5,7 +5,7 @@ import './SessionHub.css';
 export function SessionHub({ players, character, session, onToggleReady, onStart, loading, onLeave }) {
     const isHost = session?.host_id === character?.user_id;
     // Le host n'a pas besoin d'être "prêt" - vérifie seulement les autres joueurs
-    const allReady = players.length >= 2 && players.filter(p => p.user_id !== session?.host_id).every(p => p.is_ready);
+    const allReady = players.length >= 1 && players.filter(p => p.user_id !== session?.host_id).every(p => p.is_ready);
     const playerCount = players.length;
 
     return (
@@ -35,12 +35,12 @@ export function SessionHub({ players, character, session, onToggleReady, onStart
                     <div className="hub-header">
                         <div className="session-seal">
                             <svg viewBox="0 0 100 100" className="seal-svg">
-                                <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="2"/>
-                                <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="2,3"/>
+                                <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="2" />
+                                <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="2,3" />
                                 <text x="50" y="55" textAnchor="middle" fontSize="16" fill="currentColor" fontFamily="Cinzel">⚔</text>
                             </svg>
                         </div>
-                        
+
                         <div className="session-info-grid">
                             <div className="info-block">
                                 <div className="info-label">Code de Session</div>
@@ -66,8 +66,8 @@ export function SessionHub({ players, character, session, onToggleReady, onStart
 
                         <div className="players-list">
                             {players.map((p, index) => (
-                                <div 
-                                    key={p.id} 
+                                <div
+                                    key={p.id}
                                     className={`player-card ${p.user_id === character?.user_id ? 'player-self' : ''}`}
                                     style={{ animationDelay: `${index * 0.1}s` }}
                                 >
@@ -114,10 +114,10 @@ export function SessionHub({ players, character, session, onToggleReady, onStart
                     {/* Actions */}
                     <div className="hub-actions">
                         <div className="actions-divider"></div>
-                        
+
                         <div className="button-group">
-                            <button 
-                                className="btn-medieval btn-secondary" 
+                            <button
+                                className="btn-medieval btn-secondary"
                                 onClick={onLeave}
                             >
                                 <span className="btn-icon">⬅</span>
@@ -125,8 +125,8 @@ export function SessionHub({ players, character, session, onToggleReady, onStart
                             </button>
 
                             {!isHost && (
-                                <button 
-                                    className="btn-medieval btn-primary" 
+                                <button
+                                    className="btn-medieval btn-primary"
                                     onClick={onToggleReady}
                                     disabled={loading}
                                 >
@@ -136,8 +136,8 @@ export function SessionHub({ players, character, session, onToggleReady, onStart
                             )}
 
                             {isHost && (
-                                <button 
-                                    className="btn-medieval btn-epic" 
+                                <button
+                                    className="btn-medieval btn-epic"
                                     onClick={onStart}
                                     disabled={!allReady || loading}
                                 >

@@ -15,12 +15,21 @@ export const TOWN_SILVERPORT: LocationDefinition = {
   type: 'town',
   region: 'western-coast' as const,
   description: 'Port de pêche prospère. Flotte de pêche, chantier naval.',
+  lore: 'Ancien refuge de pirates devenu un pole commercial majeur. Ses eaux profondes cachent, dit-on, les restes d\'une cité engloutie dont les perles noires font la fortune des locaux.',
   biome: 'coast',
   coordinates: { x: 150, y: 350 },
   dangerLevel: 'safe',
   suggestedLevel: 3,
   population: 5000,
-  services: { inn: true, blacksmith: true, merchant: true, temple: true, guild: false, stables: true, bank: true },
+  services: {
+    inn: true,
+    blacksmith: true,
+    merchant: true,
+    temple: true,
+    guild: true,
+    stables: true,
+    bank: true
+  },
   economy: { wealth: 'prosperous', mainExports: ['poisson', 'perles', 'corail'], mainImports: ['grain', 'bois'] }
 };
 
@@ -30,12 +39,13 @@ export const VILLAGE_MOONBROOK: LocationDefinition = {
   type: 'village',
   region: 'northern-kingdoms' as const,
   description: 'Petit village paisible près d\'un ruisseau argenté.',
+  lore: 'On raconte que l\'eau du ruisseau brille d\'une lueur bleue argentée chaque nuit de pleine lune, soignant ceux qui s\'y baignent.',
   biome: 'plains',
   coordinates: { x: 510, y: 330 },
   dangerLevel: 'safe',
   suggestedLevel: 1,
   population: 800,
-  services: { inn: true, blacksmith: false, merchant: true, temple: false, guild: false, stables: false, bank: false }
+  services: { inn: true, blacksmith: false, merchant: true, temple: true, guild: false, stables: true, bank: false }
 };
 
 export const TOWN_STONEHAVEN: LocationDefinition = {
@@ -44,12 +54,21 @@ export const TOWN_STONEHAVEN: LocationDefinition = {
   type: 'town',
   region: 'central-highlands' as const,
   description: 'Ville fortifiée sur plateau rocheux.',
+  lore: 'Taillée directement dans le granit du plateau, cette ville est virtuellement imprenable. Elle sert de premier rempart contre les géants descendant des Pics du Dragon.',
   biome: 'mountains',
   coordinates: { x: 570, y: 220 },
   dangerLevel: 'low',
   suggestedLevel: 4,
   population: 6000,
-  services: { inn: true, blacksmith: true, merchant: true, temple: true, guild: true, stables: true, bank: true }
+  services: {
+    inn: true,
+    blacksmith: true,
+    merchant: true,
+    temple: true,
+    guild: true,
+    stables: true,
+    bank: true
+  }
 };
 
 export const VILLAGE_MILLTOWN: LocationDefinition = {
@@ -58,12 +77,13 @@ export const VILLAGE_MILLTOWN: LocationDefinition = {
   type: 'village',
   region: 'northern-kingdoms' as const,
   description: 'Village centré autour d\'un grand moulin à vent.',
+  lore: 'Le "Grand Moulin" est une merveille d\'ingénierie capable de moudre le grain pour toute la région, alimenté par des courants d\'air magiques constants.',
   biome: 'plains',
   coordinates: { x: 495, y: 345 },
   dangerLevel: 'safe',
   suggestedLevel: 2,
   population: 1200,
-  services: { inn: true, blacksmith: false, merchant: true, temple: false, guild: false, stables: false, bank: false }
+  services: { inn: true, blacksmith: false, merchant: true, temple: true, guild: false, stables: true, bank: false }
 };
 
 export const TOWN_REDCLIFF: LocationDefinition = {
@@ -72,12 +92,21 @@ export const TOWN_REDCLIFF: LocationDefinition = {
   type: 'town',
   region: 'western-coast' as const,
   description: 'Ville construite sur falaises rouges surplombant océan.',
+  lore: 'Nommée ainsi à cause de la couleur ferreuse de sa roche qui rougeoit intensément au coucher du soleil. C\'est ici que les meilleurs navigateurs du royaume font leurs classes.',
   biome: 'coast',
   coordinates: { x: 80, y: 380 },
   dangerLevel: 'low',
   suggestedLevel: 5,
   population: 7000,
-  services: { inn: true, blacksmith: true, merchant: true, temple: true, guild: true, stables: false, bank: true }
+  services: {
+    inn: true,
+    blacksmith: true,
+    merchant: true,
+    temple: true,
+    guild: true,
+    stables: true,
+    bank: true
+  }
 };
 
 export const VILLAGE_THORNWOOD: LocationDefinition = {
@@ -86,11 +115,21 @@ export const VILLAGE_THORNWOOD: LocationDefinition = {
   type: 'village',
   region: 'emerald-forest' as const,
   description: 'Village forestier entouré de ronces magiques protectrices.',
+  lore: 'Le village est construit au sein d\'une gigantesque structure de ronces vivantes qui obéissent aux chants des anciens druides locaux.',
   biome: 'forest',
   coordinates: { x: 440, y: 270 },
   dangerLevel: 'low',
   suggestedLevel: 3,
   population: 600,
+  services: {
+    inn: true,
+    blacksmith: false,
+    merchant: true,
+    temple: true,
+    guild: false,
+    stables: false,
+    bank: false
+  },
   creatures: ['beast:wolf', 'fey:sprite']
 };
 
@@ -115,11 +154,21 @@ export const VILLAGE_FROSTHOLM: LocationDefinition = {
   type: 'village',
   region: 'frozen-north' as const,
   description: 'Village hardy survivant dans le froid extrême.',
+  lore: 'Fondé par des bannis cherchant la solitude. Les habitants ont appris à extraire la chaleur des cristaux de glace bleus trouvés dans les cavernes environnantes.',
   biome: 'tundra',
   coordinates: { x: 480, y: 100 },
   dangerLevel: 'medium',
   suggestedLevel: 8,
   population: 400,
+  services: {
+    inn: true,
+    blacksmith: true,
+    merchant: true,
+    temple: false,
+    guild: false,
+    stables: true,
+    bank: false
+  },
   creatures: ['beast:white-wolf', 'beast:yeti']
 };
 
@@ -129,13 +178,22 @@ export const TOWN_SANDSTONE: LocationDefinition = {
   type: 'town',
   region: 'eastern-desert' as const,
   description: 'Ville oasis, hub commercial du désert.',
+  lore: 'Une merveille architecturale où chaque bâtiment est sculpté dans le grès. Ses canaux souterrains, les qanats, sont les secrets les mieux gardés des maîtres de l\'eau de la ville.',
   biome: 'desert',
   coordinates: { x: 820, y: 410 },
   dangerLevel: 'low',
   suggestedLevel: 7,
   population: 9000,
-  services: { inn: true, blacksmith: true, merchant: true, temple: true, guild: true, stables: true, bank: true },
-  economy: { wealth: 'prosperous', mainExports: ['épices', 'soie', 'dattes'] }
+  services: {
+    inn: true,
+    blacksmith: true,
+    merchant: true,
+    temple: true,
+    guild: true,
+    stables: true,
+    bank: true
+  },
+  economy: { wealth: 'prosperous', mainExports: ['épices', 'soie', 'dattes'], mainImports: ['fer', 'bois', 'vin'] }
 };
 
 export const VILLAGE_MARSHLIGHT: LocationDefinition = {
@@ -144,11 +202,21 @@ export const VILLAGE_MARSHLIGHT: LocationDefinition = {
   type: 'village',
   region: 'southern-swamps' as const,
   description: 'Village de pêcheurs dans marais. Feux follets la nuit.',
+  lore: 'Chaque cabane est suspendue par des chaînes à des arbres millénaires. Les lanternes bleues des habitants imitent les feux follets pour égarer les prédateurs.',
   biome: 'swamp',
   coordinates: { x: 410, y: 590 },
   dangerLevel: 'medium',
   suggestedLevel: 5,
   population: 700,
+  services: {
+    inn: true,
+    blacksmith: false,
+    merchant: true,
+    temple: false,
+    guild: false,
+    stables: false,
+    bank: false
+  },
   creatures: ['beast:giant-crocodile', 'undead:will-o-wisp']
 };
 

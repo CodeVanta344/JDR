@@ -50,25 +50,25 @@ const FULL_BESTIARY = [
 // Consolidated Locations - Merge world-map with taverns/landmarks
 const ALL_LOCATIONS = [
   ...WORLD_LOCATIONS,
-  ...(TAVERNS_AND_LOCATIONS.taverns || []).map(t => ({ 
-    ...t, 
-    type: 'Auberge', 
+  ...(TAVERNS_AND_LOCATIONS.taverns || []).map(t => ({
+    ...t,
+    type: 'Auberge',
     description: t.desc,
     dangerLevel: 'safe',
     suggestedLevel: 1,
     region: t.location || 'Inconnu'
   })),
-  ...(TAVERNS_AND_LOCATIONS.shops || []).map(s => ({ 
-    ...s, 
+  ...(TAVERNS_AND_LOCATIONS.shops || []).map(s => ({
+    ...s,
     type: 'Boutique',
     description: s.desc,
     dangerLevel: 'safe',
     suggestedLevel: 1,
     region: 'Commerce'
   })),
-  ...(TAVERNS_AND_LOCATIONS.landmarks || []).map(l => ({ 
-    ...l, 
-    type: 'Point d\'intérêt', 
+  ...(TAVERNS_AND_LOCATIONS.landmarks || []).map(l => ({
+    ...l,
+    type: 'Point d\'intérêt',
     description: l.desc,
     dangerLevel: l.danger_level || 'medium',
     suggestedLevel: l.suggested_level || 5,
@@ -390,11 +390,11 @@ export function CodexPanel({ isOpen, onClose }) {
                     <p className="location-type">📍 {loc.type || 'Lieu'}</p>
                     {loc.dangerLevel && (
                       <span className={`danger-badge danger-${loc.dangerLevel}`}>
-                        {loc.dangerLevel === 'safe' ? '🛡️ Sûr' : 
-                         loc.dangerLevel === 'low' ? '⚠️ Risque faible' : 
-                         loc.dangerLevel === 'medium' ? '⚔️ Dangereux' :
-                         loc.dangerLevel === 'high' ? '☠️ Très dangereux' : 
-                         loc.dangerLevel === 'extreme' ? '💀 Extrême' : '🔥 Mortel'}
+                        {loc.dangerLevel === 'safe' ? '🛡️ Sûr' :
+                          loc.dangerLevel === 'low' ? '⚠️ Risque faible' :
+                            loc.dangerLevel === 'medium' ? '⚔️ Dangereux' :
+                              loc.dangerLevel === 'high' ? '☠️ Très dangereux' :
+                                loc.dangerLevel === 'extreme' ? '💀 Extrême' : '🔥 Mortel'}
                       </span>
                     )}
                   </div>
@@ -405,36 +405,56 @@ export function CodexPanel({ isOpen, onClose }) {
               ) : (
                 <div className="location-details">
                   <h3>{selectedItem.name}</h3>
-                  
-                  <div className="stats-section">
+
+                  <div className="stats-section atlas-stats">
                     <h4>📍 Informations Générales</h4>
-                    <div className="stats-grid">
-                      <div className="stat-item">
-                        <span className="stat-label">Région</span>
-                        <span className="stat-value">{selectedItem.region || 'Inconnu'}</span>
+                    <div className="atlas-stats-grid">
+                      <div className="stat-card">
+                        <div className="stat-card-icon">🌍</div>
+                        <div className="stat-card-content">
+                          <span className="stat-label">Région</span>
+                          <span className="stat-value">{selectedItem.region || 'Inconnu'}</span>
+                        </div>
                       </div>
-                      <div className="stat-item">
-                        <span className="stat-label">Type</span>
-                        <span className="stat-value">{selectedItem.type}</span>
+                      <div className="stat-card">
+                        <div className="stat-card-icon">🏛️</div>
+                        <div className="stat-card-content">
+                          <span className="stat-label">Type</span>
+                          <span className="stat-value">{selectedItem.type}</span>
+                        </div>
                       </div>
-                      <div className="stat-item">
-                        <span className="stat-label">Danger</span>
-                        <span className="stat-value">{selectedItem.dangerLevel || 'Moyen'}</span>
+                      <div className="stat-card">
+                        <div className="stat-card-icon">⚔️</div>
+                        <div className="stat-card-content">
+                          <span className="stat-label">Danger</span>
+                          <span className="stat-value danger-text">
+                            {selectedItem.dangerLevel || 'Moyen'}
+                          </span>
+                        </div>
                       </div>
-                      <div className="stat-item">
-                        <span className="stat-label">Niveau suggéré</span>
-                        <span className="stat-value">{selectedItem.suggestedLevel || 1}</span>
+                      <div className="stat-card">
+                        <div className="stat-card-icon">📜</div>
+                        <div className="stat-card-content">
+                          <span className="stat-label">Niveau suggéré</span>
+                          <span className="stat-value">{selectedItem.suggestedLevel || 1}</span>
+                        </div>
                       </div>
                       {selectedItem.population && (
-                        <div className="stat-item">
-                          <span className="stat-label">Population</span>
-                          <span className="stat-value">{selectedItem.population.toLocaleString()}</span>
+                        <div className="stat-card">
+                          <div className="stat-card-icon">👥</div>
+                          <div className="stat-card-content">
+                            <span className="stat-label">Population</span>
+                            <span className="stat-value">{selectedItem.population.toLocaleString()}</span>
+                          </div>
                         </div>
                       )}
                       {selectedItem.biome && (
-                        <div className="stat-item">
-                          <span className="stat-label">Biome</span>
-                          <span className="stat-value">{selectedItem.biome}</span>
+                        <div className="stat-card">
+                          <div className="stat-card-icon">🌲</div>
+                          <div className="stat-card-content">
+                            <span className="stat-label">Biome</span>
+                            <span className="stat-value">{selectedItem.biome}</span>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -489,8 +509,8 @@ export function CodexPanel({ isOpen, onClose }) {
                           <span className="stat-label">Richesse</span>
                           <span className="stat-value">{
                             selectedItem.economy.wealth === 'poor' ? '💔 Pauvre' :
-                            selectedItem.economy.wealth === 'modest' ? '💛 Modeste' :
-                            selectedItem.economy.wealth === 'prosperous' ? '💚 Prospère' : '💎 Riche'
+                              selectedItem.economy.wealth === 'modest' ? '💛 Modeste' :
+                                selectedItem.economy.wealth === 'prosperous' ? '💚 Prospère' : '💎 Riche'
                           }</span>
                         </div>
                       </div>
@@ -516,8 +536,8 @@ export function CodexPanel({ isOpen, onClose }) {
                             <div className="connection-header">
                               <strong>→ {conn.locationId}</strong>
                               <span className={`difficulty-badge diff-${conn.difficulty}`}>
-                                {conn.difficulty === 'easy' ? '🟢 Facile' : 
-                                 conn.difficulty === 'medium' ? '🟡 Moyen' : '🔴 Difficile'}
+                                {conn.difficulty === 'easy' ? '🟢 Facile' :
+                                  conn.difficulty === 'medium' ? '🟡 Moyen' : '🔴 Difficile'}
                               </span>
                             </div>
                             <p>{conn.distance} km • {conn.travelTime}h de voyage</p>

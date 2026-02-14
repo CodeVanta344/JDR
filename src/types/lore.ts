@@ -93,28 +93,12 @@ export interface LifeChoice {
   incompatible_with?: string[];                         // IDs options incompatibles
 }
 
-// ===== SÉLECTION LIFEPATH COMPLÈTE =====
+// ===== SÉLECTION LIFEPATH COMPLÈTE (SIMPLIFIÉ - 1 choix par phase) =====
 export interface LifepathSelection {
-  birth: {
-    location?: LifeChoice;
-    status?: LifeChoice;
-    omen?: LifeChoice;
-  };
-  childhood: {
-    family?: LifeChoice;
-    education?: LifeChoice;
-    trauma?: LifeChoice;
-  };
-  adolescence: {
-    training?: LifeChoice;
-    exploit?: LifeChoice;
-    encounter?: LifeChoice;
-  };
-  youngAdult: {
-    profession?: LifeChoice;
-    motivation?: LifeChoice;
-    connection?: LifeChoice;
-  };
+  birth?: LifeChoice;      // Un seul choix pour la phase Naissance
+  childhood?: LifeChoice;  // Un seul choix pour la phase Enfance
+  adolescence?: LifeChoice;// Un seul choix pour la phase Adolescence
+  youngAdult?: LifeChoice; // Un seul choix pour la phase Jeune Adulte
 }
 
 // ===== EFFETS CUMULÉS FINAUX =====

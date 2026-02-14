@@ -1406,7 +1406,6 @@ export default function App() {
         if (!force) sessionStorage.setItem(`start_attempt_${activeSession.id}`, now.toString());
 
         // Additional safety: check if GM intro already exists (role is 'system' or 'assistant')
-        // We look for a message that is sufficiently long to be an intro, excluding the trigger marker itself
         const existingIntro = messages.find(m =>
             (m.role === 'system' || m.role === 'assistant') &&
             m.content &&
@@ -1417,6 +1416,14 @@ export default function App() {
         if (existingIntro && !force) {
             console.log("GM intro already exists, skipping START_ADVENTURE call");
             setAdventureStarted(true);
+            return;
+        }
+
+        // CRITICAL: Only the host should trigger the actual AI invocation for the start
+        const isHost = activeSession.host_id === profile?.id;
+        if (!isHost && !force) {
+            console.warn("Non-host player attempted to start adventure. Waiting for host.");
+            setLoading(true);
             return;
         }
 
@@ -1432,13 +1439,12 @@ export default function App() {
             // Inject start marker if missing
             const hasMarker = messages.some(m => m.content && m.content.includes("START_ADVENTURE_TRIGGERED"));
             if (!hasMarker) {
-                const { error } = await supabase.from('messages').insert({
+                await supabase.from('messages').insert({
                     id: activeSession.id,
                     session_id: activeSession.id,
                     role: 'system',
                     content: "(MEMOIRE:SYSTEM) START_ADVENTURE_TRIGGERED"
                 });
-                // Ignore error if exists (duplicate key)
             }
         }
 
@@ -1534,7 +1540,7 @@ export default function App() {
         }
 
         // HOST: Trigger the actual start when all are ready (ONLY ONCE)
-        if (allPlayersReady && character?.is_ready && players.length >= 2 && !hasMarker && !hasGMIntro && !STARTING_LOCKS.has(session.id)) {
+        if (allPlayersReady && character?.is_ready && players.length >= 1 && !hasMarker && !hasGMIntro && !STARTING_LOCKS.has(session.id)) {
             // Immediately set local and module locks
             STARTING_LOCKS.add(session.id);
             setAdventureStarted(true);
@@ -2295,7 +2301,10 @@ export default function App() {
             const { data: aiResponse } = await supabase.functions.invoke('game-master', {
                 body: {
                     action: content,
-                    history: messages.filter(m => m.id !== 'temp-intro' && m.id !== tempId).map(m => ({ role: m.role, content: m.content })),
+                    history: messages
+                        .filter(m => m.id !== 'temp-intro' && m.id !== tempId && !m.content?.startsWith('(MÉMOIRE:'))
+                        .slice(-15) // Limit context to last 15 messages for better performance and consistency
+                        .map(m => ({ role: m.role, content: m.content })),
                     sessionId: session.id,
                     playerId: character?.id,
                     gamePhase: gamePhase,
@@ -3010,6 +3019,10 @@ export default function App() {
 
             {/* Debug Panel for Combat Logs */}
             <DebugPanel onTestCombat={handleTestCombat} />
+
+            {/* Aethelgard Side Flags */}
+            <div className="side-flag left" style={{ backgroundImage: 'url("/aethelgard_flag_royal.png")' }}></div>
+            <div className="side-flag right" style={{ backgroundImage: 'url("/aethelgard_flag_royal.png")' }}></div>
         </div>
     );
 }
