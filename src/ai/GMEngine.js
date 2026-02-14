@@ -16,11 +16,18 @@ import { CraftingHandler } from './handlers/CraftingHandler.js';
 import { MemoryManager } from './MemoryManager.js';
 import { NarrativeGenerator } from './narrative/NarrativeGenerator.js';
 
-// ===== NOUVEAUX SYSTÈMES AVANCÉS =====
+// ===== NOUVEAUX SYSTÈMES AVANCÉS v2.0 =====
 import EventGenerator from './EventGenerator.js';
 import KarmaManager from './KarmaManager.js';
 import NPCPersonalitySystem from './NPCPersonalitySystem.js';
 import DialogueExpansion from './DialogueExpansion.js';
+
+// ===== SYSTÈMES ULTRA-AVANCÉS v3.0 =====
+import QuestGenerator from './QuestGenerator.js';
+import NPCRelationshipGraph from './NPCRelationshipGraph.js';
+import EconomyManager from './EconomyManager.js';
+import LocationGenerator from './LocationGenerator.js';
+import ActionComboSystem from './ActionComboSystem.js';
 
 // ═══════════════════════════════════════════════════════════════════════
 // 🎯 GAME MASTER ENGINE - Classe principale
@@ -33,9 +40,19 @@ export class GMEngine {
       llmConfidenceThreshold: 0.6,
       enableMemory: true,
       enableConsequences: true,
-      enableEvents: true,        // Nouveaux : événements dynamiques
-      enableKarma: true,          // Nouveau : système de karma
-      enableNPCPersonality: true, // Nouveau : IA des PNJ
+      
+      // v2.0
+      enableEvents: true,
+      enableKarma: true,
+      enableNPCPersonality: true,
+      
+      // v3.0
+      enableQuests: true,
+      enableRelationships: true,
+      enableEconomy: true,
+      enableLocations: true,
+      enableCombos: true,
+      
       ...config
     };
 
@@ -44,11 +61,18 @@ export class GMEngine {
     this.memoryManager = new MemoryManager();
     this.narrativeGenerator = new NarrativeGenerator();
 
-    // ===== NOUVEAUX SYSTÈMES AVANCÉS =====
+    // ===== SYSTÈMES AVANCÉS v2.0 =====
     this.eventGenerator = new EventGenerator();
     this.karmaManager = new KarmaManager();
     this.npcPersonalitySystem = new NPCPersonalitySystem();
     this.dialogueExpansion = new DialogueExpansion();
+    
+    // ===== SYSTÈMES ULTRA-AVANCÉS v3.0 =====
+    this.questGenerator = new QuestGenerator();
+    this.npcRelationshipGraph = new NPCRelationshipGraph();
+    this.economyManager = new EconomyManager();
+    this.locationGenerator = new LocationGenerator();
+    this.actionComboSystem = new ActionComboSystem();
 
     // Handlers spécialisés
     this.handlers = {
@@ -294,12 +318,19 @@ export class GMEngine {
       ruleBasedPercentage: `${ruleBasedPercentage}%`,
       llmPercentage: `${llmPercentage}%`,
       averageResponseTime: `${this.stats.averageResponseTime.toFixed(0)}ms`,
-      estimatedCostSavings: this.stats.ruleBasedActions * 0.002, // $0.002 par appel LLM évité
+      estimatedCostSavings: this.stats.ruleBasedActions * 0.002,
       
-      // Nouvelles stats
+      // Stats v2.0
       karmaReport: this.config.enableKarma ? this.karmaManager.getFullReport() : null,
       activeEvents: this.config.enableEvents ? this.eventGenerator.activeWorldEvents : [],
-      npcCount: this.config.enableNPCPersonality ? this.npcPersonalitySystem.npcs.size : 0
+      npcCount: this.config.enableNPCPersonality ? this.npcPersonalitySystem.npcs.size : 0,
+      
+      // Stats v3.0
+      activeQuests: this.config.enableQuests ? this.questGenerator.activeQuests.length : 0,
+      completedQuests: this.config.enableQuests ? this.questGenerator.completedQuests.length : 0,
+      relationshipsCount: this.config.enableRelationships ? this.npcRelationshipGraph.relationships.size : 0,
+      marketsCount: this.config.enableEconomy ? this.economyManager.markets.size : 0,
+      comboMultiplier: this.config.enableCombos ? this.actionComboSystem.getCurrentMultiplier() : 1.0
     };
   }
 
@@ -353,6 +384,142 @@ export class GMEngine {
     return this.dialogueExpansion.getRumor(type);
   }
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // 🚀 MÉTHODES v3.0 - SYSTÈMES ULTRA-AVANCÉS
+  // ═══════════════════════════════════════════════════════════════════════
+
+  // ===== QUESTS =====
+  generateQuest(context = {}) {
+    if (!this.config.enableQuests) return null;
+    return this.questGenerator.generateQuest(context);
+  }
+
+  generateQuestChain(context, chainLength = 3) {
+    if (!this.config.enableQuests) return null;
+    return this.questGenerator.generateQuestChain(context, chainLength);
+  }
+
+  updateQuestProgress(questId, progress) {
+    if (!this.config.enableQuests) return null;
+    return this.questGenerator.updateQuestProgress(questId, progress);
+  }
+
+  completeQuest(questId) {
+    if (!this.config.enableQuests) return null;
+    return this.questGenerator.completeQuest(questId);
+  }
+
+  failQuest(questId, reason) {
+    if (!this.config.enableQuests) return null;
+    return this.questGenerator.failQuest(questId, reason);
+  }
+
+  // ===== RELATIONSHIPS =====
+  addNPCRelationship(npc1Id, npc2Id, type, category) {
+    if (!this.config.enableRelationships) return false;
+    return this.npcRelationshipGraph.addRelationship(npc1Id, npc2Id, type, category);
+  }
+
+  getNPCRelationship(npc1Id, npc2Id) {
+    if (!this.config.enableRelationships) return null;
+    return this.npcRelationshipGraph.getRelationship(npc1Id, npc2Id);
+  }
+
+  modifyNPCRelationship(npc1Id, npc2Id, delta, reason = '') {
+    if (!this.config.enableRelationships) return false;
+    return this.npcRelationshipGraph.modifyRelationshipStrength(npc1Id, npc2Id, delta, reason);
+  }
+
+  generateNPCFamily(npcIds, familyName) {
+    if (!this.config.enableRelationships) return false;
+    return this.npcRelationshipGraph.generateFamily(npcIds, familyName);
+  }
+
+  findCommonFriends(npc1Id, npc2Id) {
+    if (!this.config.enableRelationships) return [];
+    return this.npcRelationshipGraph.findCommonFriends(npc1Id, npc2Id);
+  }
+
+  predictNPCReaction(npcId, targetNpcId, playerActionType) {
+    if (!this.config.enableRelationships) return 'neutral';
+    return this.npcRelationshipGraph.predictReaction(npcId, targetNpcId, playerActionType);
+  }
+
+  // ===== ECONOMY =====
+  createMarket(marketId, config = {}) {
+    if (!this.config.enableEconomy) return null;
+    return this.economyManager.createMarket(marketId, config);
+  }
+
+  setItemBasePrice(itemId, price, category = 'materials') {
+    if (!this.config.enableEconomy) return;
+    this.economyManager.setBasePrice(itemId, price, category);
+  }
+
+  initializeMarketItem(marketId, itemId, quantity = 100, demand = 50) {
+    if (!this.config.enableEconomy) return false;
+    return this.economyManager.initializeMarketItem(marketId, itemId, quantity, demand);
+  }
+
+  buyFromMarket(marketId, itemId, quantity = 1) {
+    if (!this.config.enableEconomy) return null;
+    return this.economyManager.buyItem(marketId, itemId, quantity);
+  }
+
+  sellToMarket(marketId, itemId, quantity = 1) {
+    if (!this.config.enableEconomy) return null;
+    return this.economyManager.sellItem(marketId, itemId, quantity);
+  }
+
+  createEconomicEvent(type, config = {}) {
+    if (!this.config.enableEconomy) return null;
+    return this.economyManager.createEconomicEvent(type, config);
+  }
+
+  updateMarketPrices() {
+    if (!this.config.enableEconomy) return;
+    this.economyManager.updateAllPrices();
+  }
+
+  findBestMarket(itemId, action = 'buy') {
+    if (!this.config.enableEconomy) return null;
+    return action === 'buy' 
+      ? this.economyManager.findBestMarketToBuy(itemId)
+      : this.economyManager.findBestMarketToSell(itemId);
+  }
+
+  findArbitrageOpportunities(itemId) {
+    if (!this.config.enableEconomy) return [];
+    return this.economyManager.findArbitrageOpportunities(itemId);
+  }
+
+  // ===== LOCATIONS =====
+  generateLocationDescription(type, context = {}) {
+    if (!this.config.enableLocations) return 'Un lieu inconnu.';
+    return this.locationGenerator.generateLocation(type, context);
+  }
+
+  // ===== COMBOS =====
+  recordPlayerAction(actionType, timestamp = Date.now()) {
+    if (!this.config.enableCombos) return [];
+    return this.actionComboSystem.recordAction(actionType, timestamp);
+  }
+
+  getComboMultiplier() {
+    if (!this.config.enableCombos) return 1.0;
+    return this.actionComboSystem.getCurrentMultiplier();
+  }
+
+  applyComboBonus(baseValue) {
+    if (!this.config.enableCombos) return baseValue;
+    return this.actionComboSystem.applyComboBonus(baseValue);
+  }
+
+  resetCombo() {
+    if (!this.config.enableCombos) return;
+    this.actionComboSystem.resetCombo();
+  }
+
   reset() {
     this.stats = {
       totalActions: 0,
@@ -362,10 +529,15 @@ export class GMEngine {
     };
     this.memoryManager.clear();
     
-    // Réinitialiser les nouveaux systèmes
+    // Réinitialiser v2.0
     if (this.config.enableEvents) this.eventGenerator.reset();
     if (this.config.enableKarma) this.karmaManager.reset();
     if (this.config.enableNPCPersonality) this.npcPersonalitySystem.reset();
+    
+    // Réinitialiser v3.0
+    if (this.config.enableQuests) this.questGenerator.reset();
+    if (this.config.enableRelationships) this.npcRelationshipGraph.reset();
+    if (this.config.enableEconomy) this.economyManager.reset();
   }
 }
 
