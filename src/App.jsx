@@ -168,8 +168,10 @@ export default function App() {
         if (error) console.error("addMessage error:", error);
     };
 
+    const isFetchingRef = useRef(false);
     const fetchData = React.useCallback(async () => {
-        if (!session?.id) return;
+        if (!session?.id || isFetchingRef.current) return;
+        isFetchingRef.current = true;
         try {
             // Fetch initial weather
             const { data: wData } = await supabase.from('world_state').select('value').eq('key', `weather_${session.id}`).maybeSingle();
@@ -201,21 +203,27 @@ export default function App() {
             setPlayers(pData || []);
             const pc = pData?.find(p => p.user_id === profile?.id);
             if (pc) {
-                console.log("[fetchData] Found current player data:", pc);
-                console.log("[fetchData] Abilities:", pc.abilities, "Spells:", pc.spells);
-                setCharacter(pc);
+                // Only update if data actually changed to prevent render loops
+                const hasChanged = JSON.stringify(pc) !== JSON.stringify(character);
+                if (hasChanged) {
+                    console.log("[fetchData] Player data changed, updating state.");
+                    setCharacter(pc);
+                }
             }
         } catch (err) {
             console.error("Fetch error:", err);
+        } finally {
+            isFetchingRef.current = false;
         }
-    }, [session?.id, profile?.id, setWeather, setSession, setAdventureStarted, setMessages, setSceneImage, setPlayers, setCharacter]);
+    }, [session?.id, profile?.id, character, setWeather, setSession, setAdventureStarted, setMessages, setSceneImage, setPlayers, setCharacter]);
 
     // Re-fetch everything when adventure officially starts
     useEffect(() => {
         if (adventureStarted) {
+            console.log("[App] Adventure started, performing initial fetch...");
             fetchData();
         }
-    }, [adventureStarted, fetchData]);
+    }, [adventureStarted]); // Run only when starting
 
     // --- PLAYER STATE POLLING FALLBACK ---
     useEffect(() => {
@@ -884,8 +892,9 @@ export default function App() {
         setLoading(true);
         try {
             const randomData = generateRandomCharacter(session.id, profile.id);
+            const randomCharFields = mapCharacterDataToDb(randomData);
             const finalChar = {
-                ...randomData,
+                ...randomCharFields,
                 id: character.id,
                 is_ready: true
             };
@@ -1099,10 +1108,11 @@ export default function App() {
             const randomData = generateRandomCharacter(sessionData.id, profile.id);
 
             // 4. Finalize Character
+            const randomCharFields = mapCharacterDataToDb(randomData);
             const finalChar = {
-                ...randomData,
+                ...randomCharFields,
                 id: playerData.id,
-                is_ready: true // Ensure ready
+                is_ready: true
             };
 
             const { data: charData, error: charError } = await supabase
@@ -1256,6 +1266,39 @@ export default function App() {
         }
     };
 
+    // Helper to filter character data for Supabase 'players' table
+    const mapCharacterDataToDb = (charData) => {
+        return {
+            name: charData.name,
+            class: charData.class,
+            hp: charData.hp,
+            max_hp: charData.max_hp || charData.maxHp,
+            inventory: charData.inventory || [],
+            stats: charData.stats || {},
+            abilities: charData.abilities || [],
+            spells: charData.spells || [],
+            portrait_url: charData.portrait_url,
+            resource: charData.resource,
+            max_resource: charData.max_resource,
+            level: charData.level || 1,
+            xp: charData.xp || 0,
+            gold: charData.gold || 100,
+            backstory: charData.backstory,
+            backstory_gm_context: charData.backstory_gm_context || '',
+            starting_reputation: charData.starting_reputation || {},
+            visited_npcs: charData.visited_npcs || [],
+            faction_ties: charData.faction_ties || [],
+            discovered_secrets: charData.discovered_secrets || [],
+            discovered_locations: charData.discovered_locations || [],
+            active_quests: charData.active_quests || [],
+            important_events: charData.important_events || [],
+            is_ready: charData.is_ready ?? false,
+            mechanic: charData.mechanic || '',
+            description: charData.description || '',
+            life_path: charData.life_path || {}
+        };
+    };
+
     const handleCharacterCreate = async (charData) => {
         setLoading(true);
         try {
@@ -1275,37 +1318,16 @@ export default function App() {
                 console.log("Applying catch-up bonuses:", { bonusXp, bonusGold });
             }
 
+            const charFields = mapCharacterDataToDb(charData);
             const finalChar = {
-                name: charData.name,
+                ...charFields,
                 class: charData.subclass ? `${charData.class} (${charData.subclass})` : charData.class,
-                hp: charData.hp,
-                max_hp: charData.maxHp,
-                inventory: charData.inventory || [],
-                stats: { ...charData.stats, mechanic: charData.mechanic },
-                abilities: charData.abilities || [],
-                spells: charData.spells || [],
-                portrait_url: charData.portrait_url,
-                resource: charData.resource,
-                max_resource: charData.max_resource,
-                level: 1,
                 xp: (charData.xp || 0) + bonusXp,
                 gold: (charData.gold || 100) + bonusGold,
-                backstory: charData.backstory,
-                backstory_gm_context: charData.backstory_gm_context || '',
-                starting_reputation: charData.starting_reputation || {},
-                visited_npcs: charData.visited_npcs || [],
-                faction_ties: charData.faction_ties || [],
-                discovered_secrets: charData.discovered_secrets || [],
-                discovered_locations: charData.discovered_locations || [],
-                active_quests: charData.active_quests || [],
-                important_events: charData.important_events || [],
                 session_id: session.id,
                 user_id: profile.id,
-                is_ready: false
+                is_ready: true // User just clicked "Create"
             };
-
-            console.log("[CharacterCreate] Final character object to be saved:", finalChar);
-            console.log("[CharacterCreate] Abilities:", finalChar.abilities, "Spells:", finalChar.spells);
 
             const { data, error } = await supabase
                 .from('players')
@@ -1416,6 +1438,7 @@ export default function App() {
         if (existingIntro && !force) {
             console.log("GM intro already exists, skipping START_ADVENTURE call");
             setAdventureStarted(true);
+            STARTING_LOCKS.delete(activeSession.id);
             return;
         }
 
@@ -1440,7 +1463,6 @@ export default function App() {
             const hasMarker = messages.some(m => m.content && m.content.includes("START_ADVENTURE_TRIGGERED"));
             if (!hasMarker) {
                 await supabase.from('messages').insert({
-                    id: activeSession.id,
                     session_id: activeSession.id,
                     role: 'system',
                     content: "(MEMOIRE:SYSTEM) START_ADVENTURE_TRIGGERED"
@@ -1489,7 +1511,7 @@ export default function App() {
         } catch (e) {
             console.error("Start Adventure Error:", e);
             // Unlock on error to allow retry
-            STARTING_LOCKS.delete(session.id);
+            STARTING_LOCKS.delete(activeSession.id);
             if (!force) alert("Erreur lors du lancement. Le Maître du Jeu est peut-être indisponible.");
         } finally {
             setLoading(false);

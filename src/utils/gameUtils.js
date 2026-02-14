@@ -50,27 +50,32 @@ export const generateRandomCharacter = (sessionId, userId) => {
     const randomSubclass = classData.subclasses ? pick(classData.subclasses) : null;
 
     // 3. Random Lifepath Choices (12 subcategories)
+    const loc = pick(BIRTH_LOCATIONS);
+    const status = pick(SOCIAL_STATUSES);
+    const omen = pick(OMENS);
+    const family = pick(FAMILIES);
+    const education = pick(EDUCATIONS);
+    const trauma = pick(TRAUMAS);
+    const training = pick(TRAININGS);
+    const exploit = pick(EXPLOITS);
+    const encounter = pick(ENCOUNTERS);
+    const profession = pick(PROFESSIONS);
+    const motivation = pick(MOTIVATIONS);
+    const connection = pick(CONNECTIONS);
+
     const lifepathSelection = {
-        birth: {
-            location: pick(BIRTH_LOCATIONS),
-            status: pick(SOCIAL_STATUSES),
-            omen: pick(OMENS)
-        },
-        childhood: {
-            family: pick(FAMILIES),
-            education: pick(EDUCATIONS),
-            trauma: pick(TRAUMAS)
-        },
-        adolescence: {
-            training: pick(TRAININGS),
-            exploit: pick(EXPLOITS),
-            encounter: pick(ENCOUNTERS)
-        },
-        youngAdult: {
-            profession: pick(PROFESSIONS),
-            motivation: pick(MOTIVATIONS),
-            connection: pick(CONNECTIONS)
-        }
+        location: loc,
+        status: status,
+        omen: omen,
+        family: family,
+        education: education,
+        trauma: trauma,
+        training: training,
+        exploit: exploit,
+        encounter: encounter,
+        profession: profession,
+        motivation: motivation,
+        connection: connection
     };
 
     // 4. Accumulate Lifepath Effects
@@ -86,38 +91,60 @@ export const generateRandomCharacter = (sessionId, userId) => {
         cha: roll4d6()
     };
 
-    // 6. Apply Lifepath Bonuses
+    // 6. Apply Lifepath Bonuses (Mapping long keys to short keys)
     const finalStats = {
         str: baseStats.str + (lifepathEffects.final_stats.strength || 0),
         dex: baseStats.dex + (lifepathEffects.final_stats.dexterity || 0),
         con: baseStats.con + (lifepathEffects.final_stats.constitution || 0),
         int: baseStats.int + (lifepathEffects.final_stats.intelligence || 0),
         wis: baseStats.wis + (lifepathEffects.final_stats.wisdom || 0),
-        cha: baseStats.cha + (lifepathEffects.final_stats.charisma || 0)
+        cha: baseStats.cha + (lifepathEffects.final_stats.charisma || 0),
+        per: lifepathEffects.final_stats.perception || 0,
+        wil: lifepathEffects.final_stats.willpower || 0
     };
 
     // 7. Random Abilities (3 from class)
     const availableAbilities = classData.initial_ability_options || [];
     const chosenAbilities = [];
-    const abilityCount = Math.min(3, availableAbilities.length);
-    const shuffled = [...availableAbilities].sort(() => Math.random() - 0.5);
+    const shuffledAbilities = [...availableAbilities].sort(() => Math.random() - 0.5);
+    const abilityCount = Math.min(3, shuffledAbilities.length);
     for (let i = 0; i < abilityCount; i++) {
-        chosenAbilities.push(shuffled[i]);
+        chosenAbilities.push(shuffledAbilities[i]);
     }
 
-    // 8. Random Equipment (first equipment pack)
-    const equipment = classData.equipment_packs ? classData.equipment_packs[0] || [] : [];
+    // 8. Random Equipment (Pick a random starting equipment option and RESOLVE items)
+    const equipmentOption = classData.starting_equipment_options ? pick(classData.starting_equipment_options) : null;
+    const rawEquipment = equipmentOption ? equipmentOption.items : [];
+
+    // Resolve equipment items from catalog to get full stats/desc
+    const equipment = rawEquipment.map(stub => {
+        const fullItem = ITEMS_BY_ID[stub.itemId];
+        if (fullItem) {
+            return { ...fullItem, quantity: stub.quantity || 1, equipped: true }; // Auto-equip starting gear
+        }
+        return { ...stub, equipped: true }; // Fallback to stub if not in catalog
+    });
 
     // 9. Resolve Lifepath Items
     const lifepathItems = resolveItems(lifepathEffects.items);
 
     // 10. Random Name
-    const names = ['Aragorn', 'Legolas', 'Gimli', 'Gandalf', 'Frodo', 'Sam', 'Boromir', 'Faramir'];
-    const randomName = `${pick(names)}_${Math.floor(Math.random() * 1000)}`;
+    const names = ['Aragorn', 'Legolas', 'Gimli', 'Gandalf', 'Frodo', 'Sam', 'Boromir', 'Faramir', 'Eowyn', 'Arwen', 'Galadriel'];
+    const randomName = `${pick(names)}_${Math.floor(Math.random() * 900) + 100}`;
 
     // 11. Calculate HP
     const conMod = Math.floor((finalStats.con - 10) / 2);
-    const maxHp = (classData.hitDie || 8) + 10 + (conMod * 2);
+    const hpRoll = classData.hitDie || 8;
+    const maxHp = hpRoll + 10 + (conMod * 2);
+
+    // 12. Sum Gold from Lifepath Choices
+    let totalGold = 0;
+    Object.values(lifepathSelection).forEach(choice => {
+        if (choice?.effects?.gold) {
+            totalGold += choice.effects.gold;
+        }
+    });
+    if (totalGold === 0) totalGold = 100 + (Math.floor(Math.random() * 50)); // Random starting gold if none from lifepath
 
     return {
         session_id: sessionId,
@@ -125,7 +152,7 @@ export const generateRandomCharacter = (sessionId, userId) => {
         name: randomName,
         class: `${randomClass} (${randomSubclass?.label || 'Voie Standard'})`,
         stats: finalStats,
-        gold: Math.floor(100 * (lifepathSelection.birth.status.effects.gold_modifier || 1.0)),
+        gold: totalGold,
         abilities: chosenAbilities,
         hp: maxHp,
         max_hp: maxHp,
@@ -202,9 +229,27 @@ export const calculateTotalStats = (char, inventoryOverride = null) => {
     const baseStats = { ...char.stats };
     const inv = inventoryOverride || char.inventory || [];
 
+    const keyMap = {
+        strength: 'str',
+        dexterity: 'dex',
+        constitution: 'con',
+        intelligence: 'int',
+        wisdom: 'wis',
+        charisma: 'cha',
+        perception: 'per',
+        willpower: 'wil'
+    };
+
     inv.filter(i => i.equipped && i.stats).forEach(item => {
         Object.entries(item.stats).forEach(([k, v]) => {
-            if (baseStats[k] !== undefined) baseStats[k] += v;
+            // Apply bonus to short key if it exists in map, or use the key directly
+            const targetKey = keyMap[k] || k;
+            if (baseStats[targetKey] !== undefined) {
+                baseStats[targetKey] += v;
+            } else if (keyMap[k] && baseStats[keyMap[k]] !== undefined) {
+                // Redundant safety check
+                baseStats[keyMap[k]] += v;
+            }
         });
     });
     return baseStats;
@@ -227,10 +272,11 @@ export const calculateMaxResource = (className, level, stats) => {
 export const resolvePlayerAbilities = (player) => {
     if (!player?.class) return [];
 
-    const fullClassName = player.class.toLowerCase();
-    const actualKey = Object.keys(CLASSES).find(key =>
-        fullClassName.includes(key.toLowerCase())
-    );
+    const fullClassName = player.class.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const actualKey = Object.keys(CLASSES).find(key => {
+        const normalizedKey = key.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        return fullClassName.includes(normalizedKey);
+    });
 
     const classData = actualKey ? CLASSES[actualKey] : null;
     if (!classData) return [];

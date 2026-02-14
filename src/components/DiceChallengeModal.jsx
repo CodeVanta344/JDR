@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
 import { DieVisual } from './DieVisual';
+import { DiceOverlay } from './Dice3D';
 
 /**
  * DiceChallengeModal
@@ -110,103 +110,99 @@ export const DiceChallengeModal = ({
         <div className="modal-overlay" style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.85)',
-            backdropFilter: 'blur(10px)',
+            background: 'rgba(0,0,0,0.5)', // Pure background dimming only
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 10000,
             animation: 'fadeIn 0.3s ease'
         }}>
-            <div className="glass-panel" style={{
-                width: 'min(90vw, 600px)',
-                padding: '2rem',
-                textAlign: 'center',
-                border: '1px solid var(--gold-primary)',
-                boxShadow: '0 0 50px rgba(229, 192, 109, 0.2)',
-                display: 'flex',
-                flexDirection: 'column',
-                maxHeight: '90vh'
-            }}>
-                <h2 style={{ color: 'var(--gold-primary)', marginBottom: '0.5rem', fontFamily: 'var(--font-display)', letterSpacing: '2px' }}>
-                    DÉFI DE {stat?.toUpperCase() || 'COMPÉTENCE'}
-                </h2>
-                <p style={{ color: 'var(--aether-blue)', fontStyle: 'italic', marginBottom: '2rem' }}>
-                    "{label}"
-                </p>
+            {/* Multi-Dice Physics Overlay */}
+            {isRolling || rolled ? (
+                <DiceOverlay
+                    diceRolls={rolls}
+                    onAllComplete={() => {
+                        // Logic inside handleDieComplete was simplified
+                        // Overlay takes care of visual completion
+                    }}
+                />
+            ) : null}
 
-                <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: '2rem', fontSize: '0.9rem' }}>
-                    <div style={{ color: 'var(--gold-light)' }}>
-                        Cible : <span style={{ color: '#fff', fontWeight: 'bold' }}>{dc}</span>
-                    </div>
-                    <div style={{ color: 'var(--gold-light)' }}>
-                        Formule : <span style={{ color: 'var(--gold-primary)', fontWeight: 'bold' }}>{dice.toUpperCase()}</span>
-                    </div>
-                    <div style={{ color: 'var(--gold-light)' }}>
-                        Modificateur : <span style={{ color: '#fff', fontWeight: 'bold' }}>{modifier >= 0 ? '+' : ''}{modifier}</span>
+            <div className="dice-interface-overlay" style={{
+                position: 'relative',
+                width: 'min(90vw, 600px)',
+                textAlign: 'center',
+                zIndex: 10001,
+                pointerEvents: 'none'
+            }}>
+                <div style={{ pointerEvents: 'auto' }}>
+                    <h2 style={{
+                        color: 'var(--gold-primary)',
+                        marginBottom: '0.5rem',
+                        fontFamily: 'var(--font-display)',
+                        letterSpacing: '3px',
+                        textShadow: '0 0 20px rgba(0,0,0,0.8)'
+                    }}>
+                        DÉFI DE {stat?.toUpperCase() || 'COMPÉTENCE'}
+                    </h2>
+                    <p style={{ color: 'var(--aether-blue)', fontStyle: 'italic', marginBottom: '2rem', textShadow: '0 0 10px #000' }}>
+                        "{label}"
+                    </p>
+
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '3rem', marginBottom: '2rem', fontSize: '1rem', textShadow: '0 2px 4px #000' }}>
+                        <div style={{ color: 'var(--gold-light)' }}>
+                            Cible : <span style={{ color: '#fff', fontWeight: 'bold' }}>{dc}</span>
+                        </div>
+                        <div style={{ color: 'var(--gold-light)' }}>
+                            Formule : <span style={{ color: 'var(--gold-primary)', fontWeight: 'bold' }}>{dieType.toUpperCase()}</span>
+                        </div>
+                        <div style={{ color: 'var(--gold-light)' }}>
+                            Modificateur : <span style={{ color: '#fff', fontWeight: 'bold' }}>{modifier >= 0 ? '+' : ''}{modifier}</span>
+                        </div>
                     </div>
                 </div>
 
-                <div style={{
-                    flex: 1,
-                    overflowY: 'auto',
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '2rem',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '1rem',
-                    minHeight: '200px'
-                }}>
-                    {!isRolling && !rolled ? (
+                <div style={{ minHeight: '30vh', pointerEvents: 'none' }} />
+
+                <div style={{ pointerEvents: 'auto' }}>
+                    {!isRolling && !rolled && (
                         <button
                             onClick={handleRoll}
                             className="btn-action"
-                            style={{ padding: '1rem 3rem', fontSize: '1.2rem' }}
+                            style={{ padding: '1.2rem 4rem', fontSize: '1.4rem', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
                         >
                             LANCER LES DÉS
                         </button>
-                    ) : (
-                        rolls.map((die, idx) => (
-                            <DieVisual
-                                key={idx}
-                                type={die.type}
-                                value={die.value}
-                                onComplete={() => handleDieComplete(idx)}
-                            />
-                        ))
+                    )}
+
+                    {showOutcome && (
+                        <div style={{
+                            animation: 'fadeInUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                            paddingTop: '1.5rem'
+                        }}>
+                            <h1 style={{
+                                color: getOutcome().color,
+                                fontFamily: 'var(--font-display)',
+                                fontSize: '3.5rem',
+                                textShadow: `0 0 30px ${getOutcome().color}, 0 0 10px #000`,
+                                margin: '0.5rem 0'
+                            }}>
+                                {getOutcome().label}
+                            </h1>
+                            <p style={{ color: '#fff', textShadow: '0 2px 10px #000', fontSize: '1.4rem', marginBottom: '1.5rem' }}>
+                                Résultat : <strong>{totalNatural + modifier}</strong>
+                            </p>
+
+                            <button
+                                onClick={confirmResult}
+                                className="btn-primary"
+                                style={{ width: '100%', padding: '1.2rem', fontSize: '1.1rem' }}
+                            >
+                                CONTINUER LE RÉCIT
+                            </button>
+                        </div>
                     )}
                 </div>
-
-                {showOutcome && (
-                    <div style={{
-                        marginTop: '2rem',
-                        animation: 'fadeInUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                        borderTop: '1px solid rgba(229, 192, 109, 0.2)',
-                        paddingTop: '1.5rem'
-                    }}>
-                        <h1 style={{
-                            color: getOutcome().color,
-                            fontFamily: 'var(--font-display)',
-                            fontSize: '2.5rem',
-                            textShadow: `0 0 20px ${getOutcome().color}44`,
-                            margin: '0.5rem 0'
-                        }}>
-                            {getOutcome().label}
-                        </h1>
-                        <p style={{ color: '#fff', opacity: 0.8, fontSize: '1.2rem' }}>
-                            {rolls.map(r => r.value).join(' + ')} {modifier !== 0 && `${modifier >= 0 ? '+' : ''}${modifier}`} = <strong>{totalNatural + modifier}</strong>
-                        </p>
-
-                        <button
-                            onClick={confirmResult}
-                            className="btn-primary"
-                            style={{ marginTop: '1.5rem', width: '100%', padding: '1rem' }}
-                        >
-                            CONTINUER LE RÉCIT
-                        </button>
-                    </div>
-                )}
             </div>
 
             <style>{`

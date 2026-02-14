@@ -68,9 +68,25 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
     const getStatBonus = (stat) => {
         if (!character.inventory) return 0;
         let bonus = 0;
+
+        const reverseStatMap = {
+            str: 'strength',
+            dex: 'dexterity',
+            con: 'constitution',
+            int: 'intelligence',
+            wis: 'wisdom',
+            cha: 'charisma',
+            per: 'perception',
+            wil: 'willpower'
+        };
+
         character.inventory.forEach(item => {
-            if (item.equipped && item.stats && item.stats[stat]) {
-                bonus += item.stats[stat];
+            if (item.equipped && item.stats) {
+                // Check both short and long keys
+                const val = item.stats[stat] || (reverseStatMap[stat] ? item.stats[reverseStatMap[stat]] : 0);
+                if (typeof val === 'number') {
+                    bonus += val;
+                }
             }
         });
         return bonus;
@@ -108,40 +124,57 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
 
     // Robust Ability Lookup
     const getClassAbilities = () => {
-        if (!character?.class) return [];
-
-        // Try to find the class key within the character.class string
-        // This handles cases like "Zal-Khar (Guerrier)" or "Guerrier (Berserker)"
-        const fullClassName = character.class.toLowerCase();
-        const actualKey = Object.keys(CLASSES).find(key =>
-            fullClassName.includes(key.toLowerCase())
-        );
-
-        const classData = actualKey ? CLASSES[actualKey] : null;
-
-        if (!classData) {
-            console.warn(`[CharacterSheet] No class data found for: "${character.class}"`);
+        if (!character?.class) {
+            console.warn("[CharacterSheet] No character class defined.");
             return [];
         }
 
-        const playerAbilities = [...(character.abilities || []), ...(character.spells || [])];
+        // Try to find the class key within the character.class string
+        // This handles cases like "Zal-Khar (Guerrier)" or "Guerrier (Berserker)" or "rôdeur (voie standard)"
+        const fullClassName = character.class.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const actualKey = Object.keys(CLASSES).find(key => {
+            const normalizedKey = key.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            return fullClassName.includes(normalizedKey);
+        });
+
+        const classData = actualKey ? CLASSES[actualKey] : null;
+
+        const rawAbilities = character.abilities || [];
+        const rawSpells = character.spells || [];
+        const playerAbilitiesList = [...rawAbilities, ...rawSpells].filter(Boolean);
+
+        console.log(`[CharacterSheet] Class: "${character.class}" (Matched: "${actualKey || 'None'}"), Player Abilities:`, playerAbilitiesList);
+
+        if (!classData) {
+            console.warn(`[CharacterSheet] No class data found for: "${character.class}". Using raw player abilities.`);
+            // Fallback: If no class data, just return what the player has as objects
+            return playerAbilitiesList.map(s => (typeof s === 'string' ? { name: s, desc: "Aptitude apprise", level: 1, cost: 0 } : s));
+        }
+
         let baseAbilities = [];
-        if (playerAbilities.length > 0) {
-            baseAbilities = playerAbilities.map(s => {
+        if (playerAbilitiesList.length > 0) {
+            baseAbilities = playerAbilitiesList.map(s => {
                 if (typeof s === 'string') {
                     const fromInitial = (classData.initial_ability_options || []).find(a => a.name === s);
                     const fromUnlockables = (classData.unlockables || []).find(u => u.name === s);
                     return fromInitial || fromUnlockables || { name: s, desc: "Aptitude apprise", level: 1, cost: 0 };
                 }
                 return s;
-            });
+            }).filter(Boolean);
         } else {
+            // Last resort fallback to initial class abilities if character record has NO abilities array
+            console.warn(`[CharacterSheet] Player has NO record of abilities. Falling back to class defaults.`);
             baseAbilities = classData.initial_ability_options || classData.abilities || [];
         }
 
-        const unlocked = (classData.unlockables || []).filter(u => u.level <= (character.level || 1));
-        const all = [...baseAbilities, ...unlocked];
-        return Array.from(new Map(all.map(item => [item.name, item])).values());
+        const currentLevel = character.level || 1;
+        const unlocked = (classData.unlockables || []).filter(u => u && u.level <= currentLevel);
+
+        const all = [...baseAbilities, ...unlocked].filter(i => i && i.name);
+        const uniqueAbilities = Array.from(new Map(all.map(item => [item.name, item])).values());
+
+        console.log(`[CharacterSheet] Final Resolved Abilities for ${character.name}:`, uniqueAbilities);
+        return uniqueAbilities;
     };
 
 
@@ -458,56 +491,93 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                 )}
 
                 {activeTab === 'abilities' && (
-                    <div className="animate-fade-in sheet-list-view">
+                    <div className="animate-fade-in abilities-list-scroll-area">
                         {knownAbilities.length === 0 && (
-                            <div style={{ color: '#ff6b6b', background: 'rgba(50,0,0,0.8)', padding: '10px', border: '1px solid red', fontSize: '0.8rem', marginBottom: '10px' }}>
-                                <strong>DEBUG: Aucune aptitude trouvée.</strong><br />
-                                Classe perso: "{character.class}"<br />
-                                Base Class: "{character.class?.split(' ')[0]}"<br />
-                                CLASSES Loaded: {CLASSES ? Object.keys(CLASSES).length : 'NON'}<br />
-                                Keys: {CLASSES ? Object.keys(CLASSES).join(', ') : ''}
+                            <div className="chat-message system" style={{ margin: '1rem 0' }}>
+                                <div className="msg-author">Système</div>
+                                <div style={{ fontSize: '0.85rem' }}>Aucune aptitude particulière n'a été trouvée pour votre profil actuel.</div>
                             </div>
                         )}
-                        <h4 style={{ fontSize: '0.7rem', color: 'var(--gold-dim)', marginBottom: '1.2rem', textTransform: 'uppercase', letterSpacing: '1.5px' }}>Aptitudes Connues</h4>
-                        <div style={{ display: 'grid', gap: '1rem' }}>
-                            {knownAbilities.map((ability, i) => (
-                                <div key={i} className="ability-card" style={{
-                                    padding: '1.2rem',
-                                    background: 'linear-gradient(135deg, rgba(72, 219, 251, 0.05) 0%, transparent 100%)',
-                                    borderRadius: '8px',
-                                    border: '1px solid rgba(72, 219, 251, 0.1)',
-                                    position: 'relative',
-                                    boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
-                                }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
-                                        <div>
-                                            <div style={{ color: '#48dbfb', fontWeight: '900', fontSize: '0.95rem', letterSpacing: '0.5px' }}>{ability.name.toUpperCase()}</div>
-                                            <div style={{ fontSize: '0.6rem', color: 'rgba(72,219,251,0.6)', marginTop: '2px' }}>NIVEAU REQUIS: {ability.level || 1}</div>
+                        <h4 style={{ fontSize: '0.7rem', color: 'var(--gold-dim)', marginBottom: '1.2rem', textTransform: 'uppercase', letterSpacing: '1.8px', display: 'flex', alignItems: 'center' }}>
+                            <span style={{ marginRight: '8px' }}>✧</span> Aptitudes Connues <span style={{ marginLeft: 'auto', color: 'var(--gold-primary)', opacity: 0.6 }}>{knownAbilities.length}</span>
+                        </h4>
+
+                        <div style={{ display: 'grid', gap: '1.2rem' }}>
+                            {knownAbilities.map((ability, i) => {
+                                return (
+                                    <div key={i} className="ability-card" style={{
+                                        padding: '1.2rem',
+                                        background: 'rgba(255, 255, 255, 0.04)',
+                                        borderRadius: '8px',
+                                        border: '1px solid rgba(212, 175, 55, 0.15)',
+                                        position: 'relative',
+                                        transition: 'all 0.3s ease',
+                                        overflow: 'hidden'
+                                    }}>
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: 0, left: 0, width: '2px', height: '100%',
+                                            background: 'var(--gold-primary)',
+                                            boxShadow: '0 0 10px var(--gold-primary)'
+                                        }} />
+
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '10px' }}>
+                                            <div>
+                                                <div style={{
+                                                    color: 'var(--gold-light)',
+                                                    fontWeight: '800',
+                                                    fontSize: '1rem',
+                                                    letterSpacing: '0.8px',
+                                                    textShadow: '0 0 10px rgba(251, 238, 168, 0.2)'
+                                                }}>
+                                                    {ability.name?.toUpperCase() || "SANS NOM"}
+                                                </div>
+                                                <div style={{
+                                                    fontSize: '0.65rem',
+                                                    color: 'rgba(255,255,255,0.4)',
+                                                    marginTop: '4px',
+                                                    letterSpacing: '0.5px'
+                                                }}>
+                                                    NIVEAU REQUIS: {ability.level || 1}
+                                                </div>
+                                            </div>
+                                            {ability.cost > 0 && (
+                                                <div style={{ fontSize: '0.7rem', color: '#fff', background: 'rgba(0,0,0,0.4)', padding: '2px 8px', borderRadius: '12px', border: '1px solid rgba(72,219,251,0.3)' }}>
+                                                    {ability.cost} RES
+                                                </div>
+                                            )}
                                         </div>
-                                        {ability.cost > 0 && (
-                                            <div style={{ fontSize: '0.7rem', color: '#fff', background: 'rgba(0,0,0,0.4)', padding: '2px 8px', borderRadius: '12px', border: '1px solid rgba(72,219,251,0.3)' }}>
-                                                {ability.cost} RES
+
+                                        {ability.flavor && (
+                                            <div style={{ fontSize: '0.7rem', color: '#888', fontStyle: 'italic', marginBottom: '8px', lineHeight: '1.4' }}>
+                                                "{ability.flavor}"
+                                            </div>
+                                        )}
+
+                                        {ability.desc && (
+                                            <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.8)', marginBottom: '10px', lineHeight: '1.5' }}>
+                                                {ability.desc}
+                                            </div>
+                                        )}
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
+                                            {ability.dice && (
+                                                <span style={{ fontSize: '0.65rem', color: '#fff', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.2)' }}>
+                                                    🎲 DÉS: {ability.dice} {ability.scaling && ` + ${statNames[ability.scaling]?.full || ability.scaling}`}
+                                                </span>
+                                            )}
+                                            {ability.heal && <span style={{ fontSize: '0.65rem', color: '#ff6b6b', background: 'rgba(255,107,107,0.1)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(255,107,107,0.2)' }}>❤️ SOIN</span>}
+                                            {ability.resource && <span style={{ fontSize: '0.65rem', color: '#48dbfb', background: 'rgba(72,219,251,0.1)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(72,219,251,0.2)' }}>⚡ RES: +{ability.resource}</span>}
+                                            {ability.range && <span style={{ fontSize: '0.65rem', color: '#f39c12', background: 'rgba(243,156,18,0.1)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(243,156,18,0.2)' }}>🎯 PORTÉE: {ability.range}m</span>}
+                                        </div>
+
+                                        {ability.cooldown > 0 && (
+                                            <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '8px', textAlign: 'right' }}>
+                                                ⏳ RECHARGE: {ability.cooldown} TOURS
                                             </div>
                                         )}
                                     </div>
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
-                                        {ability.dice && (
-                                            <span style={{ fontSize: '0.65rem', color: '#fff', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.2)' }}>
-                                                🎲 DÉS: {ability.dice} {ability.scaling && ` + ${statNames[ability.scaling]?.full || ability.scaling}`}
-                                            </span>
-                                        )}
-                                        {ability.heal && <span style={{ fontSize: '0.65rem', color: '#ff6b6b', background: 'rgba(255,107,107,0.1)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(255,107,107,0.2)' }}>❤️ SOIN</span>}
-                                        {ability.resource && <span style={{ fontSize: '0.65rem', color: '#48dbfb', background: 'rgba(72,219,251,0.1)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(72,219,251,0.2)' }}>⚡ RES: +{ability.resource}</span>}
-                                        {ability.range && <span style={{ fontSize: '0.65rem', color: '#f39c12', background: 'rgba(243,156,18,0.1)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(243,156,18,0.2)' }}>🎯 PORTÉE: {ability.range}m</span>}
-                                    </div>
-
-                                    {ability.cooldown > 0 && (
-                                        <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '8px', textAlign: 'right' }}>
-                                            ⏳ RECHARGE: {ability.cooldown} TOURS
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 )}

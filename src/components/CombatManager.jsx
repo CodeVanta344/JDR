@@ -3,7 +3,7 @@ import { CLASSES, BESTIARY } from '../lore';
 import { CombatLogger } from '../utils/logger';
 import { supabase } from '../supabaseClient';
 import { DieVisual } from './DieVisual';
-import { DiceRollScene } from './Dice3D';
+import { DiceOverlay } from './Dice3D';
 import {
     rollAttackD100,
     calculateDamageD100,
@@ -75,7 +75,7 @@ const TurnTracker = ({ combatants, currentTurnIndex }) => {
 
 const RemoteActionOverlay = ({ action, onComplete }) => {
     useEffect(() => {
-        const timer = setTimeout(onComplete, 4000); // Slightly longer for ceremony
+        const timer = setTimeout(onComplete, 4500);
         return () => clearTimeout(timer);
     }, [onComplete]);
 
@@ -83,66 +83,72 @@ const RemoteActionOverlay = ({ action, onComplete }) => {
 
     return (
         <div style={{
-            position: 'absolute', inset: 0, zIndex: 2500,
+            position: 'fixed', inset: 0, zIndex: 12000,
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            background: 'radial-gradient(circle, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.9) 100%)',
-            backdropFilter: 'blur(8px)',
-            animation: 'fadeIn 0.5s ease-out'
+            background: 'rgba(0,0,0,0.1)', // Very subtle dimming
+            pointerEvents: 'none'
         }}>
-            <div style={{
-                marginBottom: '40px', fontSize: '2.5rem', fontFamily: 'var(--font-display)',
-                color: 'var(--gold-light)', textShadow: '0 0 20px rgba(212, 175, 55, 0.8)',
-                textAlign: 'center', animation: 'scaleUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-            }}>
-                <div style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.6)', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '10px' }}>Action de l'adversaire</div>
-                {action.attackerName} utilise <br />
-                <span style={{ color: 'white', filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.5))' }}>{action.abilityName.toUpperCase()}</span>
-            </div>
-
-            <div style={{ transform: 'scale(1.5)', marginBottom: '40px' }}>
-                <DieVisual
-                    type="d20"
-                    value={action.roll}
-                    onComplete={() => { }}
-                    isResult={true}
-                />
-            </div>
+            {/* Multi-Dice Physics Overlay */}
+            <DiceOverlay
+                diceRolls={[{ type: 'd100', value: action.roll }]}
+                onAllComplete={() => { }}
+            />
 
             <div style={{
-                marginTop: '20px', textAlign: 'center',
-                background: 'rgba(0,0,0,0.85)', padding: '20px 40px', borderRadius: '15px',
-                border: '2px solid var(--gold-dim)',
-                boxShadow: '0 0 50px rgba(0,0,0,1)',
-                animation: 'slideUpFade 0.5s 0.3s both'
+                position: 'relative',
+                width: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                zIndex: 12001,
+                pointerEvents: 'none'
             }}>
-                <div style={{ fontSize: '2rem', color: 'white', fontWeight: '900' }}>
-                    {action.roll} <span style={{ color: 'var(--gold-primary)', fontSize: '1.2rem' }}>+ {action.modifier}</span> =
-                    <span style={{
-                        marginLeft: '15px',
-                        color: action.success ? '#00ff00' : '#ff4444',
-                        textShadow: action.success ? '0 0 15px rgba(0,255,0,0.6)' : '0 0 15px rgba(255,0,0,0.6)'
-                    }}>
-                        {action.roll + action.modifier}
-                    </span>
+                <div style={{
+                    marginBottom: '40px', fontSize: '2.5rem', fontFamily: 'var(--font-display)',
+                    color: 'var(--gold-light)', textShadow: '0 0 20px rgba(0,0,0,1)',
+                    textAlign: 'center', animation: 'scaleUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                }}>
+                    <div style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.8)', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '10px' }}>Action Ennemie</div>
+                    {action.attackerName} : <span style={{ color: 'white' }}>{action.abilityName.toUpperCase()}</span>
                 </div>
-                <div style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.5)', marginTop: '8px', letterSpacing: '1px' }}>
-                    Seuil de réussite : <span style={{ color: 'white' }}>{action.threshold} AC</span>
-                </div>
-                {action.success && (
-                    <div style={{
-                        marginTop: '15px', fontSize: '1.8rem', color: '#ff4444', fontWeight: '900',
-                        textShadow: '0 0 10px rgba(255,0,0,0.8)',
-                        animation: 'shockwave 0.5s ease-out'
-                    }}>
-                        💥 {action.damage} DÉGÂTS !
+
+                <div style={{ minHeight: '30vh' }} />
+
+                <div style={{
+                    marginTop: '20px', textAlign: 'center',
+                    padding: '30px 50px', borderRadius: '20px',
+                    animation: 'slideUpFade 0.5s 0.8s both',
+                    textShadow: '0 2px 10px #000'
+                }}>
+                    <div style={{ fontSize: '3rem', color: 'white', fontWeight: '900' }}>
+                        {action.roll} <span style={{ color: 'var(--gold-primary)', fontSize: '1.5rem' }}>+ {action.modifier}</span> =
+                        <span style={{
+                            marginLeft: '20px',
+                            color: action.success ? '#00ff00' : '#ff4444',
+                            textShadow: action.success ? '0 0 20px rgba(0,255,0,0.8)' : '0 0 20px rgba(255,0,0,0.8)'
+                        }}>
+                            {action.roll + action.modifier}
+                        </span>
                     </div>
-                )}
+                    <div style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.8)', marginTop: '10px', fontWeight: 'bold' }}>
+                        Cible : <span style={{ color: 'white' }}>{action.threshold} AC</span>
+                    </div>
+                    {action.success && (
+                        <div style={{
+                            marginTop: '20px', fontSize: '2.5rem', color: '#ff4444', fontWeight: '900',
+                            textShadow: '0 0 15px rgba(255,0,0,1)',
+                            animation: 'shockwave 0.5s ease-out'
+                        }}>
+                            💥 -{action.damage} HP !
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
 };
 
-export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeType: 'STANDARD' }, players, currentUserId, initialEnemies, syncedCombatState, onUpdateCombatState, onCombatEnd, onLogAction, onHPChange, onResourceChange, onConsumeItem, onGameOver, onRewards, onVFX, onSFX, sessionId }) => {
+export const CombatManager = ({ arenaConfig = { blocksX: 25, blocksY: 25, shapeType: 'STANDARD' }, players, currentUserId, initialEnemies, syncedCombatState, onUpdateCombatState, onCombatEnd, onLogAction, onHPChange, onResourceChange, onConsumeItem, onGameOver, onRewards, onVFX, onSFX, sessionId }) => {
     // ROBUST USER ID MATCHING - Try multiple methods (MEMOIZED with stable comparison)
     const myPlayer = useMemo(() => {
         if (!players || !currentUserId) return null;
@@ -182,10 +188,10 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
     const [selectedAction, setSelectedAction] = useState(null);
     const [shake, setShake] = useState(false);
     const [flash, setFlash] = useState(false);
-    
+
     // Track if AI has already played this turn to prevent duplicate actions
     const aiTurnExecutedRef = useRef({ turnIndex: -1, actorId: null });
-    
+
     // Track last attack to prevent rapid duplicates
     const lastAttackRef = useRef({ timestamp: 0, actorId: null, targetId: null });
     const [animatingId, setAnimatingId] = useState(null);
@@ -758,7 +764,10 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                 animationFrameRef.current = requestAnimationFrame(animate);
             } else {
                 setMovingUnit(null);
-                if (onComplete) onComplete();
+                // CRITICAL FIX: Delay callback to ensure state update completes
+                if (onComplete) {
+                    setTimeout(onComplete, 50);
+                }
             }
         };
 
@@ -888,8 +897,8 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
 
         // PROTECTION : Empêcher les attaques multiples rapides (< 500ms)
         const now = Date.now();
-        if (freshActor.isEnemy && 
-            lastAttackRef.current.actorId === freshActor.id && 
+        if (freshActor.isEnemy &&
+            lastAttackRef.current.actorId === freshActor.id &&
             lastAttackRef.current.targetId === target.id &&
             now - lastAttackRef.current.timestamp < 500) {
             console.log('[executeAttack] Blocked duplicate attack from', freshActor.name, 'to', target.name);
@@ -1232,15 +1241,15 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
     useEffect(() => {
         if (combatState === 'active' && currentActor && currentActor.isEnemy && !currentActor.hasActed) {
             // PROTECTION: Empêcher l'IA de rejouer si elle a déjà joué ce tour
-            if (aiTurnExecutedRef.current.turnIndex === currentTurnIndex && 
+            if (aiTurnExecutedRef.current.turnIndex === currentTurnIndex &&
                 aiTurnExecutedRef.current.actorId === currentActor.id) {
                 console.log('[AI] Already executed turn for', currentActor.name, 'at turn', currentTurnIndex);
                 return;
             }
-            
+
             // Marquer immédiatement pour éviter les doubles exécutions
             aiTurnExecutedRef.current = { turnIndex: currentTurnIndex, actorId: currentActor.id };
-            
+
             const timer = setTimeout(async () => {
                 const currentCombatants = combatantsRef.current;
                 const freshActor = currentCombatants.find(u => u.id === currentActor.id);
@@ -1322,8 +1331,8 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                         if (moveX !== 0 || moveY !== 0) {
                             const direction = moveX > 0 ? 'right' : moveX < 0 ? 'left' : moveY > 0 ? 'down' : 'up';
                             executeMove(direction);
-                            // Wait for move to sync (reduced delay for smoother combat)
-                            await new Promise(r => setTimeout(r, 350));
+                            // CRITICAL FIX: Wait for FULL animation (500ms) + callback delay (50ms) + state propagation (150ms)
+                            await new Promise(r => setTimeout(r, 700));
                         }
                     }
                 }
@@ -1347,11 +1356,16 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
 
                     if (chosenAction) {
                         executeAttack(bestTarget.unit, chosenAction);
-                        // CRITICAL: Wait for attack animation, then end IA turn
-                        setTimeout(() => finishTurn(), 1500);
+                        // CRITICAL: Wait for attack animation + ensure movingUnit is cleared
+                        setTimeout(() => {
+                            // Double-check movingUnit is cleared before advancing turn
+                            setMovingUnit(null);
+                            setTimeout(() => finishTurn(), 100);
+                        }, 1500);
                     } else {
-                        // Could not attack, finish turn
-                        finishTurn();
+                        // Could not attack, ensure movingUnit cleared before finish
+                        setMovingUnit(null);
+                        setTimeout(() => finishTurn(), 100);
                     }
                 } else {
                     finishTurn();
@@ -1363,13 +1377,13 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
 
     const UnitCard = ({ unit, style = {} }) => {
         const isCurrent = unit.id === currentActor?.id;
-        
+
         // Déterminer si l'unité est ciblable selon le type de sort
         let isTargetable = false;
         if (selectedAction && unit.hp > 0) {
             const isOffensive = !selectedAction.friendly; // Par défaut les sorts sont offensifs
             const isFriendly = selectedAction.friendly === true; // Sorts de soin/buff explicitement marqués
-            
+
             if (isFriendly) {
                 // Sort allié : cibler son propre camp (et potentiellement soi-même)
                 isTargetable = (unit.isEnemy === currentActor?.isEnemy);
@@ -1378,7 +1392,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
                 isTargetable = (unit.isEnemy !== currentActor?.isEnemy) && (unit.id !== currentActor?.id);
             }
         }
-        
+
         const isJumping = animatingId === unit.id;
 
         return (
@@ -1496,49 +1510,68 @@ export const CombatManager = ({ arenaConfig = { blocksX: 10, blocksY: 10, shapeT
     };
 
     const RollOverlay = ({ roll, modifier, tacticalReason, threshold, success, action }) => (
-        <div style={{ position: 'absolute', inset: 0, zIndex: 2000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}>
-            {/* 3D Dice Animation */}
-            <div style={{ marginBottom: '2rem' }}>
-                <DiceRollScene
-                    diceType="d20"
-                    value={roll}
-                    onComplete={() => handleRollComplete({ roll, modifier, threshold, success, targetId: rollOverlay.targetId, action })}
-                />
-            </div>
-            {/* Result Display */}
+        <div style={{
+            position: 'fixed', inset: 0, zIndex: 12000,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(0,0,0,0.2)',
+            pointerEvents: 'none'
+        }}>
+            {/* Full-screen Physics Dice */}
+            <DiceOverlay
+                diceRolls={[{ type: 'd100', value: roll }]}
+                onAllComplete={() => {
+                    // Slight delay to appreciate the result before auto-closing
+                    setTimeout(() => {
+                        handleRollComplete({ roll, modifier, threshold, success, targetId: rollOverlay.targetId, action });
+                    }, 1000);
+                }}
+            />
+
             <div style={{
-                textAlign: 'center',
-                padding: '2rem',
-                background: 'rgba(10, 10, 20, 0.9)',
-                borderRadius: '16px',
-                border: '2px solid var(--gold-dim)',
-                animation: 'slideUpFade 0.5s ease-out'
+                position: 'relative',
+                width: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                zIndex: 12001,
+                pointerEvents: 'none'
             }}>
-                <div style={{ fontSize: '2rem', color: 'white', marginBottom: '1rem', fontWeight: 'bold' }}>
-                    {roll} <span style={{ color: 'var(--gold-primary)', fontSize: '1.5rem' }}>+{modifier}</span>
-                    {tacticalReason && <span style={{ display: 'block', color: 'var(--gold-primary)', fontSize: '1rem', marginTop: '0.5rem' }}>({tacticalReason})</span>}
-                    <span style={{ display: 'block', fontSize: '2.5rem', marginTop: '0.5rem', color: success ? '#00ff00' : '#ff4444', textShadow: success ? '0 0 20px #00ff00' : '0 0 20px #ff4444' }}>
-                        = {roll + modifier}
-                    </span>
-                </div>
-                <div style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.6)' }}>
-                    Seuil de réussite: <span style={{ color: 'white', fontWeight: 'bold' }}>{threshold} AC</span>
-                </div>
-                {success && (
-                    <div style={{
-                        marginTop: '1rem',
-                        fontSize: '2rem',
-                        color: '#ff4444',
-                        fontWeight: '900',
-                        textShadow: '0 0 20px rgba(255,0,0,0.8)',
-                        animation: 'shockwave 0.5s ease-out'
-                    }}>
-                        💥 TOUCHÉ !
+                <div style={{ minHeight: '35vh' }} />
+
+                <div style={{
+                    textAlign: 'center',
+                    padding: '30px 60px',
+                    animation: 'slideUpFade 0.4s ease-out both',
+                    textShadow: '0 2px 10px #000'
+                }}>
+                    <div style={{ fontSize: '3rem', color: 'white', marginBottom: '1rem', fontWeight: 'bold' }}>
+                        {roll} <span style={{ color: 'var(--gold-primary)', fontSize: '1.8rem' }}>+{modifier}</span>
+                        {tacticalReason && <span style={{ display: 'block', color: 'var(--gold-primary)', fontSize: '1.2rem', marginTop: '0.5rem' }}>({tacticalReason})</span>}
+                        <span style={{
+                            display: 'block', fontSize: '4rem', marginTop: '1rem',
+                            color: success ? '#00ff00' : '#ff4444',
+                            textShadow: success ? '0 0 30px #00ff00' : '0 0 30px #ff4444'
+                        }}>
+                            = {roll + modifier}
+                        </span>
                     </div>
-                )}
+                    <div style={{ fontSize: '1.5rem', color: 'rgba(255,255,255,0.9)', fontWeight: 'bold' }}>
+                        Objectif : <span style={{ color: 'white' }}>{threshold} AC</span>
+                    </div>
+                    {success && (
+                        <div style={{
+                            marginTop: '20px', fontSize: '2rem', color: '#ff4444', fontWeight: 'bold',
+                            textShadow: '0 0 15px rgba(255,0,0,0.5)',
+                            animation: 'bounce 1s infinite'
+                        }}>
+                            VALIDE !
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
+
 
     const GameOverScreen = () => (
         <div style={{ position: 'absolute', inset: 0, zIndex: 3000, background: 'radial-gradient(circle at center, #2a0505 0%, #000 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>

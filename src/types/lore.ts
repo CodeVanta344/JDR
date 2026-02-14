@@ -93,12 +93,13 @@ export interface LifeChoice {
   incompatible_with?: string[];                         // IDs options incompatibles
 }
 
-// ===== SÉLECTION LIFEPATH COMPLÈTE (SIMPLIFIÉ - 1 choix par phase) =====
+// ===== SÉLECTION LIFEPATH COMPLÈTE (SIMPLIFIÉ - 1 choix par phase ou structure libre) =====
 export interface LifepathSelection {
-  birth?: LifeChoice;      // Un seul choix pour la phase Naissance
-  childhood?: LifeChoice;  // Un seul choix pour la phase Enfance
-  adolescence?: LifeChoice;// Un seul choix pour la phase Adolescence
-  youngAdult?: LifeChoice; // Un seul choix pour la phase Jeune Adulte
+  birth?: LifeChoice;
+  childhood?: LifeChoice;
+  adolescence?: LifeChoice;
+  youngAdult?: LifeChoice;
+  [key: string]: LifeChoice | undefined; // Allow arbitrary keys for random generation or extensions
 }
 
 // ===== EFFETS CUMULÉS FINAUX =====

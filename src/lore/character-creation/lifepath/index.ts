@@ -15,20 +15,8 @@ import type {
 
 // ===== FONCTION CALCUL CUMULATIF =====
 export function accumulateEffects(selection: LifepathSelection): AccumulatedEffects {
-  // Collecter TOUS les choix (4 phases simplifiées)
-  const allChoices: LifeChoice[] = [];
-
-  // Phase 1 - Naissance
-  if (selection.birth) allChoices.push(selection.birth);
-
-  // Phase 2 - Enfance
-  if (selection.childhood) allChoices.push(selection.childhood);
-
-  // Phase 3 - Adolescence
-  if (selection.adolescence) allChoices.push(selection.adolescence);
-
-  // Phase 4 - Jeune Adulte
-  if (selection.youngAdult) allChoices.push(selection.youngAdult);
+  // Collecter TOUS les choix (supporte structure simple 4-phases OU structure brute 12-catégories)
+  const allChoices: LifeChoice[] = Object.values(selection).filter((v): v is LifeChoice => !!v);
 
   // Initialiser résultat
   const final_stats: Record<StatKey, number> = {
@@ -54,35 +42,43 @@ export function accumulateEffects(selection: LifepathSelection): AccumulatedEffe
     const effects = choice.effects;
 
     // Stats (bonus)
-    for (const [stat, value] of Object.entries(effects.stats)) {
-      if (value) {
+    const statsBonus = effects.stats || {};
+    for (const [stat, value] of Object.entries(statsBonus)) {
+      if (value && typeof value === 'number') {
         final_stats[stat as StatKey] = (final_stats[stat as StatKey] || 0) + value;
       }
     }
 
     // Stats (malus)
-    if (effects.stats_penalty) {
-      for (const [stat, value] of Object.entries(effects.stats_penalty)) {
-        if (value) {
-          final_stats[stat as StatKey] = (final_stats[stat as StatKey] || 0) - value;
-        }
+    const statsPenalty = effects.stats_penalty || {};
+    for (const [stat, value] of Object.entries(statsPenalty)) {
+      if (value && typeof value === 'number') {
+        final_stats[stat as StatKey] = (final_stats[stat as StatKey] || 0) - value;
       }
     }
 
     // Traits mécaniques
-    all_traits.push(...effects.mechanical_traits);
+    if (effects.mechanical_traits) {
+      all_traits.push(...effects.mechanical_traits);
+    }
 
     // Réputation
-    for (const rep of effects.reputation) {
-      const current = reputation_map.get(rep.factionId) || 0;
-      reputation_map.set(rep.factionId, current + rep.delta);
+    if (effects.reputation) {
+      for (const rep of effects.reputation) {
+        const current = reputation_map.get(rep.factionId) || 0;
+        reputation_map.set(rep.factionId, current + rep.delta);
+      }
     }
 
     // Items
-    items.push(...effects.items);
+    if (effects.items) {
+      items.push(...effects.items);
+    }
 
     // Skills
-    skills.push(...effects.skills);
+    if (effects.skills) {
+      skills.push(...effects.skills);
+    }
 
     // Languages
     if (effects.languages) {
@@ -90,7 +86,9 @@ export function accumulateEffects(selection: LifepathSelection): AccumulatedEffe
     }
 
     // Tags
-    choice.tags.forEach(tag => tags.add(tag));
+    if (choice.tags) {
+      choice.tags.forEach(tag => tags.add(tag));
+    }
   }
 
   // Générer résumé narratif

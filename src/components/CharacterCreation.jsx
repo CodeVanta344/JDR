@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { CLASSES, CLASS_CATEGORIES, ENRICHED_BACKSTORIES, getBackstoriesForClass, formatBackstoryForGM, LOCATION_BACKGROUNDS, BIRTH_ORIGINS, CHILDHOOD_EVENTS, ADOLESCENCE_PATHS } from '../lore';
 import { ITEMS_BY_ID } from '../lore/items-catalog';
 import { MagicBackground } from './MagicBackground';
@@ -15,14 +15,14 @@ const rollAttribute = () => {
 // Utility: Convert lifepath itemIds to full item objects
 const resolveLifepathItems = (lifepathItems) => {
     if (!lifepathItems || lifepathItems.length === 0) return [];
-    
+
     return lifepathItems.map(({ itemId, quantity, reason }) => {
         const itemDef = ITEMS_BY_ID[itemId];
         if (!itemDef) {
             console.warn(`[CharacterCreation] Item "${itemId}" not found in catalog`);
             return null;
         }
-        
+
         // Return full item object with quantity
         return {
             ...itemDef,
@@ -86,6 +86,8 @@ export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImag
     const [rollingStat, setRollingStat] = useState(null);
     const [portraitUrl, setPortraitUrl] = useState(null);
     const [classPortraits, setClassPortraits] = useState({});
+    const [isMuted, setIsMuted] = useState(false);
+    const audioRef = useRef(null);
 
     // Callback for real-time lifepath stats
     const handleLifepathUpdate = useCallback((effects) => {
@@ -124,22 +126,34 @@ export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImag
         const audio = new Audio('/Music/Creation de personnages/Wii Sports Theme (Medieval Cover).mp3');
         audio.loop = true;
         audio.volume = 0.3; // Volume à 30%
-        
-        // Start playing
-        const playPromise = audio.play();
-        
-        if (playPromise !== undefined) {
-            playPromise.catch(error => {
-                console.log('[CharacterCreation] Audio autoplay prevented:', error);
-            });
+        audioRef.current = audio;
+
+        if (!isMuted) {
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.log('[CharacterCreation] Audio autoplay prevented:', error);
+                });
+            }
         }
-        
-        // Cleanup: stop music when component unmounts (creation complete)
+
         return () => {
             audio.pause();
             audio.currentTime = 0;
+            audioRef.current = null;
         };
-    }, []); // Run only once on mount
+    }, []);
+
+    // Handle mute state changes
+    useEffect(() => {
+        if (!audioRef.current) return;
+
+        if (isMuted) {
+            audioRef.current.pause();
+        } else {
+            audioRef.current.play().catch(() => { });
+        }
+    }, [isMuted]);
 
     const rollStatPromise = (statKey) => {
         return new Promise((resolve) => {
@@ -317,6 +331,13 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
         <>
             <MagicBackground />
             <div className="creation-container">
+                <button
+                    className="mute-toggle"
+                    onClick={() => setIsMuted(!isMuted)}
+                    title={isMuted ? "Réactiver la musique" : "Couper la musique"}
+                >
+                    {isMuted ? '🔇' : '🔊'}
+                </button>
                 <div className="creation-layout">
                     {/* STEP 1: SÉLECTION DE CLASSE (SPLIT VIEW) */}
                     {step === 1 && (
