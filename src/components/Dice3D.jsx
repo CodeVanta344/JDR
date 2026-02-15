@@ -1,228 +1,254 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { PerspectiveCamera, OrbitControls, Text, Environment, Float, Stars, Sparkles } from '@react-three/drei';
+import { PerspectiveCamera, OrbitControls, Text, Environment, Float, Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
 
-// --- GEOMETRY & FACE DATA ---
-// Helper to create face transforms (pos + rot) would be complex math.
-// For now, we use simplified reliable placements for D6 and D20 (approximated).
+// --- ENHANCED MATERIALS ---
+const createDiceMaterial = (color, metalness = 1.0, roughness = 0.15, clearcoat = 0.8) => {
+    return (
+        <meshPhysicalMaterial
+            color={color}
+            metalness={metalness}
+            roughness={roughness}
+            clearcoat={clearcoat}
+            clearcoatRoughness={0.1}
+            reflectivity={1}
+            envMapIntensity={1.2}
+            side={THREE.DoubleSide}
+        />
+    );
+};
 
-const D6_FACES = [
-    { val: 1, pos: [0, 0, 1.01], rot: [0, 0, 0] },
-    { val: 6, pos: [0, 0, -1.01], rot: [0, Math.PI, 0] },
-    { val: 2, pos: [0, 1.01, 0], rot: [-Math.PI / 2, 0, 0] },
-    { val: 5, pos: [0, -1.01, 0], rot: [Math.PI / 2, 0, 0] },
-    { val: 3, pos: [1.01, 0, 0], rot: [0, Math.PI / 2, 0] },
-    { val: 4, pos: [-1.01, 0, 0], rot: [0, -Math.PI / 2, 0] },
-];
+const GoldMaterial = ({ color = "#FFD700" }) => createDiceMaterial(color, 1.0, 0.1, 1.0);
+const SilverMaterial = ({ color = "#C0C0C0" }) => createDiceMaterial(color, 1.0, 0.15, 0.9);
+const BronzeMaterial = ({ color = "#CD7F32" }) => createDiceMaterial(color, 0.9, 0.2, 0.8);
 
-// Approximate D20 Face Centers/Rotations based on a standard Icosahedron
-// This is a manual mapping for visual plausibility
-const phi = (1 + Math.sqrt(5)) / 2;
-const D20_FACES = [
-    // Top Cap (5 faces)
-    { val: 20, pos: [0, 1, phi], rot: [0.5, 0, 0] }, // Top-most
-    { val: 19, pos: [0, 1, -phi], rot: [-0.5, Math.PI, 0] },
-    // ... Filling all 20 is math-heavy. We'll implement a procedural placement approach if possible,
-    // or just map the most visible ones (Crit/Fail) and scatter the rest for effect.
-    // Actually, let's use a clever trick: Render the Icosahedron and place text at vertex/face centers?
-];
+// --- ENHANCED DICE FACE TEXT ---
+const DiceFaceText = ({ value, position, rotation, color = "#1a1a1a", scale = 1, type = 'd20' }) => {
+    const isCrit = value === 20 || value === '00' || value >= 90;
+    const isFail = value === 1 || value === 0;
+    
+    const textColor = isFail ? "#8B0000" : isCrit ? "#B8860B" : color;
+    const emissive = isFail ? "#ff0000" : isCrit ? "#ffd700" : "#000000";
+    const emissiveIntensity = (isCrit || isFail) ? 0.3 : 0;
 
-// Simplified Text Component
-const DiceFaceText = ({ value, position, rotation, color = "#222", scale = 1 }) => (
-    <Text
-        position={position}
-        rotation={rotation}
-        fontSize={0.5 * scale}
-        color={color}
-        anchorX="center"
-        anchorY="middle"
-        font="https://unpkg.com/@fontsource/cinzel@5.0.8/files/cinzel-latin-700-normal.woff" // Thicker font
-        characters="0123456789"
-    >
-        {value}
-    </Text>
-);
+    return (
+        <group position={position} rotation={rotation}>
+            {/* Main number */}
+            <Text
+                fontSize={0.55 * scale}
+                color={textColor}
+                anchorX="center"
+                anchorY="middle"
+                characters="0123456789"
+                outlineWidth={0.02}
+                outlineColor="#000000"
+            >
+                {value}
+                <meshStandardMaterial
+                    color={textColor}
+                    emissive={emissive}
+                    emissiveIntensity={emissiveIntensity}
+                    metalness={0.5}
+                    roughness={0.3}
+                />
+            </Text>
+            {/* Embossed shadow layer for depth */}
+            <Text
+                position={[0.01, -0.01, -0.02]}
+                fontSize={0.55 * scale}
+                color="#000000"
+                anchorX="center"
+                anchorY="middle"
+                characters="0123456789"
+                opacity={0.4}
+            >
+                {value}
+            </Text>
+        </group>
+    );
+};
 
-// --- MATERIALS ---
-const MetalMaterial = ({ color, flatShading = false }) => (
-    <meshStandardMaterial
-        color={color}
-        roughness={0.3}
-        metalness={1}
-        flatShading={flatShading}
-        envMapIntensity={1.5}
-    />
-);
-
-const GoldInlayMaterial = <meshStandardMaterial color="#FFD700" metalness={1} roughness={0.2} />;
-
-// --- D10 GEOMETRY DATA ---
+// --- ENHANCED D10 GEOMETRY ---
 const createD10Geometry = (radius) => {
-    // Pentagonal Trapezohedron approximation
     const vertices = [];
-    const h = radius * 1.2;
-    const r = radius;
+    const h = radius * 1.15;
+    const r = radius * 0.9;
     const offset = Math.PI / 5;
 
-    // Poles
-    vertices.push(0, h, 0); // 0: Top
-    vertices.push(0, -h, 0); // 1: Bottom
+    vertices.push(0, h, 0);
+    vertices.push(0, -h, 0);
 
-    // Upper ring
     for (let i = 0; i < 5; i++) {
         const phi = (i * 2 * Math.PI) / 5;
-        vertices.push(r * Math.cos(phi), 0.2 * h, r * Math.sin(phi));
+        vertices.push(r * Math.cos(phi), 0.15 * h, r * Math.sin(phi));
     }
-    // Lower ring
     for (let i = 0; i < 5; i++) {
         const phi = (i * 2 * Math.PI) / 5 + offset;
-        vertices.push(r * Math.cos(phi), -0.2 * h, r * Math.sin(phi));
+        vertices.push(r * Math.cos(phi), -0.15 * h, r * Math.sin(phi));
     }
 
     const indices = [
-        // Top cap
         0, 2, 3, 0, 3, 4, 0, 4, 5, 0, 5, 6, 0, 6, 2,
-        // Bottom cap
         1, 8, 7, 1, 9, 8, 1, 10, 9, 1, 11, 10, 1, 7, 11,
-        // Middle band (triangles connecting rings)
         2, 7, 3, 3, 7, 8, 3, 8, 4, 4, 8, 9, 4, 9, 5, 5, 9, 10, 5, 10, 6, 6, 10, 11, 6, 11, 2, 2, 11, 7
     ];
 
-    const geo = new THREE.PolyhedronGeometry(vertices, indices, radius, 0);
+    const geo = new THREE.PolyhedronGeometry(vertices, indices, radius, 1);
     return geo;
 };
 
-// --- DICE MESH COMPONENT ---
+// --- ENHANCED DICE MESH ---
 const DiceMesh = ({ type, color, resultValue, isSettled }) => {
-    const radius = 0.75; // Base radius for all dice
-
+    const radius = 0.85;
     const d10Geometry = useMemo(() => createD10Geometry(radius), [radius]);
 
-    // Geometry selection based on type
     let geometry;
-    let flatShading = false;
-    let textOffset = radius + 0.05;
+    let textOffset = radius + 0.08;
+    let needsFlatShading = false;
 
     switch (type) {
         case 'd4':
-            geometry = <tetrahedronGeometry args={[radius, 0]} />;
-            textOffset = radius * 0.4; // Text sits deeper on D4 surface
+            geometry = <tetrahedronGeometry args={[radius, 1]} />;
+            textOffset = radius * 0.35;
             break;
         case 'd6':
-            // Perfect Cube for D6
-            const boxSize = radius * 1.1;
+            const boxSize = radius * 1.2;
             geometry = <boxGeometry args={[boxSize, boxSize, boxSize]} />;
-            textOffset = (boxSize / 2) + 0.02;
+            textOffset = (boxSize / 2) + 0.05;
             break;
         case 'd8':
-            geometry = <octahedronGeometry args={[radius, 0]} />;
-            textOffset = radius * 0.6;
+            geometry = <octahedronGeometry args={[radius, 1]} />;
+            textOffset = radius * 0.55;
+            needsFlatShading = true;
             break;
         case 'd10':
             geometry = d10Geometry;
-            flatShading = true;
-            textOffset = radius * 0.7;
+            textOffset = radius * 0.65;
+            needsFlatShading = true;
             break;
         case 'd12':
-            geometry = <dodecahedronGeometry args={[radius, 0]} />;
-            textOffset = radius * 0.85;
+            geometry = <dodecahedronGeometry args={[radius, 1]} />;
+            textOffset = radius * 0.8;
             break;
         case 'd20':
-            geometry = <icosahedronGeometry args={[radius, 0]} />;
-            textOffset = radius * 0.9;
+            geometry = <icosahedronGeometry args={[radius, 1]} />;
+            textOffset = radius * 0.85;
             break;
         case 'd100':
         case 'd75':
         case 'd50':
-            // High-poly sphere but with flat shading to show facets
-            geometry = <icosahedronGeometry args={[radius, 2]} />;
-            flatShading = true;
-            textOffset = radius * 0.95;
+            geometry = <icosahedronGeometry args={[radius, 3]} />;
+            needsFlatShading = true;
+            textOffset = radius * 0.92;
             break;
         default:
-            geometry = <icosahedronGeometry args={[radius, 0]} />;
+            geometry = <icosahedronGeometry args={[radius, 1]} />;
     }
 
-    const isCritSuccess = resultValue === 20 || (type === 'd100' && resultValue >= 95) || (type === 'd10' && resultValue === 10);
-    const isCritFail = resultValue === 1 || (type === 'd100' && resultValue <= 5) || (type === 'd10' && resultValue === 0);
+    const isCritSuccess = resultValue === 20 || (type === 'd100' && resultValue >= 95) || (type === 'd10' && resultValue === 10) || (type === 'd10' && resultValue === 0);
+    const isCritFail = resultValue === 1 || (type === 'd100' && resultValue <= 5);
 
-    const resultFace = (
-        <DiceFaceText
-            value={resultValue}
-            position={[0, 0, textOffset]}
-            rotation={[0, 0, 0]}
-            color={isCritFail ? "#ff0000" : (isCritSuccess ? "#FFD700" : "#222")}
-            scale={type === 'd10' ? 0.7 : 0.8}
-        />
-    );
+    // Create proper material for the mesh
+    const diceMaterial = useMemo(() => {
+        return new THREE.MeshPhysicalMaterial({
+            color: color,
+            metalness: 1.0,
+            roughness: 0.15,
+            clearcoat: 0.8,
+            clearcoatRoughness: 0.1,
+            reflectivity: 1,
+            envMapIntensity: 1.2,
+            flatShading: needsFlatShading
+        });
+    }, [color, needsFlatShading]);
 
     return (
-        <mesh castShadow receiveShadow geometry={type === 'd10' ? geometry : undefined}>
-            {type !== 'd10' && geometry}
-            <MetalMaterial color={color} flatShading={flatShading} />
-            {resultFace}
+        <group>
+            <mesh castShadow receiveShadow geometry={type === 'd10' ? geometry : undefined} material={diceMaterial}>
+                {type !== 'd10' && geometry}
+            </mesh>
+            <DiceFaceText
+                value={resultValue}
+                position={[0, 0, textOffset]}
+                rotation={[0, 0, 0]}
+                scale={type === 'd10' ? 0.65 : 0.75}
+                type={type}
+            />
             {isSettled && (
-                <Sparkles
-                    count={isCritSuccess ? 30 : 10}
-                    scale={1.2}
-                    size={isCritSuccess ? 3 : 1.5}
-                    speed={0.5}
-                    color={isCritSuccess ? "#FFD700" : color}
-                />
+                <>
+                    <Sparkles
+                        count={isCritSuccess ? 24 : 10}
+                        scale={1.5}
+                        size={isCritSuccess ? 4 : 2}
+                        speed={isCritSuccess ? 1.5 : 0.8}
+                        color={isCritSuccess ? "#FFD700" : "#ffffff"}
+                    />
+                    {isCritSuccess && (
+                        <pointLight
+                            distance={8}
+                            intensity={2}
+                            color="#FFD700"
+                        />
+                    )}
+                </>
             )}
-        </mesh>
+        </group>
     );
 };
 
-// --- PARTICLE SYSTEMS ---
+// --- ENHANCED PARTICLES ---
 const MagicParticles = ({ isRolling, color }) => {
     return (
         <group>
-            {/* Aetherial dust */}
             <Sparkles
-                count={40}
+                count={12}
                 scale={isRolling ? 3 : 4}
                 size={isRolling ? 2 : 1}
-                speed={isRolling ? 2 : 0.2}
-                opacity={0.5}
+                speed={isRolling ? 1.5 : 0.3}
                 color={color}
+                opacity={isRolling ? 0.8 : 0.2}
             />
         </group>
     );
 };
 
-
-// --- MAIN COMPONENT ---
+// --- MAIN DICE COMPONENT ---
 export const Dice3D = ({ type = 'd20', value, onComplete, autoRoll = true }) => {
-    const meshRef = useRef();
     const groupRef = useRef();
     const [isRolling, setIsRolling] = useState(autoRoll);
-    const [velocity, setVelocity] = useState({ x: 0, y: 0, z: 0 });
-    const [rotationVel, setRotationVel] = useState({ x: 0, y: 0, z: 0 });
+    const velocityRef = useRef({ x: 0, y: 0, z: 0 });
+    const rotationVelRef = useRef({ x: 0, y: 0, z: 0 });
     const rollTimeRef = useRef(0);
 
     const diceColor = useMemo(() => {
-        // Metallic colors inspired by the reference image (Antique Silver/Pewter)
-        return '#bbbbbb';
+        switch (type) {
+            case 'd4':
+            case 'd6':
+                return '#D4AF37';
+            case 'd8':
+            case 'd10':
+                return '#C0C0C0';
+            case 'd12':
+            case 'd20':
+                return '#B87333';
+            default:
+                return '#D4AF37';
+        }
     }, [type]);
-
-    const [collisionCount, setCollisionCount] = useState(0);
 
     useEffect(() => {
         if (autoRoll) {
-            // "Hand thrown" feel: Gentle downward and inward velocity
-            setVelocity({
-                x: (Math.random() - 0.5) * 0.4,
-                y: -0.2 - (Math.random() * 0.3), // Initial downward shove
-                z: -0.3 - (Math.random() * 0.4)  // Throwing "into" the screen
-            });
-            setRotationVel({
-                x: (Math.random() - 0.5) * 20,
-                y: (Math.random() - 0.5) * 20,
-                z: (Math.random() - 0.5) * 20
-            });
-            setCollisionCount(0);
+            velocityRef.current = {
+                x: (Math.random() - 0.5) * 0.5,
+                y: -0.25 - (Math.random() * 0.35),
+                z: -0.4 - (Math.random() * 0.5)
+            };
+            rotationVelRef.current = {
+                x: (Math.random() - 0.5) * 25,
+                y: (Math.random() - 0.5) * 25,
+                z: (Math.random() - 0.5) * 25
+            };
             rollTimeRef.current = 0;
         }
     }, [autoRoll, type]);
@@ -232,68 +258,53 @@ export const Dice3D = ({ type = 'd20', value, onComplete, autoRoll = true }) => 
 
         rollTimeRef.current += delta;
         const time = rollTimeRef.current;
+        const damping = 0.985;
+        const gravity = 0.03;
 
-        // Physics Simulation
-        if (time < 3.5) { // Slightly longer roll for "heavier" feel
-            // Decay
-            const damping = 0.99; // Less damping = slides/rolls longer
-            const gravity = 0.025;  // Heavier gravity
+        if (time < 3.5) {
+            // Update velocity directly without React state
+            let ny = velocityRef.current.y - gravity;
+            let nx = velocityRef.current.x * damping;
+            let nz = velocityRef.current.z * damping;
 
-            setVelocity(v => {
-                let ny = v.y - gravity;
-                let nx = v.x * damping;
-                let nz = v.z * damping;
-
-                // Floor bounce (Y = -1.5 as board surface)
-                if (groupRef.current.position.y < -1.5) {
-                    groupRef.current.position.y = -1.5;
-
-                    // Only bounce if falling fast enough
-                    if (Math.abs(ny) > 0.05) {
-                        ny = Math.abs(ny) * 0.4; // Controlled bounce
-                        setCollisionCount(c => c + 1);
-                    } else {
-                        ny = 0;
-                    }
-
-                    nx *= 0.7; // Slide friction
-                    nz *= 0.7;
+            if (groupRef.current.position.y < -1.8) {
+                groupRef.current.position.y = -1.8;
+                if (Math.abs(ny) > 0.05) {
+                    ny = Math.abs(ny) * 0.45;
+                } else {
+                    ny = 0;
                 }
+                nx *= 0.75;
+                nz *= 0.75;
+            }
 
-                return { x: nx, y: ny, z: nz };
-            });
+            velocityRef.current = { x: nx, y: ny, z: nz };
 
-            setRotationVel(v => ({
-                x: v.x * damping,
-                y: v.y * damping,
-                z: v.z * damping
-            }));
+            rotationVelRef.current = {
+                x: rotationVelRef.current.x * damping,
+                y: rotationVelRef.current.y * damping,
+                z: rotationVelRef.current.z * damping
+            };
 
-            // Apply Move
-            groupRef.current.position.x += velocity.x;
-            groupRef.current.position.y += velocity.y;
-            groupRef.current.position.z += velocity.z;
+            groupRef.current.position.x += velocityRef.current.x;
+            groupRef.current.position.y += velocityRef.current.y;
+            groupRef.current.position.z += velocityRef.current.z;
 
-            // Apply Rotate
-            groupRef.current.rotation.x += rotationVel.x * delta;
-            groupRef.current.rotation.y += rotationVel.y * delta;
-            groupRef.current.rotation.z += rotationVel.z * delta;
+            groupRef.current.rotation.x += rotationVelRef.current.x * delta;
+            groupRef.current.rotation.y += rotationVelRef.current.y * delta;
+            groupRef.current.rotation.z += rotationVelRef.current.z * delta;
 
-        } else if (isRolling) {
-            // Settle and Interpolate rotation to target the camera
-            const targetRotation = new THREE.Euler(-0.5, 0, 0);
+        } else {
+            const targetRotation = new THREE.Euler(-0.4, 0, 0);
+            
+            groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, targetRotation.x, 0.12);
+            groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, targetRotation.y, 0.12);
+            groupRef.current.rotation.z = THREE.MathUtils.lerp(groupRef.current.rotation.z, targetRotation.z, 0.12);
+            groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, -1.8, 0.12);
 
-            // Smoothly lerp rotation and position for final snap
-            groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, targetRotation.x, 0.1);
-            groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, targetRotation.y, 0.1);
-            groupRef.current.rotation.z = THREE.MathUtils.lerp(groupRef.current.rotation.z, targetRotation.z, 0.1);
-
-            groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, -1.5, 0.1);
-
-            // Once close enough, finish
-            if (Math.abs(groupRef.current.rotation.x - targetRotation.x) < 0.01) {
-                groupRef.current.rotation.set(-0.5, 0, 0);
-                groupRef.current.position.y = -1.5;
+            if (Math.abs(groupRef.current.rotation.x - targetRotation.x) < 0.015) {
+                groupRef.current.rotation.set(-0.4, 0, 0);
+                groupRef.current.position.y = -1.8;
                 setIsRolling(false);
                 if (onComplete) onComplete(value);
             }
@@ -301,15 +312,14 @@ export const Dice3D = ({ type = 'd20', value, onComplete, autoRoll = true }) => 
     });
 
     return (
-        <group ref={groupRef} position={[0, 10, 0]}> {/* Higher start for "falling" effect */}
+        <group ref={groupRef} position={[0, 12, 0]}>
             <DiceMesh type={type} color={diceColor} resultValue={value} isSettled={!isRolling} />
             <MagicParticles isRolling={isRolling} color={diceColor} />
-            <pointLight distance={5} intensity={isRolling ? 1.5 : 0.8} color={diceColor} />
         </group>
     );
 };
 
-// --- DICE BOARD OVERLAY ---
+// --- ENHANCED DICE BOARD OVERLAY ---
 export const DiceOverlay = ({ diceRolls = [], onAllComplete }) => {
     const [completedCount, setCompletedCount] = useState(0);
     const [showFinalResults, setShowFinalResults] = useState(false);
@@ -342,19 +352,45 @@ export const DiceOverlay = ({ diceRolls = [], onAllComplete }) => {
             inset: 0,
             zIndex: 11000,
             pointerEvents: 'none',
-            background: 'rgba(0,0,0,0.1)'
+            background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.5) 100%)'
         }}>
-            <Canvas shadows gl={{ antialias: true, alpha: true }}>
-                <PerspectiveCamera makeDefault position={[0, 10, 15]} fov={35} />
-                <ambientLight intensity={0.6} />
-                <spotLight position={[10, 20, 10]} intensity={2} castShadow />
-                <spotLight position={[-10, 20, -10]} intensity={1} color="#a3c2ff" />
-                <Environment preset="night" />
+            <Canvas 
+                shadows 
+                dpr={[1, 1.25]}
+                gl={{ 
+                    antialias: false,
+                    alpha: true,
+                    toneMapping: THREE.ACESFilmicToneMapping,
+                    toneMappingExposure: 1.2,
+                    powerPreference: 'high-performance'
+                }}
+                style={{ width: '100%', height: '100%' }}
+            >
+                <PerspectiveCamera makeDefault position={[0, 6, 10]} fov={36} />
+                
+                <ambientLight intensity={0.4} color="#ffffff" />
+                <hemisphereLight intensity={0.3} groundColor="#000000" color="#4a90e2" />
+                
+                <spotLight 
+                    position={[6, 12, 6]} 
+                    intensity={1.5} 
+                    castShadow 
+                    color="#fff8e7"
+                    angle={0.5}
+                    penumbra={0.5}
+                    shadow-mapSize={1024}
+                />
+                
+                <Environment preset="apartment" />
 
-                {/* The Board/Shadow catcher */}
-                <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.5, 0]} receiveShadow>
+                <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.8, 0]} receiveShadow>
                     <planeGeometry args={[100, 100]} />
-                    <meshStandardMaterial transparent opacity={0.2} color="#000" />
+                    <meshStandardMaterial 
+                        transparent 
+                        opacity={0.2} 
+                        color="#000000"
+                        roughness={0.8}
+                    />
                 </mesh>
 
                 {(() => {
@@ -363,8 +399,8 @@ export const DiceOverlay = ({ diceRolls = [], onAllComplete }) => {
                             const finalTens = roll.value === 100 ? "00" : (Math.floor(roll.value / 10) * 10);
                             const finalUnits = roll.value % 10;
                             return [
-                                { type: 'd10', value: finalTens, key: `${i}-tens`, offset: -1.7 },
-                                { type: 'd10', value: finalUnits, key: `${i}-units`, offset: 1.7 }
+                                { type: 'd10', value: finalTens, key: `${i}-tens`, offset: -1.8 },
+                                { type: 'd10', value: finalUnits, key: `${i}-units`, offset: 1.8 }
                             ];
                         }
                         return [{ ...roll, key: i, offset: 0 }];
@@ -377,7 +413,7 @@ export const DiceOverlay = ({ diceRolls = [], onAllComplete }) => {
                             if (next === totalDiceCount) {
                                 setShowFinalResults(true);
                                 if (onAllComplete) {
-                                    setTimeout(onAllComplete, 1500);
+                                    setTimeout(onAllComplete, 1200);
                                 }
                             }
                             return next;
@@ -385,7 +421,7 @@ export const DiceOverlay = ({ diceRolls = [], onAllComplete }) => {
                     };
 
                     return expandedDice.map((d, idx) => (
-                        <group key={d.key} position={[((idx - (totalDiceCount - 1) / 2) * 5) + d.offset, 0, 0]}>
+                        <group key={d.key} position={[((idx - (totalDiceCount - 1) / 2) * 3.8) + d.offset, 0, 0]}>
                             <Dice3D type={d.type} value={d.value} onComplete={onDiceComplete} autoRoll={true} />
                         </group>
                     ));
@@ -394,16 +430,70 @@ export const DiceOverlay = ({ diceRolls = [], onAllComplete }) => {
                 <OrbitControls enableZoom={false} enablePan={false} maxPolarAngle={Math.PI / 2.2} />
             </Canvas>
 
-            {/* Results UI Overlay */}
             {showFinalResults && (
-                <div className="dice-result-overlay">
-                    <div className="dice-result-card">
-                        <span className="dice-result-label">Résultat Naturel</span>
-                        <div className={`dice-result-val ${isCritSuccess ? 'dice-crit-success' : ''} ${isCritFail ? 'dice-crit-fail' : ''}`}>
+                <div style={{
+                    position: 'fixed',
+                    bottom: '12%',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    textAlign: 'center',
+                    pointerEvents: 'none'
+                }}>
+                    <div style={{
+                        background: 'linear-gradient(180deg, rgba(0,0,0,0.88) 0%, rgba(20,20,30,0.92) 100%)',
+                        border: `1.5px solid ${isCritSuccess ? '#FFD700' : isCritFail ? '#ff4444' : 'rgba(212,175,55,0.4)'}`,
+                        borderRadius: '12px',
+                        padding: '1.25rem 2rem',
+                        boxShadow: isCritSuccess 
+                            ? '0 0 40px rgba(255,215,0,0.4), inset 0 0 20px rgba(255,215,0,0.08)' 
+                            : isCritFail 
+                                ? '0 0 40px rgba(255,68,68,0.3), inset 0 0 20px rgba(255,68,68,0.08)'
+                                : '0 0 30px rgba(0,0,0,0.4)'
+                    }}>
+                        <div style={{ 
+                            fontSize: '0.75rem', 
+                            color: '#888', 
+                            textTransform: 'uppercase', 
+                            letterSpacing: '3px',
+                            marginBottom: '0.5rem'
+                        }}>
+                            Résultat
+                        </div>
+                        <div style={{
+                            fontSize: '3.5rem',
+                            fontWeight: '800',
+                            color: isCritSuccess ? '#FFD700' : isCritFail ? '#ff4444' : '#fff',
+                            textShadow: isCritSuccess 
+                                ? '0 0 30px rgba(255,215,0,0.6)' 
+                                : isCritFail 
+                                    ? '0 0 30px rgba(255,68,68,0.4)'
+                                    : '0 0 15px rgba(255,255,255,0.2)',
+                            fontFamily: '"Cinzel Decorative", serif'
+                        }}>
                             {totalNatural}
                         </div>
-                        {isCritSuccess && <span className="dice-result-label dice-crit-success">Réussite Critique !</span>}
-                        {isCritFail && <span className="dice-result-label dice-crit-fail">Échec Critique...</span>}
+                        {isCritSuccess && (
+                            <div style={{ 
+                                fontSize: '0.95rem', 
+                                color: '#FFD700', 
+                                marginTop: '0.5rem',
+                                textTransform: 'uppercase',
+                                letterSpacing: '2px'
+                            }}>
+                                Réussite Critique!
+                            </div>
+                        )}
+                        {isCritFail && (
+                            <div style={{ 
+                                fontSize: '0.95rem', 
+                                color: '#ff4444', 
+                                marginTop: '0.5rem',
+                                textTransform: 'uppercase',
+                                letterSpacing: '2px'
+                            }}>
+                                Échec Critique...
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -414,56 +504,66 @@ export const DiceOverlay = ({ diceRolls = [], onAllComplete }) => {
 export const DiceRollScene = ({ diceType, value, onComplete }) => {
     return (
         <div style={{
-            width: '320px',
-            height: '320px',
+            width: '280px',
+            height: '280px',
             position: 'relative',
-            background: 'radial-gradient(circle at center, #1a1a2e 0%, #000000 100%)',
-            borderRadius: '24px',
-            border: '1px solid rgba(255, 215, 0, 0.3)',
-            boxShadow: '0 0 50px rgba(0,0,0,0.8)',
+            background: 'radial-gradient(ellipse at center, #1a1a3e 0%, #0a0a1a 50%, #000000 100%)',
+            borderRadius: '20px',
+            border: '1.5px solid rgba(212, 175, 55, 0.3)',
+            boxShadow: '0 0 40px rgba(212, 175, 55, 0.15), inset 0 0 20px rgba(0,0,0,0.5)',
             overflow: 'hidden'
         }}>
-            <Canvas shadows gl={{ antialias: true, toneMappingExposure: 1.2 }}>
-                <PerspectiveCamera makeDefault position={[0, 4, 6]} fov={35} />
+            <Canvas 
+                shadows 
+                dpr={[1, 1.25]}
+                gl={{ 
+                    antialias: false,
+                    toneMapping: THREE.ACESFilmicToneMapping,
+                    toneMappingExposure: 1.1,
+                    powerPreference: 'high-performance'
+                }}
+                style={{ width: '100%', height: '100%' }}
+            >
+                <PerspectiveCamera makeDefault position={[0, 2.5, 6]} fov={36} />
 
-                {/* Cinematic Lighting */}
-                <ambientLight intensity={0.2} />
+                <ambientLight intensity={0.4} color="#ffffff" />
+                <hemisphereLight intensity={0.3} groundColor="#000000" color="#4a90e2" />
+                
                 <spotLight
-                    position={[5, 10, 5]}
+                    position={[3, 6, 3]}
                     angle={0.4}
-                    penumbra={1}
-                    intensity={2}
-                    castShadow
-                    color="#ffd700"
-                />
-                <spotLight
-                    position={[-5, 2, -5]}
-                    angle={0.5}
+                    penumbra={0.6}
                     intensity={1.5}
-                    color="#4a90e2"
+                    castShadow
+                    color="#fff8e7"
+                    shadow-mapSize={512}
                 />
-                <Environment preset="city" />
+                
+                <Environment preset="apartment" />
 
-                <Float speed={2} rotationIntensity={0.2} floatIntensity={0.5}>
+                <Float speed={1.5} rotationIntensity={0.3} floatIntensity={0.4}>
                     <Dice3D type={diceType} value={value} onComplete={onComplete} />
                 </Float>
 
                 <OrbitControls enableZoom={false} enablePan={false} maxPolarAngle={Math.PI / 1.5} />
             </Canvas>
 
-            {/* UI Overlay */}
             <div style={{
                 position: 'absolute',
-                bottom: '30px',
+                bottom: '20px',
                 width: '100%',
                 textAlign: 'center',
                 pointerEvents: 'none'
             }}>
                 <div style={{
-                    fontSize: '4rem',
-                    fontFamily: 'serif',
-                    color: '#FFD700',
-                    textShadow: '0 0 30px rgba(255, 215, 0, 0.6)',
+                    fontSize: '3.8rem',
+                    fontFamily: '"Cinzel Decorative", serif',
+                    color: value >= 90 ? '#FFD700' : value <= 10 ? '#ff6b6b' : '#fff',
+                    textShadow: value >= 90 
+                        ? '0 0 30px rgba(255, 215, 0, 0.6)' 
+                        : value <= 10 
+                            ? '0 0 30px rgba(255, 107, 107, 0.4)'
+                            : '0 0 20px rgba(255, 255, 255, 0.3)',
                     fontWeight: 'bold',
                     opacity: value ? 1 : 0,
                     transform: value ? 'translateY(0)' : 'translateY(20px)',

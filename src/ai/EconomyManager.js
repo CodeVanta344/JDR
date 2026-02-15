@@ -6,9 +6,7 @@
 // - Événements économiques (inflation, pénurie, abondance)
 // - Marchés locaux et régionaux
 // - Spéculation et arbitrage
-// - Imp
-
-act des actions du joueur sur l'économie
+// - Impacts des actions du joueur sur l'économie
 
 class EconomyManager {
   constructor() {

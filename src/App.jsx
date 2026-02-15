@@ -30,7 +30,7 @@ import { WeatherOverlay } from './components/WeatherOverlay';
 import { SceneBackground } from './components/SceneBackground';
 import { ParticleSystem } from './components/ParticleSystem';
 import { useGameState } from './hooks/useGameState';
-import { extractSpokenText, speakText, initSpeech } from './utils/speechUtils';
+import { getPartyAverageLevel, scaleEnemyForPartyLevel } from './utils/combat-progression';
 const STARTING_LOCKS = new Set();
 
 
@@ -53,7 +53,6 @@ export default function App() {
     const [npcConversations, setNpcConversations] = useState({});
     const [audioEnabled, setAudioEnabled] = useState(false);
     const [audioVolume, setAudioVolume] = useState(0.5);
-    const [voiceEnabled, setVoiceEnabled] = useState(true);
     const [showCodex, setShowCodex] = useState(false);
     const [showDMPanel, setShowDMPanel] = useState(false);
     const [showHelper, setShowHelper] = useState(false);
@@ -69,16 +68,17 @@ export default function App() {
     // ... (rest of state)
 
 
-    const pollInterval = useRef(null);
+    const _pollInterval = useRef(null);
     const typingTimeoutRef = useRef(null);
     const creatingPlayerRef = useRef(false);
     const chatRef = useRef(null);
+    const characterIdRef = useRef(null);
     const lastActivityRef = useRef(Date.now());
     const hasFledRef = useRef(false);
 
     const [lastSFX, setLastSFX] = useState(null);
     const [activeVFX, setActiveVFX] = useState(null);
-    const [tension, setTension] = useState(0); // 0-100 scale
+    const [tension] = useState(0); // 0-100 scale
     const [adventureStarted, setAdventureStarted] = useState(false);
 
     // Integrated Game State Hook
@@ -86,16 +86,16 @@ export default function App() {
         session, setSession,
         character, setCharacter,
         players, setPlayers,
-        onlineUsers, setOnlineUsers,
+        setOnlineUsers,
         connStatus, setConnStatus,
         affinities, setAffinities,
         titles, setTitles,
-        gameTime, setGameTime,
+        gameTime,
         syncedCombatState, setSyncedCombatState,
         realTimeSync, setRealTimeSync,
         fetchSession,
         fetchWorldState,
-        fetchPlayerExtras,
+        fetchPlayerExtras: _fetchPlayerExtras,
         handleHPChange,
         chronicle,
         addToChronicle,
@@ -128,7 +128,9 @@ export default function App() {
                 try {
                     const parsed = JSON.parse(helperSaved);
                     if (Array.isArray(parsed)) setHelperMessages(parsed);
-                } catch (e) { }
+                } catch {
+                    void 0;
+                }
             }
 
             const npcKey = `jdr_npcs_${session.id}_${character.id}`;
@@ -137,25 +139,12 @@ export default function App() {
                 try {
                     const parsed = JSON.parse(npcSaved);
                     if (typeof parsed === 'object') setNpcConversations(parsed);
-                } catch (e) { }
+                } catch {
+                    void 0;
+                }
             }
         }
-    }, [session?.id, character?.id]);
-
-    // --- GLOBAL VOICE NARRATION ---
-    useEffect(() => {
-        if (!voiceEnabled || messages.length === 0) return;
-        const lastMsg = messages[messages.length - 1];
-
-        // Only speak for GM (npc/narrative roles) and not system messages
-        if (lastMsg.role === 'narrage' || lastMsg.role === 'npc' || (lastMsg.role === 'assistant' && !showHelper)) {
-            // Check if it's already in the private modal (avoid double speech)
-            if (activeNPC) return;
-
-            const spokenText = extractSpokenText(lastMsg.content);
-            speakText(spokenText);
-        }
-    }, [messages, voiceEnabled, activeNPC]);
+    }, [session?.id, character?.id, fetchSession]);
 
     // --- DATA FETCHING ---
     const addMessage = async (msg) => {
@@ -224,7 +213,7 @@ export default function App() {
             console.log("[App] Adventure started, performing initial fetch...");
             fetchData();
         }
-    }, [adventureStarted]); // Run only when starting
+    }, [adventureStarted, fetchData]); // Run only when starting
 
     // --- PLAYER STATE POLLING FALLBACK ---
     useEffect(() => {
@@ -241,7 +230,7 @@ export default function App() {
 
         const interval = setInterval(pollPlayerState, 15000); // Polling every 15s
         return () => clearInterval(interval);
-    }, [session?.id, adventureStarted, profile?.id]);
+    }, [session?.id, adventureStarted, profile?.id, setPlayers, setCharacter]);
 
     // --- REAL-TIME MESSAGE SUBSCRIPTION ---
     useEffect(() => {
@@ -298,7 +287,7 @@ export default function App() {
         return () => {
             supabase.removeChannel(tradeChannel);
         };
-    }, [session?.id, character?.id]);
+    }, [session?.id, character?.id, fetchSession]);
 
     // --- AUTO-CREATE LOBBY PLAYER ---
     useEffect(() => {
@@ -328,7 +317,7 @@ export default function App() {
                     creatingPlayerRef.current = false;
                 });
         }
-    }, [session, profile, character, loading]);
+    }, [session, profile, character, loading, setCharacter]);
 
     // --- AUTO-RANDOMIZE FOR QUICK JOIN ---
     useEffect(() => {
@@ -336,6 +325,7 @@ export default function App() {
             window.pendingQuickStart = false; // Consume flag
             handleCharacterQuickStart();
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [character, loading]);
 
     // --- SESSION DISCOVERY POLLING ---
@@ -457,13 +447,6 @@ export default function App() {
 
         const arenaConfig = getArenaConfig();
 
-        // Helper to check validity
-        const isTileValid = (x, y) => {
-            const boundsX = Math.floor(arenaConfig.blocksX / 2);
-            const boundsY = Math.floor(arenaConfig.blocksY / 2);
-            return x >= -boundsX && x < boundsX && y >= -boundsY && y < boundsY;
-        };
-
         const generatePositions = (count, isEnemy) => {
             const positions = [];
             const maxX = Math.floor(arenaConfig.blocksX / 2);
@@ -490,6 +473,8 @@ export default function App() {
             }
         });
 
+        const partyLevel = getPartyAverageLevel(uniquePlayers);
+
         const playerPositions = generatePositions(uniquePlayers.length, false);
         const enemyPositions = generatePositions(enemiesData.length, true);
 
@@ -507,10 +492,10 @@ export default function App() {
             })),
             ...enemiesData.map((e, i) => {
                 const baseEnemy = BESTIARY[e.name.split(' ')[0]] || BESTIARY[e.class] || {};
-                return {
+                const rawEnemy = {
                     id: e.id || `enemy-${i}`, name: e.name, class: e.class || 'Monstre',
                     hp: e.hp || baseEnemy.stats?.hp || 20,
-                    maxHp: e.hp || baseEnemy.stats?.hp || 20,
+                    maxHp: e.maxHp || e.max_hp || e.hp || baseEnemy.stats?.hp || 20,
                     resource: e.resource || 20, maxResource: e.resource || 20,
                     initiative: e.initiative || Math.floor(Math.random() * 20) + 1,
                     isEnemy: true, portrait_url: e.portrait || baseEnemy.portrait_url,
@@ -522,6 +507,8 @@ export default function App() {
                     atk: e.atk || baseEnemy.stats?.atk || 5,
                     ac: e.ac || baseEnemy.stats?.ac || 12
                 };
+
+                return scaleEnemyForPartyLevel(rawEnemy, partyLevel);
             })
         ].sort((a, b) => b.initiative - a.initiative);
 
@@ -539,7 +526,7 @@ export default function App() {
         await supabase.from('world_state').upsert({ key: `combat_${session.id}`, value: initialState });
     };
 
-    const handleDebugCombat = () => {
+    const _handleDebugCombat = () => {
         if (!session || !character) return;
 
         // Safety: ensure character is alive
@@ -560,13 +547,23 @@ export default function App() {
     // SYNC: Auto-enter combat when shared state is active (Multiplayer Sync)
     useEffect(() => {
         if (syncedCombatState?.active) {
+            const enemies = (syncedCombatState.combatants || []).filter(c => c?.isEnemy);
+            const hasValidCombat = enemies.length > 0;
+
+            // Guard against stale/broken sync states that mark combat active without enemies.
+            if (!hasValidCombat) {
+                setCombatMode(false);
+                setCombatEnemies([]);
+                return;
+            }
+
             if (!hasFledRef.current) {
                 setCombatMode(true);
-                const enemies = syncedCombatState.combatants?.filter(c => c.isEnemy) || [];
-                if (enemies.length > 0) setCombatEnemies(enemies);
+                setCombatEnemies(enemies);
             }
         } else if (syncedCombatState && syncedCombatState.active === false) {
             setCombatMode(false);
+            setCombatEnemies([]);
             hasFledRef.current = false; // Reset flee status when global combat ends
         }
     }, [syncedCombatState]);
@@ -705,7 +702,7 @@ export default function App() {
         return `Nuit (${hour}h${minute.toString().padStart(2, '0')})`;
     };
 
-    const getOverlayColor = () => {
+    const _getOverlayColor = () => {
         const { hour } = gameTime;
         if (hour >= 21 || hour < 5) return 'var(--night-color)';
         if (hour >= 5 && hour < 8) return 'var(--dawn-color)';
@@ -749,7 +746,7 @@ export default function App() {
 
         window.addEventListener('beforeunload', deactivateSession);
         return () => window.removeEventListener('beforeunload', deactivateSession);
-    }, [session?.id, session?.host_id, profile?.id]);
+    }, [session, profile]);
 
     useEffect(() => {
         if (!session?.id || !profile?.id) return;
@@ -786,11 +783,12 @@ export default function App() {
                 }, (payload) => {
                     if (payload.new && payload.new.value) {
                         const val = payload.new.value;
+                        const currentCharacterId = characterIdRef.current;
                         if (val.active === false) {
                             setActiveMerchant(null);
                         } else {
                             // Only open/update if I am in the visitors list (or if list doesn't exist for legacy compatibility)
-                            if (!val.visitors || (character?.id && val.visitors.includes(character.id))) {
+                            if (!val.visitors || (currentCharacterId && val.visitors.includes(currentCharacterId))) {
                                 setActiveMerchant(val);
                             } else {
                                 // If the shop is active but I am NOT in the visitors list, close it for me.
@@ -862,6 +860,7 @@ export default function App() {
         return () => {
             if (channel) supabase.removeChannel(channel);
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [session?.id, profile?.id, fetchData]);
 
     // --- PLAYER LIST POLLING FALLBACK (Hub phase only) ---
@@ -882,11 +881,15 @@ export default function App() {
         };
         const interval = setInterval(refreshPlayers, 5000);
         return () => clearInterval(interval);
-    }, [session?.id, profile?.id, adventureStarted]);
+    }, [session?.id, profile?.id, adventureStarted, setPlayers, setCharacter, setSession]);
 
     useEffect(() => {
         chatRef.current?.scrollTo(0, chatRef.current.scrollHeight);
     }, [messages]);
+
+    useEffect(() => {
+        characterIdRef.current = character?.id || null;
+    }, [character?.id]);
 
     // --- AUTOMATIC LOCATION BACKGROUND SWITCHING ---
     useEffect(() => {
@@ -964,15 +967,6 @@ export default function App() {
             if (data) {
                 setSession(data);
                 window.history.pushState({}, '', `?s=${data.id}`);
-
-                // The useEffect for auto-creating player will trigger.
-                // We need to wait for character to be set, then trigger randomization.
-                // We'll use a one-time interval to check for character record.
-                const checkInterval = setInterval(() => {
-                    const charRef = window.tempCharacter; // Leak character to window for this sync check if needed, or better use a state effect
-                    // Use character state from component if possible
-                }, 500);
-                setTimeout(() => clearInterval(checkInterval), 5000);
 
                 // Better: set a "pendingQuickStart" flag
                 window.pendingQuickStart = true;
@@ -1199,9 +1193,31 @@ export default function App() {
             // 2. Delete the player character and related records
             const isSolo = players.length <= 1;
 
+            // Delete dynamic references first
             await supabase.from('player_titles').delete().eq('player_id', character.id);
             await supabase.from('npc_affinities').delete().eq('player_id', character.id);
-            await supabase.from('players').delete().eq('id', character.id);
+
+            // Delete messages linked to this player specifically (extra safety)
+            await supabase.from('messages').delete().eq('player_id', character.id);
+
+            // Finally delete the player
+            const { error: deletePlayerError } = await supabase.from('players').delete().eq('id', character.id);
+
+            // Some DBs can still have FK constraints without ON DELETE CASCADE.
+            // In that case, keep gameplay unblocked with a soft-delete fallback.
+            if (deletePlayerError) {
+                const isConflict = deletePlayerError.code === '23503' || String(deletePlayerError.message || '').toLowerCase().includes('conflict');
+                if (isConflict) {
+                    const { error: softDeleteError } = await supabase
+                        .from('players')
+                        .update({ hp: 0, status: 'dead', resource: 0 })
+                        .eq('id', character.id);
+
+                    if (softDeleteError) throw softDeleteError;
+                } else {
+                    throw deletePlayerError;
+                }
+            }
 
             setCharacter(null);
             setCombatMode(false);
@@ -1436,7 +1452,7 @@ export default function App() {
             }, 1500);
             return () => clearTimeout(timer);
         }
-    }, [session, players, profile]);
+    }, [session, players, profile, setSession]);
 
     const handleStartAdventure = async (force = false, passedSession = null, passedPlayers = null) => {
         const activeSession = passedSession || session;
@@ -1629,6 +1645,7 @@ export default function App() {
                 }
             });
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [players, session, profile, adventureStarted, messages, character]);
 
     // START ADVENTURE SYNC FIX
@@ -1652,7 +1669,7 @@ export default function App() {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [session, adventureStarted]);
+    }, [session, adventureStarted, setSession]);
 
     const handleUpdateInventory = async (newInventory, newGold = null) => {
         if (!character?.id) return;
@@ -1886,11 +1903,10 @@ export default function App() {
         const successMsg = `[PAIEMENT_CONFIRMÉ] Le joueur a payé ${amount} Or${reason ? ` pour : ${reason}` : ''}. Procède à la suite.`;
         if (context === "NPC" && npcName) {
             handleNPCMessage(successMsg, npcName);
-        } else {
         }
     };
 
-    const handleGMInitiative = async (isStagnation = false) => {
+    const _handleGMInitiative = async (isStagnation = false) => {
         if (!session || !character || loading || combatMode) return;
         setLoading(true);
 
@@ -1969,6 +1985,8 @@ export default function App() {
         const challengeToRef = activeChallenge;
         setActiveChallenge(null);
 
+        if (!challengeToRef) return;
+
         // Créer message avec animation 3D du dé
         const diceRollData = {
             type: 'dice_roll',
@@ -2001,6 +2019,107 @@ export default function App() {
                 role: 'system'
             });
             if (error) console.error('Error saving dice roll message:', error);
+        }
+
+        // Continue story immediately with consequence narration based on the roll outcome.
+        try {
+            const outcomeLabel =
+                result.outcome === 'CRITICAL_SUCCESS' ? 'réussite critique' :
+                    result.outcome === 'CRITICAL_FAILURE' ? 'échec critique' :
+                        result.outcome === 'SUCCESS' ? 'succès' : 'échec';
+
+            const { data: aiResponse } = await supabase.functions.invoke('game-master', {
+                body: {
+                    action: `Résous la conséquence narrative de ce test et fais avancer l'histoire.
+Action tentée: ${challengeToRef.label}
+Stat: ${result.stat}
+DC: ${result.dc}
+Jet brut: ${result.natural}
+Jet converti d100: ${result.naturalConverted ?? result.natural}
+Modificateur: ${result.modifier}
+Total: ${result.total}
+Issue: ${outcomeLabel}
+
+Consigne: décris le résultat concret dans la fiction et propose la suite immédiate. N'écris pas une remontrance générique répétée.`,
+                    history: [...messages.slice(-12), diceMessage]
+                        .filter(m => !m.content?.startsWith?.('(MÉMOIRE:'))
+                        .map(m => ({ role: m.role, content: m.content })),
+                    sessionId: session?.id,
+                    playerId: character?.id,
+                    gamePhase,
+                    context: 'CHALLENGE_RESOLUTION',
+                    gameTime,
+                    timeLabel: getTimeLabel(),
+                    weather,
+                    playerProfile: {
+                        name: character?.name,
+                        class: character?.class,
+                        level: character?.level,
+                        stats: character?.stats,
+                        inventory: character?.inventory,
+                        backstory: character?.backstory_gm_context
+                    },
+                    codex_data: {
+                        visited_npcs: character?.visited_npcs || [],
+                        discovered_locations: character?.discovered_locations || [],
+                        active_quests: character?.active_quests || [],
+                        discovered_secrets: character?.discovered_secrets || [],
+                        important_events: character?.important_events || [],
+                        discovered_visuals: character?.discovered_visuals || []
+                    },
+                    lore: {
+                        context: `${WORLD_CONTEXT}\n\n${ENVIRONMENTAL_RULES}`,
+                        bestiary: { ...BESTIARY, ...BESTIARY_EXTENDED },
+                        classes: CLASSES,
+                        chronicle,
+                        npcs: NPC_TEMPLATES,
+                        quests: QUEST_HOOKS,
+                        locations: TAVERNS_AND_LOCATIONS,
+                        rumors: RUMORS_AND_GOSSIP,
+                        encounters: RANDOM_ENCOUNTERS,
+                        myths: WORLD_MYTHS_EXTENDED,
+                        legendaryItems: LEGENDARY_ITEMS,
+                        factions: FACTION_LORE
+                    }
+                }
+            });
+
+            if (aiResponse) {
+                const narrative = aiResponse.narrative || formatAIContent(aiResponse);
+                const gmMsg = {
+                    id: crypto.randomUUID(),
+                    session_id: session?.id,
+                    role: 'assistant',
+                    content: narrative,
+                    created_at: new Date().toISOString()
+                };
+
+                setMessages(prev => [...prev, gmMsg]);
+
+                if (session?.id) {
+                    await supabase.from('messages').insert({
+                        id: gmMsg.id,
+                        session_id: session.id,
+                        role: 'assistant',
+                        content: gmMsg.content,
+                        player_id: character?.id
+                    });
+                }
+
+                if (aiResponse.reward?.xp) {
+                    handleExperienceGain(aiResponse.reward.xp, aiResponse.reward.reason);
+                }
+
+                if (aiResponse.combat?.trigger) {
+                    initializeHostCombat(aiResponse.combat.enemies || []);
+                }
+
+                if (aiResponse.challenge) {
+                    setActiveChallenge(aiResponse.challenge);
+                }
+            }
+        } catch (err) {
+            console.error('Error resolving challenge consequence:', err);
         }
     };
 
@@ -2053,7 +2172,7 @@ export default function App() {
             if (data) setCharacter(data);
 
             const boostList = Object.entries(statBoosts)
-                .filter(([_, b]) => b !== 0)
+                .filter(([, b]) => b !== 0)
                 .map(([s, b]) => `${s.toUpperCase()} ${b > 0 ? '+' : ''}${b}`)
                 .join(', ');
 
@@ -2065,7 +2184,7 @@ export default function App() {
         }
     };
 
-    const handleCombatDistanceCheck = async (combatData) => {
+    const _handleCombatDistanceCheck = async (combatData) => {
         if (!character) return;
         setLoading(true);
 
@@ -2389,6 +2508,23 @@ export default function App() {
                         important_events: character.important_events || [],
                         discovered_visuals: character.discovered_visuals || []
                     },
+                    // Add guidance for challenge creation
+                    challenge_guidance: {
+                        require_roll_for: [
+                            "actions dangereuses (sauter un précipice, escalader, désamorcer)",
+                            "tentatives difficiles (crocheter une serrure complexe, négocier avec un PNJ hostile)",
+                            "découvertes cachées (pièges, passages secrets, objets dissimulés)",
+                            "connaissances spécifiques (histoire ancienne, magie complexe)"
+                        ],
+                        no_roll_for: [
+                            "lire un panneau, un livre, ou tout texte visible",
+                            "observer un environnement évident (portes, fenêtres, meubles)",
+                            "actions triviales (marcher, s'asseoir, ouvrir une porte non verrouillée)",
+                            "interagir avec des objets accessibles (prendre une torche, boire à une fontaine)",
+                            "parler à un PNJ amical ou neutre"
+                        ],
+                        note: "Les actions simples d'observation ne nécessitent PAS de jet de perception. Un panneau en bois est LISIBLE sans jet."
+                    },
                     lore: { context: `${WORLD_CONTEXT}\n\n${ENVIRONMENTAL_RULES}`, bestiary: { ...BESTIARY, ...BESTIARY_EXTENDED }, classes: CLASSES, chronicle, npcs: NPC_TEMPLATES, quests: QUEST_HOOKS, locations: TAVERNS_AND_LOCATIONS, rumors: RUMORS_AND_GOSSIP, encounters: RANDOM_ENCOUNTERS, myths: WORLD_MYTHS_EXTENDED, legendaryItems: LEGENDARY_ITEMS, factions: FACTION_LORE }
                 }
             });
@@ -2456,8 +2592,44 @@ export default function App() {
                     initializeHostCombat(aiResponse.combat.enemies || []);
                 }
 
+                // Check for trivial challenges and auto-resolve them
                 if (aiResponse.challenge) {
-                    setActiveChallenge(aiResponse.challenge);
+                    const challenge = aiResponse.challenge;
+                    const label = challenge.label?.toLowerCase() || '';
+                    const stat = challenge.stat?.toLowerCase() || '';
+                    
+                    // Détecter les challenges triviaux qui ne nécessitent pas de jet
+                    const trivialKeywords = [
+                        'panneau', 'lire', 'écrit', 'signe', 'affiche', 'inscription',
+                        'observer', 'regarder', 'voir', 'regarde', 'observe'
+                    ];
+                    
+                    const isTrivial = trivialKeywords.some(keyword => 
+                        label.includes(keyword) || content.toLowerCase().includes(keyword)
+                    ) && (stat === 'perception' || stat === 'intelligence');
+                    
+                    if (isTrivial) {
+                        // Auto-résoudre le challenge trivial avec succès
+                        console.log('[Challenge] Action triviale détectée, résolution automatique:', challenge.label);
+                        
+                        // Créer un résultat de succès automatique
+                        const autoResult = {
+                            natural: 50,
+                            naturalConverted: 50,
+                            modifier: (character?.stats?.[stat] || 10) * 2,
+                            total: 50 + (character?.stats?.[stat] || 10) * 2,
+                            outcome: 'SUCCESS',
+                            dice: 'd100',
+                            dc: challenge.dc || 25,
+                            stat: challenge.stat || 'PERCEPTION'
+                        };
+                        
+                        // Appeler handleChallengeResult directement
+                        setTimeout(() => handleChallengeResult(autoResult), 100);
+                    } else {
+                        // Challenge normal - afficher le modal
+                        setActiveChallenge(challenge);
+                    }
                 }
 
                 if (aiResponse.npc) {
@@ -2682,7 +2854,12 @@ export default function App() {
                     onInvite={() => {
                         const url = window.location.origin + window.location.pathname + '?s=' + session.id;
                         navigator.clipboard.writeText(url);
-                        showNotification("Lien d'invitation copié ! Partagez-le avec vos amis.", "success");
+                        setMessages(prev => [...prev, {
+                            id: crypto.randomUUID(),
+                            role: 'system',
+                            content: "✅ Lien d'invitation copié !",
+                            created_at: new Date().toISOString()
+                        }]);
                     }}
                     loading={loading}
                     sessionId={session.id}
@@ -2715,7 +2892,12 @@ export default function App() {
                             onInvite={() => {
                                 const url = window.location.origin + window.location.pathname + '?s=' + session.id;
                                 navigator.clipboard.writeText(url);
-                                showNotification("Lien d'invitation copief ! Partagez-le avec vos amis.", "success");
+                                setMessages(prev => [...prev, {
+                                    id: crypto.randomUUID(),
+                                    role: 'system',
+                                    content: "✅ Lien d'invitation copié !",
+                                    created_at: new Date().toISOString()
+                                }]);
                             }}
                             onToggleHelper={() => setShowHelper(!showHelper)}
                             showHelper={showHelper}
@@ -2951,8 +3133,6 @@ export default function App() {
                         onSendMessage={handleNPCMessage}
                         onClose={() => setActiveNPC(null)}
                         loading={loading}
-                        voiceEnabled={voiceEnabled}
-                        setVoiceEnabled={setVoiceEnabled}
                     />
                 )
             }
@@ -2990,7 +3170,7 @@ export default function App() {
                         onIncomingTradeHandled={() => setIncomingTrade(null)}
                         pendingTradeResponse={pendingTradeResponse}
                         onPendingResponseHandled={() => setPendingTradeResponse(null)}
-                        onTradeComplete={(trade) => {
+                        onTradeComplete={() => {
                             triggerSFX('gold');
                             fetchSession();
                             addMessage({
@@ -3015,7 +3195,7 @@ export default function App() {
                         challenge={activeChallenge}
                         playerStats={character?.stats}
                         onResult={(res) => {
-                            if (res.success) triggerSFX('levelUp'); // Use levelUp as a success sound
+                            if (res.outcome === 'SUCCESS' || res.outcome === 'CRITICAL_SUCCESS') triggerSFX('levelUp'); // Use levelUp as a success sound
                             handleChallengeResult(res);
                         }}
                         onRollStart={() => triggerSFX('dice')}
@@ -3059,24 +3239,10 @@ export default function App() {
                                         className={`btn-secondary ${audioEnabled ? 'active' : ''}`}
                                         onClick={() => {
                                             setAudioEnabled(!audioEnabled);
-                                            if (!audioEnabled) initSpeech();
                                         }}
                                         style={{ minWidth: '60px', borderColor: audioEnabled ? 'var(--gold-primary)' : 'var(--text-muted)', color: audioEnabled ? 'var(--gold-primary)' : 'var(--text-muted)' }}
                                     >
                                         {audioEnabled ? 'ON' : 'OFF'}
-                                    </button>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 'bold', letterSpacing: '1px' }}>NARRATEUR VOCAL (PNJ)</span>
-                                    <button
-                                        className={`btn-secondary ${voiceEnabled ? 'active' : ''}`}
-                                        onClick={() => {
-                                            setVoiceEnabled(!voiceEnabled);
-                                            if (!voiceEnabled) initSpeech();
-                                        }}
-                                        style={{ minWidth: '60px', borderColor: voiceEnabled ? 'var(--gold-primary)' : 'var(--text-muted)', color: voiceEnabled ? 'var(--gold-primary)' : 'var(--text-muted)' }}
-                                    >
-                                        {voiceEnabled ? 'ON' : 'OFF'}
                                     </button>
                                 </div>
                                 <button

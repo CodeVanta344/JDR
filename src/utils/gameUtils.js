@@ -81,6 +81,61 @@ export const generateRandomCharacter = (sessionId, userId) => {
     // 4. Accumulate Lifepath Effects
     const lifepathEffects = accumulateEffects(lifepathSelection);
 
+    // 4b. Filter traits to keep only 1 per life phase (birth, childhood, adolescence, young-adult)
+    const phaseKeys = ['birth', 'childhood', 'adolescence', 'youngAdult'];
+    const phaseCategories = {
+        birth: ['location', 'status', 'omen'],
+        childhood: ['family', 'education', 'trauma'],
+        adolescence: ['training', 'exploit', 'encounter'],
+        youngAdult: ['profession', 'motivation', 'connection']
+    };
+    
+    // Group traits by phase and keep only one random trait per phase
+    const filteredTraits = [];
+    const filteredSkills = [];
+    for (const phase of phaseKeys) {
+        const categories = phaseCategories[phase];
+        // Get choices for this phase
+        const phaseChoices = categories
+            .map(cat => lifepathSelection[cat])
+            .filter(Boolean);
+        
+        // Collect all traits from this phase's choices
+        const phaseTraits = [];
+        const phaseSkills = [];
+        for (const choice of phaseChoices) {
+            if (choice.effects?.mechanical_traits) {
+                phaseTraits.push(...choice.effects.mechanical_traits.map(t => ({
+                    ...t,
+                    _phase: phase,
+                    _source: choice.label
+                })));
+            }
+            if (choice.effects?.skills) {
+                phaseSkills.push(...choice.effects.skills.map(s => ({
+                    ...s,
+                    _phase: phase,
+                    _source: choice.label
+                })));
+            }
+        }
+        
+        // Keep only one random trait from this phase
+        if (phaseTraits.length > 0) {
+            const randomTrait = phaseTraits[Math.floor(Math.random() * phaseTraits.length)];
+            filteredTraits.push(randomTrait);
+        }
+        // Keep only one random skill from this phase
+        if (phaseSkills.length > 0) {
+            const randomSkill = phaseSkills[Math.floor(Math.random() * phaseSkills.length)];
+            filteredSkills.push(randomSkill);
+        }
+    }
+    
+    // Replace accumulated traits and skills with filtered ones
+    lifepathEffects.all_traits = filteredTraits;
+    lifepathEffects.skills = filteredSkills;
+
     // 5. Roll Base Attributes
     const baseStats = {
         str: roll4d6(),
@@ -330,3 +385,8 @@ export const generateArenaDecor = (arenaConfig) => {
         };
     });
 };
+export const getArenaConfig = () => ({
+    blocksX: 20,
+    blocksY: 20,
+    cellSize: 40
+});

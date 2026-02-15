@@ -8,13 +8,21 @@ import {
     rollAttackD100,
     calculateDamageD100,
     calculateCombatantAC,
-    convertACtoD100,
     formatCombatLogD100
 } from '../utils/combat-d100';
 import { getModifier, getProficiencyBonus } from '../lore/rules';
+import { getPartyAverageLevel, scaleEnemyForPartyLevel } from '../utils/combat-progression';
 import TurnTracker from './TurnTracker';
 import { resolveCharacterAbilities } from '../utils/characterUtils';
 import './CombatManager.css';
+
+const COMBAT_DEBUG = typeof window !== 'undefined' && window.localStorage?.getItem('combat_debug') === '1';
+const debugLog = (...args) => {
+    if (COMBAT_DEBUG) console.log(...args);
+};
+const debugWarn = (...args) => {
+    if (COMBAT_DEBUG) console.warn(...args);
+};
 
 const DamagePopup = ({ amount, onDone }) => {
     useEffect(() => {
@@ -43,6 +51,8 @@ const DamagePopup = ({ amount, onDone }) => {
 
 
 const RemoteActionOverlay = ({ action, onComplete }) => {
+    const remoteDiceRolls = useMemo(() => [{ type: 'd100', value: action?.roll }], [action?.roll]);
+
     useEffect(() => {
         const timer = setTimeout(onComplete, 4500);
         return () => clearTimeout(timer);
@@ -59,11 +69,11 @@ const RemoteActionOverlay = ({ action, onComplete }) => {
         }}>
             {/* Multi-Dice Physics Overlay */}
             <DiceOverlay
-                diceRolls={[{ type: 'd100', value: action.roll }]}
+                diceRolls={remoteDiceRolls}
                 onAllComplete={() => { }}
             />
 
-            <div style={{
+                <div style={{
                 position: 'relative',
                 width: '100%',
                 display: 'flex',
@@ -112,9 +122,9 @@ const RemoteActionOverlay = ({ action, onComplete }) => {
                         </div>
                     )}
                 </div>
+                </div>
             </div>
-        </div>
-    );
+        );
 };
 
 export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeType: 'STANDARD' }, players, currentUserId, initialEnemies, syncedCombatState, onUpdateCombatState, onCombatEnd, onLogAction, onHPChange, onResourceChange, onConsumeItem, onGameOver, onRewards, onVFX, onSFX, sessionId }) => {
@@ -127,7 +137,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         // Method 2: Check if currentUserId matches any player's id
         found = players.find(p => p.id === currentUserId);
         return found;
-    }, [players?.length, currentUserId]); // Only recompute when player count or userId changes
+    }, [players, currentUserId]); // Track full players array for deep state updates
 
     // Track if already logged to prevent duplicate logs
     const hasLoggedInitRef = useRef(false);
@@ -137,17 +147,20 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         if (hasLoggedInitRef.current) return;
         hasLoggedInitRef.current = true;
 
-        console.log(`[CombatManager] ====== COMBAT INIT ======`);
-        console.log(`[CombatManager] currentUserId: ${currentUserId}`);
-        console.log(`[CombatManager] players (${players?.length}):`, players?.map(p => ({ name: p.name, user_id: p.user_id, id: p.id })));
-        console.log(`[CombatManager] myPlayer found: ${myPlayer?.name} (user_id: ${myPlayer?.user_id}, id: ${myPlayer?.id})`);
+        debugLog(`[CombatManager] ====== COMBAT INIT ======`);
+        debugLog(`[CombatManager] currentUserId: ${currentUserId}`);
+        debugLog(`[CombatManager] players (${players?.length}):`, players?.map(p => ({ name: p.name, user_id: p.user_id, id: p.id })));
+        debugLog(`[CombatManager] myPlayer found: ${myPlayer?.name} (user_id: ${myPlayer?.user_id}, id: ${myPlayer?.id})`);
 
-        CombatLogger.log('INIT', 'Combat Manager Initialized', {
-            currentUserId,
-            playersCount: players?.length,
-            players: players?.map(p => ({ name: p.name, user_id: p.user_id, id: p.id })),
-            myPlayer: myPlayer ? { name: myPlayer.name, user_id: myPlayer.user_id, id: myPlayer.id } : null
-        });
+        if (COMBAT_DEBUG) {
+            CombatLogger.log('INIT', 'Combat Manager Initialized', {
+                currentUserId,
+                playersCount: players?.length,
+                players: players?.map(p => ({ name: p.name, user_id: p.user_id, id: p.id })),
+                myPlayer: myPlayer ? { name: myPlayer.name, user_id: myPlayer.user_id, id: myPlayer.id } : null
+            });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Empty deps = run once on mount
 
     const [combatants, setCombatants] = useState([]);
@@ -160,6 +173,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
 
     // Track if AI has already played this turn to prevent duplicate actions
     const aiTurnExecutedRef = useRef({ turnIndex: -1, actorId: null });
+    const resolvedRollsRef = useRef(new Set());
 
     // Track last attack to prevent rapid duplicates
     const lastAttackRef = useRef({ timestamp: 0, actorId: null, targetId: null });
@@ -171,18 +185,22 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
     }, []);
 
     const [animatingId, setAnimatingId] = useState(null);
-    const [shakingId, setShakingId] = useState(null);
+    const [, setShakingId] = useState(null);
     const [damagePopups, setDamagePopups] = useState([]);
     const [rollOverlay, setRollOverlay] = useState(null);
     const [cooldowns, setCooldowns] = useState({});
     const [logs, setLogs] = useState([]);
-    const [hoveredTile, setHoveredTile] = useState(null);
-    const [plannedPath, setPlannedPath] = useState([]);
-    const [isPathPlanning, setIsPathPlanning] = useState(false);
     const [decor, setDecor] = useState([]);
     const [remoteAction, setRemoteAction] = useState(null); // { attackerName, abilityName, roll, modifier, targetName, threshold, success, damage, id }
-    const [movingUnit, setMovingUnit] = useState(null); // { id, path: [{x, y}], currentStep: 0 }
-    const [attackAnimation, setAttackAnimation] = useState(null); // { attackerId, targetId, type, diceRoll }
+    const [movingUnit, setMovingUnit] = useState(null); // { id, animX, animY }
+
+    // NEW UI & PLANNING STATE
+    const [arenaScale, setArenaScale] = useState(1);
+    const [isPathPlanning, setIsPathPlanning] = useState(false);
+    const [plannedPath, setPlannedPath] = useState([]); // Array of [x, y] coordinates
+    const [hoveredTile, setHoveredTile] = useState(null);
+    const [characterMenuOpen, setCharacterMenuOpen] = useState(false); // Toggle diegetic UI on character click
+    const [hoveredAbility, setHoveredAbility] = useState(null); // Track hovered ability for tooltip
     const logEndRef = useRef(null);
     const lastSyncRef = useRef(0);
     const lastActionIdRef = useRef(null);
@@ -207,6 +225,15 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
             }, (payload) => {
                 if (payload.new && payload.new.value && payload.new.value.active) {
                     const newState = payload.new.value;
+                    if (movingUnit) {
+                        // Ignore external snapshots while a local movement animation is running.
+                        return;
+                    }
+
+                    if (!newState.combatants || newState.combatants.length === 0) {
+                        return;
+                    }
+
                     // Avoid applying our own updates (check timestamp)
                     if (newState.updatedAt && newState.updatedAt > lastSyncRef.current) {
                         lastSyncRef.current = newState.updatedAt;
@@ -232,12 +259,12 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [sessionId, combatState, logs.length]);
+    }, [sessionId, combatState, logs.length, movingUnit]);
 
     // CLEANUP FIX: Clear all timeouts on unmount
     useEffect(() => {
         return () => {
-            console.log('[CombatManager] Cleanup: Clearing all pending timeouts');
+            debugLog('[CombatManager] Cleanup: Clearing all pending timeouts');
             timeoutsRef.current.forEach(clearTimeout);
             timeoutsRef.current = [];
             if (animationFrameRef.current) {
@@ -257,7 +284,10 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
 
     // SYNC: Update local state from Shared State
     useEffect(() => {
-        console.log('[SYNC] useEffect triggered', {
+        // CRITICAL FIX: Ignore synced state if we are in local Debug Mode (initialEnemies set)
+        if (initialEnemies && initialEnemies.length > 0) return;
+
+        debugLog('[SYNC] useEffect triggered', {
             updatedAt: syncedCombatState?.updatedAt,
             lastSync: lastSyncRef.current,
             shouldSkip: syncedCombatState?.updatedAt && syncedCombatState?.updatedAt <= lastSyncRef.current,
@@ -268,32 +298,71 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         if (syncedCombatState && syncedCombatState.active) {
             // CRITICAL FIX: Only apply if this is a newer update than what we already have
             if (syncedCombatState.updatedAt && syncedCombatState.updatedAt <= lastSyncRef.current) {
-                console.log('[SYNC] Skipping - already have this update');
+                debugLog('[SYNC] Skipping - already have this update');
                 return; // Skip - we already have this or a newer update
             }
 
             // CRITICAL FIX: Block DB sync during active animations to prevent position rollback
             if (movingUnit) {
-                console.log('[SYNC] BLOCKED - Animation in progress, will sync after completion');
+                debugLog('[SYNC] BLOCKED - Animation in progress, will sync after completion');
                 return; // Skip sync while unit is animating to avoid overwriting intermediate positions
             }
 
             // CRITICAL PROTECTION: If we receive an empty combatants list, IGNORE it (it's likely a blink during update)
             if (!syncedCombatState.combatants || syncedCombatState.combatants.length === 0) {
-                console.warn('[SYNC] Received empty combatants list - IGNORING to prevent turn skip/crash');
+                debugWarn('[SYNC] Received empty combatants list - IGNORING to prevent turn skip/crash');
                 return;
             }
 
-            console.log(`[Combat Sync] ====== RECEIVING SYNCED STATE ======`);
-            console.log(`[Combat Sync] Combatants count: ${syncedCombatState.combatants?.length}`);
+            debugLog(`[Combat Sync] ====== RECEIVING SYNCED STATE ======`);
+            debugLog(`[Combat Sync] Combatants count: ${syncedCombatState.combatants?.length}`);
 
-            // ... (rest of the logging)
             lastSyncRef.current = syncedCombatState.updatedAt || Date.now();
 
-            // Use functional update to ensure we don't overwrite if state is already further ahead
             setCombatants(prev => {
-                // If local state has moved ahead significantly (e.g. animation finished but not synced yet), be careful
-                return syncedCombatState.combatants;
+                const syncedCombatants = syncedCombatState.combatants || [];
+
+                // 1. Identify our local player (critical to preserve)
+                let localPlayer = prev.find(p => !p.isEnemy && p.user_id === currentUserId);
+
+                if (!localPlayer && myPlayer) {
+                    localPlayer = {
+                        ...myPlayer,
+                        isEnemy: false,
+                        hp: myPlayer.hp ?? myPlayer.stats?.hp ?? 100,
+                        maxHp: myPlayer.maxHp ?? myPlayer.stats?.maxHp ?? 100,
+                        resource: myPlayer.resource ?? myPlayer.stats?.resource ?? 100,
+                        maxResource: myPlayer.maxResource ?? myPlayer.stats?.maxResource ?? 100,
+                        posX: myPlayer.posX ?? 0,
+                        posY: myPlayer.posY ?? 0,
+                        facing: myPlayer.facing || 'SOUTH',
+                        currentPM: myPlayer.currentPM ?? myPlayer.pm ?? 5,
+                        maxPM: myPlayer.maxPM ?? myPlayer.pm ?? 5,
+                        hasMoved: myPlayer.hasMoved ?? false,
+                        hasActed: myPlayer.hasActed ?? false,
+                        initiative: myPlayer.initiative ?? (Math.floor(Math.random() * 20) + (myPlayer.stats?.dexterity || 10))
+                    };
+                }
+
+                // 2. Merge logic: preservation is key
+                const updatedCombatants = syncedCombatants.map(syncedP => {
+                    const localP = prev.find(p => p.id === syncedP.id);
+                    if (!localP) return syncedP;
+                    return {
+                        ...localP,
+                        ...syncedP,
+                        hp: syncedP.hp ?? localP.hp,
+                        maxHp: syncedP.maxHp ?? localP.maxHp,
+                    };
+                });
+
+                // 3. Ensure the local player is ALWAYS present even if missing from sync
+                if (localPlayer && !updatedCombatants.some(p => p.id === localPlayer.id)) {
+                    debugWarn('[SYNC] Local player missing from sync! Re-inserting.');
+                    updatedCombatants.push(localPlayer);
+                }
+
+                return updatedCombatants.sort((a, b) => (b.initiative || 0) - (a.initiative || 0));
             });
 
             setRound(syncedCombatState.round || 1);
@@ -301,7 +370,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
             // Only update turn index if it changed - prevents UI flickers
             setCurrentTurnIndex(prev => {
                 if (syncedCombatState.turnIndex !== undefined && syncedCombatState.turnIndex !== prev) {
-                    console.log(`[Combat Sync] Turn changing: ${prev} -> ${syncedCombatState.turnIndex}`);
+                    debugLog(`[Combat Sync] Turn changing: ${prev} -> ${syncedCombatState.turnIndex}`);
                     return syncedCombatState.turnIndex;
                 }
                 return prev;
@@ -315,12 +384,6 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                 const action = syncedCombatState.lastAction;
                 lastActionIdRef.current = action.id;
 
-                // Only show overlay if we didn't do it ourselves (optional, maybe we want to see it too?)
-                // For now, let's show it to everyone for consistency, or skip if it's the local player who JUST acted
-                // But checking user_id might be loop-prone. Let's compare timestamp or just show it.
-                // If it's the local player, they already saw the "RollOverlay". 
-                // We should add a flag 'sourceUserId' to action to filter.
-
                 if (action.sourceUserId !== currentUserId) {
                     setRemoteAction(action);
 
@@ -328,7 +391,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                     if (action.success) {
                         if (onSFX) setTimeout(() => onSFX('damage'), 800);
                         if (onVFX) onVFX('blood',
-                            window.innerWidth / 2, // Rough fallback - ideally we'd find the target element
+                            window.innerWidth / 2,
                             window.innerHeight / 2,
                             '#ff0000'
                         );
@@ -341,11 +404,48 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [syncedCombatState?.updatedAt, currentUserId, movingUnit]); // Re-check sync when animation completes
 
+    // ARENA CENTERING & SCALE EFFECT
+    useEffect(() => {
+        const updateScale = () => {
+            const container = document.querySelector('.combat-arena-container');
+            const arena = document.querySelector('.combat-arena');
+            if (container && arena) {
+                const padding = 120;
+                const vh = window.innerHeight * 0.9;
+                const vw = window.innerWidth * 0.95;
+
+                const scaleX = (vw - padding) / arena.offsetWidth;
+                const scaleY = (vh - padding) / arena.offsetHeight;
+                const scale = Math.min(scaleX, scaleY, 1.0);
+                setArenaScale(scale);
+            }
+        };
+
+        updateScale();
+        window.addEventListener('resize', updateScale);
+        const timer = setTimeout(updateScale, 500); // Initial delay to ensure DOM is ready
+        return () => {
+            window.removeEventListener('resize', updateScale);
+            clearTimeout(timer);
+        };
+    }, []);
+
     const getPosPercent = (pos, isY = false) => {
         const blocks = isY ? arenaConfig.blocksY : arenaConfig.blocksX;
         const offset = Math.floor(blocks / 2);
         return ((pos + 0.5 + offset) / blocks) * 100;
     };
+
+    // Handle ESC key to cancel selected action
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape' && selectedAction) {
+                setSelectedAction(null);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [selectedAction]);
 
     // SYNC: Only initialize locally if NO synced state is provided (Fallback/SinglePlayer)
     useEffect(() => {
@@ -383,7 +483,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
             };
 
             const playerCombatants = players.map(p => {
-                console.log(`[Combat Init] Loading player for combat: ${p.name}, user_id: ${p.user_id}, id: ${p.id}`);
+                debugLog(`[Combat Init] Loading player for combat: ${p.name}, user_id: ${p.user_id}, id: ${p.id}`);
                 const stats = p.stats || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 };
                 const dexMod = Math.floor((stats.dex - 10) / 2);
                 const charClass = p.class?.split(' ')[0] || "Guerrier";
@@ -528,37 +628,20 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                 };
             });
 
+            const partyLevel = getPartyAverageLevel(playerCombatants);
+
             const enemiesToUse = (initialEnemies && initialEnemies.length > 0) ? initialEnemies.map((e, idx) => {
                 const pos = getUniquePos(true);
                 const baseEnemy = BESTIARY[e.name.split(' ')[0]] || BESTIARY[e.class] || {};
 
-                // ========== CONVERSION D100 ENNEMIS ==========
-                // Si AC ancien (10-22), convertir en d100 (20-60)
-                let enemyAC = e.ac || baseEnemy.stats?.ac || 12;
-                if (enemyAC < 20) {
-                    enemyAC = convertACtoD100(enemyAC);
-                }
-
-                // ATK : si ancien (+2-6), multiplier ×2.5
-                let enemyATK = e.atk || baseEnemy.stats?.atk || 5;
-                if (enemyATK < 10) {
-                    enemyATK = Math.round(enemyATK * 2.5);
-                }
-
-                // HP : si ancien (10-50), multiplier ×5
-                let enemyHP = e.hp || baseEnemy.stats?.hp || 20;
-                if (enemyHP < 100) {
-                    enemyHP = enemyHP * 5;
-                }
-
-                return {
+                const baseEnemyCombatant = {
                     id: e.id || `ai-enemy-${idx}`,
                     name: e.name || "Ennemi Inconnu",
                     class: e.class || "Monstre",
-                    hp: enemyHP,
-                    maxHp: e.maxHp ? (e.maxHp < 100 ? e.maxHp * 5 : e.maxHp) : enemyHP,
-                    atk: enemyATK,
-                    ac: enemyAC,
+                    hp: e.hp || baseEnemy.stats?.hp || 20,
+                    maxHp: e.maxHp || e.max_hp || e.hp || baseEnemy.stats?.hp || 20,
+                    atk: e.atk || baseEnemy.stats?.atk || 5,
+                    ac: e.ac || baseEnemy.stats?.ac || 12,
                     // Stats par défaut (si bestiaire pas encore converti)
                     str: e.str || baseEnemy.stats?.str || 14,
                     dex: e.dex || baseEnemy.stats?.dex || 12,
@@ -584,6 +667,8 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                     hasActed: false,
                     portrait_url: (e.portrait && e.portrait.startsWith('http')) ? e.portrait : (baseEnemy.portrait_url || `https://loremflickr.com/320/450/fantasy,monster,${e.name?.split(' ')[0] || 'creature'}/all`)
                 };
+
+                return scaleEnemyForPartyLevel(baseEnemyCombatant, partyLevel);
             }) : [
                 // Ennemis par défaut (DÉJÀ CONVERTIS D100)
                 {
@@ -619,10 +704,10 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
             const all = [...playerCombatants, ...enemiesToUse];
             const sorted = all.sort((a, b) => b.initiative - a.initiative);
 
-            console.log(`[Combat Init] ====== LOCAL INITIALIZATION (HOST) ======`);
-            console.log(`[Combat Init] Total combatants: ${sorted.length}`);
+            debugLog(`[Combat Init] ====== LOCAL INITIALIZATION (HOST) ======`);
+            debugLog(`[Combat Init] Total combatants: ${sorted.length}`);
             sorted.forEach((c, i) => {
-                console.log(`[Combat Init] [${i}] name: ${c.name}, isEnemy: ${c.isEnemy}, user_id: ${c.user_id}, initiative: ${c.initiative}`);
+                debugLog(`[Combat Init] [${i}] name: ${c.name}, isEnemy: ${c.isEnemy}, user_id: ${c.user_id}, initiative: ${c.initiative}`);
             });
 
             setCombatants(sorted);
@@ -630,9 +715,9 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
 
             // CRITICAL: Sync initial state to other players
             if (onUpdateCombatState) {
-                console.log(`[Combat Init] SENDING initial sync to other players`);
+                debugLog(`[Combat Init] SENDING initial sync to other players`);
                 sorted.forEach((c, i) => {
-                    console.log(`[Combat Init SEND] [${i}] name: ${c.name}, isEnemy: ${c.isEnemy}, user_id: ${c.user_id}`);
+                    debugLog(`[Combat Init SEND] [${i}] name: ${c.name}, isEnemy: ${c.isEnemy}, user_id: ${c.user_id}`);
                 });
                 onUpdateCombatState({
                     combatants: sorted,
@@ -674,7 +759,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
     useEffect(() => {
         const timer = setTimeout(() => {
             setIsInitializing(false);
-            console.log("[CombatManager] Initialization period ended.");
+            debugLog('[CombatManager] Initialization period ended.');
         }, 2000);
         return () => clearTimeout(timer);
     }, []);
@@ -687,10 +772,12 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
             const enemiesAlive = combatants.filter(u => u.isEnemy && u.hp > 0);
             const playersAlive = combatants.filter(u => !u.isEnemy && u.hp > 0);
 
-            console.log(`[Combat Check] Enemies alive: ${enemiesAlive.length}, Players alive: ${playersAlive.length}`);
-            combatants.forEach(c => {
-                console.log(` - Combatant: ${c.name} (isEnemy: ${c.isEnemy}, hp: ${c.hp}/${c.maxHp}, user_id: ${c.user_id})`);
-            });
+            debugLog(`[Combat Check] Enemies alive: ${enemiesAlive.length}, Players alive: ${playersAlive.length}`);
+            if (COMBAT_DEBUG) {
+                combatants.forEach(c => {
+                    debugLog(` - Combatant: ${c.name} (isEnemy: ${c.isEnemy}, hp: ${c.hp}/${c.maxHp}, user_id: ${c.user_id})`);
+                });
+            }
 
             if (enemiesAlive.length === 0) {
                 setCombatState('finished');
@@ -704,7 +791,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                 }, 5000);
                 return () => clearTimeout(timer);
             } else if (playersAlive.length === 0) {
-                console.warn("[CombatManager] GAME OVER TRIGGERED: No players alive.");
+                debugWarn('[CombatManager] GAME OVER TRIGGERED: No players alive.');
                 setCombatState('finished');
                 onGameOver();
             }
@@ -728,33 +815,63 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
     // Log only when turn actually changes (not on every render)
     useEffect(() => {
         if (currentActor) {
-            console.log(`[Combat Turn] ====== TURN CHECK ======`);
-            console.log(`[Combat Turn] currentActor: ${currentActor.name}, user_id: ${currentActor.user_id}, id: ${currentActor.id}, isEnemy: ${currentActor.isEnemy}`);
-            console.log(`[Combat Turn] currentUserId: ${currentUserId}`);
-            console.log(`[Combat Turn] myPlayer: ${myPlayer?.name}, user_id: ${myPlayer?.user_id}, id: ${myPlayer?.id}`);
-            console.log(`[Combat Turn] isLocalPlayerTurn: ${isLocalPlayerTurn}`);
+            debugLog(`[Combat Turn] ====== TURN CHECK ======`);
+            debugLog(`[Combat Turn] currentActor: ${currentActor.name}, user_id: ${currentActor.user_id}, id: ${currentActor.id}, isEnemy: ${currentActor.isEnemy}`);
+            debugLog(`[Combat Turn] currentUserId: ${currentUserId}`);
+            debugLog(`[Combat Turn] myPlayer: ${myPlayer?.name}, user_id: ${myPlayer?.user_id}, id: ${myPlayer?.id}`);
+            debugLog(`[Combat Turn] isLocalPlayerTurn: ${isLocalPlayerTurn}`);
 
-            CombatLogger.log('TURN', 'Turn Check', {
-                currentActor: { name: currentActor.name, user_id: currentActor.user_id, id: currentActor.id, isEnemy: currentActor.isEnemy },
-                currentUserId,
-                myPlayer: myPlayer ? { name: myPlayer.name, user_id: myPlayer.user_id, id: myPlayer.id } : null,
-                isLocalPlayerTurn
-            });
+            if (COMBAT_DEBUG) {
+                CombatLogger.log('TURN', 'Turn Check', {
+                    currentActor: { name: currentActor.name, user_id: currentActor.user_id, id: currentActor.id, isEnemy: currentActor.isEnemy },
+                    currentUserId,
+                    myPlayer: myPlayer ? { name: myPlayer.name, user_id: myPlayer.user_id, id: myPlayer.id } : null,
+                    isLocalPlayerTurn
+                });
+            }
         }
-    }, [currentTurnIndex, isLocalPlayerTurn]); // Only log when turn index or decision changes
+    }, [currentTurnIndex, isLocalPlayerTurn, currentActor, currentUserId, myPlayer]); // Only log when turn index or decision changes
 
     // MEMOIZED to prevent unnecessary re-calculations
     const canMove = useMemo(() =>
         isLocalPlayerTurn && currentActor && currentActor.currentPM > 0 && combatState === 'active',
-        [isLocalPlayerTurn, currentActor?.currentPM, combatState]
+        [isLocalPlayerTurn, currentActor, combatState]
     );
 
     const canAct = useMemo(() =>
         isLocalPlayerTurn && currentActor && !currentActor.hasActed && combatState === 'active',
-        [isLocalPlayerTurn, currentActor?.hasActed, combatState]
+        [isLocalPlayerTurn, currentActor, combatState]
     );
 
-    console.log(`[Combat UI] canMove: ${canMove}, canAct: ${canAct}, currentPM: ${currentActor?.currentPM}, combatState: ${combatState}`);
+    const resourceDisplayName = useMemo(() => {
+        const rawName = (currentActor?.resourceName || '').toLowerCase();
+        if (rawName.includes('mana')) return 'Mana';
+        if (rawName.includes('endu') || rawName.includes('energ') || rawName.includes('rage') || rawName.includes('stamina')) {
+            return 'Endurance';
+        }
+        const className = (currentActor?.class || '').toLowerCase();
+        if (className.includes('mage') || className.includes('sorcier') || className.includes('prêtre')) return 'Mana';
+        return 'Endurance';
+    }, [currentActor?.resourceName, currentActor?.class]);
+
+    const selectedActionCost = useMemo(() => {
+        if (!selectedAction) return 0;
+        return selectedAction.cost !== undefined ? selectedAction.cost : (selectedAction.name === 'Attaque' ? 0 : 20);
+    }, [selectedAction]);
+
+    const actorAbilities = useMemo(() => {
+        if (!currentActor) return [];
+        return [
+            { name: 'Attaque', desc: 'Attaque de base rapide', range: 2 },
+            { name: 'Se déplacer', desc: `Se déplacer de ${currentActor.currentPM} cases maximum`, range: currentActor.currentPM, isMovement: true },
+            ...resolveCharacterAbilities(currentActor)
+        ];
+    }, [currentActor]);
+
+    const projectedResourceAfterCast = useMemo(() => {
+        if (!currentActor) return 0;
+        return Math.max(0, currentActor.resource - selectedActionCost);
+    }, [currentActor, selectedActionCost]);
 
     const isTileValid = (x, y) => {
         const boundsX = Math.floor(arenaConfig.blocksX / 2);
@@ -892,11 +1009,62 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         }
     };
 
-    const executeMove = (direction) => {
-        // Keeping for generic usage or legacy, but will be bypassed by click-to-move
+    const executeMove = (direction, actorOverride = null) => {
+        // Used by AI single-step movement (legacy keyboard path for player can also use this safely)
         const currentCombatants = combatantsRef.current;
-        const freshActor = currentCombatants.find(u => u.id === currentActor.id);
-        if (!freshActor || !canMove || freshActor.currentPM <= 0) return;
+        const actorId = actorOverride?.id || currentActor?.id;
+        if (!actorId) return false;
+
+        const freshActor = currentCombatants.find(u => u.id === actorId);
+        if (!freshActor || freshActor.currentPM <= 0 || freshActor.hp <= 0) return false;
+
+        const deltas = {
+            right: { x: 1, y: 0, facing: 'EAST' },
+            left: { x: -1, y: 0, facing: 'WEST' },
+            down: { x: 0, y: 1, facing: 'SOUTH' },
+            up: { x: 0, y: -1, facing: 'NORTH' }
+        };
+
+        const delta = deltas[direction];
+        if (!delta) return false;
+
+        const nextX = freshActor.posX + delta.x;
+        const nextY = freshActor.posY + delta.y;
+
+        if (!isTileValid(nextX, nextY) || isTileOccupied(nextX, nextY, freshActor.id)) {
+            return false;
+        }
+
+        const updatedCombatants = currentCombatants.map(u =>
+            u.id === freshActor.id
+                ? {
+                    ...u,
+                    posX: nextX,
+                    posY: nextY,
+                    facing: delta.facing,
+                    currentPM: Math.max(0, (u.currentPM || 0) - 1),
+                    hasMoved: true
+                }
+                : u
+        );
+
+        setCombatants(updatedCombatants);
+
+        if (onUpdateCombatState) {
+            const syncTs = Date.now();
+            lastSyncRef.current = syncTs;
+            onUpdateCombatState({
+                combatants: updatedCombatants,
+                turnIndex: currentTurnIndex,
+                round,
+                active: true,
+                logs,
+                updatedAt: syncTs
+            });
+        }
+
+        animateMovement(freshActor.id, freshActor.posX, freshActor.posY, nextX, nextY);
+        return true;
     };
 
 
@@ -954,7 +1122,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
             lastAttackRef.current.actorId === freshActor.id &&
             lastAttackRef.current.targetId === target.id &&
             now - lastAttackRef.current.timestamp < 500) {
-            console.log('[executeAttack] Blocked duplicate attack from', freshActor.name, 'to', target.name);
+            debugLog('[executeAttack] Blocked duplicate attack from', freshActor.name, 'to', target.name);
             return;
         }
         lastAttackRef.current = { timestamp: now, actorId: freshActor.id, targetId: target.id };
@@ -1003,11 +1171,12 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         const { bonus: tacticalBonus, reason: tacticalReason } = getTacticalModifier(freshActor, target);
 
         // Jet d'attaque d100
-        const rollData = rollAttackD100(freshActor, target, actorLevel, tacticalBonus);
-        const { roll, modifier, total, success, isCritical } = rollData;
+        const rollData = rollAttackD100(freshActor, target, actorLevel, tacticalBonus, action);
+        const { roll, modifier, success, isCritical } = rollData;
 
         // Afficher overlay avec résultat
         setRollOverlay({
+            rollId: crypto.randomUUID(),
             roll,
             modifier,
             tacticalReason,
@@ -1079,8 +1248,17 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
     };
 
     const handleRollComplete = (rollData) => {
-        const { roll, modifier, threshold, success, targetId, action } = rollData;
-        const target = combatants.find(u => u.id === targetId);
+        const { rollId, roll, modifier, threshold, success, targetId, action } = rollData;
+        if (rollId && resolvedRollsRef.current.has(rollId)) {
+            return;
+        }
+        if (rollId) {
+            resolvedRollsRef.current.add(rollId);
+        }
+
+        const liveCombatants = combatantsRef.current;
+        const target = liveCombatants.find(u => u.id === targetId);
+        const liveActor = liveCombatants.find(u => u.id === currentActor?.id) || currentActor;
         const el = document.getElementById(`unit-${targetId}`);
         const rect = el ? el.getBoundingClientRect() : { x: window.innerWidth / 2, y: window.innerHeight / 2, width: 0, height: 0 };
         const cx = rect.x + rect.width / 2;
@@ -1090,14 +1268,14 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
             setRollOverlay(null);
             if (success && target) {
                 // ========== SYSTÈME D100 - CALCUL DÉGÂTS ==========
-                const damageData = calculateDamageD100(currentActor, action, rollData.isCritical);
+                const damageData = calculateDamageD100(liveActor, action, rollData.isCritical);
                 const damage = damageData.damage;
 
                 // Log formaté d100
-                const combatLog = formatCombatLogD100(currentActor, target, rollData, damageData);
+                const combatLog = formatCombatLogD100(liveActor, target, rollData, damageData);
                 addLog({ role: 'system', content: combatLog });
 
-                setAnimatingId(currentActor.id);
+                setAnimatingId(liveActor.id);
                 if (onVFX) onVFX(action.name === 'Attaque' ? 'blood' : 'magic', cx, cy, action.name === 'Attaque' ? '#ff0000' : 'var(--aether-blue)');
 
                 setTimeout(() => {
@@ -1111,14 +1289,15 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                     if (!target.isEnemy && onHPChange) onHPChange(target.id, newHp);
                     if (newHp === 0 && target.hp > 0) addLog({ role: 'system', content: `💀 **${target.name}** s'effondre, terrassé !` });
 
-                    const newCombatants = combatants.map(u => u.id === target.id ? { ...u, hp: newHp } : u);
+                    const freshCombatants = combatantsRef.current;
+                    const newCombatants = freshCombatants.map(u => u.id === target.id ? { ...u, hp: newHp } : u);
                     setCombatants(newCombatants);
 
                     // PREPARE SYNCED ACTION
                     const actionEvent = {
                         id: crypto.randomUUID(),
                         sourceUserId: currentUserId,
-                        attackerName: currentActor.name,
+                        attackerName: liveActor.name,
                         targetName: target.name,
                         abilityName: action.name,
                         roll,
@@ -1144,7 +1323,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                         setCooldowns(prev => ({ ...prev, [currentActor.id]: { ...(prev[currentActor.id] || {}), [action.name]: action.cooldown } }));
                     }
 
-                    addLog({ role: 'system', content: `🎲 **${roll}**(+${modifier}) vs **${threshold}** AC | 💥 **${currentActor.name}** touche **${target.name}** pour ${damage} dégâts !` });
+                    addLog({ role: 'system', content: `🎲 **${roll}**(+${modifier}) vs **${threshold}** AC | 💥 **${liveActor.name}** touche **${target.name}** pour ${damage} dégâts !` });
                     const timeoutId = setTimeout(() => {
                         setAnimatingId(null); setShakingId(null);
                         // CRITICAL FIX: Finish turn for ALL actors after attack, not just enemies
@@ -1170,12 +1349,12 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                     timestamp: Date.now()
                 };
 
-                addLog({ role: 'system', content: `🎲 **${roll}**(+${modifier}) vs **${threshold}** AC | 💨 **${currentActor.name}** rate son attaque !` });
+                addLog({ role: 'system', content: `🎲 **${roll}**(+${modifier}) vs **${threshold}** AC | 💨 **${liveActor.name}** rate son attaque !` });
 
                 // Sync the miss
                 lastSyncRef.current = Date.now();
                 if (onUpdateCombatState) onUpdateCombatState({
-                    combatants, // No HP change
+                    combatants: combatantsRef.current, // No HP change
                     turnIndex: currentTurnIndex,
                     round,
                     active: true,
@@ -1194,7 +1373,8 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         setAnimatingId(null); setShakingId(null);
 
         // CRITICAL FIX: Mark current actor as having acted to prevent infinite replay
-        const updatedCombatants = combatants.map(u =>
+        const currentCombatants = combatantsRef.current;
+        const updatedCombatants = currentCombatants.map(u =>
             u.id === currentActor?.id ? { ...u, hasActed: true } : u
         );
         setCombatants(updatedCombatants);
@@ -1297,7 +1477,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
             // PROTECTION: Empêcher l'IA de rejouer si elle a déjà joué ce tour
             if (aiTurnExecutedRef.current.turnIndex === currentTurnIndex &&
                 aiTurnExecutedRef.current.actorId === currentActor.id) {
-                console.log('[AI] Already executed turn for', currentActor.name, 'at turn', currentTurnIndex);
+                debugLog('[AI] Already executed turn for', currentActor.name, 'at turn', currentTurnIndex);
                 return;
             }
 
@@ -1318,76 +1498,63 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                     return;
                 }
 
-                // AI Always knows player position: target the closest one
-                const targetsWithDist = playerTargets.map(p => ({
-                    unit: p,
-                    dist: Math.max(Math.abs(freshActor.posX - p.posX), Math.abs(freshActor.posY - p.posY))
-                })).sort((a, b) => a.dist - b.dist);
-
-                const primaryTarget = targetsWithDist[0].unit;
-
                 // --- STRATEGY: MOVEMENT ---
-                // AI moves ONE tile per turn towards target (more tactical & visible)
-                let enemyCanMove = freshActor.currentPM > 0;
-                if (enemyCanMove) {
-                    // Decide target destination
-                    let targetX = primaryTarget.posX;
-                    let targetY = primaryTarget.posY;
+                // Both ranged and melee close distance until at least one action is in range.
+                if (freshActor.currentPM > 0) {
+                    const baseActions = freshActor.actions || [{ name: 'Attaque', range: 1.5, cost: 0 }];
+                    const affordableActions = baseActions.filter(a => (a.cost || 0) <= freshActor.resource);
+                    const maxAttackRange = (affordableActions.length > 0
+                        ? Math.max(...affordableActions.map(a => a.range || 1.5))
+                        : 1.5);
 
-                    // If RANGED, try to stay away but in range
-                    if (freshActor.behavior_type === 'RANGED') {
-                        const preferredRange = 6;
-                        const dist = targetsWithDist[0].dist;
-                        if (dist < preferredRange) {
-                            // Too close! Try to move away from primary target
-                            const dx = freshActor.posX - primaryTarget.posX;
-                            const dy = freshActor.posY - primaryTarget.posY;
-                            const norm = Math.max(Math.abs(dx), Math.abs(dy)) || 1;
-                            targetX = freshActor.posX + Math.round((dx / norm) * 3);
-                            targetY = freshActor.posY + Math.round((dy / norm) * 3);
-                        } else if (dist > 8) {
-                            // Too far, close in slightly
-                            const dx = primaryTarget.posX - freshActor.posX;
-                            const dy = primaryTarget.posY - freshActor.posY;
-                            const norm = Math.max(Math.abs(dx), Math.abs(dy)) || 1;
-                            targetX = freshActor.posX + Math.round((dx / norm) * 2);
-                            targetY = freshActor.posY + Math.round((dy / norm) * 2);
-                        } else {
-                            // In sweet spot
-                            targetX = freshActor.posX;
-                            targetY = freshActor.posY;
-                        }
-                    }
+                    let stepsLeft = freshActor.currentPM;
+                    while (stepsLeft > 0) {
+                        const actorNow = combatantsRef.current.find(u => u.id === freshActor.id);
+                        if (!actorNow) break;
 
-                    // Move ONE step towards target (not full path)
-                    const dx = Math.sign(targetX - freshActor.posX);
-                    const dy = Math.sign(targetY - freshActor.posY);
+                        const targetsNow = combatantsRef.current
+                            .filter(u => !u.isEnemy && u.hp > 0)
+                            .map(p => ({
+                                unit: p,
+                                dist: Math.max(Math.abs(actorNow.posX - p.posX), Math.abs(actorNow.posY - p.posY))
+                            }))
+                            .sort((a, b) => a.dist - b.dist);
 
-                    if (dx !== 0 || dy !== 0) {
-                        // Prioritize primary axis (horizontal or vertical)
-                        let moveX = 0, moveY = 0;
-                        if (Math.abs(targetX - freshActor.posX) >= Math.abs(targetY - freshActor.posY)) {
-                            // Horizontal priority
-                            if (dx !== 0 && isTileValid(freshActor.posX + dx, freshActor.posY) && !isTileOccupied(freshActor.posX + dx, freshActor.posY, freshActor.id)) {
+                        if (targetsNow.length === 0) break;
+
+                        const nearest = targetsNow[0];
+                        if (nearest.dist <= maxAttackRange) break; // Already in range to attack
+
+                        const targetX = nearest.unit.posX;
+                        const targetY = nearest.unit.posY;
+                        const dx = Math.sign(targetX - actorNow.posX);
+                        const dy = Math.sign(targetY - actorNow.posY);
+
+                        let moveX = 0;
+                        let moveY = 0;
+
+                        if (Math.abs(targetX - actorNow.posX) >= Math.abs(targetY - actorNow.posY)) {
+                            if (dx !== 0 && isTileValid(actorNow.posX + dx, actorNow.posY) && !isTileOccupied(actorNow.posX + dx, actorNow.posY, actorNow.id)) {
                                 moveX = dx;
-                            } else if (dy !== 0 && isTileValid(freshActor.posX, freshActor.posY + dy) && !isTileOccupied(freshActor.posX, freshActor.posY + dy, freshActor.id)) {
+                            } else if (dy !== 0 && isTileValid(actorNow.posX, actorNow.posY + dy) && !isTileOccupied(actorNow.posX, actorNow.posY + dy, actorNow.id)) {
                                 moveY = dy;
                             }
                         } else {
-                            // Vertical priority
-                            if (dy !== 0 && isTileValid(freshActor.posX, freshActor.posY + dy) && !isTileOccupied(freshActor.posX, freshActor.posY + dy, freshActor.id)) {
+                            if (dy !== 0 && isTileValid(actorNow.posX, actorNow.posY + dy) && !isTileOccupied(actorNow.posX, actorNow.posY + dy, actorNow.id)) {
                                 moveY = dy;
-                            } else if (dx !== 0 && isTileValid(freshActor.posX + dx, freshActor.posY) && !isTileOccupied(freshActor.posX + dx, freshActor.posY, freshActor.id)) {
+                            } else if (dx !== 0 && isTileValid(actorNow.posX + dx, actorNow.posY) && !isTileOccupied(actorNow.posX + dx, actorNow.posY, actorNow.id)) {
                                 moveX = dx;
                             }
                         }
 
-                        if (moveX !== 0 || moveY !== 0) {
-                            const direction = moveX > 0 ? 'right' : moveX < 0 ? 'left' : moveY > 0 ? 'down' : 'up';
-                            executeMove(direction);
-                            // CRITICAL FIX: Wait for FULL animation (500ms) + callback delay (50ms) + state propagation (150ms)
-                            await new Promise(r => setTimeout(r, 700));
-                        }
+                        if (moveX === 0 && moveY === 0) break; // Blocked
+
+                        const direction = moveX > 0 ? 'right' : moveX < 0 ? 'left' : moveY > 0 ? 'down' : 'up';
+                        const moved = executeMove(direction, actorNow);
+                        if (!moved) break;
+
+                        stepsLeft -= 1;
+                        await new Promise(r => setTimeout(r, 420));
                     }
                 }
 
@@ -1410,12 +1577,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
 
                     if (chosenAction) {
                         executeAttack(bestTarget.unit, chosenAction);
-                        // CRITICAL: Wait for attack animation + ensure movingUnit is cleared
-                        setTimeout(() => {
-                            // Double-check movingUnit is cleared before advancing turn
-                            setMovingUnit(null);
-                            setTimeout(() => finishTurn(), 100);
-                        }, 1500);
+                        // Ne pas forcer finishTurn ici : executeAttack -> résolution du jet gère déjà la fin de tour.
                     } else {
                         // Could not attack, ensure movingUnit cleared before finish
                         setMovingUnit(null);
@@ -1427,39 +1589,88 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
             }, 1000);
             return () => clearTimeout(timer);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentTurnIndex, combatState, currentActor?.id]);
 
     const UnitCard = ({ unit, style = {} }) => {
         const isCurrent = unit.id === currentActor?.id;
 
-        // Déterminer si l'unité est ciblable selon le type de sort
+        // Déterminer si l'unité est ciblable selon le type de cible de l'ability
         let isTargetable = false;
+        let targetType = 'enemy'; // Default
+        
         if (selectedAction && unit.hp > 0) {
-            const isOffensive = !selectedAction.friendly; // Par défaut les sorts sont offensifs
-            const isFriendly = selectedAction.friendly === true; // Sorts de soin/buff explicitement marqués
-
-            if (isFriendly) {
-                // Sort allié : cibler son propre camp (et potentiellement soi-même)
-                isTargetable = (unit.isEnemy === currentActor?.isEnemy);
-            } else {
-                // Sort offensif : cibler le camp opposé UNIQUEMENT (jamais soi-même)
-                isTargetable = (unit.isEnemy !== currentActor?.isEnemy) && (unit.id !== currentActor?.id);
+            const actionTarget = selectedAction.target || (selectedAction.friendly ? 'ally' : 'enemy');
+            const canTargetSelf = selectedAction.canTargetSelf !== false; // Par défaut true pour ally
+            const isSameSide = unit.isEnemy === currentActor?.isEnemy;
+            const isSelf = unit.id === currentActor?.id;
+            
+            switch (actionTarget) {
+                case 'self':
+                    // Cible soi-même uniquement
+                    isTargetable = isSelf;
+                    targetType = 'self';
+                    break;
+                case 'ally':
+                    // Cible alliés (et potentiellement soi-même)
+                    isTargetable = isSameSide && (canTargetSelf || !isSelf);
+                    targetType = 'ally';
+                    break;
+                case 'area':
+                    // Zone - cible les ennemis par défaut
+                    isTargetable = !isSameSide;
+                    targetType = 'area';
+                    break;
+                case 'enemy':
+                default:
+                    // Cible ennemis (jamais soi-même)
+                    isTargetable = !isSameSide && !isSelf;
+                    targetType = 'enemy';
+                    break;
             }
         }
 
         const isJumping = animatingId === unit.id;
+        
+        // Déterminer la classe CSS de ciblage
+        let targetClass = '';
+        if (isTargetable) {
+            switch (targetType) {
+                case 'self':
+                    targetClass = 'targetable-self';
+                    break;
+                case 'ally':
+                    targetClass = 'targetable-friendly';
+                    break;
+                case 'area':
+                    targetClass = 'targetable-area';
+                    break;
+                default:
+                    targetClass = 'targetable';
+            }
+        }
 
         return (
             <div id={`unit-${unit.id}`}
-                onClick={() => isTargetable && isLocalPlayerTurn && executeAttack(unit, selectedAction)}
-                className={`unit-card ${isCurrent ? 'active-turn' : ''} ${isTargetable ? (selectedAction.friendly ? 'targetable-friendly' : 'targetable') : ''}`}
+                onClick={() => {
+                    if (isTargetable && isLocalPlayerTurn) {
+                        executeAttack(unit, selectedAction);
+                    } else if (isCurrent && isLocalPlayerTurn && !selectedAction) {
+                        // Toggle character menu on click when it's player's turn
+                        setCharacterMenuOpen(prev => !prev);
+                    }
+                }}
+                className={`unit-card ${isCurrent ? 'active-turn' : ''} ${targetClass}`}
                 style={{
                     left: style.left,
                     top: style.top,
+                    width: style.width,
+                    height: style.height,
                     opacity: unit.hp <= 0 ? 0.4 : 1,
                     filter: unit.hp <= 0 ? 'grayscale(1) brightness(0.6)' : 'none',
-                    pointerEvents: unit.hp <= 0 ? 'none' : (isTargetable || (isCurrent && !selectedAction) ? 'auto' : 'none'),
+                    pointerEvents: unit.hp <= 0 ? 'none' : (isTargetable || isCurrent ? 'auto' : 'none'),
                     zIndex: isCurrent ? 100 : (isJumping ? 200 : 10),
+                    cursor: isCurrent && isLocalPlayerTurn && !selectedAction ? 'pointer' : (isTargetable ? (targetType === 'self' ? 'pointer' : targetType === 'ally' ? 'help' : 'crosshair') : 'default')
                 }}>
 
                 {/* Isometric Shadow (Ground level) */}
@@ -1512,10 +1723,6 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                     {unit.name.toUpperCase()}
                 </div>
 
-                {/* Stats Orbs */}
-                <div className="stat-orb initiative">{unit.initiative}</div>
-                <div className="stat-orb pm">{unit.currentPM}</div>
-
                 {/* Side Badges */}
                 <div className="unit-badges-container">
                     {unit.hasMoved && <div className="unit-badge" title="A déjà bougé">👟</div>}
@@ -1530,75 +1737,33 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         );
     };
 
-    const AbilityCard = ({ ability }) => {
-        const cost = ability.cost !== undefined ? ability.cost : (ability.name === 'Attaque' ? 0 : 20);
-        const currentCooldown = cooldowns[currentActor?.id]?.[ability.name] || 0;
-        const onCooldown = currentCooldown > 0;
-        const canAfford = currentActor.resource >= cost && !onCooldown;
-        const isSelected = selectedAction?.name === ability.name;
+    const RollOverlay = ({ rollId, roll, modifier, tacticalReason, threshold, success, action }) => {
+        const hasCompletedRef = useRef(false);
+        const rollDiceValues = useMemo(() => [{ type: 'd100', value: roll }], [roll]);
 
-        // Determine type based on name or other properties (demo logic)
-        const isMagical = ability.name !== 'Attaque';
+        useEffect(() => {
+            hasCompletedRef.current = false;
+        }, [rollId]);
 
         return (
-            <div
-                onClick={() => canAfford && isLocalPlayerTurn && setSelectedAction(ability)}
-                className={`ability-card-premium ${isSelected ? 'selected' : ''} ${!canAfford ? 'disabled' : ''} ${isMagical ? 'magical' : 'physical'}`}
-            >
-                <div className="ability-glass-layer" />
-                <div className="ability-border-glow" />
-
-                {onCooldown && (
-                    <div className="ability-cooldown-overlay">
-                        <span className="cooldown-value">{currentCooldown}</span>
-                        <span className="cooldown-label">Tours</span>
-                    </div>
-                )}
-
-                <div className="ability-header">
-                    <span className="ability-type-tag">{isMagical ? 'MAGIQUE' : 'PHYSIQUE'}</span>
-                    <div className="ability-range-pill">
-                        <span className="range-icon">🏹</span>
-                        <span>{ability.range}m</span>
-                    </div>
-                </div>
-
-                <div className="ability-content">
-                    <div className="ability-title">{ability.name}</div>
-                    <div className="ability-desc">{ability.desc}</div>
-                </div>
-
-                <div className="ability-footer">
-                    <div className="ability-cost">
-                        <span className="cost-label">COÛT</span>
-                        <div className="cost-container">
-                            <span className="cost-value">{cost}</span>
-                            <span className="cost-unit">AÉ</span>
-                        </div>
-                    </div>
-                    {isSelected && <div className="ability-active-indicator">SÉLECTIONNÉ</div>}
-                </div>
-            </div>
-        );
-    };
-
-    const RollOverlay = ({ roll, modifier, tacticalReason, threshold, success, action }) => (
-        <div style={{
-            position: 'fixed', inset: 0, zIndex: 12000,
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            background: 'rgba(0,0,0,0.2)',
-            pointerEvents: 'none'
-        }}>
-            {/* Full-screen Physics Dice */}
-            <DiceOverlay
-                diceRolls={[{ type: 'd100', value: roll }]}
-                onAllComplete={() => {
-                    // Slight delay to appreciate the result before auto-closing
-                    setTimeout(() => {
-                        handleRollComplete({ roll, modifier, threshold, success, targetId: rollOverlay.targetId, action });
-                    }, 1000);
-                }}
-            />
+            <div style={{
+                position: 'fixed', inset: 0, zIndex: 12000,
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                background: 'rgba(0,0,0,0.2)',
+                pointerEvents: 'none'
+            }}>
+                {/* Full-screen Physics Dice */}
+                <DiceOverlay
+                    diceRolls={rollDiceValues}
+                    onAllComplete={() => {
+                        if (hasCompletedRef.current) return;
+                        hasCompletedRef.current = true;
+                        // Slight delay to appreciate the result before auto-closing
+                        setTimeout(() => {
+                            handleRollComplete({ rollId, roll, modifier, threshold, success, targetId: rollOverlay.targetId, action });
+                        }, 1000);
+                    }}
+                />
 
             <div style={{
                 position: 'relative',
@@ -1644,7 +1809,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
             </div>
         </div>
     );
-
+    };
 
     const GameOverScreen = () => (
         <div style={{ position: 'absolute', inset: 0, zIndex: 3000, background: 'radial-gradient(circle at center, #2a0505 0%, #000 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
@@ -1653,107 +1818,8 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         </div>
     );
 
-
     return (
         <div className="combat-manager-viewport">
-            {/* --- LEFT SIDEBAR (Controls & Stats) --- */}
-            <div className="combat-sidebar">
-                {/* Character Summary */}
-                {currentActor && (
-                    <div className="character-summary">
-                        <div className="char-header">
-                            <img src={currentActor.portrait_url || 'https://placehold.co/150'} className="char-portrait-large" alt="" />
-                            <div className="char-info">
-                                <div className="char-name">{currentActor.name}</div>
-                                <div className="char-class">{currentActor.class || 'Combattant'}</div>
-                            </div>
-                        </div>
-
-                        <div className="char-stats-grid">
-                            <div className="stat-box">
-                                <span className="stat-value stat-hp">{currentActor.hp}/{currentActor.maxHp}</span>
-                                <span className="stat-label">Santé</span>
-                            </div>
-                            <div className="stat-box">
-                                <span className="stat-value stat-res">{currentActor.resource}/{currentActor.maxResource}</span>
-                                <span className="stat-label">Mana/Endu</span>
-                            </div>
-                            <div className="stat-box">
-                                <span className="stat-value stat-ac">{currentActor.ac}</span>
-                                <span className="stat-label">Armure</span>
-                            </div>
-                            <div className="stat-box">
-                                <span className="stat-value stat-pm">{currentActor.currentPM}</span>
-                                <span className="stat-label">Mouvement</span>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {isLocalPlayerTurn ? (
-                    <>
-                        {/* ABILITIES SECTION */}
-                        <div className="sidebar-section">
-                            <div className="sidebar-label">CAPACITÉS & SORTS</div>
-                            <div className="abilities-grid">
-                                {[{ name: 'Attaque', desc: 'Attaque de base rapide', range: 2 }, ...resolveCharacterAbilities(currentActor)].map((s, i) => (
-                                    <AbilityCard key={i} ability={s} />
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* ITEMS SECTION */}
-                        <div className="sidebar-section">
-                            <div className="sidebar-label">INVENTAIRE RAPIDE ({currentActor.inventory?.filter(item => (item.stats && (item.stats.heal || item.stats.resource || item.stats.hp)) || ['consumable', 'potion', 'scroll'].includes(item.type?.toLowerCase())).length || 0})</div>
-                            <div className="items-grid">
-                                {currentActor.inventory?.filter(item => (item.stats && (item.stats.heal || item.stats.resource || item.stats.hp)) || ['consumable', 'potion', 'scroll'].includes(item.type?.toLowerCase())).length > 0 ? (
-                                    currentActor.inventory
-                                        .filter(item => (item.stats && (item.stats.heal || item.stats.resource || item.stats.hp)) || ['consumable', 'potion', 'scroll'].includes(item.type?.toLowerCase()))
-                                        .map((item, idx) => (
-                                            <div
-                                                key={`item-${idx}`}
-                                                onClick={() => !currentActor.hasActed && executeUseItem(item)}
-                                                className={`item-slot-premium ${currentActor.hasActed ? 'disabled' : ''}`}
-                                            >
-                                                <div className="item-glass-layer" />
-                                                <div className="item-title">{item.name}</div>
-                                                <div className="item-footer-hint">UTILISER</div>
-                                            </div>
-                                        ))
-                                ) : (
-                                    <div className="item-slot-premium empty">
-                                        <div className="item-glass-layer" />
-                                        <span className="empty-label">VIDE</span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* ACTIONS SECTION */}
-                        <div className="sidebar-section" style={{ marginTop: 'auto', borderBottom: 'none' }}>
-                            <div className="sidebar-label">FIN DU TOUR</div>
-                            <button onClick={nextTurn} className="end-turn-premium">
-                                <div className="end-turn-glow" />
-                                <div className="end-turn-content">
-                                    <span className="end-turn-icon">⌛</span>
-                                    <span className="end-turn-text">Finir le Tour</span>
-                                </div>
-                            </button>
-                        </div>
-                    </>
-                ) : (
-                    <div className="sidebar-section">
-                        <div className="waiting-turn-aura" style={{ fontSize: '1rem', color: 'var(--combat-gold)', letterSpacing: '1px', textAlign: 'center', padding: '20px 0' }}>
-                            {currentActor?.isEnemy ? (
-                                <span>⚔️ L'ENNEMI PRÉPARE SON ACTION...</span>
-                            ) : (
-                                <span>⏳ ATTENTE DE {currentActor?.name?.toUpperCase()}...</span>
-                            )}
-                        </div>
-                    </div>
-                )}
-            </div>
-
             {/* --- RIGHT MAIN VIEW (Arena + Overlays) --- */}
             <div className="combat-viewer-container">
                 {/* Global Overlay Elements */}
@@ -1771,7 +1837,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                 </div>
 
                 {/* The Arena */}
-                <div className="combat-arena">
+                <div className="combat-arena" style={{ transform: `scale(${arenaScale})`, transformOrigin: 'center center' }}>
                     <div className="arena-background-plane" />
 
                     <div className="arena-grid-container">
@@ -1810,8 +1876,8 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                         })}
                     </div>
 
-                    {/* Range Illumination (Tactical Squares) */}
-                    {(selectedAction || canMove) && isLocalPlayerTurn && currentActor && (
+                    {/* Range Illumination (Tactical Squares) - Only show for selected actions, NOT for default movement */}
+                    {selectedAction && isLocalPlayerTurn && currentActor && (
                         <>
                             {Array.from({ length: arenaConfig.blocksY }).map((_, yIdx) => {
                                 const y = yIdx - Math.floor(arenaConfig.blocksY / 2);
@@ -1819,21 +1885,33 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                                     const x = xIdx - Math.floor(arenaConfig.blocksX / 2);
                                     const dx = x - currentActor.posX;
                                     const dy = y - currentActor.posY;
-                                    // Use BFS reachability instead of Chebyshev for movement range
+                                    
                                     let highlight = null;
-                                    if (selectedAction) {
-                                        const chebyshevDist = Math.max(Math.abs(dx), Math.abs(dy));
+                                    const chebyshevDist = Math.max(Math.abs(dx), Math.abs(dy));
+                                    
+                                    // Check if this is movement action
+                                    if (selectedAction.isMovement) {
+                                        // Use Manhattan distance for movement
+                                        // Calculate remaining PM based on planned path
+                                        const pmLeft = currentActor.currentPM - plannedPath.length;
+                                        const manhattanDist = Math.abs(dx) + Math.abs(dy);
+                                        if (manhattanDist <= (selectedAction.range || pmLeft) && manhattanDist > 0 && pmLeft > 0) {
+                                            highlight = { color: 'rgba(0, 150, 255, 0.15)', border: '1px dashed rgba(0, 180, 255, 0.5)', glow: 'rgba(0, 150, 255, 0.3)' };
+                                        }
+                                    } else {
+                                        // Regular attack/ability range - check target type for color
                                         if (chebyshevDist <= (selectedAction.range || 1) && chebyshevDist > 0) {
-                                            if (selectedAction.friendly) {
+                                            const actionTarget = selectedAction.target || (selectedAction.friendly ? 'ally' : 'enemy');
+                                            if (actionTarget === 'self') {
+                                                // Self-target abilities don't show range highlights
+                                                highlight = null;
+                                            } else if (actionTarget === 'ally') {
                                                 highlight = { color: 'rgba(74, 222, 128, 0.15)', border: '1px solid rgba(74, 222, 128, 0.3)', glow: 'rgba(74, 222, 128, 0.2)' };
+                                            } else if (actionTarget === 'area') {
+                                                highlight = { color: 'rgba(168, 85, 247, 0.15)', border: '1px solid rgba(168, 85, 247, 0.3)', glow: 'rgba(168, 85, 247, 0.2)' };
                                             } else {
                                                 highlight = { color: 'rgba(212, 175, 55, 0.15)', border: '1px solid rgba(212, 175, 55, 0.3)', glow: 'rgba(212, 175, 55, 0.2)' };
                                             }
-                                        }
-                                    } else if (canMove) {
-                                        const manhattanDist = Math.abs(dx) + Math.abs(dy);
-                                        if (manhattanDist <= currentActor.currentPM && manhattanDist > 0) {
-                                            highlight = { color: 'rgba(0, 150, 255, 0.08)', border: '1px dashed rgba(0, 150, 255, 0.4)', glow: 'rgba(0, 150, 255, 0.1)' };
                                         }
                                     }
 
@@ -1864,8 +1942,8 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                                 });
                             })}
 
-                            {/* Interaction Layer (Click to move / Hover Path) - MOVED TO TOP */}
-                            {isLocalPlayerTurn && canMove && !selectedAction && (
+                            {/* Interaction Layer for Movement - Only when 'Se déplacer' is selected, with dynamic range reduction */}
+                            {isLocalPlayerTurn && canMove && selectedAction?.isMovement && (
                                 <div className="interaction-layer-container" style={{ position: 'absolute', inset: 0, zIndex: 1000, pointerEvents: 'none' }}>
                                     {Array.from({ length: arenaConfig.blocksY }).map((_, yIdx) => {
                                         const y = yIdx - Math.floor(arenaConfig.blocksY / 2);
@@ -1874,7 +1952,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                                             const dx = x - currentActor.posX;
                                             const dy = y - currentActor.posY;
 
-                                            // Character tile click to toggle planning
+                                            // Character tile click to open menu or confirm movement
                                             if (dx === 0 && dy === 0) {
                                                 const pX = getPosPercent(x);
                                                 const pY = getPosPercent(y, true);
@@ -1883,11 +1961,12 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                                                         key={`char-interactive-${x}-${y}`}
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            console.log('[DEBUG] Character Click - isPathPlanning:', isPathPlanning, 'plannedPath:', plannedPath.length);
+                                                            debugLog('[DEBUG] Character Click - characterMenuOpen:', characterMenuOpen, 'plannedPath:', plannedPath.length);
                                                             if (plannedPath.length > 0) {
                                                                 executePathMovement(plannedPath[plannedPath.length - 1][0], plannedPath[plannedPath.length - 1][1], plannedPath);
                                                             } else {
-                                                                setIsPathPlanning(!isPathPlanning);
+                                                                // Toggle character menu on click
+                                                                setCharacterMenuOpen(!characterMenuOpen);
                                                             }
                                                         }}
                                                         style={{
@@ -1902,12 +1981,19 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                                                             pointerEvents: 'auto'
                                                         }}
                                                     >
+                                                        {/* Clickable indicator ring */}
+                                                        {!characterMenuOpen && plannedPath.length === 0 && (
+                                                            <div className="character-clickable-indicator">
+                                                                <div className="clickable-ring" />
+                                                                <div className="clickable-icon">⚡</div>
+                                                            </div>
+                                                        )}
                                                         {plannedPath.length > 0 && (
                                                             <div
                                                                 className="confirm-move-badge"
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    console.log('[DEBUG] Confirm Badge Clicked via inner handler');
+                                                                    debugLog('[DEBUG] Confirm Badge Clicked via inner handler');
                                                                     if (plannedPath.length > 0) {
                                                                         executePathMovement(plannedPath[plannedPath.length - 1][0], plannedPath[plannedPath.length - 1][1], plannedPath);
                                                                     }
@@ -1920,8 +2006,12 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                                                 );
                                             }
 
-                                            const dist = Math.abs(dx) + Math.abs(dy); // Use Manhattan for cardinal movement
-                                            if (dist > (currentActor.currentPM || 0)) return null;
+                                            // Calculate PM left based on planned path
+                                            const pmLeft = currentActor.currentPM - plannedPath.length;
+                                            const dist = Math.abs(dx) + Math.abs(dy);
+                                            
+                                            // Only show tiles within remaining PM range
+                                            if (dist > pmLeft || pmLeft <= 0) return null;
 
                                             const pX = getPosPercent(x);
                                             const pY = getPosPercent(y, true);
@@ -1929,10 +2019,9 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
 
                                             // Calculate path from current actor position or from last planned step
                                             const startPoint = plannedPath.length > 0 ? { x: plannedPath[plannedPath.length - 1][0], y: plannedPath[plannedPath.length - 1][1] } : { x: currentActor.posX, y: currentActor.posY };
-                                            const pmLeft = currentActor.currentPM - (plannedPath.length);
+                                            const segmentPmLeft = currentActor.currentPM - plannedPath.length;
 
-                                            const segmentPath = isHovered && pmLeft > 0 ? findPath(startPoint.x, startPoint.y, x, y, pmLeft) : null;
-                                            const fullPreviewPath = [...plannedPath, ...(segmentPath || [])];
+                                            const segmentPath = isHovered && segmentPmLeft > 0 ? findPath(startPoint.x, startPoint.y, x, y, segmentPmLeft) : null;
 
                                             return (
                                                 <div
@@ -1940,13 +2029,9 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                                                     onMouseEnter={() => setHoveredTile({ x, y })}
                                                     onMouseLeave={() => setHoveredTile(null)}
                                                     onClick={() => {
-                                                        console.log('[DEBUG] Tile Click:', x, y, 'isPathPlanning:', isPathPlanning);
-                                                        if (isPathPlanning) {
-                                                            if (segmentPath) {
-                                                                setPlannedPath(prev => [...prev, ...segmentPath]);
-                                                            }
-                                                        } else {
-                                                            executePathMovement(x, y);
+                                                        debugLog('[DEBUG] Tile Click:', x, y, 'isPathPlanning:', isPathPlanning);
+                                                        if (isPathPlanning && segmentPath) {
+                                                            setPlannedPath(prev => [...prev, ...segmentPath]);
                                                         }
                                                     }}
                                                     style={{
@@ -1959,61 +2044,14 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                                                         cursor: 'pointer',
                                                         zIndex: 1001,
                                                         pointerEvents: 'auto',
-                                                        background: isPathPlanning && plannedPath.some(p => p[0] === x && p[1] === y) ? 'rgba(212, 175, 55, 0.1)' : 'transparent'
+                                                        background: plannedPath.some(p => p[0] === x && p[1] === y) ? 'rgba(212, 175, 55, 0.3)' : 'transparent',
+                                                        border: isHovered ? '2px solid rgba(212, 175, 55, 0.6)' : 'none'
                                                     }}
                                                 />
                                             );
                                         });
                                     })}
 
-                                    {/* Centralized Path Preview (to avoid duplication per tile) */}
-                                    {(hoveredTile || (isPathPlanning && plannedPath.length > 0)) && (() => {
-                                        const startPoint = plannedPath.length > 0 ? { x: plannedPath[plannedPath.length - 1][0], y: plannedPath[plannedPath.length - 1][1] } : { x: currentActor.posX, y: currentActor.posY };
-                                        const pmLeft = currentActor.currentPM - (plannedPath.length);
-                                        const segmentPath = hoveredTile && pmLeft > 0 ? findPath(startPoint.x, startPoint.y, hoveredTile.x, hoveredTile.y, pmLeft) : null;
-                                        const fullPreviewPath = [...plannedPath, ...(segmentPath || [])];
-
-                                        return fullPreviewPath.map((step, sIdx) => {
-                                            const isLastStep = sIdx === fullPreviewPath.length - 1;
-                                            return (
-                                                <React.Fragment key={`path-preview-${sIdx}`}>
-                                                    <div
-                                                        className="path-dot-animated"
-                                                        style={{
-                                                            position: 'absolute',
-                                                            left: `${getPosPercent(step[0])}%`,
-                                                            top: `${getPosPercent(step[1], true)}%`,
-                                                            width: '8px',
-                                                            height: '8px',
-                                                            background: sIdx < plannedPath.length ? 'var(--combat-gold)' : 'rgba(212, 175, 55, 0.8)',
-                                                            borderRadius: '50%',
-                                                            transform: 'translate(-50%, -50%)',
-                                                            boxShadow: '0 0 10px var(--combat-gold)',
-                                                            zIndex: 1005,
-                                                            pointerEvents: 'none'
-                                                        }}
-                                                    />
-                                                    <div className="path-cost-label" style={{
-                                                        left: `${getPosPercent(step[0])}%`,
-                                                        top: `${getPosPercent(step[1], true)}%`
-                                                    }}>
-                                                        -{sIdx + 1} PM
-                                                    </div>
-
-                                                    {isLastStep && (
-                                                        <div className="character-ghost" style={{
-                                                            left: `${getPosPercent(step[0])}%`,
-                                                            top: `${getPosPercent(step[1], true)}%`
-                                                        }}>
-                                                            <div className="unit-portrait-wrapper">
-                                                                <img src={currentActor.portrait_url} className="unit-portrait" alt="" />
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </React.Fragment>
-                                            );
-                                        });
-                                    })()}
                                 </div>
                             )}
                         </>
@@ -2042,7 +2080,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
 
                     {/* Arena Units (2D Positioning with smooth animation) */}
                     <div style={{ position: 'absolute', inset: 0, zIndex: 10 }}>
-                        {combatants.map((u, index) => {
+                        {combatants.map((u) => {
                             // Check if this unit is currently animating
                             const isAnimating = movingUnit && movingUnit.id === u.id;
                             const displayX = isAnimating ? movingUnit.animX : u.posX;
@@ -2053,17 +2091,266 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                             return <UnitCard key={u.id} unit={u} style={{
                                 left: `${x}%`,
                                 top: `${y}%`,
+                                width: `${100 / arenaConfig.blocksX}%`,
+                                height: `${100 / arenaConfig.blocksY}%`,
                                 transition: isAnimating ? 'none' : 'left 0.8s cubic-bezier(0.4, 0, 0.2, 1), top 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
                             }} />;
                         })}
                     </div>
 
-                    {/* Planning Instruction HUD */}
-                    {isLocalPlayerTurn && isPathPlanning && (
-                        <div className="planning-instruction">
-                            Cliquez pour tracer <span>•</span> Cliquez sur vous pour confirmer
+                    {/* Floating Diegetic UI - Only visible when character menu is open and no action selected */}
+                    {isLocalPlayerTurn && currentActor && characterMenuOpen && !selectedAction && (
+                        <>
+                            {/* Floating Stats Panel - Positioned above character */}
+                            <div
+                                className="diegetic-stats-panel"
+                                style={{
+                                    position: 'absolute',
+                                    left: `${getPosPercent(currentActor.posX)}%`,
+                                    top: `${getPosPercent(currentActor.posY, true) - 22}%`,
+                                    transform: 'translateX(-50%)',
+                                    zIndex: 100,
+                                    pointerEvents: 'auto'
+                                }}
+                            >
+                                <div className="stats-panel-content">
+                                    <div className="stat-row hp">
+                                        <span className="stat-icon">❤️</span>
+                                        <span className="stat-value-large">{currentActor.hp}</span>
+                                        <span className="stat-max">/{currentActor.maxHp}</span>
+                                    </div>
+                                    <div className="stat-row resource">
+                                        <span className="stat-icon">⚡</span>
+                                        <span className="stat-value-large">{currentActor.resource}</span>
+                                        <span className="stat-max">/{currentActor.maxResource}</span>
+                                    </div>
+                                    <div className="stat-row pm">
+                                        <span className="stat-icon">👟</span>
+                                        <span className="stat-value-large">{currentActor.currentPM}</span>
+                                        <span className="stat-label">PM</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Floating Abilities Panel - Positioned below character */}
+                            <div
+                                className="diegetic-abilities-float"
+                                style={{
+                                    position: 'absolute',
+                                    left: `${getPosPercent(currentActor.posX)}%`,
+                                    top: `${getPosPercent(currentActor.posY, true) + 8}%`,
+                                    transform: 'translateX(-50%)',
+                                    zIndex: 100,
+                                    pointerEvents: 'auto'
+                                }}
+                            >
+                                <div className="abilities-float-content">
+                                    {actorAbilities.slice(0, 4).map((ability, idx) => {
+                                        const cost = ability.cost !== undefined ? ability.cost : (ability.name === 'Attaque' ? 0 : 20);
+                                        const currentCooldown = cooldowns[currentActor?.id]?.[ability.name] || 0;
+                                        const onCooldown = currentCooldown > 0;
+                                        const canAfford = currentActor.resource >= cost;
+                                        const canUseNow = isLocalPlayerTurn && canAct && canAfford && !onCooldown;
+                                        const isSelected = selectedAction?.name === ability.name;
+                                        const isMagical = ability.name !== 'Attaque' && ability.name !== 'Se déplacer';
+                                        const isMovement = ability.name === 'Se déplacer';
+                                        
+                                        return (
+                                            <div
+                                                key={idx}
+                                                className={`ability-float-slot ${isSelected ? 'selected' : ''} ${!canUseNow ? 'disabled' : ''}`}
+                                                onClick={() => {
+                                                    if (!canUseNow) return;
+                                                    const isCurrentlySelected = selectedAction?.name === ability.name;
+                                                    if (isCurrentlySelected) {
+                                                        // Annuler l'action
+                                                        setSelectedAction(null);
+                                                        setIsPathPlanning(false);
+                                                        setPlannedPath([]);
+                                                    } else {
+                                                        // Sélectionner l'action
+                                                        setSelectedAction(ability);
+                                                        
+                                                        // Auto-cast pour les sorts sur soi-même
+                                                        if (ability.target === 'self' || (ability.target === 'ally' && ability.canTargetSelf === false)) {
+                                                            // Cibler automatiquement soi-même
+                                                            const selfTarget = combatants.find(c => c.id === currentActor?.id);
+                                                            if (selfTarget) {
+                                                                setTimeout(() => executeAttack(selfTarget, ability), 100);
+                                                            }
+                                                        }
+                                                        
+                                                        // Activer le path planning si c'est un déplacement
+                                                        if (ability.isMovement || ability.name === 'Se déplacer') {
+                                                            setIsPathPlanning(true);
+                                                        }
+                                                    }
+                                                }}
+                                                onMouseEnter={() => setHoveredAbility(ability)}
+                                                onMouseLeave={() => setHoveredAbility(null)}
+                                                style={{ animationDelay: `${idx * 0.1}s` }}
+                                            >
+                                                <div className={`ability-float-glow ${isMagical ? 'magical' : isMovement ? 'movement' : 'physical'}`} />
+                                                <span className="ability-float-name">{ability.name}</span>
+                                                {/* Target type indicator */}
+                                                {ability.target === 'self' && <span className="ability-float-target" title="Cible: Soi-même">🛡️</span>}
+                                                {ability.target === 'ally' && <span className="ability-float-target" title="Cible: Allié">✨</span>}
+                                                {ability.target === 'area' && <span className="ability-float-target" title="Cible: Zone">💥</span>}
+                                                {!ability.target && !ability.friendly && <span className="ability-float-target" title="Cible: Ennemi">⚔️</span>}
+                                                {!isMovement && <span className="ability-float-cost">{cost}</span>}
+                                                {isMovement && <span className="ability-float-movement">👟</span>}
+                                                {onCooldown && <span className="ability-float-cd">{currentCooldown}</span>}
+                                                {isSelected && <div className="ability-float-active-indicator" />}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                
+                                {/* Ability Detail Tooltip */}
+                                {hoveredAbility && (
+                                    <div className="ability-detail-tooltip">
+                                        <div className="ability-detail-header">
+                                            <span className={`ability-detail-type ${hoveredAbility.name === 'Attaque' ? 'physical' : hoveredAbility.name === 'Se déplacer' ? 'movement' : 'magical'}`}>
+                                                {hoveredAbility.name === 'Attaque' ? 'PHYSIQUE' : hoveredAbility.name === 'Se déplacer' ? 'MOUVEMENT' : 'MAGIQUE'}
+                                            </span>
+                                            {hoveredAbility.name !== 'Se déplacer' && (
+                                                <span className="ability-detail-cost">
+                                                    {hoveredAbility.cost !== undefined ? hoveredAbility.cost : (hoveredAbility.name === 'Attaque' ? 0 : 20)} {resourceDisplayName.toUpperCase()}
+                                                </span>
+                                            )}
+                                            {hoveredAbility.name === 'Se déplacer' && (
+                                                <span className="ability-detail-cost movement-cost">
+                                                    👟 Gratuit (PM)
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="ability-detail-name">{hoveredAbility.name}</div>
+                                        <div className="ability-detail-target">
+                                            {hoveredAbility.target === 'self' && <span className="target-tag target-self">🛡️ Soi-même</span>}
+                                            {hoveredAbility.target === 'ally' && <span className="target-tag target-ally">✨ Allié {hoveredAbility.canTargetSelf !== false ? '(+Soi)' : ''}</span>}
+                                            {hoveredAbility.target === 'area' && <span className="target-tag target-area">💥 Zone</span>}
+                                            {hoveredAbility.target === 'enemy' && <span className="target-tag target-enemy">⚔️ Ennemi</span>}
+                                            {!hoveredAbility.target && hoveredAbility.friendly && <span className="target-tag target-ally">✨ Allié</span>}
+                                            {!hoveredAbility.target && !hoveredAbility.friendly && <span className="target-tag target-enemy">⚔️ Ennemi</span>}
+                                        </div>
+                                        <div className="ability-detail-desc">{hoveredAbility.desc}</div>
+                                        <div className="ability-detail-footer">
+                                            <span className="ability-detail-range">
+                                                {hoveredAbility.name === 'Se déplacer' ? '👟' : '🏹'} 
+                                                Portée: {hoveredAbility.range || 2}m
+                                            </span>
+                                            {hoveredAbility.cooldown > 0 && (
+                                                <span className="ability-detail-cooldown">⏱️ Recharge: {hoveredAbility.cooldown} tours</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {/* End Turn Button */}
+                                <button 
+                                    className="diegetic-end-turn"
+                                    onClick={nextTurn}
+                                    style={{ marginTop: '8px' }}
+                                >
+                                    <span>⌛</span>
+                                </button>
+                            </div>
+                        </>
+                    )}
+
+                    {/* Selected Action Indicator - Always visible when action selected */}
+                    {isLocalPlayerTurn && currentActor && selectedAction && (
+                        <div
+                            className="diegetic-selected-action"
+                            style={{
+                                position: 'absolute',
+                                left: plannedPath.length > 0 
+                                    ? `${getPosPercent(currentActor.posX) + 12}%`  // Décalé à droite si chemin planifié
+                                    : `${getPosPercent(currentActor.posX)}%`,
+                                top: plannedPath.length > 0
+                                    ? `${getPosPercent(currentActor.posY, true)}%`  // Aligné avec le personnage si chemin
+                                    : `${getPosPercent(currentActor.posY, true) - 20}%`,
+                                transform: 'translateX(-50%)',
+                                zIndex: 101,
+                                pointerEvents: 'auto'
+                            }}
+                        >
+                            <div className="selected-action-diegetic">
+                                <span className="selected-diegetic-name">{selectedAction.name}</span>
+                                <button 
+                                    className="selected-diegetic-clear"
+                                    onClick={() => {
+                                        setSelectedAction(null);
+                                        setIsPathPlanning(false);
+                                        setPlannedPath([]);
+                                    }}
+                                >
+                                    ✕
+                                </button>
+                            </div>
                         </div>
                     )}
+
+                    {/* Path Preview & Ghost (Centralized to avoid per-tile duplication) */}
+                    {(hoveredTile || (isPathPlanning && plannedPath.length > 0)) && (() => {
+                        const startPoint = plannedPath.length > 0
+                            ? { x: plannedPath[plannedPath.length - 1][0], y: plannedPath[plannedPath.length - 1][1] }
+                            : { x: currentActor.posX, y: currentActor.posY };
+
+                        const pmLeft = currentActor.currentPM - plannedPath.length;
+                        const segmentPath = hoveredTile && pmLeft > 0
+                            ? findPath(startPoint.x, startPoint.y, hoveredTile.x, hoveredTile.y, pmLeft)
+                            : null;
+
+                        const fullPreviewPath = [...plannedPath, ...(segmentPath || [])];
+
+                        return fullPreviewPath.map((step, sIdx) => {
+                            const isLastStep = sIdx === fullPreviewPath.length - 1;
+                            return (
+                                <React.Fragment key={`path-preview-${sIdx}`}>
+                                    <div
+                                        className="path-dot-animated"
+                                        style={{
+                                            position: 'absolute',
+                                            left: `${getPosPercent(step[0])}%`,
+                                            top: `${getPosPercent(step[1], true)}%`,
+                                            width: '8px',
+                                            height: '8px',
+                                            background: sIdx < plannedPath.length ? 'var(--combat-gold)' : 'rgba(212, 175, 55, 0.8)',
+                                            borderRadius: '50%',
+                                            transform: 'translate(-50%, -50%)',
+                                            boxShadow: '0 0 10px var(--combat-gold)',
+                                            zIndex: 1005,
+                                            pointerEvents: 'none'
+                                        }}
+                                    />
+                                    <div className="path-cost-label" style={{
+                                        left: `${getPosPercent(step[0])}%`,
+                                        top: `${getPosPercent(step[1], true)}%`,
+                                        width: `${100 / arenaConfig.blocksX}%`,
+                                        textAlign: 'center'
+                                    }}>
+                                        -{sIdx + 1} PM
+                                    </div>
+
+                                    {isLastStep && (
+                                        <div className="character-ghost" style={{
+                                            left: `${getPosPercent(step[0])}%`,
+                                            top: `${getPosPercent(step[1], true)}%`,
+                                            width: `${100 / arenaConfig.blocksX}%`,
+                                            height: `${100 / arenaConfig.blocksY}%`,
+                                            transform: 'translate(-50%, -50%)',
+                                            pointerEvents: 'none'
+                                        }}>
+                                            <div className="unit-portrait-wrapper" style={{ opacity: 0.5, filter: 'grayscale(0.5) brightness(1.5)' }}>
+                                                <img src={currentActor.portrait_url} className="unit-portrait" alt="" />
+                                            </div>
+                                        </div>
+                                    )}
+                                </React.Fragment>
+                            );
+                        });
+                    })()}
                 </div>
 
                 {/* Overlays that shouldn't be covered by Arena */}

@@ -634,6 +634,17 @@
   box-shadow: 0 15px 40px rgba(212, 175, 55, 0.4);
 }
 
+.premium-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.premium-action-btn:disabled .btn-glow {
+  display: none;
+}
+
 .btn-glow {
   position: absolute;
   top: 0;
@@ -817,6 +828,29 @@
   color: #999;
   margin: 0;
   line-height: 1.5;
+}
+
+.profession-card.locked {
+  opacity: 0.45;
+  filter: grayscale(0.85);
+  cursor: not-allowed;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.profession-card.locked:hover {
+  transform: none;
+  filter: grayscale(0.9);
+  background: var(--codex-surface);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
+}
+
+.profession-lock {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.8px;
+  color: #8f8f8f;
+  text-transform: uppercase;
 }
 
 .item-rarity-legendary {

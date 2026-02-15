@@ -669,6 +669,14 @@ button {
     text-shadow: 0 0 5px rgba(255, 77, 77, 0.3);
 }
 
+.mj-keyword {
+    color: #ffd36b;
+    font-weight: 700;
+    text-shadow: 0 0 8px rgba(255, 211, 107, 0.35);
+    border-bottom: 1px solid rgba(255, 211, 107, 0.5);
+    padding: 0 1px;
+}
+
 .msg-author {
     display: block;
     font-size: 0.75rem;

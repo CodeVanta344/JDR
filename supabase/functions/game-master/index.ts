@@ -474,6 +474,39 @@ const RESPONSE_FORMAT = `REPONDS TOUJOURS EN JSON VALIDE :
 ⚠️ Le champ "challenge" est OBLIGATOIRE quand tu demandes un jet de dés.
 Si tu écris "Lance un jet de X", tu DOIS inclure l'objet challenge.`;
 
+function isNpcGuidanceQuestion(action: string): boolean {
+    const text = (action || '').toLowerCase();
+    const asksInfo = /(où se trouve|ou se trouve|où est|ou est|comment aller|quel chemin|quelle direction|indique\s+le\s+chemin|demander\s+où|demande\s+où|renseigne)/i.test(text);
+    const talksToNpc = /(aubergiste|marchand|forgeron|pnj|garde|villageois|habitant|prêtre|pretre)/i.test(text);
+    const asksLocation = /(marché|marche|auberge|taverne|temple|banque|forge|forgeron|guilde|écuries|ecuries|ville|quartier|place)/i.test(text);
+    return asksInfo && (talksToNpc || asksLocation);
+}
+
+function extractGuidanceDestination(action: string): string {
+    const text = (action || '').toLowerCase();
+    const destinations = [
+        'marché', 'marche', 'auberge', 'taverne', 'temple', 'banque',
+        'forge', 'forgeron', 'guilde', 'écuries', 'ecuries', 'place',
+        'port', 'château', 'chateau', 'bibliothèque', 'bibliotheque'
+    ];
+    const found = destinations.find((d) => text.includes(d));
+    if (!found) return 'le lieu demandé';
+    if (found === 'marche') return 'marché';
+    if (found === 'ecuries') return 'écuries';
+    if (found === 'chateau') return 'château';
+    if (found === 'bibliotheque') return 'bibliothèque';
+    return found;
+}
+
+function hasConcreteDirection(text: string): boolean {
+    return /(prends|prenez|continue|tourne|tournez|droite|gauche|nord|sud|est|ouest|rue|place|pont|porte|carrefour|près de|jusqu['’]à|derrière|devant|à côté)/i.test(text || '');
+}
+
+function buildGuidanceFallbackNarrative(destination: string, currentLocation: string): string {
+    const fromLocation = currentLocation && currentLocation !== 'Inconnu' ? currentLocation : 'ici';
+    return `L'aubergiste te répond sans hésiter: pour rejoindre ${destination}, sors de ${fromLocation} par la rue principale, continue tout droit jusqu'à la grande place, puis tourne à droite au carrefour avec la fontaine. Tu verras les étals et l'agitation du ${destination} à deux minutes de marche.`;
+}
+
 // ─── MERCHANT ITEM TABLES (SUMMARY) ──────────────────────────────────
 
 function generateMerchantItems(avgLevel: number): any[] {
@@ -657,8 +690,14 @@ SI le joueur dit "Je fais X", "Je m'approche de Y", "Je vais à Z", ou toute ACT
 
 1. ❌ NE DÉCRIS JAMAIS l'action comme si elle se passait
 2. ❌ NE DIS JAMAIS "Tu avances...", "Tu t'approches...", "Tu arrives..."
-3. ✅ DEMANDE UN JET DE DÉS IMMÉDIATEMENT
+3. ✅ DEMANDE UN JET DE DÉS IMMÉDIATEMENT (SAUF EXCEPTION CI-DESSOUS)
 4. ✅ DÉCRIS L'ACTION UNIQUEMENT APRÈS LE JET
+
+🟢 EXCEPTION IMPORTANTE (SANS JET) :
+Si le joueur pose une question d'information simple à un PNJ (ex: directions, "où se trouve le marché", "comment aller à ..."),
+tu DOIS répondre directement SANS challenge.
+- Si le PNJ connaît l'information: donne des directions claires et utiles.
+- Si le PNJ ne sait pas: il l'admet honnêtement et suggère où se renseigner.
 
 EXEMPLE CRITIQUE:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -930,6 +969,12 @@ Deno.serve(async (req: Request) => {
         });
 
         // Call OpenAI
+        const guidanceQuestion = isNpcGuidanceQuestion(action);
+        const guidanceDestination = extractGuidanceDestination(action);
+        const guidanceAction = guidanceQuestion
+            ? `${action}\n\n[INSTRUCTION MJ OBLIGATOIRE]\nRéponds SANS jet de dés. Donne une direction CONCRÈTE vers ${guidanceDestination} (itinéraire avec repères, au moins 2 indications spatiales). Si le PNJ ne sait pas, il l'avoue et indique précisément à qui demander.`
+            : action;
+
         const aiRes = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -940,7 +985,7 @@ Deno.serve(async (req: Request) => {
                 model: 'gpt-4o-mini',
                 messages: [
                     { role: 'system', content: prompt },
-                    { role: 'user', content: action },
+                    { role: 'user', content: guidanceAction },
                 ],
                 temperature: 0.7,
             }),
@@ -955,6 +1000,17 @@ Deno.serve(async (req: Request) => {
             result = JSON.parse(clean);
         } catch (_e) {
             result = { narrative: raw };
+        }
+
+        // Guidance questions to NPCs should not trigger dice challenges.
+        if (guidanceQuestion) {
+            if (result.challenge) {
+                delete result.challenge;
+            }
+
+            if (!result.narrative || /(lance\s+\d*d?\d+|lance\s+un\s+jet|jet\s+de\s+d[0-9]+|\bdc\s*\d+\b)/i.test(result.narrative) || !hasConcreteDirection(result.narrative)) {
+                result.narrative = buildGuidanceFallbackNarrative(guidanceDestination, currentLocation);
+            }
         }
 
         // Failsafe combat detection

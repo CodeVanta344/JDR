@@ -519,6 +519,102 @@
   color: #f4e4c1;
 }
 
+/* Players View */
+.dm-players-view {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.players-list {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.player-card {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(139, 115, 85, 0.1) 0%, rgba(22, 33, 62, 0.2) 100%);
+  border: 2px solid rgba(139, 115, 85, 0.4);
+  border-radius: 12px;
+}
+
+.player-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid rgba(139, 115, 85, 0.3);
+}
+
+.player-header h3 {
+  font-family: 'Cinzel', serif;
+  color: #f4e4c1;
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.player-class {
+  color: #a0a0a0;
+  font-size: 0.9rem;
+}
+
+.player-traits,
+.player-skills {
+  margin-top: 1rem;
+}
+
+.player-traits h4,
+.player-skills h4 {
+  font-family: 'Cinzel', serif;
+  color: #d4af37;
+  font-size: 1.1rem;
+  margin-bottom: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.player-traits ul,
+.player-skills ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: #d0d0d0;
+  line-height: 1.8;
+}
+
+.player-traits li,
+.player-skills li {
+  margin-bottom: 0.5rem;
+}
+
+.trait-effect,
+.skill-bonus {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.2rem 0.5rem;
+  background: rgba(76, 209, 55, 0.15);
+  border: 1px solid rgba(76, 209, 55, 0.3);
+  border-radius: 4px;
+  color: #5dff98;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.trait-desc,
+.skill-reason {
+  margin: 0.3rem 0 0 0;
+  font-size: 0.85rem;
+  color: #a0a0a0;
+  font-style: italic;
+}
+
+.empty-traits {
+  text-align: center;
+  padding: 2rem;
+  color: #a0a0a0;
+  font-style: italic;
+}
+
 /* Loading Overlay */
 .dm-loading-overlay {
   position: absolute;

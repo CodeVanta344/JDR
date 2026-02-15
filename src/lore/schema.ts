@@ -131,7 +131,7 @@ export interface CombatStats {
 // LOOT & ECONOMY
 // ============================================================================
 
-export type ItemRarity = 'common' | 'uncommon' | 'rare' | 'very-rare' | 'legendary' | 'artifact';
+export type ItemRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'very-rare' | 'legendary' | 'artifact';
 export type ItemCategory =
   | 'weapon' | 'armor' | 'shield' | 'accessory' | 'consumable'
   | 'material' | 'ingredient' | 'tool' | 'key-item' | 'quest-item';
@@ -143,9 +143,7 @@ export interface LootEntry {
   condition?: string; // Condition spéciale (ex: "if boss killed solo")
 }
 
-export interface LootTable {
-  id: string;
-  name: string;
+export interface LootTable extends EntityBase {
   entries: LootEntry[];
   gold?: { min: number; max: number };
 }
@@ -183,11 +181,12 @@ export type ProfessionType =
   | 'smithing' | 'alchemy' | 'enchanting' | 'cooking'
   | 'tailoring' | 'leatherworking' | 'jewelcrafting' | 'inscription'
   // Récolte
-  | 'mining' | 'herbalism' | 'fishing' | 'hunting' | 'skinning' | 'logging';
+  | 'mining' | 'herbalism' | 'fishing' | 'hunting' | 'skinning' | 'logging'
+  // Services et spécialisés
+  | 'architecture' | 'engineering' | 'cartography' | 'music'
+  | 'medicine' | 'commerce' | 'agriculture' | 'animal-husbandry';
 
-export interface Recipe {
-  id: string;
-  name: string;
+export interface Recipe extends EntityBase {
   profession: ProfessionType;
   level: number; // Niveau de métier requis
   station?: string; // "forge", "alchemy-table", etc.
@@ -212,11 +211,13 @@ export interface Profession {
   specialization?: string;
 }
 
-export interface Resource {
-  id: string;
-  name: string;
+export interface Resource extends EntityBase {
+  type: string; // Type de ressource (animal, mineral, plant, treasure, etc.)
   category: ItemCategory;
   rarity: ItemRarity;
+  value?: number; // Valeur en or
+  professionRequired?: { name: string; level: number };
+  harvestLocation?: string[]; // Lieux de récolte
   gatheredBy: ProfessionType;
   biomes: BiomeId[];
   season?: 'spring' | 'summer' | 'autumn' | 'winter' | 'all';

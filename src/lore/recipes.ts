@@ -731,13 +731,22 @@ export const RECIPES_BY_PROFESSION: Record<ProfessionType, RecipeDefinition[]> =
   leatherworking: ALL_RECIPES.filter(r => r.profession === 'leatherworking'),
   jewelcrafting: ALL_RECIPES.filter(r => r.profession === 'jewelcrafting'),
   inscription: ALL_RECIPES.filter(r => r.profession === 'inscription'),
+  // New crafting professions
+  architecture: ALL_RECIPES.filter(r => r.profession === 'architecture'),
+  engineering: ALL_RECIPES.filter(r => r.profession === 'engineering'),
+  cartography: ALL_RECIPES.filter(r => r.profession === 'cartography'),
+  music: ALL_RECIPES.filter(r => r.profession === 'music'),
+  medicine: ALL_RECIPES.filter(r => r.profession === 'medicine'),
+  commerce: ALL_RECIPES.filter(r => r.profession === 'commerce'),
   // Gathering professions
   mining: [],
   herbalism: [],
   fishing: [],
   hunting: [],
   skinning: [],
-  logging: []
+  logging: [],
+  agriculture: ALL_RECIPES.filter(r => r.profession === 'agriculture'),
+  'animal-husbandry': ALL_RECIPES.filter(r => r.profession === 'animal-husbandry')
 };
 
 export const RECIPES_BY_ID: Record<string, RecipeDefinition> = ALL_RECIPES.reduce((acc, recipe) => {

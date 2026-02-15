@@ -15,24 +15,37 @@ export type QuestType =
   | 'event'; // Quête événement
 
 export type QuestCategory = 
-  | 'combat' 
-  | 'investigation' 
-  | 'exploration' 
-  | 'diplomacy' 
-  | 'stealth'
+  | 'main' 
+  | 'side' 
+  | 'faction' 
+  | 'repeatable'
+  | 'investigation'
+  | 'combat'
+  | 'exploration'
   | 'crafting'
-  | 'collection';
+  | 'collection'
+  | 'escort'
+  | 'diplomacy'
+  | 'stealth'
+  | 'intrigue'
+  | 'defense'
+  | 'decision'
+  | 'preparation'
+  | 'boss';
 
 export type QuestStatus = 'not_started' | 'in_progress' | 'completed' | 'failed';
 
 export interface QuestObjective {
   id: string;
   description: string;
-  type: 'kill' | 'collect' | 'talk' | 'explore' | 'escort' | 'craft' | 'choice';
+  type: 'kill' | 'collect' | 'talk' | 'explore' | 'escort' | 'craft' | 'choice' | 'combat' | 'stealth' | 'special' | 'investigate' | 'travel';
   target?: string; // ID de l'entité cible
   quantity?: number;
   location?: string;
   optional?: boolean;
+  required?: boolean; // Pour compatibilité
+  count?: number; // Alias pour quantity
+  completed?: boolean; // Pour compatibilité
 }
 
 export interface QuestAct {
@@ -54,6 +67,7 @@ export interface QuestChoice {
     reputationChange?: { faction: string; amount: number }[];
     itemsGained?: string[];
     itemsLost?: string[];
+    unlocks?: string[]; // IDs de quêtes/zones débloquées
   }[];
 }
 
@@ -63,6 +77,37 @@ export interface QuestReward {
   items?: string[];
   reputation?: { faction: string; amount: number }[];
   unlocks?: string[]; // IDs de quêtes/zones débloquées
+  titles?: string[]; // Titres débloqués
+}
+
+export interface SkillCheck {
+  stat: string;
+  dc: number;
+  description?: string;
+}
+
+export interface QuestDefinition {
+  id: string;
+  title: string;
+  description: string;
+  type: QuestType;
+  category: QuestCategory;
+  status: QuestStatus;
+  level: number;
+  questGiver: string;
+  location: string;
+  prerequisites?: {
+    level?: number;
+    quests?: string[];
+    skills?: SkillCheck[];
+    reputation?: Record<string, number>;
+  };
+  acts: QuestAct[];
+  rewards: QuestReward;
+  reputationChanges?: Record<string, number>;
+  timeLimit?: number; // En jours
+  isRepeatable: boolean;
+  tags: string[];
 }
 
 export interface QuestPrerequisites {
@@ -70,40 +115,41 @@ export interface QuestPrerequisites {
   quests?: string[]; // IDs de quêtes requises
   faction?: { id: string; reputation: number };
   items?: string[];
+  skills?: SkillCheck[];
 }
 
 export interface QuestDefinition {
   id: string;
   name: string;
+  title: string; // Alias pour name
   type: QuestType;
   category: QuestCategory;
-  
-  // Donneur de quête
-  questGiver: string; // ID du NPC
+  status: QuestStatus;
+  level: number;
+  questGiver: string;
   location: string;
-  region: string;
-  
-  // Description
-  summary: string;
-  description: string;
-  
-  // Structure
+  prerequisites?: {
+    level?: number;
+    quests?: string[];
+    skills?: SkillCheck[];
+    reputation?: Record<string, number>;
+  };
   acts: QuestAct[];
+  rewards: QuestReward;
+  reputationChanges?: Record<string, number>;
+  timeLimit?: number; // En jours
+  isRepeatable: boolean;
+  tags: string[];
+  objectives?: QuestObjective[]; // Objectifs directs (compatibilité)
+  followUpQuests?: string[]; // Quêtes suivantes
   
-  // Prérequis
-  prerequisites?: QuestPrerequisites;
-  
-  // Récompenses finales
-  finalRewards: QuestReward;
-  
-  // Temps
-  timeLimit?: number; // En minutes (0 = pas de limite)
-  
-  // Lore
+  // Propriétés héritées de l'ancienne structure
+  region?: string;
+  summary?: string;
+  description: string;
+  suggestedLevel?: number;
+  finalRewards?: QuestReward; // Récompenses finales
   loreImpact?: string; // Impact sur le monde
-  
-  // Difficulté suggerée
-  suggestedLevel: number;
 }
 
 // ============================================================================
@@ -113,14 +159,19 @@ export interface QuestDefinition {
 export const MAIN_DRAGON_AWAKENS: QuestDefinition = {
   id: 'quest:main:dragon-awakens',
   name: "Le Réveil du Dragon",
+  title: "Le Réveil du Dragon",
   type: 'main',
   category: 'combat',
+  status: 'not_started',
+  level: 15,
   questGiver: 'npc:quest:elena',
   location: 'royal-palace',
   region: 'northern-kingdoms',
   summary: "Un dragon rouge ancien s'est réveillé dans les Montagnes de Feu. Le royaume est en danger.",
   description: "Depuis des siècles, le dragon Infernus dormait sous les Montagnes de Feu. Des tremblements de terre et colonnes de fumée signalent son réveil. Le roi ordonne son élimination avant qu'il ne rase le royaume.",
   suggestedLevel: 15,
+  tags: ['dragon', 'combat', 'main'],
+  isRepeatable: false,
   
   acts: [
     {
@@ -293,6 +344,14 @@ export const MAIN_DRAGON_AWAKENS: QuestDefinition = {
     }
   ],
   
+  rewards: {
+    experience: 10000,
+    gold: 20000,
+    items: ['title:dragonslayer', 'mount:dragon-hatchling'],
+    reputation: [{ faction: 'faction:royal-crown', amount: 1000 }],
+    unlocks: ['zone:dragon-roost', 'quest:main:ancient-prophecy']
+  },
+  
   finalRewards: {
     experience: 10000,
     gold: 20000,
@@ -312,18 +371,22 @@ export const MAIN_DRAGON_AWAKENS: QuestDefinition = {
 export const FACTION_ARCANE_INITIATION: QuestDefinition = {
   id: 'quest:faction:arcane-initiation',
   name: "Rites d'Initiation Arcane",
+  title: "Rites d'Initiation Arcane",
   type: 'faction',
   category: 'investigation',
+  status: 'not_started',
+  level: 5,
   questGiver: 'npc:trainer:thalion',
   location: 'arcane-academy',
   region: 'northern-kingdoms',
   summary: "Prouver votre maîtrise de la magie pour rejoindre la Guilde Arcane.",
   description: "L'Archimage Thalion vous met à l'épreuve. Trois défis doivent être relevés pour prouver votre valeur et rejoindre les rangs de la prestigieuse Guilde Arcane.",
   suggestedLevel: 5,
-  
+  tags: ['magic', 'faction', 'initiation'],
+  isRepeatable: false,
   prerequisites: {
     level: 5,
-    items: ['spellbook:apprentice']
+    quests: ['spellbook:apprentice']
   },
   
   acts: [
@@ -424,6 +487,14 @@ export const FACTION_ARCANE_INITIATION: QuestDefinition = {
     }
   ],
   
+  rewards: {
+    experience: 1000,
+    gold: 500,
+    items: ['robe:arcane-guild', 'badge:guild-member'],
+    reputation: [{ faction: 'faction:arcane-guild', amount: 500 }],
+    unlocks: ['faction:arcane-guild:rank1', 'shop:guild-exclusive']
+  },
+  
   finalRewards: {
     experience: 1000,
     gold: 500,
@@ -438,18 +509,22 @@ export const FACTION_ARCANE_INITIATION: QuestDefinition = {
 export const FACTION_THIEVES_GUILD_HEIST: QuestDefinition = {
   id: 'quest:faction:grand-heist',
   name: "Le Grand Casse",
+  title: "Le Grand Casse",
   type: 'faction',
   category: 'stealth',
+  status: 'not_started',
+  level: 10,
   questGiver: 'npc:quest:stranger',
   location: 'shadowy-alley',
   region: 'northern-kingdoms',
   summary: "Voler le Diamant de Minuit dans le manoir le mieux gardé du royaume.",
   description: "L'Étranger vous propose le casse du siècle : voler le légendaire Diamant de Minuit de la collection privée du Duc Blackwood. Discrétion absolue requise.",
   suggestedLevel: 10,
-  
+  tags: ['stealth', 'faction', 'heist'],
+  isRepeatable: false,
   prerequisites: {
     level: 10,
-    faction: { id: 'faction:shadow-brotherhood', reputation: 200 }
+    reputation: { 'faction:shadow-brotherhood': 200 }
   },
   
   acts: [
@@ -565,6 +640,17 @@ export const FACTION_THIEVES_GUILD_HEIST: QuestDefinition = {
     }
   ],
   
+  rewards: {
+    experience: 2500,
+    gold: 10000,
+    items: ['title:master-thief', 'cloak:shadow-master'],
+    reputation: [
+      { faction: 'faction:shadow-brotherhood', amount: 1000 },
+      { faction: 'faction:royal-crown', amount: -500 }
+    ],
+    unlocks: ['faction:shadow-brotherhood:rank3', 'quest:faction:guild-war']
+  },
+  
   finalRewards: {
     experience: 2500,
     gold: 10000,
@@ -587,14 +673,19 @@ export const FACTION_THIEVES_GUILD_HEIST: QuestDefinition = {
 export const SIDE_WOLF_PROBLEM: QuestDefinition = {
   id: 'quest:side:wolf-problem',
   name: "Le Problème des Loups",
+  title: "Le Problème des Loups",
   type: 'side',
   category: 'combat',
-  questGiver: 'npc:quest:marcus',
-  location: 'riverside-farm',
-  region: 'northern-kingdoms',
-  summary: "Des loups attaquent le bétail du vieux Marcus. Éliminer la meute.",
-  description: "Le vieux Marcus est désespéré. Une meute de loups terrorise sa ferme depuis des semaines. Il a déjà perdu 12 moutons. Aidez-le avant qu'il ne perde tout.",
-  suggestedLevel: 2,
+  status: 'not_started',
+  level: 3,
+  questGiver: 'npc:quest:old-marcus',
+  location: 'village-outskirts',
+  region: 'val-dore',
+  summary: "Des loups anormalement agressifs terrorisent le village.",
+  description: "Les fermiers du village sont terrifiés. Des loups plus gros et plus agressifs que la normale rôdent près des fermes. Le vieux Marcus demande de l'aide pour protéger le bétail.",
+  suggestedLevel: 3,
+  tags: ['combat', 'wolves', 'village'],
+  isRepeatable: false,
   
   acts: [
     {
@@ -666,6 +757,13 @@ export const SIDE_WOLF_PROBLEM: QuestDefinition = {
     }
   ],
   
+  rewards: {
+    experience: 200,
+    gold: 100,
+    items: ['food:roasted-meat'],
+    reputation: [{ faction: 'faction:common-folk', amount: 50 }]
+  },
+  
   finalRewards: {
     experience: 200,
     gold: 100,
@@ -679,14 +777,19 @@ export const SIDE_WOLF_PROBLEM: QuestDefinition = {
 export const SIDE_MISSING_DAUGHTER: QuestDefinition = {
   id: 'quest:side:missing-daughter',
   name: "La Fille Disparue",
+  title: "La Fille Disparue",
   type: 'side',
   category: 'investigation',
+  status: 'not_started',
+  level: 4,
   questGiver: 'npc:innkeeper:rosie',
   location: 'prancing-pony-inn',
   region: 'northern-kingdoms',
   summary: "La fille de Rosie a disparu. Retrouvez-la avant qu'il ne soit trop tard.",
   description: "Sarah, la fille de Rosie, n'est pas rentrée hier soir. Elle devait cueillir des champignons dans la forêt. Rosie est folle d'inquiétude. Des rumeurs parlent de disparitions récentes...",
   suggestedLevel: 4,
+  tags: ['investigation', 'rescue', 'missing'],
+  isRepeatable: false,
   
   acts: [
     {
@@ -801,6 +904,14 @@ export const SIDE_MISSING_DAUGHTER: QuestDefinition = {
     }
   ],
   
+  rewards: {
+    experience: 750,
+    gold: 200,
+    items: ['ring:rosies-gratitude'],
+    reputation: [{ faction: 'faction:common-folk', amount: 150 }],
+    unlocks: ['discount:prancing-pony:50%']
+  },
+  
   finalRewards: {
     experience: 750,
     gold: 200,
@@ -816,14 +927,19 @@ export const SIDE_MISSING_DAUGHTER: QuestDefinition = {
 export const SIDE_HAUNTED_MANOR: QuestDefinition = {
   id: 'quest:side:haunted-manor',
   name: "Le Manoir Hanté",
+  title: "Le Manoir Hanté",
   type: 'side',
   category: 'investigation',
+  status: 'not_started',
+  level: 8,
   questGiver: 'npc:noble:blackwood',
   location: 'blackwood-manor',
   region: 'southern-swamps',
   summary: "Le Manoir Blackwood est hanté. Découvrir la source et l'éliminer.",
   description: "Lord Blackwood vous engage pour enquêter sur phénomènes paranormaux dans son manoir ancestral. Serviteurs terrifiés, objets qui bougent seuls, cris la nuit. Il offre récompense généreuse mais quelque chose ne tourne pas rond...",
   suggestedLevel: 7,
+  tags: ['investigation', 'haunted', 'mystery'],
+  isRepeatable: false,
   
   acts: [
     {
@@ -948,6 +1064,14 @@ export const SIDE_HAUNTED_MANOR: QuestDefinition = {
     }
   ],
   
+  rewards: {
+    experience: 1800,
+    gold: 1000,
+    items: ['title:ghost-hunter', 'grimoire:exorcism'],
+    reputation: [{ faction: 'faction:temple-light', amount: 200 }],
+    unlocks: ['quest:side:other-hauntings']
+  },
+  
   finalRewards: {
     experience: 1800,
     gold: 1000,
@@ -967,14 +1091,19 @@ export const SIDE_HAUNTED_MANOR: QuestDefinition = {
 export const REPEATABLE_BOUNTY_HUNT: QuestDefinition = {
   id: 'quest:repeatable:bounty-board',
   name: "Tableau des Primes",
+  title: "Tableau des Primes",
   type: 'repeatable',
   category: 'combat',
+  status: 'not_started',
+  level: 3,
   questGiver: 'npc:guard:captain',
   location: 'city-barracks',
   region: 'northern-kingdoms',
   summary: "Éliminer criminels recherchés listés sur le tableau des primes.",
   description: "Le Capitaine Marcus tient à jour liste de criminels dangereux. Rapporter preuves de leur capture/élimination contre récompense.",
   suggestedLevel: 3,
+  tags: ['combat', 'bounty', 'repeatable'],
+  isRepeatable: true,
   
   acts: [
     {
@@ -1008,6 +1137,12 @@ export const REPEATABLE_BOUNTY_HUNT: QuestDefinition = {
     }
   ],
   
+  rewards: {
+    experience: 150,
+    gold: 100,
+    reputation: [{ faction: 'faction:royal-crown', amount: 25 }]
+  },
+  
   finalRewards: {
     experience: 150,
     gold: 100,
@@ -1021,14 +1156,19 @@ export const REPEATABLE_BOUNTY_HUNT: QuestDefinition = {
 export const REPEATABLE_GATHER_HERBS: QuestDefinition = {
   id: 'quest:repeatable:herb-gathering',
   name: "Cueillette d'Herbes Médicinales",
+  title: "Cueillette d'Herbes Médicinales",
   type: 'repeatable',
   category: 'collection',
+  status: 'not_started',
+  level: 1,
   questGiver: 'npc:alchemist:mirabel',
   location: 'arcane-district',
   region: 'northern-kingdoms',
   summary: "Mirabel a constamment besoin d'herbes fraîches pour ses potions.",
   description: "Mirabel paiera bon prix pour herbes médicinales fraîches. Liste change selon saison et besoins.",
   suggestedLevel: 1,
+  tags: ['collection', 'herbs', 'repeatable'],
+  isRepeatable: true,
   
   acts: [
     {
@@ -1058,6 +1198,13 @@ export const REPEATABLE_GATHER_HERBS: QuestDefinition = {
     }
   ],
   
+  rewards: {
+    experience: 50,
+    gold: 30,
+    items: ['potion:healing:minor'],
+    reputation: [{ faction: 'faction:arcane-guild', amount: 10 }]
+  },
+  
   finalRewards: {
     experience: 50,
     gold: 30,
@@ -1065,7 +1212,7 @@ export const REPEATABLE_GATHER_HERBS: QuestDefinition = {
     reputation: [{ faction: 'faction:arcane-guild', amount: 10 }]
   },
   
-  loreImpact: "Mirabel peut continuer ses expériences alchimiques.",
+  loreImpact: "Mirabel apprécie votre fiabilité. Accès à potions exclusives.",
   timeLimit: 0
 };
 
@@ -1115,7 +1262,7 @@ export function getAvailableQuests(
 ): QuestDefinition[] {
   return ALL_QUESTS.filter(quest => {
     // Niveau requis
-    if (quest.suggestedLevel > playerLevel + 2) return false;
+    if ((quest.suggestedLevel || 0) > playerLevel + 2) return false;
     
     // Déjà complétée (sauf répétables)
     if (quest.type !== 'repeatable' && completedQuests.includes(quest.id)) return false;
@@ -1132,9 +1279,11 @@ export function getAvailableQuests(
       }
       
       // Réputation faction
-      if (quest.prerequisites.faction && factionReps) {
-        const rep = factionReps[quest.prerequisites.faction.id] || 0;
-        if (rep < quest.prerequisites.faction.reputation) return false;
+      if (quest.prerequisites.reputation && factionReps) {
+        const hasRequiredRep = Object.entries(quest.prerequisites.reputation).every(
+          ([factionId, requiredRep]) => (factionReps[factionId] || 0) >= requiredRep
+        );
+        if (!hasRequiredRep) return false;
       }
     }
     
@@ -1146,9 +1295,10 @@ export function getAvailableQuests(
  * Calcule récompenses totales d'une quête
  */
 export function calculateTotalRewards(quest: QuestDefinition): QuestReward {
-  let totalExp = quest.finalRewards.experience;
-  let totalGold = quest.finalRewards.gold;
-  const allItems: string[] = [...(quest.finalRewards.items || [])];
+  const finalRewards = quest.finalRewards || quest.rewards;
+  let totalExp = finalRewards.experience;
+  let totalGold = finalRewards.gold;
+  const allItems: string[] = [...(finalRewards.items || [])];
   
   quest.acts.forEach(act => {
     if (act.rewards) {
@@ -1162,7 +1312,7 @@ export function calculateTotalRewards(quest: QuestDefinition): QuestReward {
     experience: totalExp,
     gold: totalGold,
     items: allItems,
-    reputation: quest.finalRewards.reputation
+    reputation: finalRewards.reputation
   };
 }
 
@@ -1193,3 +1343,34 @@ export function getNextQuestInChain(currentQuest: QuestDefinition): QuestDefinit
   
   return nextQuest || null;
 }
+
+// Export aliases for compatibility
+export const QUEST_HOOKS = {
+  byRegion: QUESTS_BY_ID,
+  byLevel: QUESTS_BY_TYPE,
+  byType: QUESTS_BY_TYPE,
+  getAllQuests: () => ALL_QUESTS,
+  getQuestsByGiver,
+  getNextQuestInChain
+};
+
+export const RUMORS_AND_GOSSIP = {
+  valDore: [
+    "Le Maire Casteleyn cache un sombre secret...",
+    "Des étranges lumières ont été vues près du cimetière",
+    "La Guilde des Mages recrute en secret",
+    "Un marchand a été vu parlant avec des hommes en noir"
+  ],
+  coteOrages: [
+    "Les pirates préparent une grande attaque",
+    "Un trésor serait caché dans les falaises",
+    "Le Capitaine a un passé trouble",
+    "Des créatures marines étranges apparaissent"
+  ],
+  montsCoeurFer: [
+    "Les nains ont découvert une nouvelle veine",
+    "Un dragon se serait réveillé",
+    "Les mines sont hantées",
+    "Une tribu gobeline approche"
+  ]
+};

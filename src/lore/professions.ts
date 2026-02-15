@@ -660,6 +660,210 @@ export const LOGGING: ProfessionDefinition = {
 };
 
 // ============================================================================
+// SERVICE & SPECIALIZED PROFESSIONS
+// ============================================================================
+
+export const ARCHITECTURE: ProfessionDefinition = {
+  type: 'architecture',
+  name: "Architecture",
+  category: 'crafting',
+  description: "Conception et construction de bâtiments, fortifications et structures complexes. Les architectes combinent art et ingénierie pour créer des édifices durables.",
+  primaryStat: 'int',
+  associatedSkill: 'architecture',
+  trainingCost: 200,
+  maxLevel: 100,
+  specializations: [
+    { name: "Architecte Militaire", description: "Fortifications et structures défensives", levelRequired: 40, bonus: "Fortifications +30% résistance" },
+    { name: "Urbaniste", description: "Planification de villes et quartiers", levelRequired: 60, bonus: "Efficacité urbaine +20%" }
+  ],
+  levelBonuses: [
+    { level: 10, bonus: "Coût construction -10%" },
+    { level: 25, bonus: "Vitesse construction +15%" },
+    { level: 50, bonus: "Structures complexes" },
+    { level: 75, bonus: "Architecture monumentale" }
+  ],
+  tools: [
+    { name: "Planche à dessin", cost: 50, description: "Outil de base pour les plans" },
+    { name: "Kit d'architecte", cost: 300, description: "Ensemble complet d'outils de précision" }
+  ]
+};
+
+export const ENGINEERING: ProfessionDefinition = {
+  type: 'engineering',
+  name: "Ingénierie",
+  category: 'crafting',
+  description: "Création de mécanismes complexes, machines et inventions. Les ingénieurs maîtrisent physique et mécanique pour créer des appareils révolutionnaires.",
+  primaryStat: 'int',
+  associatedSkill: 'engineering',
+  trainingCost: 180,
+  maxLevel: 100,
+  specializations: [
+    { name: "Ingénieur de Siège", description: "Machines de guerre et engins de siège", levelRequired: 35, bonus: "Engins +25% puissance" },
+    { name: "Horloger", description: "Mécanismes précis et automates", levelRequired: 50, bonus: "Mécanismes +20% fiabilité" }
+  ],
+  levelBonuses: [
+    { level: 10, bonus: "Mécanismes de base" },
+    { level: 25, bonus: "Machines complexes" },
+    { level: 50, bonus: "Automates simples" },
+    { level: 75, bonus: "Dispositifs magico-technologiques" }
+  ],
+  tools: [
+    { name: "Outils d'ingénieur", cost: 75, description: "Ensemble de base pour mécaniciens" },
+    { name: "Atelier portable", cost: 250, description: "Station de travail mobile" }
+  ]
+};
+
+export const CARTOGRAPHY: ProfessionDefinition = {
+  type: 'cartography',
+  name: "Cartographie",
+  category: 'crafting',
+  description: "Création de cartes détaillées et navigation. Les cartographes documentent routes, points d'intérêt et dangers. Les maîtres créent des cartes magiques.",
+  primaryStat: 'wis',
+  associatedSkill: 'cartography',
+  trainingCost: 120,
+  maxLevel: 100,
+  specializations: [
+    { name: "Cartographe Maritime", description: "Cartes maritimes et navigation", levelRequired: 30, bonus: "Navigation +20% précision" },
+    { name: "Cartographe Souterrain", description: "Cartes de donjons et souterrains", levelRequired: 40, bonus: "Donjons +25% détails" }
+  ],
+  levelBonuses: [
+    { level: 10, bonus: "Cartes de base" },
+    { level: 25, bonus: "Cartes détaillées" },
+    { level: 50, bonus: "Cartes magiques simples" },
+    { level: 75, bonus: "Cartes prophétiques" }
+  ],
+  tools: [
+    { name: "Kit de cartographe", cost: 60, description: "Outils de base pour cartographier" },
+    { name: "Boussole magique", cost: 200, description: "Boussole avec propriétés magiques" }
+  ]
+};
+
+export const MUSIC: ProfessionDefinition = {
+  type: 'music',
+  name: "Musique",
+  category: 'crafting',
+  description: "Composition et interprétation musicale. Les musiciens créent des mélodies qui inspirent, soignent ou enchantent. Les maîtres composent des oeuvres légendaires.",
+  primaryStat: 'cha',
+  associatedSkill: 'music',
+  trainingCost: 100,
+  maxLevel: 100,
+  specializations: [
+    { name: "Barde", description: "Musique narrative et chants épiques", levelRequired: 25, bonus: "Inspiration +20% efficacité" },
+    { name: "Compositeur", description: "Oeuvres musicales complexes", levelRequired: 40, bonus: "Oeuvres magiques +25% puissance" }
+  ],
+  levelBonuses: [
+    { level: 10, bonus: "Instruments de base" },
+    { level: 25, bonus: "Effets émotionnels" },
+    { level: 50, bonus: "Musique curative" },
+    { level: 75, bonus: "Composition légendaire" }
+  ],
+  tools: [
+    { name: "Instrument de musique", cost: 40, description: "Instrument de base" },
+    { name: "Instrument magique", cost: 300, description: "Instrument avec propriétés magiques" }
+  ]
+};
+
+export const MEDICINE: ProfessionDefinition = {
+  type: 'medicine',
+  name: "Médecine",
+  category: 'crafting',
+  description: "Diagnostic et traitement des maladies et blessures. Les médecins étudient anatomie et remèdes pour soigner les afflictions.",
+  primaryStat: 'wis',
+  associatedSkill: 'medicine',
+  trainingCost: 150,
+  maxLevel: 100,
+  specializations: [
+    { name: "Chirurgien", description: "Interventions médicales invasives", levelRequired: 35, bonus: "Chirurgie +25% succès" },
+    { name: "Herboriste Médical", description: "Pharmacologie et remèdes naturels", levelRequired: 25, bonus: "Potions médicinales +20% efficacité" }
+  ],
+  levelBonuses: [
+    { level: 10, bonus: "Soins de base améliorés" },
+    { level: 25, bonus: "Diagnostic avancé" },
+    { level: 50, bonus: "Potions complexes" },
+    { level: 75, bonus: "Traitement maladies magiques" }
+  ],
+  tools: [
+    { name: "Kit médical", cost: 80, description: "Outils de base pour médecin" },
+    { name: "Laboratoire alchimique", cost: 400, description: "Équipement pour potions avancées" }
+  ]
+};
+
+export const COMMERCE: ProfessionDefinition = {
+  type: 'commerce',
+  name: "Commerce",
+  category: 'crafting',
+  description: "Négociation, vente et gestion d'entreprises. Les commerçants maîtrisent l'art de la négociation et établissent des réseaux commerciaux.",
+  primaryStat: 'cha',
+  associatedSkill: 'commerce',
+  trainingCost: 90,
+  maxLevel: 100,
+  specializations: [
+    { name: "Négociateur", description: "Négociation et diplomatie commerciale", levelRequired: 30, bonus: "Négociation +25% efficacité" },
+    { name: "Maître de Caravane", description: "Organisation de routes commerciales", levelRequired: 40, bonus: "Commerce +20% profit" }
+  ],
+  levelBonuses: [
+    { level: 10, bonus: "Prix améliorés de 10%" },
+    { level: 25, bonus: "Réseaux commerciaux" },
+    { level: 50, bonus: "Caravanes commerciales" },
+    { level: 75, bonus: "Influence économique" }
+  ],
+  tools: [
+    { name: "Balance commerciale", cost: 30, description: "Outil pour peser et évaluer" },
+    { name: "Registre de commerce", cost: 50, description: "Registre pour transactions" }
+  ]
+};
+
+export const AGRICULTURE: ProfessionDefinition = {
+  type: 'agriculture',
+  name: "Agriculture",
+  category: 'gathering',
+  description: "Culture de plantes et gestion de fermes. Les agriculteurs font pousser des récoltes. Les maîtres cultivent des plantes rares et magiques.",
+  primaryStat: 'wis',
+  associatedSkill: 'agriculture',
+  trainingCost: 70,
+  maxLevel: 100,
+  specializations: [
+    { name: "Herboriste Agricole", description: "Plantes médicinales et rares", levelRequired: 35, bonus: "Plantes rares +30% rendement" },
+    { name: "Viticulteur", description: "Culture de vignes et production de vin", levelRequired: 25, bonus: "Vins +25% valeur" }
+  ],
+  levelBonuses: [
+    { level: 10, bonus: "Rendement +10%" },
+    { level: 25, bonus: "Cultures saisonnières" },
+    { level: 50, bonus: "Plantes magiques" },
+    { level: 75, bonus: "Optimisation des récoltes" }
+  ],
+  tools: [
+    { name: "Outils d'agriculteur", cost: 40, description: "Ensemble de base pour agriculture" },
+    { name: "Irrigation améliorée", cost: 150, description: "Système d'irrigation avancé" }
+  ]
+};
+
+export const ANIMAL_HUSBANDRY: ProfessionDefinition = {
+  type: 'animal-husbandry',
+  name: "Élevage",
+  category: 'gathering',
+  description: "Élevage d'animaux domestiques et production de ressources animales. Les éleveurs s'occupent de bétail, montures et animaux de compagnie.",
+  primaryStat: 'wis',
+  associatedSkill: 'animal-husbandry',
+  trainingCost: 80,
+  maxLevel: 100,
+  specializations: [
+    { name: "Éleveur de Montures", description: "Montures et animaux de guerre", levelRequired: 30, bonus: "Montures +25% performance" },
+    { name: "Éleveur Magique", description: "Créatures magiques rares", levelRequired: 50, bonus: "Créatures magiques +30% rendement" }
+  ],
+  levelBonuses: [
+    { level: 10, bonus: "Animaux de base" },
+    { level: 25, bonus: "Montures simples" },
+    { level: 50, bonus: "Créatures exotiques" },
+    { level: 75, bonus: "Élevage avancé" }
+  ],
+  tools: [
+    { name: "Équipement d'élevage", cost: 50, description: "Outils de base pour éleveur" },
+    { name: "Enclos amélioré", cost: 200, description: "Installation pour créatures spéciales" }
+  ]
+};
+
+// ============================================================================
 // EXPORTS
 // ============================================================================
 
@@ -673,13 +877,21 @@ export const ALL_PROFESSIONS: ProfessionDefinition[] = [
   LEATHERWORKING,
   JEWELCRAFTING,
   INSCRIPTION,
+  ARCHITECTURE,
+  ENGINEERING,
+  CARTOGRAPHY,
+  MUSIC,
+  MEDICINE,
+  COMMERCE,
   // Gathering
   MINING,
   HERBALISM,
   FISHING,
   HUNTING,
   SKINNING,
-  LOGGING
+  LOGGING,
+  AGRICULTURE,
+  ANIMAL_HUSBANDRY
 ];
 
 export const PROFESSIONS_BY_TYPE: Record<ProfessionType, ProfessionDefinition> = ALL_PROFESSIONS.reduce((acc, prof) => {

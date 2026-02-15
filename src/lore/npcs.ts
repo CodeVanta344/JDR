@@ -1291,3 +1291,34 @@ export function getDialogue(npc: NPCDefinition, trigger: NPCDialogue['trigger'])
 export function calculatePrice(basePrice: number, multiplier: number): number {
   return Math.floor(basePrice * multiplier);
 }
+
+// Export templates for compatibility
+export const NPC_TEMPLATES = {
+  merchants: {
+    general: [MERCHANT_ALDRIC, MERCHANT_SYLVANA],
+    weapons: MERCHANT_WEAPONS,
+    potions: MERCHANT_POTION_SELLER,
+    jewelry: MERCHANT_JEWELER,
+    books: MERCHANT_RARE_BOOKS
+  },
+  artisans: {
+    blacksmith: BLACKSMITH_BROM,
+    alchemist: ALCHEMIST_MIRABEL,
+    enchanter: ENCHANTER_MYSTRAL,
+    cook: COOK_PIERRE,
+    tailor: TAILOR_MADAME_BOUTIQUE
+  },
+  questgivers: {
+    main: [QUESTGIVER_ELENA, QUESTGIVER_OLD_MARCUS, QUESTGIVER_MYSTERIOUS_STRANGER],
+    secondary: [QUEST_LOST_CHILD, QUEST_SCHOLAR_ANCIENT, QUEST_WIDOW]
+  },
+  trainers: {
+    combat: TRAINER_SWORD_MASTER,
+    magic: TRAINER_ARCHMAGE_THALION
+  },
+  allies: [ALLY_THERON, ALLY_LYRA, ALLY_DWARF_WARRIOR, ALLY_ROGUE, ALLY_CLERIC],
+  enemies: {
+    bosses: [ENEMY_BANDIT_KING, ENEMY_NECROMANCER],
+    minor: [ENEMY_CORRUPT_MERCHANT, ENEMY_CULT_LEADER]
+  }
+};

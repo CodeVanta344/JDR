@@ -3,7 +3,8 @@
  * Fonctions pour intégrer formules d100 dans CombatManager
  */
 
-import { getModifier, rollDice, DIFFICULTY_THRESHOLDS, calculateAC, getProficiencyBonus } from '../lore/rules';
+import { getModifier, rollDice, calculateAC, getProficiencyBonus } from '../lore/rules';
+import { resolveAttackDice, resolveDamageDice, resolveDamageCap } from './combat-progression';
 
 /**
  * Calcul jet d'attaque d100
@@ -13,9 +14,9 @@ import { getModifier, rollDice, DIFFICULTY_THRESHOLDS, calculateAC, getProficien
  * @param tacticalBonus - Bonus tactique (flanking, etc.)
  * @returns {roll, modifier, total, success, isCritical}
  */
-export const rollAttackD100 = (attacker, target, level = 1, tacticalBonus = 0) => {
-  // Jet d100
-  const { total: roll, rolls, isCritical, isFumble } = rollDice('1d100');
+export const rollAttackD100 = (attacker, target, level = 1, tacticalBonus = 0, action = null) => {
+  const { dice: attackDice, tier, prioritized } = resolveAttackDice({ level, action, attacker });
+  const { total: roll, rolls, isCritical, isFumble } = rollDice(attackDice);
   
   // Modificateur = attribut principal + bonus maîtrise + tactique
   const primaryStat = attacker.str || attacker.dex || 15; // Default 15 si pas défini
@@ -36,7 +37,10 @@ export const rollAttackD100 = (attacker, target, level = 1, tacticalBonus = 0) =
     success,
     isCritical,
     isFumble,
-    targetAC: target.ac
+    targetAC: target.ac,
+    attackDice,
+    tier: tier.key,
+    isPrioritized: prioritized
   };
 };
 
@@ -48,8 +52,12 @@ export const rollAttackD100 = (attacker, target, level = 1, tacticalBonus = 0) =
  * @returns {damage, rolls, breakdown}
  */
 export const calculateDamageD100 = (attacker, action, isCritical = false) => {
-  // Base : dés d'arme
-  const weaponDice = action.damage_dice || '1d40'; // Épée longue standard
+  const level = attacker?.level || 1;
+  const { dice: progressionDamageDice, tier, prioritized } = resolveDamageDice({ level, action, attacker });
+  const { cap: damageCap } = resolveDamageCap(level);
+
+  // Base : dés d'arme, sinon fallback progressif par niveau
+  const weaponDice = action.damage_dice || progressionDamageDice;
   const weaponRoll = rollDice(weaponDice);
   
   // Modificateur attribut
@@ -82,21 +90,28 @@ export const calculateDamageD100 = (attacker, action, isCritical = false) => {
   
   // Total final
   const damage = weaponRoll.total + statMod + traitBonus + bonusDiceTotal + actionBonus + criticalBonus;
+  const cappedDamage = Math.max(1, Math.min(damage, damageCap));
   
   return {
-    damage: Math.max(1, damage), // Minimum 1 dégât
+    damage: cappedDamage,
     rolls: {
       weapon: weaponRoll.rolls,
       critical: isCritical ? criticalBonus : 0
     },
     breakdown: {
+      tier: tier.key,
+      isPrioritized: prioritized,
+      selectedDice: weaponDice,
+      damageCap,
+      wasCapped: damage > damageCap,
       weaponDice: weaponRoll.total,
       statMod,
       traitBonus,
       bonusDice: bonusDiceTotal,
       actionBonus,
       critical: criticalBonus,
-      total: damage
+      total: damage,
+      finalDamage: cappedDamage
     }
   };
 };
@@ -211,10 +226,19 @@ export const COMBATANT_D100_TEMPLATE = {
  * MESSAGE DE LOG FORMATÉ D100
  */
 export const formatCombatLogD100 = (attacker, target, rollData, damageData) => {
-  const { roll, modifier, total, success, isCritical } = rollData;
+  const { roll, modifier, total, success, isCritical, attackDice, tier, isPrioritized } = rollData;
   const { damage, breakdown } = damageData;
+  const priorityLabel = (isPrioritized || breakdown?.isPrioritized) ? 'priorisée' : 'standard';
+  const tierLabel = tier || breakdown?.tier || 'unknown';
   
   let msg = `⚔️ **${attacker.name}** attaque **${target.name}**\n`;
+  msg += `📈 Palier: **${tierLabel}** | Style: **${priorityLabel}**\n`;
+  if (attackDice) {
+    msg += `🎯 Dé attaque: **${attackDice}**\n`;
+  }
+  if (breakdown?.selectedDice) {
+    msg += `🗡️ Dé dégâts: **${breakdown.selectedDice}**\n`;
+  }
   msg += `🎲 Jet : **${roll}** + ${modifier} = **${total}** vs CA ${target.ac}`;
   
   if (isCritical) {
@@ -223,6 +247,9 @@ export const formatCombatLogD100 = (attacker, target, rollData, damageData) => {
   } else if (success) {
     msg += ` ✅\n`;
     msg += `💥 Dégâts : ${breakdown.weaponDice} + ${breakdown.statMod} + ${breakdown.traitBonus} = **${damage}**`;
+    if (breakdown?.wasCapped) {
+      msg += `\n🛡️ Cap palier appliqué: **${breakdown.damageCap}**`;
+    }
   } else {
     msg += ` ❌ **RATÉ !**`;
   }

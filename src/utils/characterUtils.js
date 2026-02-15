@@ -48,6 +48,20 @@ export const resolveCharacterAbilities = (character) => {
                 // Fallback object if not found in class data
                 return fromInitial || fromUnlockables || { name: s, desc: "Aptitude apprise", level: 1, cost: 0, range: 2 };
             }
+            // If it's an object, merge with class data to get new fields like 'target'
+            const fromInitial = (classData.initial_ability_options || []).find(a => a.name === s.name);
+            const fromUnlockables = (classData.unlockables || []).find(u => u.name === s.name);
+            const classAbility = fromInitial || fromUnlockables;
+            if (classAbility) {
+                // Merge: class data provides defaults, player data overrides, but ensure target is set
+                const merged = {
+                    ...classAbility,
+                    ...s,
+                    target: s.target || classAbility.target || (classAbility.friendly ? 'ally' : 'enemy'),
+                    friendly: s.friendly !== undefined ? s.friendly : classAbility.friendly
+                };
+                return merged;
+            }
             return s;
         }).filter(Boolean);
     } else {

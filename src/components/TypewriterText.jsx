@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-export const TypewriterText = ({ text, speed = 30, onComplete }) => {
+export const TypewriterText = ({ text, speed = 30, onComplete, renderText }) => {
     const [displayedText, setDisplayedText] = useState('');
     const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -19,7 +19,7 @@ export const TypewriterText = ({ text, speed = 30, onComplete }) => {
 
     return (
         <div style={{ whiteSpace: 'pre-wrap' }}>
-            {displayedText}
+            {renderText ? renderText(displayedText) : displayedText}
             {currentIndex < text.length && <span className="typewriter-cursor"></span>}
         </div>
     );

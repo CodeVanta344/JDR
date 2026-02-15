@@ -20,6 +20,33 @@ export const NarrationPanel = ({
         !players.every(p => p.is_ready) &&
         !messages.some(m => m.role === 'system' && m.content.includes("START_ADVENTURE_TRIGGERED"));
 
+    const NARRATIVE_KEYWORDS = [
+        'quête', 'quêtes', 'objectif', 'objectifs', 'indice', 'indices', 'secret', 'secrets',
+        'danger', 'combat', 'ennemi', 'ennemis', 'boss', 'piège', 'récompense', 'or',
+        'artefact', 'relique', 'faction', 'factions', 'village', 'auberge', 'marchand',
+        'portail', 'rumeur', 'rumeurs', 'rituel', 'sort', 'malédiction', 'décision', 'choix'
+    ];
+    const KEYWORD_SET = new Set(NARRATIVE_KEYWORDS.map((k) => k.toLowerCase()));
+    const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const KEYWORD_REGEX = new RegExp(`\\b(${NARRATIVE_KEYWORDS.map(escapeRegExp).join('|')})\\b`, 'giu');
+
+    const renderHighlightedNarrative = (text) => {
+        const lines = (text || '').split('\n');
+        return lines.map((line, lineIndex) => {
+            const segments = line.split(KEYWORD_REGEX);
+            return (
+                <React.Fragment key={`line-${lineIndex}`}>
+                    {segments.map((segment, segmentIndex) => (
+                        KEYWORD_SET.has(segment.toLowerCase())
+                            ? <span key={`seg-${lineIndex}-${segmentIndex}`} className="mj-keyword">{segment}</span>
+                            : <React.Fragment key={`seg-${lineIndex}-${segmentIndex}`}>{segment}</React.Fragment>
+                    ))}
+                    {lineIndex < lines.length - 1 && <br />}
+                </React.Fragment>
+            );
+        });
+    };
+
     const extractNarrative = (rawContent) => {
         if (!rawContent) return '';
 
@@ -165,9 +192,11 @@ export const NarrationPanel = ({
                                         })()}
 
                                         {i === messages.length - 1 && m.role !== 'user' ? (
-                                            <TypewriterText text={content} speed={15} />
+                                            <TypewriterText text={content} speed={15} renderText={renderHighlightedNarrative} />
                                         ) : (
-                                            <div style={{ whiteSpace: 'pre-wrap' }}>{content}</div>
+                                            <div style={{ whiteSpace: 'pre-wrap' }}>
+                                                {m.role === 'user' ? content : renderHighlightedNarrative(content)}
+                                            </div>
                                         )}
                                     </>
                                 )}

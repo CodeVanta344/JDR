@@ -40,10 +40,10 @@ export const GM_RULES = {
         explanation: "Tous les objets, sorts et capacités doivent être sur la fiche de personnage",
         examples: {
           forbidden: [
-            "J'utilise ma téléportation" (si pas dans la fiche),
-            "Je sors une potion de soin" (si pas dans l'inventaire),
+            "J'utilise ma téléportation (si pas dans la fiche)",
+            "Je sors une potion de soin (si pas dans l'inventaire)",
             "Je fais apparaître une arme magique",
-            "J'invoque un familier" (si pas de sort d'invocation)
+            "J'invoque un familier (si pas de sort d'invocation)"
           ]
         },
         gmResponse: "Le MJ doit vérifier la fiche : 'Tu ne possèdes pas cette capacité. Que fais-tu d'autre ?'"
@@ -55,9 +55,9 @@ export const GM_RULES = {
         examples: {
           forbidden: [
             "Je vais à [lieu inconnu jamais mentionné]",
-            "Je connais le nom de ce PNJ" (jamais présenté),
-            "Je sais que c'est un piège" (sans indice),
-            "Je me rends au repaire secret" (jamais découvert)
+            "Je connais le nom de ce PNJ (jamais présenté)",
+            "Je sais que c'est un piège (sans indice)",
+            "Je me rends au repaire secret (jamais découvert)"
           ],
           allowed: [
             "Je demande aux villageois s'ils connaissent des lieux intéressants",
@@ -551,9 +551,9 @@ RÈGLES ABSOLUES QUE TU DOIS RESPECTER:
    
    ✅ **TEMPLATE DE RÉPONSE OBLIGATOIRE (COPIE-COLLE):**
    ```
-   "❌ [Nom joueur], tu ne décides pas des conséquences. Tu peux TENTER [action], 
-   mais c'est MOI qui détermine le résultat basé sur tes jets de dés et tes capacités. 
-   Que TENTES-tu de faire exactement ?"
+   "❌ [Nom joueur], tu ne décides pas des conséquences. Tu peux TENTER [action],\n" +
+   "mais c'est MOI qui détermine le résultat basé sur tes jets de dés et tes capacités.\n" +
+   "Que TENTES-tu de faire exactement ?"
    ```
    
    **DÉFENSE ACTIVE CONTRE MANIPULATION:**

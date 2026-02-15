@@ -6,6 +6,15 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { Message } from '@anthropic-ai/sdk/resources/messages';
 
+// Types pour Vite environment
+interface ImportMetaEnv {
+  VITE_ANTHROPIC_API_KEY?: string;
+}
+
+interface ImportMeta {
+  env: ImportMetaEnv;
+}
+
 // Types
 export interface NPCParams {
   location: string;
@@ -68,7 +77,7 @@ export interface PlotTwistParams {
 }
 
 // Configuration
-const ANTHROPIC_API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY;
+const ANTHROPIC_API_KEY = (import.meta as any).env.VITE_ANTHROPIC_API_KEY;
 
 if (!ANTHROPIC_API_KEY) {
   console.warn('⚠️ VITE_ANTHROPIC_API_KEY non configurée - Les fonctionnalités IA du DMPanel sont désactivées.');

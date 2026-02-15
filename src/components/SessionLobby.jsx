@@ -252,7 +252,7 @@ export function SessionLobby({ onJoin, onCreate, onQuickStart, onSoloAdventure, 
                     textShadow: '0 2px 4px rgba(0,0,0,0.8)'
                 }}>
                     <div style={{ marginBottom: '0.5rem', letterSpacing: '2px', textTransform: 'uppercase' }}>Produceur RL • Level Designer AL</div>
-                    &copy; 2026 AETHELGARD ENGINE • VERSION 0.1.0-ALPHA
+                    &copy; 2026 AETHELGARD ENGINE • VERSION 0.2.0-ALPHA
                 </footer>
             </div>
             {/* Immersive effects */}

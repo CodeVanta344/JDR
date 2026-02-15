@@ -6,19 +6,28 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { dmAssistant } from '../services/dm-assistant';
 import type { NPC, Encounter } from '../services/dm-assistant';
-import './DMPanel.css';
+import { ALL_RESOURCES } from '../lore/resources';
+import { gatheringSystem } from '../lore/gathering-system';
 
 interface DMPanelProps {
   isOpen: boolean;
   onClose: () => void;
   gameState: {
     location: string;
-    players: Array<{ class: string; level: number; name: string; user_id: string }>;
+    players: Array<{ 
+      class: string; 
+      level: number; 
+      name: string; 
+      user_id: string;
+      mechanical_traits?: Array<{ name: string; effect?: string; desc?: string; game_effect?: string }>;
+      skill_bonuses?: Array<{ skillId: string; bonus?: number; reason?: string } | string>;
+    }>;
     history: string[];
     lore: any;
   };
   onSpawnNPC: (npc: NPC) => void;
-  onTriggerCombat: (encounter: Encounter) => void;
+  onTriggerCombat?: (encounter: Encounter) => void;
+  onGiveItems?: (playerId: string, items: any[]) => void;
 }
 
 interface ChatMessage {
@@ -27,15 +36,18 @@ interface ChatMessage {
   timestamp: number;
 }
 
-type TabType = 'actions' | 'chat' | 'npcs' | 'quests' | 'locations' | 'rules';
+type TabType = 'actions' | 'chat' | 'npcs' | 'quests' | 'locations' | 'rules' | 'players' | 'materials';
 
-export function DMPanel({ isOpen, onClose, gameState, onSpawnNPC, onTriggerCombat }: DMPanelProps) {
+export function DMPanel({ isOpen, onClose, gameState, onSpawnNPC, onTriggerCombat, onGiveItems }: DMPanelProps) {
   const [activeTab, setActiveTab] = useState<TabType>('actions');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generatedNPCs, setGeneratedNPCs] = useState<NPC[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
+  const [selectedPlayer, setSelectedPlayer] = useState<string>('');
+  const [selectedResource, setSelectedResource] = useState<string>('');
+  const [resourceQuantity, setResourceQuantity] = useState<number>(1);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Charger lore au montage
@@ -87,7 +99,7 @@ export function DMPanel({ isOpen, onClose, gameState, onSpawnNPC, onTriggerComba
         narrative_context: gameState.history.slice(-3).join(' '),
       });
 
-      onTriggerCombat(encounter);
+      onTriggerCombat?.(encounter);
       addChatMessage('assistant', `Combat improvisé généré : ${encounter.enemies.length} ennemis dans ${encounter.terrain.ambient}`);
     } catch (err: any) {
       setError(err.message);
@@ -182,6 +194,9 @@ export function DMPanel({ isOpen, onClose, gameState, onSpawnNPC, onTriggerComba
           <button className={activeTab === 'npcs' ? 'active' : ''} onClick={() => setActiveTab('npcs')}>
             🎭 NPCs ({generatedNPCs.length})
           </button>
+          <button className={activeTab === 'players' ? 'active' : ''} onClick={() => setActiveTab('players')}>
+            👥 Joueurs ({gameState.players.length})
+          </button>
           <button className={activeTab === 'quests' ? 'active' : ''} onClick={() => setActiveTab('quests')}>
             📜 Quêtes
           </button>
@@ -190,6 +205,9 @@ export function DMPanel({ isOpen, onClose, gameState, onSpawnNPC, onTriggerComba
           </button>
           <button className={activeTab === 'rules' ? 'active' : ''} onClick={() => setActiveTab('rules')}>
             📖 Règles d100
+          </button>
+          <button className={activeTab === 'materials' ? 'active' : ''} onClick={() => setActiveTab('materials')}>
+            📦 Matériaux
           </button>
         </div>
 
@@ -383,6 +401,166 @@ export function DMPanel({ isOpen, onClose, gameState, onSpawnNPC, onTriggerComba
                 <ul>
                   <li><strong>Création Perso:</strong> 200-800 PO selon origine</li>
                   <li><strong>Prix Items:</strong> Common 5-50 PO | Uncommon 50-500 PO | Rare 500-5000 PO</li>
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'players' && (
+            <div className="dm-players-view">
+              {gameState.players.length === 0 ? (
+                <div className="empty-state">
+                  <p>👥 Aucun joueur connecté</p>
+                  <p className="empty-hint">Les joueurs doivent rejoindre la session</p>
+                </div>
+              ) : (
+                <div className="players-list">
+                  {gameState.players.map((player, i) => (
+                    <div key={i} className="player-card">
+                      <div className="player-header">
+                        <h3>{player.name}</h3>
+                        <span className="player-class">{player.class} (Niv. {player.level})</span>
+                      </div>
+                      
+                      {/* Aptitudes Spéciales */}
+                      {player.mechanical_traits && player.mechanical_traits.length > 0 && (
+                        <div className="player-traits">
+                          <h4>✨ Aptitudes Spéciales</h4>
+                          <ul>
+                            {player.mechanical_traits.map((trait: any, j: number) => (
+                              <li key={j}>
+                                <strong>{trait.name}</strong>
+                                {trait.effect && <span className="trait-effect">{trait.effect}</span>}
+                                {(trait.desc || trait.game_effect) && (
+                                  <p className="trait-desc">{trait.desc || trait.game_effect}</p>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {/* Compétences Maîtrisées */}
+                      {player.skill_bonuses && player.skill_bonuses.length > 0 && (
+                        <div className="player-skills">
+                          <h4>🎯 Compétences Maîtrisées</h4>
+                          <ul>
+                            {player.skill_bonuses.map((skill: any, j: number) => {
+                              const skillId = typeof skill === 'string' ? skill : skill.skillId;
+                              const bonus = typeof skill === 'object' ? skill.bonus : null;
+                              const reason = typeof skill === 'object' ? skill.reason : null;
+                              return (
+                                <li key={j}>
+                                  <strong>{skillId}</strong>
+                                  {bonus && <span className="skill-bonus">+{bonus}</span>}
+                                  {reason && <p className="skill-reason">{reason}</p>}
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {/* Message si aucune info */}
+                      {(!player.mechanical_traits || player.mechanical_traits.length === 0) && 
+                       (!player.skill_bonuses || player.skill_bonuses.length === 0) && (
+                        <div className="empty-traits">
+                          <p>Aucune aptitude ou compétence spéciale enregistrée</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'materials' && (
+            <div className="dm-materials-view">
+              <h3>📦 Distribution de Matériaux</h3>
+              <p className="info-text">Donnez des ressources aux joueurs pour récompenses narratives ou butin</p>
+              
+              {gameState.players.length === 0 ? (
+                <div className="empty-state">
+                  <p>👥 Aucun joueur connecté</p>
+                  <p className="empty-hint">Les joueurs doivent rejoindre la session pour recevoir des matériaux</p>
+                </div>
+              ) : (
+                <div className="materials-form">
+                  <div className="form-row">
+                    <label>Joueur cible:</label>
+                    <select 
+                      value={selectedPlayer} 
+                      onChange={(e) => setSelectedPlayer(e.target.value)}
+                      className="dm-select"
+                    >
+                      <option value="">Sélectionner un joueur...</option>
+                      {gameState.players.map((player) => (
+                        <option key={player.user_id} value={player.user_id}>
+                          {player.name} ({player.class} Niv.{player.level})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className="form-row">
+                    <label>Ressource:</label>
+                    <select 
+                      value={selectedResource} 
+                      onChange={(e) => setSelectedResource(e.target.value)}
+                      className="dm-select"
+                    >
+                      <option value="">Sélectionner une ressource...</option>
+                      {ALL_RESOURCES.map((resource) => (
+                        <option key={resource.id} value={resource.id}>
+                          {resource.name} ({resource.rarity}) - {resource.value} PO
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className="form-row">
+                    <label>Quantité:</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="100"
+                      value={resourceQuantity}
+                      onChange={(e) => setResourceQuantity(parseInt(e.target.value) || 1)}
+                      className="dm-input"
+                    />
+                  </div>
+                  
+                  <button 
+                    className="dm-action-btn primary"
+                    onClick={() => {
+                      if (selectedPlayer && selectedResource && onGiveItems) {
+                        const resource = ALL_RESOURCES.find(r => r.id === selectedResource);
+                        if (resource) {
+                          const item = gatheringSystem.createResourceItem(selectedResource, resourceQuantity);
+                          if (item) {
+                            onGiveItems(selectedPlayer, [item]);
+                            addChatMessage('assistant', `✅ Donné: ${resourceQuantity}x ${resource.name} à ${gameState.players.find(p => p.user_id === selectedPlayer)?.name}`);
+                            setSelectedResource('');
+                            setResourceQuantity(1);
+                          }
+                        }
+                      }
+                    }}
+                    disabled={!selectedPlayer || !selectedResource}
+                  >
+                    🎁 Donner au joueur
+                  </button>
+                </div>
+              )}
+              
+              <div className="materials-info">
+                <h4>💡 Conseils pour le MJ</h4>
+                <ul>
+                  <li><strong>Butin de combat:</strong> Les créatures vaincues donnent automatiquement leur loot</li>
+                  <li><strong>Récompenses:</strong> Donnez des matériaux rares pour quêtes importantes</li>
+                  <li><strong>Récolte:</strong> Les joueurs peuvent récolter via l'onglet Métiers de leur fiche</li>
+                  <li><strong>Visibilité:</strong> Ressources évidentes = pas de jet, cachées = jet de Perception</li>
                 </ul>
               </div>
             </div>

@@ -962,3 +962,14 @@ export function getCreatureVariants(baseCreatureId: string): CreatureDefinition[
     .map(id => CREATURES_BY_ID[id])
     .filter(c => c !== undefined);
 }
+
+// Export aliases for compatibility
+export const BESTIARY = CREATURES_BY_ID;
+export const BESTIARY_EXTENDED = {
+  ...CREATURES_BY_ID,
+  ALL_CREATURES,
+  CREATURES_BY_CR,
+  CREATURES_BY_TYPE,
+  CREATURES_BY_BIOME,
+  getCreatureVariants
+};

@@ -63,14 +63,21 @@ export interface Ability {
     level: number;
     dice?: string;
     scaling?: string;
+    range?: number;
     type?: string;
     actionType?: string;
     flavor?: string;
+    description?: string;
     desc?: string;
-    vfx?: string;
-    range?: number;
     heal?: string;
     resource?: number;
+    friendly?: boolean;
+    /** Type de cible : 'self' (soi-même), 'ally' (allié), 'enemy' (ennemi), 'area' (zone) */
+    target?: 'self' | 'ally' | 'enemy' | 'area';
+    /** Si true, peut cibler soi-même en plus de allies (pour les sorts ally) */
+    canTargetSelf?: boolean;
+    /** Effet visuel associé */
+    vfx?: string;
 }
 
 export interface SubclassDetails {
@@ -163,9 +170,9 @@ export const CLASSES: Record<string, Class> = {
             }
         ],
         initial_ability_options: [
-            { name: "Frappe Puissante", cost: 15, cooldown: 2, level: 1, dice: "1d10", scaling: "str", type: "Physique", actionType: "Action", flavor: "Un coup d'une brutalité sauvage, capable d'écraser les os et de traverser le cuir le plus épais.", desc: "Ignore 2 points d'armure de la cible.", vfx: "slash_red" },
-            { name: "Heurt de Bouclier", cost: 10, cooldown: 3, level: 1, dice: "1d4", scaling: "str", type: "Physique", actionType: "Action", flavor: "Vous utilisez votre bouclier non pas pour parer, mais comme un marteau de fer pour sonner l'adversaire.", desc: "Chance d'étourdir la cible pendant 1 tour.", vfx: "impact_white" },
-            { name: "Posture Défensive", cost: 5, cooldown: 4, level: 1, type: "Posture", actionType: "Action Bonus", flavor: "Vous ancrez vos pieds dans le sol et serrez les dents, vous préparant à l'inévitable déferlement de coups.", desc: "Réduit les dégâts subis de 3 pendant 1 tour.", vfx: "shield_glow" }
+            { name: "Frappe Puissante", cost: 15, cooldown: 2, level: 1, dice: "1d10", scaling: "str", type: "Physique", actionType: "Action", flavor: "Un coup d'une brutalité sauvage, capable d'écraser les os et de traverser le cuir le plus épais.", desc: "Ignore 2 points d'armure de la cible.", vfx: "slash_red", target: "enemy" },
+            { name: "Heurt de Bouclier", cost: 10, cooldown: 3, level: 1, dice: "1d4", scaling: "str", type: "Physique", actionType: "Action", flavor: "Vous utilisez votre bouclier non pas pour parer, mais comme un marteau de fer pour sonner l'adversaire.", desc: "Chance d'étourdir la cible pendant 1 tour.", vfx: "impact_white", target: "enemy" },
+            { name: "Posture Défensive", cost: 5, cooldown: 4, level: 1, type: "Posture", actionType: "Action Bonus", flavor: "Vous ancrez vos pieds dans le sol et serrez les dents, vous préparant à l'inévitable déferlement de coups.", desc: "Réduit les dégâts subis de 3 pendant 1 tour.", vfx: "shield_glow", target: "self" }
         ],
         subclasses: {
             "juggernaut": { label: "Juggernaut", desc: "Une muraille vivante.", details: { style: "Défenseur", feature: "Forteresse Vivante : Réduit tous les dégâts subis de 50%, mais votre vitesse tombe à 0 pour ce tour." } },
@@ -223,9 +230,9 @@ export const CLASSES: Record<string, Class> = {
             }
         ],
         initial_ability_options: [
-            { name: "Trait Arcanique", cost: 8, cooldown: 0, level: 1, dice: "1d10", scaling: "int", range: 10, type: "Arcane", actionType: "Action", flavor: "Un dard de lumière azurée, crépitant d'énergie instable, s'élance de vos doigts vers le cœur de l'ennemi.", desc: "Projectile magique à longue portée.", vfx: "magic_bolt_blue" },
-            { name: "Onde de Choc", cost: 15, cooldown: 2, level: 1, dice: "2d6", scaling: "int", range: 3, type: "Élémentaire", actionType: "Action", flavor: "Vous frappez l'air de vos paumes, créant une distorsion violente qui balaie tout sur son passage.", desc: "Repousse les ennemis proches de 2 cases.", vfx: "shockwave_purple" },
-            { name: "Bouclier de Mana", cost: 5, cooldown: 3, level: 1, type: "Abjuration", actionType: "Réaction", flavor: "Au moment de l'impact, une membrane de géométrie éthérée se matérialise pour absorber le choc.", desc: "Consomme 1 MP pour chaque point de dégât absorbé.", vfx: "mana_shield" }
+            { name: "Trait Arcanique", cost: 8, cooldown: 0, level: 1, dice: "1d10", scaling: "int", range: 10, type: "Arcane", actionType: "Action", flavor: "Un dard de lumière azurée, crépitant d'énergie instable, s'élance de vos doigts vers le cœur de l'ennemi.", desc: "Projectile magique à longue portée.", vfx: "magic_bolt_blue", target: "enemy" },
+            { name: "Onde de Choc", cost: 15, cooldown: 2, level: 1, dice: "2d6", scaling: "int", range: 3, type: "Élémentaire", actionType: "Action", flavor: "Vous frappez l'air de vos paumes, créant une distorsion violente qui balaie tout sur son passage.", desc: "Repousse les ennemis proches de 2 cases.", vfx: "shockwave_purple", target: "area" },
+            { name: "Bouclier de Mana", cost: 5, cooldown: 3, level: 1, type: "Abjuration", actionType: "Réaction", flavor: "Au moment de l'impact, une membrane de géométrie éthérée se matérialise pour absorber le choc.", desc: "Consomme 1 MP pour chaque point de dégât absorbé.", vfx: "mana_shield", target: "self" }
         ],
         subclasses: {
             "elementaliste": { label: "Élémentaliste", desc: "Maître des éléments.", details: { style: "Artillerie", feature: "Maîtrise Élémentaire : Vos sorts percent les défenses et ignorent la résistance élémentaire de la cible." } },
@@ -282,9 +289,9 @@ export const CLASSES: Record<string, Class> = {
             }
         ],
         initial_ability_options: [
-            { name: "Attaque Sournoise", cost: 12, cooldown: 0, level: 1, dice: "1d6", scaling: "dex", type: "Précision", actionType: "Passif", flavor: "Vous profitez de la moindre seconde d'inattention pour loger votre lame entre deux vertèbres.", desc: "Ajoute +1d6 dégâts si vous avez l'avantage.", vfx: "slash_purple" },
-            { name: "Disparition", cost: 15, cooldown: 4, level: 1, type: "Ombre", actionType: "Action Bonus", flavor: "Un mouvement fluide dans les angles morts, une ombre qui se fond dans les ténèbres... et vous n'êtes plus là.", desc: "Entrez en état d'invisibilité.", vfx: "smoke_puff" },
-            { name: "Lancer de Dague", cost: 5, cooldown: 0, level: 1, dice: "1d4", scaling: "dex", range: 8, type: "Physique", actionType: "Action", flavor: "Une lueur argentée, le sifflement du vent, et l'acier trouve sa cible avant même qu'elle n'ait pu crier.", desc: "Attaque rapide à distance.", vfx: "dagger_throw" }
+            { name: "Attaque Sournoise", cost: 12, cooldown: 0, level: 1, dice: "1d6", scaling: "dex", type: "Précision", actionType: "Passif", flavor: "Vous profitez de la moindre seconde d'inattention pour loger votre lame entre deux vertèbres.", desc: "Ajoute +1d6 dégâts si vous avez l'avantage.", vfx: "slash_purple", target: "enemy" },
+            { name: "Disparition", cost: 15, cooldown: 4, level: 1, type: "Ombre", actionType: "Action Bonus", flavor: "Un mouvement fluide dans les angles morts, une ombre qui se fond dans les ténèbres... et vous n'êtes plus là.", desc: "Entrez en état d'invisibilité.", vfx: "smoke_puff", target: "self" },
+            { name: "Lancer de Dague", cost: 5, cooldown: 0, level: 1, dice: "1d4", scaling: "dex", range: 8, type: "Physique", actionType: "Action", flavor: "Une lueur argentée, le sifflement du vent, et l'acier trouve sa cible avant même qu'elle n'ait pu crier.", desc: "Attaque rapide à distance.", vfx: "dagger_throw", target: "enemy" }
         ],
         subclasses: {
             "assassin": { label: "Assassin", desc: "Tueur silencieux.", details: { style: "Burst", feature: "Marque de Mort : Toute attaque portée contre une créature surprise est automatiquement un coup critique." } },
@@ -341,9 +348,9 @@ export const CLASSES: Record<string, Class> = {
             }
         ],
         initial_ability_options: [
-            { name: "Mot de Guérison", cost: 15, cooldown: 2, level: 1, dice: "1d4", scaling: "wis", range: 6, type: "Lumière", actionType: "Action Bonus", flavor: "Une simple syllabe du Crystal Céleste suffit à refermer les plaies et à redonner espoir aux cœurs vaillants.", desc: "Soin rapide à distance.", vfx: "heal_gold", friendly: true },
-            { name: "Flamme Sacrée", cost: 10, cooldown: 0, level: 1, dice: "1d8", scaling: "wis", range: 8, type: "Radieux", actionType: "Action", flavor: "Une colonne de feu blanc descend des cieux pour purifier ceux qui s'opposent à la volonté divine.", desc: "La cible ne bénéficie d'aucun bonus de couvert.", vfx: "holy_fire" },
-            { name: "Bénédiction", cost: 20, cooldown: 4, level: 1, range: 4, type: "Bénédiction", actionType: "Action", flavor: "Vous tracez un symbole sacré dans l'air, insufflant une fraction de la puissance du Crystal en vos alliés.", desc: "Donne +1d4 aux jets d'attaque de 3 alliés.", vfx: "bless_glow", friendly: true }
+            { name: "Mot de Guérison", cost: 15, cooldown: 2, level: 1, dice: "1d4", scaling: "wis", range: 6, type: "Lumière", actionType: "Action Bonus", flavor: "Une simple syllabe du Crystal Céleste suffit à refermer les plaies et à redonner espoir aux cœurs vaillants.", desc: "Soin rapide à distance.", vfx: "heal_gold", target: "ally", canTargetSelf: true },
+            { name: "Flamme Sacrée", cost: 10, cooldown: 0, level: 1, dice: "1d8", scaling: "wis", range: 8, type: "Radieux", actionType: "Action", flavor: "Une colonne de feu blanc descend des cieux pour purifier ceux qui s'opposent à la volonté divine.", desc: "La cible ne bénéficie d'aucun bonus de couvert.", vfx: "holy_fire", target: "enemy" },
+            { name: "Bénédiction", cost: 20, cooldown: 4, level: 1, range: 4, type: "Bénédiction", actionType: "Action", flavor: "Vous tracez un symbole sacré dans l'air, insufflant une fraction de la puissance du Crystal en vos alliés.", desc: "Donne +1d4 aux jets d'attaque de 3 alliés.", vfx: "bless_glow", target: "ally", canTargetSelf: true }
         ],
         subclasses: {
             "guerre": { label: "Domaine de Guerre", desc: "Combattant divin.", details: { style: "Offensif", feature: "Frappe Divine : Vos attaques d'armes infligent 1d8 dégâts radiants bonus." } },
@@ -400,9 +407,9 @@ export const CLASSES: Record<string, Class> = {
             }
         ],
         initial_ability_options: [
-            { name: "Imposition des Mains", cost: 10, cooldown: 3, level: 1, heal: "10", scaling: "cha", type: "Sacré", actionType: "Action", flavor: "Votre foi est si pure qu'un seul toucher peut chasser les ombres et restaurer la vitalité d'un corps brisé.", desc: "Rend 5 PV par point de Charisme.", vfx: "heal_white" },
-            { name: "Châtiment Divin", cost: 25, cooldown: 0, level: 1, dice: "2d8", scaling: "cha", type: "Châtiment", actionType: "Passif", flavor: "Le Crystal guide votre lame, l'enveloppant d'une fureur sacrée qui réduit le mal en cendres.", desc: "Invoquez le châtiment pour +2d8 dégâts radiants.", vfx: "smite_yellow" },
-            { name: "Bouclier de Foi", cost: 15, cooldown: 4, level: 1, type: "Abjuration", actionType: "Action Bonus", flavor: "Une aura dorée vous enveloppe, tel un rempart invisible érigé par les mains de Solarius lui-même.", desc: "Augmente la CA d'un allié de 2.", vfx: "shield_glow_gold" }
+            { name: "Imposition des Mains", cost: 10, cooldown: 3, level: 1, heal: "10", scaling: "cha", type: "Sacré", actionType: "Action", flavor: "Votre foi est si pure qu'un seul toucher peut chasser les ombres et restaurer la vitalité d'un corps brisé.", desc: "Rend 5 PV par point de Charisme.", vfx: "heal_white", target: "ally", canTargetSelf: true },
+            { name: "Châtiment Divin", cost: 25, cooldown: 0, level: 1, dice: "2d8", scaling: "cha", type: "Châtiment", actionType: "Passif", flavor: "Le Crystal guide votre lame, l'enveloppant d'une fureur sacrée qui réduit le mal en cendres.", desc: "Invoquez le châtiment pour +2d8 dégâts radiants.", vfx: "smite_yellow", target: "enemy" },
+            { name: "Bouclier de Foi", cost: 15, cooldown: 4, level: 1, type: "Abjuration", actionType: "Action Bonus", flavor: "Une aura dorée vous enveloppe, tel un rempart invisible érigé par les mains de Solarius lui-même.", desc: "Augmente la CA d'un allié de 2.", vfx: "shield_glow_gold", target: "ally", canTargetSelf: true }
         ],
         subclasses: {
             "vengeance": { label: "Serment de Vengeance", desc: "Juge impitoyable.", details: { style: "Traqueur", feature: "Vœu d'Inimitié : Désignez une cible comme ennemi juré pour avoir l'Avantage sur toutes vos attaques contre elle." } },

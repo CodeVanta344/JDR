@@ -56,7 +56,6 @@ interface GameState {
   sceneImage: string | null;
   audioEnabled: boolean;
   audioVolume: number;
-  voiceEnabled: boolean;
   lastSFX: { type: string; t: number } | null;
   activeVFX: { type: string; x: number; y: number; color: string; t: number } | null;
   tension: number;
@@ -111,7 +110,6 @@ interface GameState {
   setSceneImage: (url: string | null) => void;
   setAudioEnabled: (enabled: boolean) => void;
   setAudioVolume: (volume: number) => void;
-  setVoiceEnabled: (enabled: boolean) => void;
   setLastSFX: (sfx: { type: string; t: number } | null) => void;
   setActiveVFX: (vfx: { type: string; x: number; y: number; color: string; t: number } | null) => void;
   setTension: (tension: number) => void;
@@ -160,7 +158,6 @@ const initialState = {
   sceneImage: null,
   audioEnabled: false,
   audioVolume: 0.5,
-  voiceEnabled: true,
   lastSFX: null,
   activeVFX: null,
   tension: 0,
@@ -237,7 +234,6 @@ export const useGameStore = create<GameState>()(
       setSceneImage: (sceneImage) => set({ sceneImage }),
       setAudioEnabled: (audioEnabled) => set({ audioEnabled }),
       setAudioVolume: (audioVolume) => set({ audioVolume }),
-      setVoiceEnabled: (voiceEnabled) => set({ voiceEnabled }),
       setLastSFX: (lastSFX) => set({ lastSFX }),
       setActiveVFX: (activeVFX) => set({ activeVFX }),
       setTension: (tension) => set({ tension }),
@@ -268,7 +264,6 @@ export const useGameStore = create<GameState>()(
         profile: state.profile,
         audioEnabled: state.audioEnabled,
         audioVolume: state.audioVolume,
-        voiceEnabled: state.voiceEnabled,
         notes: state.notes,
       }),
     }

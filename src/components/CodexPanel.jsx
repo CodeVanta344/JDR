@@ -1,23 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { gameSystemsManager } from '../lore/game-systems-manager';
 import { BLACKSMITHING } from '../lore/professions/craft/blacksmithing';
 import { ALCHEMY } from '../lore/professions/craft/alchemy';
+import { ENCHANTING } from '../lore/professions/craft/enchanting';
+import { COOKING } from '../lore/professions/craft/cooking';
+import { LEATHERWORKING } from '../lore/professions/craft/leatherworking';
+import { TAILORING } from '../lore/professions/craft/tailoring';
+import { CARPENTRY } from '../lore/professions/craft/carpentry';
+import { JEWELCRAFTING } from '../lore/professions/craft/jewelcrafting';
 import { MINING } from '../lore/professions/gather/mining';
+import { HERBALISM } from '../lore/professions/gather/herbalism';
+import { FISHING } from '../lore/professions/gather/fishing';
+import { HUNTING } from '../lore/professions/gather/hunting';
+import { WOODCUTTING } from '../lore/professions/gather/woodcutting';
+import { SKINNING } from '../lore/professions/gather/skinning';
 import { GUILDES } from '../lore/factions/index';
+import { ALL_FACTIONS as LORE_FACTIONS } from '../lore/factions';
 import { LEGENDARY_WEAPONS } from '../lore/legendary-items';
+import { ALL_LEGENDARY_ITEMS as LEGENDARY_ITEMS_EXPANDED } from '../lore/items-legendary-expansion';
 import {
   BALANCED_WEAPONS,
   BALANCED_ARMORS,
   BALANCED_CONSUMABLES,
   calculateMerchantPrice
 } from '../lore/economy-system';
-import { LEGENDARY_WEAPONS as LW_BASE } from '../lore/legendary-items';
 import { ALL_CREATURES } from '../lore/bestiary';
 import { EXPANDED_BESTIARY_BATCH_1 } from '../lore/bestiary-expansion-1';
 import { EXPANDED_BESTIARY_BATCH_2 } from '../lore/bestiary-expansion-2';
 import { BESTIARY_EXPANSION_3 } from '../lore/bestiary-expansion-3';
-import { CLASSES } from '../lore/classes';
+import { CLASSES, CLASS_CATEGORIES } from '../lore/classes';
 import { ALL_QUESTS } from '../lore/quests';
+import { ARC_SEALED_ONES_QUESTS } from '../lore/quests-arc-sealed-ones';
+import { WORLD_EVENTS as CORE_WORLD_EVENTS } from '../lore/world-events';
+import { ALL_WORLD_EVENTS as EXPANDED_WORLD_EVENTS } from '../lore/events-world-expansion';
 import { TAVERNS_AND_LOCATIONS } from '../lore/locations';
 import { LEVEL_THRESHOLDS, EQUIPMENT_RULES, DIFFICULTY_THRESHOLDS } from '../lore/rules';
 import { ALL_LOCATIONS as WORLD_LOCATIONS } from '../lore/world-map';
@@ -33,19 +48,31 @@ const WORLD_RULES = {
 // Consolidated Legendary Items
 const ALL_LEGENDARY_ITEMS = [
   ...LEGENDARY_WEAPONS,
+  ...LEGENDARY_ITEMS_EXPANDED,
 ].filter((item, index, self) =>
   index === self.findIndex((t) => t.id === item.id)
 );
 
 // Consolidated Bestiary
+const normalizeCreature = (creature, index) => ({
+  ...creature,
+  id: creature.id || `creature_${index}_${(creature.name || 'unknown').toLowerCase().replace(/\s+/g, '_')}`,
+  name: creature.name || 'Créature Inconnue',
+  type: creature.type || creature.class || 'Créature',
+  challengeRating: creature.challengeRating ?? creature.cr ?? creature.level ?? 1,
+  description: creature.description || creature.desc || 'Aucune description disponible.'
+});
+
 const FULL_BESTIARY = [
   ...ALL_CREATURES,
   ...EXPANDED_BESTIARY_BATCH_1,
   ...EXPANDED_BESTIARY_BATCH_2,
   ...BESTIARY_EXPANSION_3
-].filter((c, index, self) =>
-  index === self.findIndex((t) => t.id === c.id)
-);
+]
+  .map(normalizeCreature)
+  .filter((c, index, self) =>
+    index === self.findIndex((t) => (t.id || t.name) === (c.id || c.name))
+  );
 
 // Consolidated Locations - Merge world-map with taverns/landmarks
 const ALL_LOCATIONS = [
@@ -76,6 +103,113 @@ const ALL_LOCATIONS = [
   }))
 ];
 
+const parseLegendaryEffects = (item) => {
+  const directEffects = item?.properties?.magical_effects;
+  if (Array.isArray(directEffects) && directEffects.length > 0) {
+    return directEffects
+      .filter((effect) => effect && (effect.name || effect.description))
+      .map((effect, index) => ({
+        name: effect.name || `Propriété ${index + 1}`,
+        description: effect.description || 'Aucune description.'
+      }));
+  }
+
+  const description = typeof item?.description === 'string' ? item.description : '';
+  const powersSection = description.includes('**Pouvoirs:**')
+    ? description.split('**Pouvoirs:**')[1]
+    : (description.includes('Pouvoirs:') ? description.split('Pouvoirs:')[1] : '');
+
+  const parsedPowers = powersSection
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith('-'))
+    .map((line, index) => ({
+      name: `Pouvoir ${index + 1}`,
+      description: line.replace(/^-\s*/, '').trim()
+    }));
+
+  if (parsedPowers.length > 0) {
+    return parsedPowers;
+  }
+
+  const fallbackEffects = [];
+
+  if (item?.stats && Object.keys(item.stats).length > 0) {
+    const statsText = Object.entries(item.stats)
+      .map(([key, value]) => `${key}: ${value}`)
+      .join(' | ');
+    fallbackEffects.push({ name: 'Statistiques', description: statsText });
+  }
+
+  if (item?.requirements && Object.keys(item.requirements).length > 0) {
+    const reqText = Object.entries(item.requirements)
+      .map(([key, value]) => `${key}: ${value}`)
+      .join(' | ');
+    fallbackEffects.push({ name: 'Pré-requis', description: reqText });
+  }
+
+  if (item?.questRequired) {
+    fallbackEffects.push({ name: 'Quête associée', description: item.questRequired });
+  }
+
+  if (item?.cursed) {
+    fallbackEffects.push({ name: 'Malédiction', description: 'Cet artefact est maudit.' });
+  }
+
+  return fallbackEffects;
+};
+
+const normalizeWorldEvent = (event) => ({
+  id: event.id,
+  name: event.name || 'Événement Inconnu',
+  kind: event.type || event.category || 'event',
+  scope: event.magnitude || 'regional',
+  durationDays: event.duration || event.initial_phase?.duration_days || 0,
+  levelRequirement: event.levelRequirement || 1,
+  description: event.description || event.initial_phase?.description || 'Aucune chronique disponible.',
+  triggers: event.triggers || event.trigger_conditions?.player_actions || [],
+  regions: event.regions || [],
+  objectives: event.phases?.[0]?.objectives || event.escalation_phases?.[0]?.player_intervention_options?.map((o) => o.action) || [],
+  consequences:
+    event.consequences ||
+    event.resolution?.possible_endings?.flatMap((ending) => ending.long_term_consequences || []).slice(0, 5) ||
+    [],
+  rumors: event.initial_phase?.rumors_spreading || []
+});
+
+const WORLD_CHRONICLES = [
+  ...CORE_WORLD_EVENTS,
+  ...EXPANDED_WORLD_EVENTS
+]
+  .map(normalizeWorldEvent)
+  .filter((event, index, self) => index === self.findIndex((e) => e.id === event.id));
+
+const ALL_BALANCED_ITEMS = [
+  ...BALANCED_WEAPONS,
+  ...BALANCED_ARMORS,
+  ...BALANCED_CONSUMABLES
+].filter((item, index, self) => index === self.findIndex((it) => it.id === item.id));
+
+const ECONOMY_CATEGORY_LABELS = {
+  all: 'Tout le Comptoir',
+  weapon: 'Armurerie',
+  armor: 'Protections',
+  consumable: 'Vivres',
+  material: 'Matériaux'
+};
+
+const ECONOMY_CATEGORIES = [
+  { id: 'all', label: ECONOMY_CATEGORY_LABELS.all, items: ALL_BALANCED_ITEMS },
+  ...Object.entries(ECONOMY_CATEGORY_LABELS)
+    .filter(([type]) => type !== 'all')
+    .map(([type, label]) => ({
+      id: type,
+      label,
+      items: ALL_BALANCED_ITEMS.filter((item) => item.type === type)
+    }))
+    .filter((category) => category.items.length > 0)
+];
+
 export function CodexPanel({ isOpen, onClose }) {
   const [activeTab, setActiveTab] = useState('professions');
   const [selectedItem, setSelectedItem] = useState(null);
@@ -88,7 +222,73 @@ export function CodexPanel({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  const PROFESSIONS = [BLACKSMITHING, ALCHEMY, MINING];
+  const PROFESSIONS = [
+    BLACKSMITHING,
+    ALCHEMY,
+    ENCHANTING,
+    COOKING,
+    LEATHERWORKING,
+    TAILORING,
+    CARPENTRY,
+    JEWELCRAFTING,
+    MINING,
+    HERBALISM,
+    FISHING,
+    HUNTING,
+    WOODCUTTING,
+    SKINNING
+  ];
+
+  const normalizeFaction = (faction) => ({
+    id: faction.id,
+    name: faction.name,
+    category: faction.category || faction.type || 'guild',
+    motto: faction.motto || faction.summary || 'Aucune devise connue',
+    headquarters: faction.headquarters || 'Inconnu',
+    leader: faction.leader || 'Inconnu',
+    lore: {
+      founding_story:
+        faction.lore?.founding_story ||
+        faction.description ||
+        faction.summary ||
+        'Aucune chronique disponible.'
+    },
+    ranks: (faction.ranks || []).map((rank, index) => ({
+      level: rank.level ?? index + 1,
+      title: rank.title || rank.name || `Rang ${index + 1}`,
+      reputation_required: rank.reputation_required ?? rank.threshold ?? 0,
+      privileges: rank.privileges || rank.perks || []
+    }))
+  });
+
+  const FACTIONS = [
+    ...GUILDES.map(normalizeFaction),
+    ...LORE_FACTIONS.map(normalizeFaction)
+  ].filter((faction, index, self) => index === self.findIndex((f) => f.id === faction.id));
+
+  const normalizeQuest = (quest) => ({
+    ...quest,
+    title: quest.title || quest.name || 'Quête Inconnue',
+    difficulty:
+      quest.difficulty ||
+      (quest.suggestedLevel >= 15 ? 'Épique' : quest.suggestedLevel >= 8 ? 'Difficile' : 'Moyenne'),
+    min_level: quest.min_level || quest.suggestedLevel || quest.level || 1,
+    hook: quest.hook || quest.summary || quest.description || 'Aucune accroche disponible.'
+  });
+
+  const CODEX_QUESTS = [
+    ...ALL_QUESTS,
+    ...ARC_SEALED_ONES_QUESTS
+  ]
+    .map(normalizeQuest)
+    .filter((quest, index, self) => index === self.findIndex((q) => q.id === quest.id));
+
+  const playerProfessions = gameSystemsManager.exportState().player_professions || [];
+  const swornProfessionId = playerProfessions[0]?.profession_id || null;
+  const hasSwornProfession = Boolean(swornProfessionId);
+  const isProfessionLocked = (professionId) => hasSwornProfession && professionId !== swornProfessionId;
+  const isSelectedProfessionKnown = Boolean(selectedItem?.id && playerProfessions.some((p) => p.profession_id === selectedItem.id));
+  const isSelectedProfessionLocked = Boolean(selectedItem?.id && isProfessionLocked(selectedItem.id));
 
   return (
     <div className="codex-overlay" onClick={onClose}>
@@ -127,10 +327,18 @@ export function CodexPanel({ isOpen, onClose }) {
               <div className="professions-list">
                 <h3>Grimoire des Métiers</h3>
                 {PROFESSIONS.map(prof => (
-                  <div key={prof.id} className={`profession-card ${selectedItem?.id === prof.id ? 'active' : ''}`} onClick={() => setSelectedItem(prof)}>
+                  <div
+                    key={prof.id}
+                    className={`profession-card ${selectedItem?.id === prof.id ? 'active' : ''} ${isProfessionLocked(prof.id) ? 'locked' : ''}`}
+                    onClick={() => {
+                      if (isProfessionLocked(prof.id)) return;
+                      setSelectedItem(prof);
+                    }}
+                  >
                     <h4>{prof.name}</h4>
                     <p className="profession-category">{prof.category === 'craft' ? '⚒️ Grand Artisanat' : '⛏️ Maître Récolteur'}</p>
                     <p className="profession-desc">{prof.description.substring(0, 80)}...</p>
+                    {isProfessionLocked(prof.id) && <p className="profession-lock">🔒 Inaccessible après serment</p>}
                   </div>
                 ))}
               </div>
@@ -165,10 +373,15 @@ export function CodexPanel({ isOpen, onClose }) {
                     </div>
                   </div>
                   <div className="action-footer">
-                    <button className="premium-action-btn" onClick={() => {
-                      const result = gameSystemsManager.learnProfession(selectedItem.id);
-                      triggerFeedback("Serment Prêté", result.message, "⚒️");
-                    }}>
+                    <button
+                      className="premium-action-btn"
+                      disabled={isSelectedProfessionLocked || isSelectedProfessionKnown}
+                      onClick={() => {
+                        if (isSelectedProfessionLocked || isSelectedProfessionKnown) return;
+                        const result = gameSystemsManager.learnProfession(selectedItem.id);
+                        triggerFeedback(result.success ? 'Serment Prêté' : 'Serment Refusé', result.message, result.success ? '⚒️' : '⛔');
+                      }}
+                    >
                       <span className="btn-glow"></span>Prêter Serment
                     </button>
                   </div>
@@ -181,7 +394,7 @@ export function CodexPanel({ isOpen, onClose }) {
             <div className="factions-view">
               <div className="factions-list">
                 <h3>Annales des Factions</h3>
-                {GUILDES.map(faction => (
+                {FACTIONS.map(faction => (
                   <div key={faction.id} className={`faction-card ${selectedItem?.id === faction.id ? 'active' : ''}`} onClick={() => setSelectedItem(faction)}>
                     <h4>{faction.name}</h4>
                     <span className={`category-badge ${faction.category}`}>{faction.category}</span>
@@ -234,16 +447,22 @@ export function CodexPanel({ isOpen, onClose }) {
               ) : (
                 <div className="legendary-details">
                   <h3>{selectedItem.name}</h3>
-                  <div className="lore-section"><h4>🔥 Chronique de Création</h4><p className="lore-p">{selectedItem.lore?.creation_story || selectedItem.description}</p></div>
+                  <div className="lore-section"><h4>🔥 Chronique de Création</h4><p className="lore-p">{selectedItem.lore?.creation_story || selectedItem.lore || selectedItem.description}</p></div>
                   <div className="abilities-section">
                     <h4>✨ Propriétés Sacrées</h4>
                     <div className="ability-detail-grid">
-                      {(selectedItem.properties?.magical_effects || []).map((effect, i) => (
-                        <div key={i} className="ability-card">
-                          <div className="ability-header"><h5>{effect.name}</h5></div>
-                          <p>{effect.description}</p>
-                        </div>
-                      ))}
+                      {(() => {
+                        const legendaryEffects = parseLegendaryEffects(selectedItem);
+                        if (legendaryEffects.length === 0) {
+                          return <p>Aucune propriété détaillée disponible pour cette relique.</p>;
+                        }
+                        return legendaryEffects.map((effect, i) => (
+                          <div key={i} className="ability-card">
+                            <div className="ability-header"><h5>{effect.name}</h5></div>
+                            <p>{effect.description}</p>
+                          </div>
+                        ));
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -322,9 +541,18 @@ export function CodexPanel({ isOpen, onClose }) {
             <div className="classes-view">
               <div className="classes-list">
                 <h3>Archétypes de Destin</h3>
+                <div className="class-categories-overview">
+                  {Object.entries(CLASS_CATEGORIES).map(([id, cat]) => (
+                    <div key={id} className="rule-card">
+                      <h4>{cat.icon} {cat.label}</h4>
+                      <p className="profession-desc">{cat.desc}</p>
+                    </div>
+                  ))}
+                </div>
                 {Object.values(CLASSES).map(cls => (
                   <div key={cls.label} className={`class-card ${selectedItem?.label === cls.label ? 'active' : ''}`} onClick={() => setSelectedItem(cls)}>
                     <h4>{cls.label}</h4>
+                    <p className="class-role">{CLASS_CATEGORIES[cls.category]?.icon} {CLASS_CATEGORIES[cls.category]?.label || cls.category}</p>
                     <p className="class-role">✨ {cls.recommended_stats?.major?.join(' / ') || 'Équilibre'}</p>
                   </div>
                 ))}
@@ -334,11 +562,107 @@ export function CodexPanel({ isOpen, onClose }) {
               ) : (
                 <div className="class-details">
                   <h3>{selectedItem.label}</h3>
-                  <div className="lore-section"><h4>📜 Voie & Philosophie</h4><p className="lore-p">{selectedItem.desc}</p></div>
+                  {CLASS_CATEGORIES[selectedItem.category] && (
+                    <div className="stats-section">
+                      <h4>{CLASS_CATEGORIES[selectedItem.category].icon} Catégorie</h4>
+                      <div className="stats-grid">
+                        <div className="stat-item">
+                          <span className="stat-label">Voie</span>
+                          <span className="stat-value">{CLASS_CATEGORIES[selectedItem.category].label}</span>
+                        </div>
+                        <div className="stat-item">
+                          <span className="stat-label">Affinité</span>
+                          <span className="stat-value">{CLASS_CATEGORIES[selectedItem.category].classes.join(' / ')}</span>
+                        </div>
+                      </div>
+                      <p className="lore-p">{CLASS_CATEGORIES[selectedItem.category].desc}</p>
+                    </div>
+                  )}
+
+                  <div className="stats-section">
+                    <h4>📊 Fiche Technique</h4>
+                    <div className="stats-grid">
+                      <div className="stat-item">
+                        <span className="stat-label">Dé de Vie</span>
+                        <span className="stat-value">d{selectedItem.hitDie || 6}</span>
+                      </div>
+                      <div className="stat-item">
+                        <span className="stat-label">Ressource</span>
+                        <span className="stat-value">{selectedItem.resourceStat || 'N/A'}</span>
+                      </div>
+                      <div className="stat-item">
+                        <span className="stat-label">Stats majeures</span>
+                        <span className="stat-value">{selectedItem.recommended_stats?.major?.join(' / ') || 'N/A'}</span>
+                      </div>
+                      <div className="stat-item">
+                        <span className="stat-label">Stats mineures</span>
+                        <span className="stat-value">{selectedItem.recommended_stats?.minor?.join(' / ') || 'N/A'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {selectedItem.mechanic && (
+                    <div className="lore-section">
+                      <h4>⚙️ Mécanique de Classe — {selectedItem.mechanic.name}</h4>
+                      <p className="lore-p">{selectedItem.mechanic.desc}</p>
+                    </div>
+                  )}
+
+                  {selectedItem.protection && (
+                    <div className="stats-section">
+                      <h4>�️ Maîtrises</h4>
+                      <div className="stats-grid">
+                        <div className="stat-item">
+                          <span className="stat-label">Armures</span>
+                          <span className="stat-value">{selectedItem.protection.armor?.join(' / ') || 'Aucune'}</span>
+                        </div>
+                        <div className="stat-item">
+                          <span className="stat-label">Armes</span>
+                          <span className="stat-value">{selectedItem.protection.weapons?.join(' / ') || 'Aucune'}</span>
+                        </div>
+                        <div className="stat-item">
+                          <span className="stat-label">Boucliers</span>
+                          <span className="stat-value">{selectedItem.protection.shields ? 'Oui' : 'Non'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="lore-section"><h4>�📜 Voie & Philosophie</h4><p className="lore-p">{selectedItem.desc}</p></div>
+
+                  {(selectedItem.starting_equipment_options?.length > 0) && (
+                    <div className="abilities-section">
+                      <h4>🎒 Équipements de départ</h4>
+                      <div className="ability-detail-grid">
+                        {selectedItem.starting_equipment_options.map((option, idx) => (
+                          <div key={idx} className="ability-card">
+                            <div className="ability-header"><h5>{option.label}</h5></div>
+                            <p>{option.items?.map((it) => it.name).join(', ')}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {(selectedItem.subclasses && Object.keys(selectedItem.subclasses).length > 0) && (
+                    <div className="abilities-section">
+                      <h4>🧭 Spécialisations</h4>
+                      <div className="ability-detail-grid">
+                        {Object.values(selectedItem.subclasses).map((subclass, idx) => (
+                          <div key={idx} className="ability-card">
+                            <div className="ability-header"><h5>{subclass.label}</h5></div>
+                            <p>{subclass.desc}</p>
+                            {subclass.details?.feature && <p>{subclass.details.feature}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="abilities-section">
                     <h4>✨ Arts & Sortilèges</h4>
                     <div className="ability-detail-grid">
-                      {(selectedItem.abilities || selectedItem.unlockables || []).map((ability, idx) => (
+                      {(selectedItem.abilities?.length ? selectedItem.abilities : selectedItem.unlockables || []).map((ability, idx) => (
                         <div key={idx} className="ability-card">
                           <div className="ability-header"><h5>{ability.name}</h5><span className="cost-tag">{ability.cost || 'Inné'}</span></div>
                           <p>{ability.desc || ability.flavor}</p>
@@ -355,7 +679,7 @@ export function CodexPanel({ isOpen, onClose }) {
             <div className="quests-view">
               <div className="quests-list">
                 <h3>Chroniques de Quêtes</h3>
-                {ALL_QUESTS.map((quest, idx) => (
+                {CODEX_QUESTS.map((quest, idx) => (
                   <div key={quest.id || idx} className={`quest-card ${selectedItem?.id === quest.id ? 'active' : ''}`} onClick={() => setSelectedItem(quest)}>
                     <h4>{quest.name || quest.title}</h4>
                     <p className="quest-difficulty">{quest.difficulty || 'Moyenne'}</p>
@@ -577,7 +901,53 @@ export function CodexPanel({ isOpen, onClose }) {
 
           {activeTab === 'world_events' && (
             <div className="world-events-view">
-              <div className="details-placeholder"><div className="placeholder-icon">🌍</div><p>Les Chroniques sont en cours d'écriture...</p></div>
+              <div className="quests-list">
+                <h3>Chroniques du Monde</h3>
+                {WORLD_CHRONICLES.map((event, idx) => (
+                  <div key={event.id || idx} className={`quest-card ${selectedItem?.id === event.id ? 'active' : ''}`} onClick={() => setSelectedItem(event)}>
+                    <h4>{event.name}</h4>
+                    <p className="quest-difficulty">{event.kind} • {event.scope}</p>
+                  </div>
+                ))}
+              </div>
+              {!selectedItem ? (
+                <div className="details-placeholder"><div className="placeholder-icon">🌍</div><p>Consultez les chroniques et bouleversements d'Aethelgard.</p></div>
+              ) : (
+                <div className="quest-details">
+                  <h3>{selectedItem.name}</h3>
+                  <div className="stats-section">
+                    <h4>📊 Informations</h4>
+                    <div className="stats-grid">
+                      <div className="stat-item"><span className="stat-label">Type</span><span className="stat-value">{selectedItem.kind}</span></div>
+                      <div className="stat-item"><span className="stat-label">Portée</span><span className="stat-value">{selectedItem.scope}</span></div>
+                      <div className="stat-item"><span className="stat-label">Durée</span><span className="stat-value">{selectedItem.durationDays} jours</span></div>
+                      <div className="stat-item"><span className="stat-label">Niveau recommandé</span><span className="stat-value">{selectedItem.levelRequirement}</span></div>
+                    </div>
+                  </div>
+
+                  <div className="lore-section"><h4>📜 Chronique</h4><p className="lore-p">{selectedItem.description}</p></div>
+
+                  {selectedItem.regions?.length > 0 && (
+                    <div className="lore-section"><h4>🗺️ Régions concernées</h4><p className="lore-p">{selectedItem.regions.join(' • ')}</p></div>
+                  )}
+
+                  {selectedItem.objectives?.length > 0 && (
+                    <div className="lore-section"><h4>🎯 Objectifs majeurs</h4><ul>{selectedItem.objectives.map((o, i) => <li key={i} className="lore-p">{o}</li>)}</ul></div>
+                  )}
+
+                  {selectedItem.triggers?.length > 0 && (
+                    <div className="lore-section"><h4>⚡ Déclencheurs</h4><ul>{selectedItem.triggers.map((t, i) => <li key={i} className="lore-p">{t}</li>)}</ul></div>
+                  )}
+
+                  {selectedItem.consequences?.length > 0 && (
+                    <div className="lore-section"><h4>🏛️ Conséquences</h4><ul>{selectedItem.consequences.map((c, i) => <li key={i} className="lore-p">{c}</li>)}</ul></div>
+                  )}
+
+                  {selectedItem.rumors?.length > 0 && (
+                    <div className="lore-section"><h4>🕯️ Rumeurs</h4><ul>{selectedItem.rumors.map((r, i) => <li key={i} className="lore-p">{r}</li>)}</ul></div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -585,9 +955,9 @@ export function CodexPanel({ isOpen, onClose }) {
             <div className="economy-view">
               <div className="economy-list">
                 <h3>Archives du Comptoir</h3>
-                {['Armurerie', 'Protections', 'Vivres'].map(cat => (
-                  <div key={cat} className={`economy-card ${selectedItem === cat ? 'active' : ''}`} onClick={() => setSelectedItem(cat)}>
-                    <h4>{cat}</h4>
+                {ECONOMY_CATEGORIES.map(cat => (
+                  <div key={cat.id} className={`economy-card ${selectedItem?.id === cat.id ? 'active' : ''}`} onClick={() => setSelectedItem(cat)}>
+                    <h4>{cat.label}</h4>
                   </div>
                 ))}
               </div>
@@ -595,9 +965,9 @@ export function CodexPanel({ isOpen, onClose }) {
                 <div className="details-placeholder"><div className="placeholder-icon">💰</div><p>Consultez les prix du marché.</p></div>
               ) : (
                 <div className="economy-details">
-                  <h3>{selectedItem}</h3>
+                  <h3>{selectedItem.label || 'Comptoir'}</h3>
                   <div className="ability-detail-grid">
-                    {(selectedItem === 'Armurerie' ? BALANCED_WEAPONS : (selectedItem === 'Protections' ? BALANCED_ARMORS : BALANCED_CONSUMABLES)).map(item => (
+                    {(selectedItem.items || []).map(item => (
                       <div key={item.id} className="ability-card">
                         <div className="ability-header"><h5>{item.name}</h5><span className="cost-tag">{calculateMerchantPrice(item.basePrice, item.rarity)} PO</span></div>
                         <p>{item.description || `Qualité ${item.rarity}.`}</p>

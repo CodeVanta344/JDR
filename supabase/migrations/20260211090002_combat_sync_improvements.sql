@@ -33,7 +33,18 @@ CREATE POLICY "Allow authenticated users to manage combat_locks"
     WITH CHECK (true);
 
 -- Enable Realtime
-ALTER PUBLICATION supabase_realtime ADD TABLE IF NOT EXISTS public.combat_locks;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime'
+          AND schemaname = 'public'
+          AND tablename = 'combat_locks'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.combat_locks;
+    END IF;
+END $$;
 
 -- Add version field to world_state for optimistic locking
 ALTER TABLE public.world_state ADD COLUMN IF NOT EXISTS version INTEGER DEFAULT 0;

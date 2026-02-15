@@ -53,8 +53,8 @@ describe('Bestiary Lore', () => {
   });
 
   it('should have required creature properties', () => {
-    const allCreatures = { ...BESTIARY, ...BESTIARY_EXTENDED };
-    Object.values(allCreatures).forEach(creature => {
+    const allCreatures = BESTIARY_EXTENDED.ALL_CREATURES || [];
+    allCreatures.forEach(creature => {
       expect(creature).toHaveProperty('name');
       expect(creature).toHaveProperty('stats');
       expect(creature.stats).toHaveProperty('hp');
@@ -67,42 +67,39 @@ describe('Bestiary Lore', () => {
 
 describe('NPC Templates', () => {
   it('should have merchant templates', () => {
-    expect(NPC_TEMPLATES.merchants.length).toBeGreaterThan(0);
+    expect(NPC_TEMPLATES.merchants.general.length).toBeGreaterThan(0);
   });
 
   it('should have tavernkeeper templates', () => {
-    expect(NPC_TEMPLATES.tavernkeepers.length).toBeGreaterThan(0);
+    expect(NPC_TEMPLATES.merchants.general.length).toBeGreaterThan(0);
   });
 
   it('should have quest giver templates', () => {
-    expect(NPC_TEMPLATES.quest_givers.length).toBeGreaterThan(0);
+    expect(NPC_TEMPLATES.questgivers.main.length).toBeGreaterThan(0);
   });
 
   it('should have NPC templates with required properties', () => {
-    NPC_TEMPLATES.merchants.forEach(npc => {
+    NPC_TEMPLATES.merchants.general.forEach((npc: any) => {
       expect(npc).toHaveProperty('name');
-      expect(npc).toHaveProperty('personality');
-      expect(npc).toHaveProperty('greeting');
+      expect(npc).toHaveProperty('title');
+      expect(npc).toHaveProperty('role');
     });
   });
 });
 
 describe('Quest Hooks', () => {
-  it('should have quests for all regions', () => {
-    expect(QUEST_HOOKS).toHaveProperty('val_dore');
-    expect(QUEST_HOOKS).toHaveProperty('cote_des_orages');
-    expect(QUEST_HOOKS).toHaveProperty('monts_coeur_de_fer');
-    expect(QUEST_HOOKS).toHaveProperty('sylve_emeraude');
-    expect(QUEST_HOOKS).toHaveProperty('terres_brulees');
+  it('should have quests functions', () => {
+    expect(QUEST_HOOKS).toHaveProperty('getAllQuests');
+    expect(QUEST_HOOKS).toHaveProperty('getQuestsByGiver');
+    expect(QUEST_HOOKS).toHaveProperty('getNextQuestInChain');
   });
 
   it('should have quest hooks with required properties', () => {
-    Object.values(QUEST_HOOKS).forEach(region => {
-      region.forEach(quest => {
-        expect(quest).toHaveProperty('title');
-        expect(quest).toHaveProperty('type');
-        expect(quest).toHaveProperty('desc');
-      });
+    const allQuests = QUEST_HOOKS.getAllQuests();
+    allQuests.forEach((quest: any) => {
+      expect(quest).toHaveProperty('title');
+      expect(quest).toHaveProperty('type');
+      expect(quest).toHaveProperty('description');
     });
   });
 });

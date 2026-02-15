@@ -1,20 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { extractSpokenText, speakText, initSpeech } from '../utils/speechUtils';
 
-export function NPCDialogueModal({ npc, messages, onSendMessage, onClose, loading, voiceEnabled, setVoiceEnabled }) {
+export function NPCDialogueModal({ npc, messages, onSendMessage, onClose, loading }) {
     const [inputValue, setInputValue] = useState('');
     const scrollRef = useRef(null);
-
-    // Speech Synthesis setup
-    useEffect(() => {
-        const lastMsg = messages[messages.length - 1];
-        if (!lastMsg || lastMsg.role !== 'npc' || !voiceEnabled) return;
-
-        const spokenText = extractSpokenText(lastMsg.content);
-        speakText(spokenText, npc.name);
-
-        return () => window.speechSynthesis.cancel();
-    }, [messages, voiceEnabled, npc.name]);
 
     useEffect(() => {
         if (scrollRef.current) {
@@ -82,50 +70,6 @@ export function NPCDialogueModal({ npc, messages, onSendMessage, onClose, loadin
                     <div style={{ marginLeft: 'auto', display: 'flex', gap: '10px' }}>
                         <button
                             onClick={() => {
-                                setVoiceEnabled(!voiceEnabled);
-                                if (voiceEnabled) window.speechSynthesis.cancel();
-                            }}
-                            style={{
-                                background: 'rgba(255,255,255,0.05)',
-                                border: '1px solid rgba(255,255,255,0.1)',
-                                color: voiceEnabled ? 'var(--gold-primary)' : 'var(--text-muted)',
-                                width: '36px',
-                                height: '36px',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '1rem',
-                                transition: 'all 0.3s'
-                            }}
-                            title={voiceEnabled ? "Couper la voix" : "Activer la voix"}
-                        >
-                            {voiceEnabled ? '🔊' : '🔈'}
-                        </button>
-                        <button
-                            onClick={() => {
-                                initSpeech();
-                                speakText("Salutations. Je vous écoute.", npc.name);
-                            }}
-                            style={{
-                                background: 'rgba(255,255,255,0.05)',
-                                border: '1px solid rgba(255,255,255,0.1)',
-                                color: 'var(--gold-primary)',
-                                width: '36px',
-                                height: '36px',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '1rem',
-                                transition: 'all 0.3s',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}
-                            title="Tester la voix"
-                        >
-                            ▶️
-                        </button>
-                        <button
-                            onClick={() => {
-                                window.speechSynthesis.cancel();
                                 onClose();
                             }}
                             style={{

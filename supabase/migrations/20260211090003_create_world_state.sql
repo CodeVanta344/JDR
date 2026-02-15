@@ -61,4 +61,15 @@ CREATE TRIGGER update_world_state_updated_at_trigger
     EXECUTE FUNCTION public.update_world_state_updated_at();
 
 -- Enable Realtime for world_state table
-ALTER PUBLICATION supabase_realtime ADD TABLE public.world_state;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime'
+          AND schemaname = 'public'
+          AND tablename = 'world_state'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.world_state;
+    END IF;
+END $$;

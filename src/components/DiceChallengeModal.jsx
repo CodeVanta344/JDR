@@ -1,3 +1,4 @@
+import React, { useEffect, useMemo, useState } from 'react';
 import { DieVisual } from './DieVisual';
 import { DiceOverlay } from './Dice3D';
 
@@ -26,17 +27,19 @@ export const DiceChallengeModal = ({
         multiplier,
         critSuccessThreshold,
         critFailThreshold
-    } = React.useMemo(() => {
+    } = useMemo(() => {
+        // Niveau 1-5 : d20 uniquement (pas de d100)
         if (charLevel <= 5) return { dieType: 'd20', multiplier: 5, critSuccessThreshold: 20, critFailThreshold: 1 };
         if (charLevel <= 10) return { dieType: 'd50', multiplier: 2, critSuccessThreshold: 48, critFailThreshold: 3 };
         if (charLevel <= 15) return { dieType: 'd75', multiplier: 1.33, critSuccessThreshold: 73, critFailThreshold: 3 };
+        // Niveau 16+ seulement : d100
         return { dieType: 'd100', multiplier: 1, critSuccessThreshold: 95, critFailThreshold: 5 };
     }, [charLevel]);
 
     const { stat, label, dc = 50 } = challenge;
 
     // Calculate modifier from player stats
-    React.useEffect(() => {
+    useEffect(() => {
         if (playerStats && stat) {
             const val = playerStats[stat.toLowerCase()] || 10;
             // D100 Scaling: Stat * 2
@@ -55,6 +58,16 @@ export const DiceChallengeModal = ({
             value: Math.floor(Math.random() * parseInt(dieType.substring(1))) + 1,
             completed: false
         }]);
+    };
+
+    const finalizeRoll = () => {
+        const natRoll = rolls[0]?.value || 0;
+        const finalNatural = natRoll * multiplier;
+
+        setTotalNatural(finalNatural);
+        setIsRolling(false);
+        setRolled(true);
+        setShowOutcome(true);
     };
 
     const handleDieComplete = (index) => {
@@ -95,7 +108,8 @@ export const DiceChallengeModal = ({
     const confirmResult = () => {
         const outcome = getOutcome();
         onResult({
-            natural: totalNatural,
+            natural: rolls[0]?.value || 0,
+            naturalConverted: totalNatural,
             modifier,
             total: totalNatural + modifier,
             outcome: outcome.status,
@@ -118,12 +132,11 @@ export const DiceChallengeModal = ({
             animation: 'fadeIn 0.3s ease'
         }}>
             {/* Multi-Dice Physics Overlay */}
-            {isRolling || rolled ? (
+            {isRolling ? (
                 <DiceOverlay
                     diceRolls={rolls}
                     onAllComplete={() => {
-                        // Logic inside handleDieComplete was simplified
-                        // Overlay takes care of visual completion
+                        finalizeRoll();
                     }}
                 />
             ) : null}
@@ -190,7 +203,11 @@ export const DiceChallengeModal = ({
                                 {getOutcome().label}
                             </h1>
                             <p style={{ color: '#fff', textShadow: '0 2px 10px #000', fontSize: '1.4rem', marginBottom: '1.5rem' }}>
-                                Résultat : <strong>{totalNatural + modifier}</strong>
+                                Résultat ({dieType === 'd100' ? 'd100' : `${dieType.toUpperCase()} → équivalent d100`}) : <strong>{totalNatural + modifier}</strong>
+                            </p>
+
+                            <p style={{ color: '#ccc', textShadow: '0 2px 8px #000', fontSize: '0.95rem', marginBottom: '1.5rem' }}>
+                                Calcul : {rolls[0]?.value || 0}{multiplier !== 1 ? ` × ${multiplier}` : ''} + {modifier} = {totalNatural + modifier}
                             </p>
 
                             <button

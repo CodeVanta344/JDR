@@ -13,7 +13,7 @@
  * 3 fins possibles selon choix moraux
  */
 
-import type { QuestDefinition } from './schema';
+import type { QuestDefinition } from './quests';
 
 // ============================================================================
 // CHAPITRE 1 : SIGNES PRÉCURSEURS
@@ -113,7 +113,7 @@ Après avoir fait votre rapport au Général Marcus, vous apprenez que c'est le 
     gold: 500,
     experience: 300,
     reputation: [
-      { factionId: 'faction_crown', amount: 10 }
+      { faction: 'faction_crown', amount: 10 }
     ],
     titles: ['Défenseurs des Égouts'],
     items: []
@@ -162,7 +162,7 @@ Parmi les débris, vous découvrez un journal cultiste mentionnant un certain "G
   
   prerequisites: {
     level: 4,
-    completedQuests: ['quest_sealed_ch1']
+    quests: ['quest_sealed_ch1']
   },
   
   objectives: [
@@ -230,7 +230,7 @@ Parmi les débris, vous découvrez un journal cultiste mentionnant un certain "G
     gold: 1500,
     experience: 800,
     reputation: [
-      { factionId: 'faction_crown', amount: 20 }
+      { faction: 'faction_crown', amount: 20 }
     ],
     items: ['item_weapon_plus_one', 'item_seal_fragment_1'],
     titles: []
@@ -279,7 +279,7 @@ Vous avez maintenant la preuve que Blackthorn travaille pour le Grand Prêtre Ma
   
   prerequisites: {
     level: 7,
-    completedQuests: ['quest_sealed_ch2']
+    quests: ['quest_sealed_ch2']
   },
   
   objectives: [
@@ -345,7 +345,7 @@ Vous avez maintenant la preuve que Blackthorn travaille pour le Grand Prêtre Ma
     gold: 2500,
     experience: 1500,
     reputation: [
-      { factionId: 'faction_crown', amount: 30 }
+      { faction: 'faction_crown', amount: 30 }
     ],
     items: ['item_blackthorn_evidence'],
     titles: []
@@ -395,7 +395,7 @@ La Reine Elara est blessée mais vivante grâce à votre intervention. Le Grand 
   
   prerequisites: {
     level: 10,
-    completedQuests: ['quest_sealed_ch3']
+    quests: ['quest_sealed_ch3']
   },
   
   objectives: [
@@ -464,7 +464,7 @@ La Reine Elara est blessée mais vivante grâce à votre intervention. Le Grand 
     gold: 3500,
     experience: 2500,
     reputation: [
-      { factionId: 'faction_crown', amount: 50 }
+      { faction: 'faction_crown', amount: 50 }
     ],
     items: ['item_armor_plus_two', 'item_weapon_plus_two'],
     titles: ['Sauveurs de la Reine']
@@ -495,9 +495,9 @@ export const QUEST_SEALED_CH5: QuestDefinition = {
   suggestedLevel: 12,
   summary: `Voyage vers la forteresse naine de Hammerdeep pour protéger le Sceau #2 et forger une alliance avec les nains.`,
   description: `Voyage de 2 semaines vers Hammerdeep. Négociation avec le Conseil Nain. Descente au Niveau 12 pour protéger le Sceau #2 des Flagelleurs Mentaux.`,
-  prerequisites: { level: 12, completedQuests: ['quest_sealed_ch4'] },
+  prerequisites: { level: 12, quests: ['quest_sealed_ch4'] },
   objectives: [],
-  rewards: { gold: 4500, experience: 3500, reputation: [{ factionId: 'faction_hammerdeep', amount: 40 }], items: ['item_mithril_equipment'], titles: [] },
+  rewards: { gold: 4500, experience: 3500, reputation: [{ faction: 'faction_hammerdeep', amount: 40 }], items: ['item_mithril_equipment'], titles: [] },
   followUpQuests: ['quest_sealed_ch6']
 };
 
@@ -518,7 +518,7 @@ export const QUEST_SEALED_CH6: QuestDefinition = {
   suggestedLevel: 13,
   summary: `Recherche dans les Archives Secrètes pour comprendre l'origine des Sceaux et la menace du Miroir des Ombres.`,
   description: `Accès rare aux Archives. Révélation que les Sceaux ont été créés à l'Ère de l'Éveil par une alliance Dieux-Mortels. Malachi cherche la Clé Primordiale pour ouvrir totalement le Miroir.`,
-  prerequisites: { level: 13, completedQuests: ['quest_sealed_ch5'] },
+  prerequisites: { level: 13, quests: ['quest_sealed_ch5'] },
   objectives: [],
   rewards: { gold: 0, experience: 4000, reputation: [], items: ['item_seal_map', 'item_closure_ritual_grimoire'], titles: [] },
   followUpQuests: ['quest_sealed_ch7']
@@ -541,9 +541,9 @@ export const QUEST_SEALED_CH7: QuestDefinition = {
   suggestedLevel: 14,
   summary: `Voyage vers Kuldahar pour forger une alliance avec le Jarl Thorgrim et protéger le Sceau #3.`,
   description: `Conditions extrêmes du Nord. Épreuve de combat pour prouver valeur. Défense du Hall des Glaces contre 6 Géants du Givre. Sceau #3 protégé.`,
-  prerequisites: { level: 14, completedQuests: ['quest_sealed_ch6'] },
+  prerequisites: { level: 14, quests: ['quest_sealed_ch6'] },
   objectives: [],
-  rewards: { gold: 6000, experience: 5000, reputation: [{ factionId: 'faction_kuldahar', amount: 50 }], items: ['item_nordic_legendary_weapon'], titles: ['Ami du Nord'] },
+  rewards: { gold: 6000, experience: 5000, reputation: [{ faction: 'faction_kuldahar', amount: 50 }], items: ['item_nordic_legendary_weapon'], titles: ['Ami du Nord'] },
   followUpQuests: ['quest_sealed_ch8']
 };
 
@@ -564,9 +564,9 @@ export const QUEST_SEALED_CH8: QuestDefinition = {
   suggestedLevel: 15,
   summary: `Expédition militaire vers les Terres Brûlées pour protéger le Sceau #4 situé dans les ruines anciennes.`,
   description: `Voyage dans le désert hostile. Combat contre Momie Royale et Golem de Bronze. Protection réussie du Sceau #4.`,
-  prerequisites: { level: 15, completedQuests: ['quest_sealed_ch7'] },
+  prerequisites: { level: 15, quests: ['quest_sealed_ch7'] },
   objectives: [],
-  rewards: { gold: 7000, experience: 6000, reputation: [{ factionId: 'faction_crown', amount: 30 }], items: [], titles: [] },
+  rewards: { gold: 7000, experience: 6000, reputation: [{ faction: 'faction_crown', amount: 30 }], items: [], titles: [] },
   followUpQuests: ['quest_sealed_ch9']
 };
 
@@ -587,7 +587,7 @@ export const QUEST_SEALED_CH9: QuestDefinition = {
   suggestedLevel: 16,
   summary: `Exploration des dangereuses Ruines de l'Hégémonie Ashkan pour trouver la Clé Primordiale avant Malachi.`,
   description: `Course contre Malachi. Découverte de la Clé Primordiale dans les profondeurs. Combat épique contre Cultistes et Balor (CR 19). Malachi s'échappe avec la Clé.`,
-  prerequisites: { level: 16, completedQuests: ['quest_sealed_ch8'] },
+  prerequisites: { level: 16, quests: ['quest_sealed_ch8'] },
   objectives: [],
   rewards: { gold: 8000, experience: 7000, reputation: [], items: [], titles: [] },
   followUpQuests: ['quest_sealed_ch10']
@@ -603,17 +603,24 @@ export const QUEST_SEALED_CH9: QuestDefinition = {
 export const QUEST_SEALED_CH10: QuestDefinition = {
   id: 'quest_sealed_ch10',
   name: 'Les Sceaux Brisés - Chapitre 10 : L\'Ouverture',
+  title: 'Les Sceaux Brisés - Chapitre 10 : L\'Ouverture',
   type: 'main',
   category: 'defense',
-  region: 'Sol-Aureus',
+  status: 'not_started',
+  level: 17,
   questGiver: 'npc_queen_elara',
+  location: 'Sol-Aureus',
+  region: 'Sol-Aureus',
   suggestedLevel: 17,
   summary: `Malachi active la Clé Primordiale. Le Portail Majeur du Miroir s'ouvre. L'invasion démoniaque commence.`,
   description: `Défense désespérée de Sol-Aureus. Évacuation des civils. Ralliement des factions alliées. Préparation à entrer dans le Miroir des Ombres.`,
-  prerequisites: { level: 17, completedQuests: ['quest_sealed_ch9'] },
+  prerequisites: { level: 17, quests: ['quest_sealed_ch9'] },
   objectives: [],
-  rewards: { gold: 10000, experience: 8000, reputation: [{ factionId: 'faction_crown', amount: 50 }], items: [], titles: [] },
-  followUpQuests: ['quest_sealed_ch11']
+  rewards: { gold: 10000, experience: 8000, reputation: [{ faction: 'faction_crown', amount: 50 }], items: [], titles: [] },
+  followUpQuests: ['quest_sealed_ch11'],
+  acts: [],
+  isRepeatable: false,
+  tags: ['main', 'defense', 'portal']
 };
 
 /**
@@ -626,17 +633,24 @@ export const QUEST_SEALED_CH10: QuestDefinition = {
 export const QUEST_SEALED_CH11: QuestDefinition = {
   id: 'quest_sealed_ch11',
   name: 'Les Sceaux Brisés - Chapitre 11 : Premier Voyage dans le Miroir',
+  title: 'Les Sceaux Brisés - Chapitre 11 : Premier Voyage dans le Miroir',
   type: 'main',
   category: 'exploration',
-  region: 'Miroir des Ombres',
+  status: 'not_started',
+  level: 18,
   questGiver: 'npc_high_priest_alduin',
+  location: 'Miroir des Ombres',
+  region: 'Miroir des Ombres',
   suggestedLevel: 18,
   summary: `Première incursion dans le dangereux Plan du Miroir des Ombres pour comprendre la menace.`,
   description: `Traversée du portail. Environnement hostile et désorientant. Rencontre avec des entités du Miroir. Découverte de la structure du plan.`,
-  prerequisites: { level: 18, completedQuests: ['quest_sealed_ch10'] },
+  prerequisites: { level: 18, quests: ['quest_sealed_ch10'] },
   objectives: [],
   rewards: { gold: 0, experience: 9000, reputation: [], items: ['item_shadow_essence'], titles: [] },
-  followUpQuests: ['quest_sealed_ch12']
+  followUpQuests: ['quest_sealed_ch12'],
+  acts: [],
+  isRepeatable: false,
+  tags: ['main', 'exploration', 'mirror']
 };
 
 /**
@@ -656,7 +670,7 @@ export const QUEST_SEALED_CH12: QuestDefinition = {
   suggestedLevel: 18,
   summary: `Découverte de l'identité et des plans du Seigneur des Ombres, entité ancienne préparant sa manifestation.`,
   description: `Exploration plus profonde du Miroir. Découverte du trône du Seigneur des Ombres. Armée de démons en préparation. Retour pour planifier la riposte.`,
-  prerequisites: { level: 18, completedQuests: ['quest_sealed_ch11'] },
+  prerequisites: { level: 18, quests: ['quest_sealed_ch11'] },
   objectives: [],
   rewards: { gold: 0, experience: 10000, reputation: [], items: ['item_shadow_lord_intel'], titles: [] },
   followUpQuests: ['quest_sealed_ch13']
@@ -703,7 +717,7 @@ Trois voies s'offrent à vous :
 - Fin : Champions des Ombres
 
 Ce choix est irréversible et déterminera votre destinée.`,
-  prerequisites: { level: 19, completedQuests: ['quest_sealed_ch12'] },
+  prerequisites: { level: 19, quests: ['quest_sealed_ch12'] },
   objectives: [
     {
       id: 'council_meeting',
@@ -751,7 +765,7 @@ export const QUEST_SEALED_CH14: QuestDefinition = {
   suggestedLevel: 19,
   summary: `Ralliement des forces d'Aethelgard et préparation finale avant l'affrontement avec le Seigneur des Ombres.`,
   description: `Mobilisation de toutes les factions. Forge d'armes légendaires par Maître-Forgeron Aldric. Entraînement intensif. Stratégie finale selon choix moral.`,
-  prerequisites: { level: 19, completedQuests: ['quest_sealed_ch13'] },
+  prerequisites: { level: 19, quests: ['quest_sealed_ch13'] },
   objectives: [],
   rewards: { gold: 15000, experience: 12000, reputation: [], items: ['item_legendary_weapon', 'item_legendary_armor'], titles: [] },
   followUpQuests: ['quest_sealed_ch15']
@@ -832,7 +846,7 @@ Selon votre choix du Chapitre 13, une des trois fins se déclenchera après la v
   
   prerequisites: {
     level: 20,
-    completedQuests: ['quest_sealed_ch14']
+    quests: ['quest_sealed_ch14']
   },
   
   objectives: [
@@ -891,9 +905,9 @@ Selon votre choix du Chapitre 13, une des trois fins se déclenchera après la v
     gold: 50000,
     experience: 20000,
     reputation: [
-      { factionId: 'faction_crown', amount: 100 },
-      { factionId: 'faction_hammerdeep', amount: 100 },
-      { factionId: 'faction_kuldahar', amount: 100 }
+      { faction: 'faction_crown', amount: 100 },
+      { faction: 'faction_hammerdeep', amount: 100 },
+      { faction: 'faction_kuldahar', amount: 100 }
     ],
     items: ['item_legendary_artifact', 'item_shadow_lord_trophy'],
     titles: ['Héros du Scellement', 'Briseurs de Réalité', 'Champions des Ombres']

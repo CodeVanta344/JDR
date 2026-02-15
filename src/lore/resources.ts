@@ -530,6 +530,141 @@ export const WORLDTREE_WOOD: ResourceDefinition = {
 };
 
 // ============================================================================
+// TISSUS / ÉTOFFES (TAILORING - récoltés via agriculture/chasse)
+// ============================================================================
+
+export const TATTERED_CLOTH: ResourceDefinition = {
+  id: 'cloth:tattered',
+  name: "Chiffon Déchiré",
+  category: 'cloth',
+  rarity: 'common',
+  description: "Morceaux de tissus usagés. Matériau de base pour la couture.",
+  gatheredBy: 'hunting',
+  biomes: ['plains', 'forest'],
+  season: 'all',
+  levelRequired: 1,
+  baseYield: 3,
+  respawnTime: 0,
+  value: 1,
+  usedBy: ['tailoring']
+};
+
+export const LINEN: ResourceDefinition = {
+  id: 'cloth:linen',
+  name: "Lin",
+  category: 'cloth',
+  rarity: 'common',
+  description: "Tissu léger en fibres de lin. Respirant et confortable.",
+  gatheredBy: 'agriculture',
+  biomes: ['plains'],
+  season: ['spring', 'summer'],
+  levelRequired: 5,
+  baseYield: 2,
+  respawnTime: 15,
+  value: 8,
+  usedBy: ['tailoring']
+};
+
+export const WOOL: ResourceDefinition = {
+  id: 'cloth:wool',
+  name: "Laine",
+  category: 'cloth',
+  rarity: 'common',
+  description: "Laine de mouton. Chaude et résistante, idéale pour les vêtements d'hiver.",
+  gatheredBy: 'animal-husbandry',
+  biomes: ['plains', 'mountain'],
+  season: 'all',
+  levelRequired: 10,
+  baseYield: 2,
+  respawnTime: 20,
+  value: 12,
+  usedBy: ['tailoring']
+};
+
+export const COTTON: ResourceDefinition = {
+  id: 'cloth:cotton',
+  name: "Coton",
+  category: 'cloth',
+  rarity: 'common',
+  description: "Fibres de coton douces et absorbantes. Matériau de couture polyvalent.",
+  gatheredBy: 'agriculture',
+  biomes: ['plains', 'forest'],
+  season: ['spring', 'summer', 'autumn'],
+  levelRequired: 15,
+  baseYield: 3,
+  respawnTime: 25,
+  value: 10,
+  usedBy: ['tailoring']
+};
+
+export const SILK: ResourceDefinition = {
+  id: 'cloth:silk',
+  name: "Soie",
+  category: 'cloth',
+  rarity: 'uncommon',
+  description: "Fil précieux produit par les vers à soie. Luxueux et léger.",
+  gatheredBy: 'agriculture',
+  biomes: ['forest'],
+  season: ['spring', 'summer'],
+  levelRequired: 30,
+  baseYield: 1,
+  respawnTime: 45,
+  value: 50,
+  usedBy: ['tailoring']
+};
+
+export const MAGECLOTH: ResourceDefinition = {
+  id: 'cloth:magecloth',
+  name: "Étoffe de Mage",
+  category: 'cloth',
+  rarity: 'rare',
+  description: "Tissu imprégné de pouvoir magique. Conduit les sorts.",
+  gatheredBy: 'hunting',
+  biomes: ['mystic', 'forest'],
+  season: 'all',
+  levelRequired: 50,
+  baseYield: 1,
+  respawnTime: 0,
+  value: 200,
+  usedBy: ['tailoring', 'enchanting'],
+  specialProperties: "Conduction magique +15%"
+};
+
+export const MOONWEAVE: ResourceDefinition = {
+  id: 'cloth:moonweave',
+  name: "Tisse-Lune",
+  category: 'cloth',
+  rarity: 'epic',
+  description: "Soie tissée sous la pleine lune avec enchantements lunaires. Brille d'une lueur argentée.",
+  gatheredBy: 'hunting',
+  biomes: ['mystic'],
+  season: 'all',
+  levelRequired: 75,
+  baseYield: 1,
+  respawnTime: 0,
+  value: 1200,
+  usedBy: ['tailoring', 'enchanting'],
+  specialProperties: "Régénération mana +20%, Résistance magie lune"
+};
+
+export const PHOENIX_FEATHER_CLOTH: ResourceDefinition = {
+  id: 'cloth:phoenix',
+  name: "Étoffe de Plumes de Phénix",
+  category: 'cloth',
+  rarity: 'legendary',
+  description: "Tissu tissé de plumes de phénix. Incroyablement léger, résistant au feu, se régénère.",
+  gatheredBy: 'hunting',
+  biomes: ['volcanic', 'mystic'],
+  season: 'all',
+  levelRequired: 95,
+  baseYield: 1,
+  respawnTime: 0,
+  value: 10000,
+  usedBy: ['tailoring', 'enchanting'],
+  specialProperties: "Immunité feu, Régénération 5 HP/tour, Indestructible"
+};
+
+// ============================================================================
 // PEAUX / CUIRS (SKINNING)
 // ============================================================================
 
@@ -870,6 +1005,8 @@ export const ALL_RESOURCES: ResourceDefinition[] = [
   SILVERLEAF, PEACEBLOOM, BLOODTHISTLE, DREAMFOIL, DRAGONS_BREATH, GHOST_MUSHROOM, MOONPETAL, SUNGRASS, WORLDTREE_SEED,
   // Wood
   ROUGH_WOOD, OAK_WOOD, MAPLE_WOOD, EBONY_WOOD, IRONWOOD, WORLDTREE_WOOD,
+  // Cloth
+  TATTERED_CLOTH, LINEN, WOOL, COTTON, SILK, MAGECLOTH, MOONWEAVE, PHOENIX_FEATHER_CLOTH,
   // Leather
   RUINED_LEATHER, LIGHT_LEATHER, MEDIUM_LEATHER, THICK_LEATHER, CHITIN, DRAKE_SCALE, DRAGON_SCALE, ANCIENT_DRAGON_HIDE,
   // Fish
@@ -887,9 +1024,11 @@ export const RESOURCES_BY_PROFESSION: Record<ProfessionType, ResourceDefinition[
   mining: ALL_RESOURCES.filter(r => r.gatheredBy === 'mining'),
   herbalism: ALL_RESOURCES.filter(r => r.gatheredBy === 'herbalism'),
   fishing: ALL_RESOURCES.filter(r => r.gatheredBy === 'fishing'),
-  hunting: [], // Viandes récoltées via skinning sur créatures tuées
+  hunting: ALL_RESOURCES.filter(r => r.gatheredBy === 'hunting'),
   skinning: ALL_RESOURCES.filter(r => r.gatheredBy === 'skinning'),
   logging: ALL_RESOURCES.filter(r => r.gatheredBy === 'logging'),
+  agriculture: ALL_RESOURCES.filter(r => r.gatheredBy === 'agriculture'),
+  'animal-husbandry': ALL_RESOURCES.filter(r => r.gatheredBy === 'animal-husbandry'),
   // Crafting professions
   smithing: [],
   alchemy: [],
@@ -898,7 +1037,13 @@ export const RESOURCES_BY_PROFESSION: Record<ProfessionType, ResourceDefinition[
   tailoring: [],
   leatherworking: [],
   jewelcrafting: [],
-  inscription: []
+  inscription: [],
+  architecture: [],
+  engineering: [],
+  cartography: [],
+  music: [],
+  medicine: [],
+  commerce: []
 };
 
 export const RESOURCES_BY_BIOME: Record<BiomeType, ResourceDefinition[]> = ALL_RESOURCES.reduce((acc, res) => {

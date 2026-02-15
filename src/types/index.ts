@@ -2,6 +2,16 @@ import { z } from 'zod';
 
 // === CORE GAME TYPES ===
 
+export interface StatsInterface {
+  str: number;
+  dex: number;
+  con: number;
+  int: number;
+  wis: number;
+  cha: number;
+  [key: string]: number;
+}
+
 export const StatsSchema = z.object({
   str: z.number().min(1).max(30),
   dex: z.number().min(1).max(30),
@@ -10,14 +20,14 @@ export const StatsSchema = z.object({
   wis: z.number().min(1).max(30),
   cha: z.number().min(1).max(30),
 });
-export type Stats = z.infer<typeof StatsSchema>;
+export type Stats = z.infer<typeof StatsSchema> & { [key: string]: number };
 
 export const ItemSchema = z.object({
   name: z.string(),
   type: z.enum(['weapon', 'armor', 'shield', 'offhand', 'accessory', 'consumable', 'tool', 'ammo']),
   category: z.string().optional(),
   slot: z.string().optional(),
-  stats: z.record(z.number()).optional(),
+  stats: z.record(z.string(), z.number()).optional(),
   rarity: z.enum(['common', 'uncommon', 'rare', 'epic', 'legendary', 'artifact']).optional(),
   desc: z.string().optional(),
   equipped: z.boolean().optional(),
@@ -37,10 +47,10 @@ export const AbilitySchema = z.object({
   type: z.string().optional(),
   actionType: z.string().optional(),
   flavor: z.string().optional(),
-  desc: z.string(),
-  vfx: z.string().optional(),
+  description: z.string().optional(),
   heal: z.string().optional(),
   resource: z.number().optional(),
+  friendly: z.boolean().optional(),
 });
 export type Ability = z.infer<typeof AbilitySchema>;
 
@@ -71,6 +81,26 @@ export const CharacterSchema = z.object({
   skill_bonuses: z.array(z.string()).optional(),
 });
 export type Character = z.infer<typeof CharacterSchema>;
+
+export interface Enemy {
+  name: string;
+  type: string;
+  level: number;
+  stats: Stats;
+  abilities?: string[];
+  loot?: string[];
+  experience: number;
+  gold?: number;
+}
+
+export interface CharacterStats {
+  str: number;
+  dex: number;
+  con: number;
+  int: number;
+  wis: number;
+  cha: number;
+}
 
 export const SessionSchema = z.object({
   id: z.string(),

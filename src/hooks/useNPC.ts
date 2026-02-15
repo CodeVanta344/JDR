@@ -36,17 +36,25 @@ export const useNPC = ({ onAffinityChange, onTitleUnlock }: UseNPCOptions = {}) 
   const getRandomNPCByRole = useCallback((role: string): any => {
     const roleMap: Record<string, keyof typeof NPC_TEMPLATES> = {
       merchant: 'merchants',
-      tavern: 'tavernkeepers',
-      quest: 'quest_givers',
-      guard: 'guards',
-      outcast: 'outcasts',
+      tavern: 'merchants',
+      quest: 'questgivers',
+      guard: 'enemies',
+      outcast: 'enemies',
     };
 
     const category = roleMap[role.toLowerCase()];
     if (!category || !NPC_TEMPLATES[category]) return null;
 
     const npcs = NPC_TEMPLATES[category];
-    return npcs[Math.floor(Math.random() * npcs.length)];
+    let npcArray: any[] = [];
+    
+    if (Array.isArray(npcs)) {
+      npcArray = npcs;
+    } else if (npcs && typeof npcs === 'object' && 'general' in npcs) {
+      npcArray = (npcs as any).general || [];
+    }
+    
+    return npcArray.length > 0 ? npcArray[Math.floor(Math.random() * npcArray.length)] : null;
   }, []);
 
   const openNPCDialog = useCallback((npc: NPC | string) => {

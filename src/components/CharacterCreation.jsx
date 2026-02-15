@@ -87,6 +87,7 @@ export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImag
     const [portraitUrl, setPortraitUrl] = useState(null);
     const [classPortraits, setClassPortraits] = useState({});
     const [isMuted, setIsMuted] = useState(false);
+    const [needsAudioGesture, setNeedsAudioGesture] = useState(false);
     const audioRef = useRef(null);
 
     // Callback for real-time lifepath stats
@@ -131,8 +132,9 @@ export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImag
         if (!isMuted) {
             const playPromise = audio.play();
             if (playPromise !== undefined) {
-                playPromise.catch(error => {
-                    console.log('[CharacterCreation] Audio autoplay prevented:', error);
+                playPromise.catch(() => {
+                    // Browser blocked autoplay: wait for first user interaction.
+                    setNeedsAudioGesture(true);
                 });
             }
         }
@@ -151,9 +153,31 @@ export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImag
         if (isMuted) {
             audioRef.current.pause();
         } else {
-            audioRef.current.play().catch(() => { });
+            audioRef.current.play().catch(() => {
+                setNeedsAudioGesture(true);
+            });
         }
     }, [isMuted]);
+
+    useEffect(() => {
+        if (!needsAudioGesture || isMuted) return;
+
+        const handleFirstInteraction = () => {
+            if (!audioRef.current || isMuted) return;
+
+            audioRef.current.play()
+                .then(() => setNeedsAudioGesture(false))
+                .catch(() => { });
+        };
+
+        window.addEventListener('pointerdown', handleFirstInteraction, { once: true });
+        window.addEventListener('keydown', handleFirstInteraction, { once: true });
+
+        return () => {
+            window.removeEventListener('pointerdown', handleFirstInteraction);
+            window.removeEventListener('keydown', handleFirstInteraction);
+        };
+    }, [needsAudioGesture, isMuted]);
 
     const rollStatPromise = (statKey) => {
         return new Promise((resolve) => {

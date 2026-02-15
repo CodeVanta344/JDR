@@ -4,12 +4,15 @@ import type { Combatant, ArenaConfig, CombatState } from '../types';
 import { rollDice, getModifier } from '../lore/rules';
 import { BESTIARY, BESTIARY_EXTENDED } from '../lore/bestiary';
 
+import { gatheringSystem } from '../lore/gathering-system';
+
 interface UseCombatOptions {
-  onCombatEnd?: (victory: boolean, rewards?: { gold: number; xp: number }) => void;
+  onCombatEnd?: (victory: boolean, rewards?: { gold: number; xp: number; loot?: any[] }) => void;
   onLogAction?: (log: { type: string; msg: string }) => void;
   onHPChange?: (playerId: string, newHP: number) => void;
   onVFX?: (vfx: { type: string; x: number; y: number }) => void;
   onSFX?: (sfx: string) => void;
+  onLootGenerated?: (loot: any[]) => void;
 }
 
 export const useCombat = ({
@@ -18,6 +21,7 @@ export const useCombat = ({
   onHPChange,
   onVFX,
   onSFX,
+  onLootGenerated,
 }: UseCombatOptions = {}) => {
   const {
     combatMode,
@@ -259,17 +263,61 @@ export const useCombat = ({
   const checkCombatEnd = useCallback(() => {
     const playersAlive = combatants.filter(c => !c.isEnemy && c.hp > 0);
     const enemiesAlive = combatants.filter(c => c.isEnemy && c.hp > 0);
+    const defeatedEnemies = combatants.filter(c => c.isEnemy && c.hp <= 0);
 
     if (enemiesAlive.length === 0) {
       setCombatPhase('finished');
-      const totalXP = combatants
-        .filter(c => c.isEnemy && c.hp <= 0)
-        .length * 50;
+      const totalXP = defeatedEnemies.length * 50;
       const totalGold = Math.floor(Math.random() * 50) + 20;
+      
+      // Générer le butin des ennemis vaincus
+      const allCreatures = { ...BESTIARY, ...BESTIARY_EXTENDED };
+      const allLoot: any[] = [];
+      
+      defeatedEnemies.forEach(enemy => {
+        // Extraire le type de créature de l'ID (enemy_type_index_timestamp)
+        const typeMatch = enemy.id.match(/enemy_(.+?)_\d+_\d+/);
+        if (typeMatch) {
+          const creatureType = typeMatch[1];
+          const creatureData = allCreatures[creatureType as keyof typeof allCreatures];
+          if (creatureData && creatureData.loot) {
+            const loot = gatheringSystem.generateCreatureLoot(
+              creatureData.name,
+              creatureData.loot,
+              0 // luck modifier
+            );
+            loot.forEach(item => {
+              const resourceItem = gatheringSystem.createResourceItem(item.resourceId, item.quantity);
+              if (resourceItem) {
+                allLoot.push(resourceItem);
+              }
+            });
+          }
+        }
+      });
+      
+      // Ajouter l'or comme item de butin
+      if (totalGold > 0) {
+        allLoot.push({
+          id: 'currency:gold',
+          name: 'Or',
+          type: 'currency',
+          quantity: totalGold,
+          value: 1,
+          desc: `${totalGold} pièces d'or`,
+          stackable: true
+        });
+      }
+      
+      // Notifier le butin généré
+      if (allLoot.length > 0) {
+        onLootGenerated?.(allLoot);
+        addLog('system', `Butin généré : ${allLoot.length} objet(s)`);
+      }
       
       addLog('system', `Victoire ! Récompenses : ${totalXP} XP, ${totalGold} Or`);
       onSFX?.('victory');
-      onCombatEnd?.(true, { gold: totalGold, xp: totalXP });
+      onCombatEnd?.(true, { gold: totalGold, xp: totalXP, loot: allLoot });
       return;
     }
 
@@ -279,7 +327,7 @@ export const useCombat = ({
       onSFX?.('defeat');
       onCombatEnd?.(false);
     }
-  }, [combatants, addLog, onSFX, onCombatEnd]);
+  }, [combatants, addLog, onSFX, onCombatEnd, onLootGenerated]);
 
   const endCombat = useCallback(() => {
     setCombatMode(false);
