@@ -16,8 +16,7 @@ export const HUDHeader = ({
     audioVolume,
     onVolumeChange,
     onToggleCodex,
-    onToggleDMPanel,
-    tension = 0
+    onToggleDMPanel
 }) => {
     return (
         <div className="hud-header">
@@ -35,21 +34,6 @@ export const HUDHeader = ({
                 >
                     🔄
                 </button>
-            </div>
-
-            {/* Tension Meter */}
-            <div className="tension-widget" title={`Tension: ${tension}%`}>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginRight: '0.5rem' }}>DANGER</span>
-                <div className="tension-bar-bg">
-                    <div
-                        className="tension-fill"
-                        style={{
-                            width: `${tension}%`,
-                            background: tension > 80 ? 'var(--neon-red)' : (tension > 50 ? 'var(--gold-primary)' : 'var(--success-color)'),
-                            boxShadow: tension > 80 ? '0 0 10px var(--neon-red)' : 'none'
-                        }}
-                    />
-                </div>
             </div>
 
             {/* Top Right Controls */}
@@ -78,7 +62,21 @@ export const HUDHeader = ({
                     </button>
                 )}
                 {onToggleCodex && (
-                    <button onClick={onToggleCodex} className="hud-btn codex-btn">
+                    <button 
+                        onClick={onToggleCodex} 
+                        className="hud-btn codex-btn"
+                        style={{
+                            fontSize: '0.75rem',
+                            padding: '6px 16px',
+                            background: 'linear-gradient(135deg, var(--gold-primary) 0%, var(--gold-dark) 100%)',
+                            color: 'var(--bg-dark)',
+                            fontWeight: 'bold',
+                            border: '2px solid var(--gold-light)',
+                            boxShadow: '0 0 12px rgba(197, 168, 100, 0.5), inset 0 1px 0 rgba(255,255,255,0.3)',
+                            textShadow: 'none',
+                            letterSpacing: '0.5px'
+                        }}
+                    >
                         📖 CODEX
                     </button>
                 )}
