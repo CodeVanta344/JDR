@@ -1780,6 +1780,14 @@ export default function App() {
         if (data) setCharacter(data);
     };
 
+    const handleUpdateMaterialInventory = async (newMaterialInventory) => {
+        if (!character?.id) return;
+        const { data } = await supabase.from('players').update({
+            material_inventory: newMaterialInventory
+        }).eq('id', character.id).select().single();
+        if (data) setCharacter(data);
+    };
+
     const handleEquipItem = async (index) => {
         if (!character || !character.inventory) return;
         const item = character.inventory[index];
@@ -2997,6 +3005,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                     <CharacterSheet
                         character={character}
                         onUpdateInventory={handleUpdateInventory}
+                        onUpdateMaterialInventory={handleUpdateMaterialInventory}
                         onEquipItem={handleEquipItem}
                         onToggleSettings={() => setShowSettings(!showSettings)}
                         onConsume={handleConsumeItem}

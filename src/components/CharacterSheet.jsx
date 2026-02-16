@@ -8,7 +8,7 @@ import { ALL_RESOURCES } from '../lore/resources';
 import MaterialInventory from './MaterialInventory';
 import { InventoryPanel } from './InventoryPanel';
 
-export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onToggleSettings, onConsume, onLevelUpClick, onTradeClick }) => {
+export const CharacterSheet = ({ character, onUpdateInventory, onUpdateMaterialInventory, onEquipItem, onToggleSettings, onConsume, onLevelUpClick, onTradeClick }) => {
     const [activeTab, setActiveTab] = React.useState('stats');
     const [enlargedImage, setEnlargedImage] = React.useState(null);
     const [selectedTrait, setSelectedTrait] = React.useState(null);
@@ -333,10 +333,7 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
             );
             
             // Mettre à jour le personnage avec le nouveau materialInventory
-            onUpdateInventory({
-                ...character.inventory,
-                materialInventory: newMaterialInventory
-            });
+            onUpdateMaterialInventory(newMaterialInventory);
 
             // Gain d'XP dans le métier
             if (resource.gatheredBy) {
