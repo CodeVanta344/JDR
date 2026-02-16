@@ -2728,7 +2728,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                         const previewMsg = {
                             id: crypto.randomUUID(),
                             role: 'system',
-                            content: `🎲 **Test de ${challenge.stat?.toUpperCase() || 'compétence'}** - "${challenge.label}"\n\nObjectif : ${challenge.dc || 50} | Modificateur : ${(character?.stats?.[challenge.stat?.toLowerCase()] || 10) * 2 >= 0 ? '+' : ''}${(character?.stats?.[challenge.stat?.toLowerCase()] || 10) * 2}\n\n*Cliquez sur le bouton ci-dessus pour lancer les dés...*`,
+                            content: `🎲 **Test de ${challenge.stat?.toUpperCase() || 'compétence'}** - "${challenge.label || 'Test de compétence'}"\n\nObjectif : ${challenge.dc || 50} | Modificateur : ${(character?.stats?.[challenge.stat?.toLowerCase()] || 10) * 2 >= 0 ? '+' : ''}${(character?.stats?.[challenge.stat?.toLowerCase()] || 10) * 2}\n\n*Cliquez sur le bouton ci-dessus pour lancer les dés...*`,
                             created_at: new Date().toISOString()
                         };
                         setMessages(prev => [...prev, previewMsg]);
