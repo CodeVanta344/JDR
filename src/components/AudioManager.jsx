@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 
+import { SFX_AUDIO_FILES, SKILL_SFX_TYPES } from '../audio/skillSfx';
+
 /**
  * Mood-based music tracks (CC0 - OpenGameArt.org)
  * - exploration: "The Field of Dreams" 
@@ -25,10 +27,42 @@ const AMBIENTS = {
 };
 
 const SFX = {
+    // Basic SFX
     dice: null,
     gold: null,
     damage: null,
     levelUp: null,
+    magic: null,
+    notification: null,
+    
+    // Skill SFX - Physical
+    [SKILL_SFX_TYPES.SWORD_SLASH]: null,
+    [SKILL_SFX_TYPES.AXE_CLEAVE]: null,
+    [SKILL_SFX_TYPES.DAGGER_STRIKE]: null,
+    [SKILL_SFX_TYPES.BOW_SHOT]: null,
+    
+    // Skill SFX - Magic Offensive
+    [SKILL_SFX_TYPES.FIREBALL]: null,
+    [SKILL_SFX_TYPES.ICE_SHARD]: null,
+    [SKILL_SFX_TYPES.LIGHTNING_BOLT]: null,
+    [SKILL_SFX_TYPES.ARCANE_MISSILE]: null,
+    [SKILL_SFX_TYPES.SHADOW_STRIKE]: null,
+    
+    // Skill SFX - Magic Defensive
+    [SKILL_SFX_TYPES.SHIELD_BLOCK]: null,
+    [SKILL_SFX_TYPES.BARRIER_CAST]: null,
+    [SKILL_SFX_TYPES.HEAL_SPELL]: null,
+    
+    // Skill SFX - Utility
+    [SKILL_SFX_TYPES.TELEPORT]: null,
+    [SKILL_SFX_TYPES.STEALTH]: null,
+    [SKILL_SFX_TYPES.HASTE]: null,
+    
+    // Skill SFX - Special
+    [SKILL_SFX_TYPES.RAGE]: null,
+    [SKILL_SFX_TYPES.BERSERK]: null,
+    [SKILL_SFX_TYPES.INSPIRE]: null,
+    [SKILL_SFX_TYPES.COMMAND]: null,
 };
 
 const FADE_STEP = 0.02;
@@ -37,6 +71,7 @@ const FADE_INTERVAL = 50;
 export function AudioManager({ mood = 'exploration', enabled = false, volume = 0.3, hour = 12, sfx = null }) {
     const musicRef = useRef(null);
     const ambientRef = useRef(null);
+    const sfxRef = useRef({});
     const [currentTrack, setCurrentTrack] = useState(null);
     const [currentAmbient, setCurrentAmbient] = useState(null);
     const musicFade = useRef(null);
@@ -87,12 +122,24 @@ export function AudioManager({ mood = 'exploration', enabled = false, volume = 0
         ambientRef.current = new Audio();
         ambientRef.current.loop = true;
         ambientRef.current.volume = 0;
+        
+        // Preload SFX audio elements
+        Object.keys(SFX_AUDIO_FILES).forEach(sfxType => {
+            const audio = new Audio();
+            audio.src = SFX_AUDIO_FILES[sfxType];
+            audio.volume = volume * 0.8; // SFX slightly louder than music
+            sfxRef.current[sfxType] = audio;
+        });
 
         return () => {
             if (musicRef.current) { musicRef.current.pause(); musicRef.current = null; }
             if (ambientRef.current) { ambientRef.current.pause(); ambientRef.current = null; }
             if (musicFade.current) clearInterval(musicFade.current);
             if (ambientFade.current) clearInterval(ambientFade.current);
+            // Clean up SFX
+            Object.values(sfxRef.current).forEach(audio => {
+                if (audio) { audio.pause(); }
+            });
         };
     }, []);
 
@@ -158,11 +205,36 @@ export function AudioManager({ mood = 'exploration', enabled = false, volume = 0
         }
     }, [enabled]);
 
-    // Handle volume changes
+    // Handle SFX trigger
     useEffect(() => {
-        if (musicRef.current && enabled) musicRef.current.volume = volume;
-        if (ambientRef.current && enabled) ambientRef.current.volume = volume * 0.4;
-    }, [volume]);
+        if (!sfx || !enabled) return;
+        
+        const { type } = sfx;
+        
+        // Check if it's a skill SFX
+        if (SFX_AUDIO_FILES[type]) {
+            const audio = sfxRef.current[type];
+            if (audio) {
+                audio.currentTime = 0;
+                audio.volume = volume * 0.8;
+                audio.play().catch(() => { });
+            }
+        } else if (type === 'dice' || type === 'gold' || type === 'damage' || type === 'levelUp' || type === 'magic' || type === 'notification') {
+            // Legacy SFX handling
+            const sfxAudio = new Audio();
+            const sfxMap = {
+                dice: '/audio/sfx/dice_roll.mp3',
+                gold: '/audio/sfx/gold_pickup.mp3',
+                damage: '/audio/sfx/hit_impact.mp3',
+                levelUp: '/audio/sfx/level_up.mp3',
+                magic: '/audio/sfx/magic_cast.mp3',
+                notification: '/audio/sfx/notification.mp3',
+            };
+            sfxAudio.src = sfxMap[type] || '/audio/sfx/magic_cast.mp3';
+            sfxAudio.volume = volume * 0.7;
+            sfxAudio.play().catch(() => { });
+        }
+    }, [sfx, enabled, volume]);
 
     return null;
 }

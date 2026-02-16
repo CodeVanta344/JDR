@@ -3,7 +3,7 @@ import { CLASSES, BESTIARY } from '../lore';
 import { CombatLogger } from '../utils/logger';
 import { supabase } from '../supabaseClient';
 import { DieVisual } from './DieVisual';
-import { DiceOverlay } from './Dice3D';
+import { DiceOverlay2D } from './Dice2D';
 import {
     rollAttackD100,
     calculateDamageD100,
@@ -67,8 +67,8 @@ const RemoteActionOverlay = ({ action, onComplete }) => {
             background: 'rgba(0,0,0,0.1)', // Very subtle dimming
             pointerEvents: 'none'
         }}>
-            {/* Multi-Dice Physics Overlay */}
-            <DiceOverlay
+            {/* Multi-Dice 2D Overlay */}
+            <DiceOverlay2D
                 diceRolls={remoteDiceRolls}
                 onAllComplete={() => { }}
             />
@@ -260,6 +260,107 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
             supabase.removeChannel(channel);
         };
     }, [sessionId, combatState, logs.length, movingUnit]);
+
+    // Real-time ACTION broadcast subscription - REPLICATE ALL PLAYER ACTIONS
+    useEffect(() => {
+        if (!sessionId) return;
+
+        const actionChannel = supabase
+            .channel(`combat_actions_${sessionId}`)
+            .on('broadcast', { event: 'player_action' }, (payload) => {
+                const action = payload.payload;
+                if (!action || action.sourceUserId === currentUserId) return;
+
+                debugLog('[Action Broadcast] Received action from other player:', action);
+
+                // Replicate the action locally
+                switch (action.type) {
+                    case 'attack':
+                        // Show remote attack animation
+                        setRemoteAction({
+                            attackerName: action.attackerName,
+                            abilityName: action.abilityName,
+                            roll: action.roll,
+                            modifier: action.modifier,
+                            targetName: action.targetName,
+                            threshold: action.threshold,
+                            success: action.success,
+                            damage: action.damage,
+                            id: action.id
+                        });
+                        break;
+                    case 'movement':
+                        // Animate remote player movement
+                        if (action.path && action.path.length > 0) {
+                            animateRemoteMovement(action.actorId, action.path);
+                        }
+                        break;
+                    case 'vfx':
+                        // Trigger visual effects
+                        if (onVFX && action.vfxType) {
+                            onVFX(action.vfxType, action.x, action.y, action.color);
+                        }
+                        break;
+                    case 'sfx':
+                        // Trigger sound effects
+                        if (onSFX && action.sfxType) {
+                            onSFX(action.sfxType);
+                        }
+                        break;
+                    case 'dice_roll':
+                        // Show dice roll for other players
+                        setRollOverlay({
+                            rollId: action.rollId,
+                            roll: action.roll,
+                            modifier: action.modifier,
+                            tacticalReason: action.tacticalReason,
+                            threshold: action.threshold,
+                            success: action.success,
+                            isCritical: action.isCritical,
+                            type: action.rollType,
+                            targetId: action.targetId,
+                            action: action.actionData
+                        });
+                        break;
+                }
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(actionChannel);
+        };
+    }, [sessionId, currentUserId]);
+
+    // Helper to animate remote player movement
+    const animateRemoteMovement = async (actorId, path) => {
+        if (!path || path.length === 0) return;
+
+        for (let i = 0; i < path.length; i++) {
+            const [x, y] = path[i];
+            setMovingUnit({ id: actorId, animX: x, animY: y });
+            await new Promise(r => setTimeout(r, 300));
+        }
+        setMovingUnit(null);
+    };
+
+    // Broadcast action to all other players
+    const broadcastAction = useCallback(async (actionType, actionData) => {
+        if (!sessionId) return;
+
+        const channel = supabase.channel(`combat_actions_${sessionId}`);
+        // Use send() with explicit HTTP fallback (new Supabase API)
+        await channel.send({
+            type: 'broadcast',
+            event: 'player_action',
+            payload: {
+                type: actionType,
+                sourceUserId: currentUserId,
+                timestamp: Date.now(),
+                ...actionData
+            }
+        });
+        debugLog('[Action Broadcast] Sent:', actionType, actionData);
+    }, [sessionId, currentUserId]);
 
     // CLEANUP FIX: Clear all timeouts on unmount
     useEffect(() => {
@@ -834,12 +935,12 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
 
     // MEMOIZED to prevent unnecessary re-calculations
     const canMove = useMemo(() =>
-        isLocalPlayerTurn && currentActor && currentActor.currentPM > 0 && combatState === 'active',
+        isLocalPlayerTurn && currentActor && currentActor.currentPM > 0 && currentActor.resource > 0 && combatState === 'active',
         [isLocalPlayerTurn, currentActor, combatState]
     );
 
     const canAct = useMemo(() =>
-        isLocalPlayerTurn && currentActor && !currentActor.hasActed && combatState === 'active',
+        isLocalPlayerTurn && currentActor && !currentActor.hasActed && currentActor.resource > 0 && combatState === 'active',
         [isLocalPlayerTurn, currentActor, combatState]
     );
 
@@ -1003,10 +1104,23 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
             });
 
             if (onSFX) onSFX('footstep');
+            
+            // BROADCAST movement step to other players
+            broadcastAction('movement', {
+                actorId: currentActor.id,
+                actorName: currentActor.name,
+                path: [[nextX, nextY]],
+                stepIndex: i,
+                totalSteps: path.length
+            });
 
             currentX = nextX;
             currentY = nextY;
         }
+        
+        // Déplacement terminé - désélectionner l'action "Se déplacer"
+        // Le joueur devra recliquer s'il veut bouger à nouveau
+        setSelectedAction(null);
     };
 
     const executeMove = (direction, actorOverride = null) => {
@@ -1064,6 +1178,17 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         }
 
         animateMovement(freshActor.id, freshActor.posX, freshActor.posY, nextX, nextY);
+        
+        // BROADCAST AI/player movement to other players
+        broadcastAction('movement', {
+            actorId: freshActor.id,
+            actorName: freshActor.name,
+            path: [[nextX, nextY]],
+            stepIndex: 0,
+            totalSteps: 1,
+            direction
+        });
+        
         return true;
     };
 
@@ -1127,6 +1252,12 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         }
         lastAttackRef.current = { timestamp: now, actorId: freshActor.id, targetId: target.id };
 
+        // PROTECTION CRITIQUE : Empêcher un nouvel overlay si un est déjà actif (pour éviter les doubles animations)
+        if (rollOverlay) {
+            debugLog('[executeAttack] Blocked: dice roll already in progress');
+            return;
+        }
+
         // SÉCURITÉ : Empêcher de s'attaquer soi-même avec des attaques offensives
         if (!action.friendly && target.id === freshActor.id) {
             addLog({ role: 'system', content: `❌ **${freshActor.name}** ne peut pas s'attaquer soi-même !` });
@@ -1175,8 +1306,9 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         const { roll, modifier, success, isCritical } = rollData;
 
         // Afficher overlay avec résultat
+        const rollId = crypto.randomUUID();
         setRollOverlay({
-            rollId: crypto.randomUUID(),
+            rollId,
             roll,
             modifier,
             tacticalReason,
@@ -1187,6 +1319,23 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
             targetId: target.id,
             action
         });
+        
+        // BROADCAST dice roll to other players
+        broadcastAction('dice_roll', {
+            rollId,
+            roll,
+            modifier,
+            tacticalReason,
+            threshold: target.ac,
+            success,
+            isCritical,
+            rollType: 'hit',
+            targetId: target.id,
+            actionData: action,
+            attackerName: freshActor.name,
+            targetName: target.name
+        });
+        
         if (onSFX) onSFX('dice');
     };
 
@@ -1245,6 +1394,139 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
 
         // CRITICAL FIX: Finish turn after using item
         setTimeout(() => finishTurn(), 800);
+    };
+
+    // NEW: Execute self-buff spells (like Disparition/Invisibility)
+    const executeSelfBuff = (action) => {
+        const freshActor = combatantsRef.current.find(u => u.id === currentActor.id);
+        // CRITICAL FIX: Check fresh state directly instead of stale canAct memo
+        const canActFresh = isLocalPlayerTurn && freshActor && !freshActor.hasActed && freshActor.resource > 0 && combatState === 'active';
+        
+        if (!canActFresh) {
+            console.log('[SelfBuff] Blocked - cannot act:', { isLocalPlayerTurn, hasActed: freshActor?.hasActed, resource: freshActor?.resource, combatState });
+            return;
+        }
+        if (!action) {
+            console.log('[SelfBuff] Blocked - no action');
+            return;
+        }
+        if (action.target !== 'self') {
+            console.log('[SelfBuff] Blocked - target is not self:', action.target);
+            return;
+        }
+
+        const cost = action.cost !== undefined ? action.cost : 20;
+        if (freshActor.resource < cost) {
+            addLog({ role: 'system', content: `❌ **${freshActor.name}** n'a pas assez de ressources !` });
+            return;
+        }
+
+        console.log('[SelfBuff] Executing:', action.name, 'on', freshActor.name);
+
+        // Consume resources
+        const newResource = Math.max(0, freshActor.resource - cost);
+        setCombatants(prev => prev.map(u => u.id === freshActor.id ? { ...u, resource: newResource, hasActed: true } : u));
+        if (!freshActor.isEnemy && onResourceChange) onResourceChange(freshActor.id, newResource);
+
+        // Apply buff effects based on action name/type
+        let effectMsg = '';
+        let buffEffect = null;
+        
+        switch (action.name) {
+            case 'Disparition':
+            case 'Invisibilité':
+                buffEffect = { type: 'invisible', duration: action.duration || 3, name: 'Invisibilité' };
+                effectMsg = '👻 **Invisibilité** activée (3 tours)';
+                break;
+            case 'Bouclier':
+            case 'Barrière':
+                buffEffect = { type: 'shield', duration: action.duration || 2, name: 'Bouclier magique' };
+                effectMsg = '🛡️ **Bouclier** activé';
+                break;
+            case 'Hâte':
+            case 'Célérité':
+                buffEffect = { type: 'haste', duration: action.duration || 2, name: 'Hâte' };
+                effectMsg = '⚡ **Hâte** activée';
+                break;
+            case 'Régénération':
+                buffEffect = { type: 'regen', duration: action.duration || 3, name: 'Régénération' };
+                effectMsg = '💚 **Régénération** activée';
+                break;
+            default:
+                effectMsg = `✨ **${action.name}** activé`;
+        }
+
+        // Add buff to combatant
+        const newCombatants = combatantsRef.current.map(u => {
+            if (u.id === freshActor.id) {
+                const buffs = u.buffs || [];
+                return { ...u, buffs: [...buffs, buffEffect].filter(Boolean) };
+            }
+            return u;
+        });
+        setCombatants(newCombatants);
+
+        // VFX/SFX - Utiliser des SFX spécifiques à la compétence (style League of Legends)
+        const el = document.getElementById(`unit-${freshActor.id}`);
+        const rect = el ? el.getBoundingClientRect() : { x: window.innerWidth / 2, y: window.innerHeight / 2, width: 0, height: 0 };
+        const cx = rect.x + rect.width / 2;
+        const cy = rect.y + rect.height / 2;
+        
+        // Import dynamique pour éviter les dépendances circulaires
+        const { getSkillSFXType } = await import('../audio/skillSfx');
+        const skillSfxType = getSkillSFXType(action.name);
+        
+        if (onVFX) onVFX('magic', cx, cy, '#5eead4');
+        if (onSFX) onSFX(skillSfxType); // SFX spécifique à la compétence
+
+        // Log
+        addLog({ role: 'system', content: `✨ **${freshActor.name}** utilise **${action.name}** ! ${effectMsg}` });
+
+        // Sync state
+        const actionEvent = {
+            id: crypto.randomUUID(),
+            sourceUserId: currentUserId,
+            attackerName: freshActor.name,
+            targetName: freshActor.name,
+            abilityName: action.name,
+            roll: 0,
+            modifier: 0,
+            threshold: 0,
+            success: true,
+            damage: 0,
+            isBuff: true,
+            buffEffect,
+            timestamp: Date.now()
+        };
+
+        lastSyncRef.current = Date.now();
+        if (onUpdateCombatState) onUpdateCombatState({
+            combatants: newCombatants,
+            turnIndex: currentTurnIndex,
+            round,
+            active: true,
+            logs,
+            updatedAt: lastSyncRef.current,
+            lastAction: actionEvent
+        });
+
+        // Cooldown
+        if (action.cooldown > 0) {
+            setCooldowns(prev => ({ ...prev, [currentActor.id]: { ...(prev[currentActor.id] || {}), [action.name]: action.cooldown } }));
+        }
+
+        // Broadcast
+        broadcastAction('buff', {
+            actorName: freshActor.name,
+            abilityName: action.name,
+            effect: buffEffect,
+            id: actionEvent.id
+        });
+        broadcastAction('vfx', { vfxType: 'magic', x: cx, y: cy, color: '#5eead4' });
+        broadcastAction('sfx', { sfxType: skillSfxType });
+
+        // Finish turn
+        setTimeout(() => finishTurn(), 600);
     };
 
     const handleRollComplete = (rollData) => {
@@ -1323,7 +1605,27 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                         setCooldowns(prev => ({ ...prev, [currentActor.id]: { ...(prev[currentActor.id] || {}), [action.name]: action.cooldown } }));
                     }
 
-                    addLog({ role: 'system', content: `🎲 **${roll}**(+${modifier}) vs **${threshold}** AC | 💥 **${liveActor.name}** touche **${target.name}** pour ${damage} dégâts !` });
+                    // BROADCAST attack success with damage
+                    broadcastAction('attack', {
+                        attackerName: liveActor.name,
+                        targetName: target.name,
+                        abilityName: action.name,
+                        roll,
+                        modifier,
+                        threshold,
+                        success: true,
+                        damage,
+                        id: actionEvent.id
+                    });
+                    
+                    // BROADCAST VFX/SFX
+                    broadcastAction('vfx', {
+                        vfxType: action.name === 'Attaque' ? 'blood' : 'magic',
+                        x: window.innerWidth / 2,
+                        y: window.innerHeight / 2,
+                        color: action.name === 'Attaque' ? '#ff0000' : 'var(--aether-blue)'
+                    });
+                    broadcastAction('sfx', { sfxType: 'damage' });
                     const timeoutId = setTimeout(() => {
                         setAnimatingId(null); setShakingId(null);
                         // CRITICAL FIX: Finish turn for ALL actors after attack, not just enemies
@@ -1350,6 +1652,27 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                 };
 
                 addLog({ role: 'system', content: `🎲 **${roll}**(+${modifier}) vs **${threshold}** AC | 💨 **${liveActor.name}** rate son attaque !` });
+
+                // BROADCAST miss action
+                broadcastAction('attack', {
+                    attackerName: currentActor.name,
+                    targetName: target.name,
+                    abilityName: action.name,
+                    roll,
+                    modifier,
+                    threshold,
+                    success: false,
+                    damage: 0,
+                    id: actionEvent.id
+                });
+                
+                // BROADCAST VFX for miss
+                broadcastAction('vfx', {
+                    vfxType: 'spark',
+                    x: window.innerWidth / 2,
+                    y: window.innerHeight / 2,
+                    color: '#ffff00'
+                });
 
                 // Sync the miss
                 lastSyncRef.current = Date.now();
@@ -1424,6 +1747,9 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         let newCombatants = [...currentCombatants];
 
         if (nextActor) {
+            // Check if actor has 0 resources - they must skip turn to recover
+            const isExhausted = nextActor.resource <= 0;
+            
             // Update PM and Status - ONLY for the new actor
             newCombatants = newCombatants.map(u => u.id === nextActor.id ? { ...u, hasActed: false, currentPM: u.maxPM } : u);
 
@@ -1442,6 +1768,32 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                     return;
                 }
             }
+            
+            // If exhausted (0 resources), skip turn but recover 25% of max resource
+            if (isExhausted) {
+                const recoveryAmount = Math.floor(nextActor.maxResource * 0.25); // 25% recovery
+                const recoveredResource = Math.min(nextActor.maxResource, nextActor.resource + recoveryAmount);
+                
+                newCombatants = newCombatants.map(u => u.id === nextActor.id ? { ...u, resource: recoveredResource, hasActed: true } : u);
+                setCombatants(newCombatants);
+                
+                addLog({ role: 'system', content: `😰 **${nextActor.name}** est épuisé ! Tour de récupération... (+${recoveryAmount} ${resourceDisplayName})` });
+                
+                // Sync and skip to next turn
+                if (onUpdateCombatState) onUpdateCombatState({
+                    combatants: newCombatants,
+                    turnIndex: nextIndex,
+                    round: newRound,
+                    active: true,
+                    logs,
+                    updatedAt: Date.now()
+                });
+                
+                // Auto-skip to next after delay
+                setTimeout(nextTurn, 1500);
+                return;
+            }
+            
             addLog({ role: 'system', content: `${nextActor.isEnemy ? "👹" : "👤"} C'est au tour de **${nextActor.name}** !` });
             setCooldowns(prev => {
                 const actorCooldowns = prev[nextActor.id];
@@ -1682,6 +2034,16 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                 {/* Tactical Selection Ring (pulsing) */}
                 {isCurrent && <div className="unit-selection-ring" />}
 
+                {/* Range Indicator Ring - visible when action selected */}
+                {isCurrent && selectedAction && (
+                    <>
+                        <div className="range-indicator-ring" />
+                        <div className="range-badge">
+                            {selectedAction.range || 1}m
+                        </div>
+                    </>
+                )}
+
                 {/* Facing Indicator */}
                 <div className="unit-facing-indicator" style={{
                     transform: `translate(-50%, -50%) rotate(${unit.facing === 'NORTH' ? 0 : (unit.facing === 'EAST' ? 90 : (unit.facing === 'SOUTH' ? 180 : 270))}deg) translateY(-55px)`,
@@ -1737,79 +2099,36 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         );
     };
 
-    const RollOverlay = ({ rollId, roll, modifier, tacticalReason, threshold, success, action }) => {
-        const hasCompletedRef = useRef(false);
-        const rollDiceValues = useMemo(() => [{ type: 'd100', value: roll }], [roll]);
+// --- ROLLOVERLAY COMPONENT (moved outside to prevent re-mounts) ---
+const RollOverlay = ({ rollId, roll, modifier, tacticalReason, threshold, success, action, targetId, onRollComplete }) => {
+    const hasCompletedRef = useRef(false);
+    const rollDiceValues = useMemo(() => [{ type: 'd100', value: roll }], [roll]);
 
-        useEffect(() => {
-            hasCompletedRef.current = false;
-        }, [rollId]);
+    useEffect(() => {
+        hasCompletedRef.current = false;
+    }, [rollId]);
 
-        return (
-            <div style={{
-                position: 'fixed', inset: 0, zIndex: 12000,
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                background: 'rgba(0,0,0,0.2)',
-                pointerEvents: 'none'
-            }}>
-                {/* Full-screen Physics Dice */}
-                <DiceOverlay
-                    diceRolls={rollDiceValues}
-                    onAllComplete={() => {
-                        if (hasCompletedRef.current) return;
-                        hasCompletedRef.current = true;
-                        // Slight delay to appreciate the result before auto-closing
-                        setTimeout(() => {
-                            handleRollComplete({ rollId, roll, modifier, threshold, success, targetId: rollOverlay.targetId, action });
-                        }, 1000);
-                    }}
-                />
-
-            <div style={{
-                position: 'relative',
-                width: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                zIndex: 12001,
-                pointerEvents: 'none'
-            }}>
-                <div style={{ minHeight: '35vh' }} />
-
-                <div style={{
-                    textAlign: 'center',
-                    padding: '30px 60px',
-                    animation: 'slideUpFade 0.4s ease-out both',
-                    textShadow: '0 2px 10px #000'
-                }}>
-                    <div style={{ fontSize: '3rem', color: 'white', marginBottom: '1rem', fontWeight: 'bold' }}>
-                        {roll} <span style={{ color: 'var(--gold-primary)', fontSize: '1.8rem' }}>+{modifier}</span>
-                        {tacticalReason && <span style={{ display: 'block', color: 'var(--gold-primary)', fontSize: '1.2rem', marginTop: '0.5rem' }}>({tacticalReason})</span>}
-                        <span style={{
-                            display: 'block', fontSize: '4rem', marginTop: '1rem',
-                            color: success ? '#00ff00' : '#ff4444',
-                            textShadow: success ? '0 0 30px #00ff00' : '0 0 30px #ff4444'
-                        }}>
-                            = {roll + modifier}
-                        </span>
-                    </div>
-                    <div style={{ fontSize: '1.5rem', color: 'rgba(255,255,255,0.9)', fontWeight: 'bold' }}>
-                        Objectif : <span style={{ color: 'white' }}>{threshold} AC</span>
-                    </div>
-                    {success && (
-                        <div style={{
-                            marginTop: '20px', fontSize: '2rem', color: '#ff4444', fontWeight: 'bold',
-                            textShadow: '0 0 15px rgba(255,0,0,0.5)',
-                            animation: 'bounce 1s infinite'
-                        }}>
-                            VALIDE !
-                        </div>
-                    )}
-                </div>
-            </div>
+    return (
+        <div style={{
+            position: 'fixed', inset: 0, zIndex: 12000,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(0,0,0,0.2)',
+            pointerEvents: 'none'
+        }}>
+            {/* Dice 2D Overlay - gère tout l'affichage visuel */}
+            <DiceOverlay2D
+                diceRolls={rollDiceValues}
+                onAllComplete={() => {
+                    if (hasCompletedRef.current) return;
+                    hasCompletedRef.current = true;
+                    setTimeout(() => {
+                        onRollComplete({ rollId, roll, modifier, threshold, success, targetId, action });
+                    }, 1000);
+                }}
+            />
         </div>
     );
-    };
+};
 
     const GameOverScreen = () => (
         <div style={{ position: 'absolute', inset: 0, zIndex: 3000, background: 'radial-gradient(circle at center, #2a0505 0%, #000 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
@@ -1896,7 +2215,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                                         const pmLeft = currentActor.currentPM - plannedPath.length;
                                         const manhattanDist = Math.abs(dx) + Math.abs(dy);
                                         if (manhattanDist <= (selectedAction.range || pmLeft) && manhattanDist > 0 && pmLeft > 0) {
-                                            highlight = { color: 'rgba(0, 150, 255, 0.15)', border: '1px dashed rgba(0, 180, 255, 0.5)', glow: 'rgba(0, 150, 255, 0.3)' };
+                                            highlight = { color: 'rgba(0, 150, 255, 0.35)', border: '2px dashed rgba(0, 200, 255, 0.8)', glow: 'rgba(0, 180, 255, 0.5)' };
                                         }
                                     } else {
                                         // Regular attack/ability range - check target type for color
@@ -1906,11 +2225,11 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                                                 // Self-target abilities don't show range highlights
                                                 highlight = null;
                                             } else if (actionTarget === 'ally') {
-                                                highlight = { color: 'rgba(74, 222, 128, 0.15)', border: '1px solid rgba(74, 222, 128, 0.3)', glow: 'rgba(74, 222, 128, 0.2)' };
+                                                highlight = { color: 'rgba(74, 222, 128, 0.35)', border: '2px solid rgba(74, 222, 128, 0.7)', glow: 'rgba(74, 222, 128, 0.5)' };
                                             } else if (actionTarget === 'area') {
-                                                highlight = { color: 'rgba(168, 85, 247, 0.15)', border: '1px solid rgba(168, 85, 247, 0.3)', glow: 'rgba(168, 85, 247, 0.2)' };
+                                                highlight = { color: 'rgba(168, 85, 247, 0.4)', border: '2px solid rgba(168, 85, 247, 0.8)', glow: 'rgba(168, 85, 247, 0.6)' };
                                             } else {
-                                                highlight = { color: 'rgba(212, 175, 55, 0.15)', border: '1px solid rgba(212, 175, 55, 0.3)', glow: 'rgba(212, 175, 55, 0.2)' };
+                                                highlight = { color: 'rgba(255, 100, 100, 0.35)', border: '2px solid rgba(255, 80, 80, 0.8)', glow: 'rgba(255, 100, 100, 0.5)' };
                                             }
                                         }
                                     }
@@ -2101,36 +2420,46 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                     {/* Floating Diegetic UI - Only visible when character menu is open and no action selected */}
                     {isLocalPlayerTurn && currentActor && characterMenuOpen && !selectedAction && (
                         <>
-                            {/* Floating Stats Panel - Positioned above character */}
-                            <div
-                                className="diegetic-stats-panel"
-                                style={{
-                                    position: 'absolute',
-                                    left: `${getPosPercent(currentActor.posX)}%`,
-                                    top: `${getPosPercent(currentActor.posY, true) - 22}%`,
-                                    transform: 'translateX(-50%)',
-                                    zIndex: 100,
-                                    pointerEvents: 'auto'
-                                }}
-                            >
-                                <div className="stats-panel-content">
-                                    <div className="stat-row hp">
-                                        <span className="stat-icon">❤️</span>
-                                        <span className="stat-value-large">{currentActor.hp}</span>
-                                        <span className="stat-max">/{currentActor.maxHp}</span>
+                            {/* Floating Stats Panel - Positioned adaptively based on character position */}
+                            {(() => {
+                                const charYPercent = getPosPercent(currentActor.posY, true);
+                                const isNearBottom = charYPercent > 75;
+                                const statsTop = isNearBottom 
+                                    ? `${charYPercent - 35}%`  // Plus haut si en bas de l'arène
+                                    : `${charYPercent - 22}%`;
+                                
+                                return (
+                                    <div
+                                        className="diegetic-stats-panel"
+                                        style={{
+                                            position: 'absolute',
+                                            left: `${getPosPercent(currentActor.posX)}%`,
+                                            top: statsTop,
+                                            transform: 'translateX(-50%)',
+                                            zIndex: 100,
+                                            pointerEvents: 'auto'
+                                        }}
+                                    >
+                                        <div className="stats-panel-content">
+                                            <div className="stat-row hp">
+                                                <span className="stat-icon">❤️</span>
+                                                <span className="stat-value-large">{currentActor.hp}</span>
+                                                <span className="stat-max">/{currentActor.maxHp}</span>
+                                            </div>
+                                            <div className="stat-row resource">
+                                                <span className="stat-icon">⚡</span>
+                                                <span className="stat-value-large">{currentActor.resource}</span>
+                                                <span className="stat-max">/{currentActor.maxResource}</span>
+                                            </div>
+                                            <div className="stat-row pm">
+                                                <span className="stat-icon">👟</span>
+                                                <span className="stat-value-large">{currentActor.currentPM}</span>
+                                                <span className="stat-label">PM</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="stat-row resource">
-                                        <span className="stat-icon">⚡</span>
-                                        <span className="stat-value-large">{currentActor.resource}</span>
-                                        <span className="stat-max">/{currentActor.maxResource}</span>
-                                    </div>
-                                    <div className="stat-row pm">
-                                        <span className="stat-icon">👟</span>
-                                        <span className="stat-value-large">{currentActor.currentPM}</span>
-                                        <span className="stat-label">PM</span>
-                                    </div>
-                                </div>
-                            </div>
+                                );
+                            })()}
 
                             {/* Floating Abilities Panel - Positioned below character */}
                             <div
@@ -2171,9 +2500,19 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                                                         // Sélectionner l'action
                                                         setSelectedAction(ability);
                                                         
+                                                        // Réinitialiser le path planning si ce n'est PAS un déplacement
+                                                        if (!ability.isMovement && ability.name !== 'Se déplacer') {
+                                                            setIsPathPlanning(false);
+                                                            setPlannedPath([]);
+                                                            setHoveredTile(null);
+                                                        }
+                                                        
                                                         // Auto-cast pour les sorts sur soi-même
-                                                        if (ability.target === 'self' || (ability.target === 'ally' && ability.canTargetSelf === false)) {
-                                                            // Cibler automatiquement soi-même
+                                                        if (ability.target === 'self') {
+                                                            // Utiliser executeSelfBuff pour les sorts sur soi
+                                                            setTimeout(() => executeSelfBuff(ability), 100);
+                                                        } else if (ability.target === 'ally' && ability.canTargetSelf === false) {
+                                                            // Cibler automatiquement soi-même pour les sorts ally exclusifs
                                                             const selfTarget = combatants.find(c => c.id === currentActor?.id);
                                                             if (selfTarget) {
                                                                 setTimeout(() => executeAttack(selfTarget, ability), 100);
@@ -2226,12 +2565,13 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                                         </div>
                                         <div className="ability-detail-name">{hoveredAbility.name}</div>
                                         <div className="ability-detail-target">
-                                            {hoveredAbility.target === 'self' && <span className="target-tag target-self">🛡️ Soi-même</span>}
+                                            {hoveredAbility.name === 'Se déplacer' && <span className="target-tag target-self">👤 Soi-même</span>}
+                                            {hoveredAbility.target === 'self' && hoveredAbility.name !== 'Se déplacer' && <span className="target-tag target-self">🛡️ Soi-même</span>}
                                             {hoveredAbility.target === 'ally' && <span className="target-tag target-ally">✨ Allié {hoveredAbility.canTargetSelf !== false ? '(+Soi)' : ''}</span>}
                                             {hoveredAbility.target === 'area' && <span className="target-tag target-area">💥 Zone</span>}
                                             {hoveredAbility.target === 'enemy' && <span className="target-tag target-enemy">⚔️ Ennemi</span>}
                                             {!hoveredAbility.target && hoveredAbility.friendly && <span className="target-tag target-ally">✨ Allié</span>}
-                                            {!hoveredAbility.target && !hoveredAbility.friendly && <span className="target-tag target-enemy">⚔️ Ennemi</span>}
+                                            {!hoveredAbility.target && !hoveredAbility.friendly && hoveredAbility.name !== 'Se déplacer' && <span className="target-tag target-enemy">⚔️ Ennemi</span>}
                                         </div>
                                         <div className="ability-detail-desc">{hoveredAbility.desc}</div>
                                         <div className="ability-detail-footer">
@@ -2292,7 +2632,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                     )}
 
                     {/* Path Preview & Ghost (Centralized to avoid per-tile duplication) */}
-                    {(hoveredTile || (isPathPlanning && plannedPath.length > 0)) && (() => {
+                    {selectedAction?.isMovement && isPathPlanning && (hoveredTile || plannedPath.length > 0) && (() => {
                         const startPoint = plannedPath.length > 0
                             ? { x: plannedPath[plannedPath.length - 1][0], y: plannedPath[plannedPath.length - 1][1] }
                             : { x: currentActor.posX, y: currentActor.posY };
@@ -2354,7 +2694,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                 </div>
 
                 {/* Overlays that shouldn't be covered by Arena */}
-                {rollOverlay && <RollOverlay {...rollOverlay} />}
+                {rollOverlay && <RollOverlay {...rollOverlay} onRollComplete={handleRollComplete} />}
                 {remoteAction && <RemoteActionOverlay action={remoteAction} onComplete={() => setRemoteAction(null)} />}
 
                 {combatState === 'finished' && (
