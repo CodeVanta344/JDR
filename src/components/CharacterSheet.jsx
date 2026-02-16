@@ -1,9 +1,12 @@
 import React from 'react';
 import { CLASSES } from '../lore';
+import { ALL_PROFESSIONS } from '../lore/professions';
 import { resolveCharacterAbilities } from '../utils/characterUtils';
 import { gameSystemsManager } from '../lore/game-systems-manager';
-import { gatheringSystem, getGatheringStat } from '../lore/gathering-system';
+import { gatheringSystem, getGatheringStat, addMaterialToInventory } from '../lore/gathering-system';
 import { ALL_RESOURCES } from '../lore/resources';
+import MaterialInventory from './MaterialInventory';
+import { InventoryPanel } from './InventoryPanel';
 
 export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onToggleSettings, onConsume, onLevelUpClick, onTradeClick }) => {
     const [activeTab, setActiveTab] = React.useState('stats');
@@ -320,13 +323,20 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
             total: roll + statModifier
         });
 
-        // Si succès, ajouter à l'inventaire
+        // Si succès, ajouter au materialInventory (pas à l'inventaire principal)
         if (result.success && result.quantityGathered > 0) {
-            const item = gatheringSystem.createResourceItem(spot.resourceId, result.quantityGathered);
-            if (item) {
-                const currentInventory = character.inventory || [];
-                onUpdateInventory([...currentInventory, item]);
-            }
+            const currentMaterialInventory = character.materialInventory || {};
+            const newMaterialInventory = addMaterialToInventory(
+                currentMaterialInventory,
+                spot.resourceId,
+                result.quantityGathered
+            );
+            
+            // Mettre à jour le personnage avec le nouveau materialInventory
+            onUpdateInventory({
+                ...character.inventory,
+                materialInventory: newMaterialInventory
+            });
 
             // Gain d'XP dans le métier
             if (resource.gatheredBy) {
@@ -600,25 +610,42 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
 
                         {/* Serments et Hiérarchies de Métiers */}
                         {(() => {
-                            // Récupérer les professions depuis gameSystemsManager si non présentes dans character
-                            const professions = character.professions || gameSystemsManager.gameState?.player_professions?.map(pp => {
-                                const profData = gameSystemsManager.getProfessionData?.(pp.profession_id);
-                                if (!profData) return null;
-                                const currentRank = profData.ranks?.find(r => r.level === pp.level);
-                                const nextRank = profData.ranks?.find(r => r.level === pp.level + 1);
-                                return {
-                                    profession_id: pp.profession_id,
-                                    name: profData.name,
-                                    level: pp.level,
-                                    xp: pp.xp,
-                                    next_rank_xp: nextRank?.xp_required,
-                                    ranks: profData.ranks?.map(r => ({
-                                        level: r.level,
-                                        title: r.title
-                                    })),
-                                    isGathering: ['mining', 'herbalism', 'fishing', 'hunting', 'skinning', 'logging'].includes(pp.profession_id)
-                                };
-                            }).filter(Boolean) || [];
+                            // Helper pour transformer les données brutes en format riche
+                            const transformProfessions = (rawProfessions) => {
+                                if (!rawProfessions || rawProfessions.length === 0) return [];
+                                return rawProfessions.map(pp => {
+                                    const profData = gameSystemsManager.getProfessionData?.(pp.profession_id);
+                                    if (!profData) {
+                                        return {
+                                            profession_id: pp.profession_id,
+                                            name: pp.profession_id,
+                                            level: pp.level || 1,
+                                            xp: pp.xp || 0,
+                                            next_rank_xp: null,
+                                            ranks: [],
+                                            isGathering: ['mining', 'herbalism', 'fishing', 'hunting', 'skinning', 'logging'].includes(pp.profession_id)
+                                        };
+                                    }
+                                    const nextRank = profData.ranks?.find(r => r.level === (pp.level || 1) + 1);
+                                    return {
+                                        profession_id: pp.profession_id,
+                                        name: profData.name,
+                                        level: pp.level || 1,
+                                        xp: pp.xp || 0,
+                                        next_rank_xp: nextRank?.xp_required,
+                                        ranks: profData.ranks?.map(r => ({ level: r.level, title: r.title })),
+                                        isGathering: ['mining', 'herbalism', 'fishing', 'hunting', 'skinning', 'logging'].includes(pp.profession_id)
+                                    };
+                                }).filter(Boolean);
+                            };
+                            
+                            // Essayer d'abord character.professions, puis gameSystemsManager
+                            let professions = [];
+                            if (character.professions?.length > 0) {
+                                professions = transformProfessions(character.professions);
+                            } else if (gameSystemsManager.gameState?.player_professions?.length > 0) {
+                                professions = transformProfessions(gameSystemsManager.gameState.player_professions);
+                            }
                             
                             if (professions.length === 0) {
                                 return (
@@ -656,6 +683,8 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                                         <span style={{ fontSize: '1.2rem' }}>⚒️</span>
                                         <span>Serments Prêtés</span>
                                     </h4>
+                                    
+                                    <MaterialInventory materialInventory={character.materialInventory} />
                                     
                                     {/* Section Récolte */}
                                     {gatheringProfessions.length > 0 && (
@@ -916,110 +945,13 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                 )}
 
                 {activeTab === 'equip' && (
-                    <div style={{
-                        display: 'block',
-                        width: '100%',
-                        animation: 'fadeIn 0.4s ease-out',
-                        border: '1px solid rgba(255,255,255,0.05)',
-                        background: 'rgba(0,0,0,0.1)',
-                        borderRadius: '8px',
-                        padding: '0.5rem'
-                    }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                            <h4 style={{ fontSize: '0.7rem', color: 'var(--gold-dim)', margin: 0, textTransform: 'uppercase', letterSpacing: '1.5px' }}>Besace & Equipement</h4>
-                            {onTradeClick && (
-                                <button
-                                    onClick={onTradeClick}
-                                    style={{ padding: '0.4rem 0.8rem', fontSize: '0.7rem', background: 'rgba(212,175,55,0.1)', border: '1px solid var(--gold-dim)', borderRadius: '4px', color: 'var(--gold-primary)', cursor: 'pointer' }}
-                                >
-                                    ECHANGER
-                                </button>
-                            )}
-                        </div>
-                        {/* DEBUG: Log inventory */}
-                        {console.log('[CharacterSheet] Inventory:', character.inventory, 'Count:', character.inventory?.length)}
-
-                        {(!character.inventory || character.inventory.length === 0) ? (
-                            <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#666', background: 'rgba(0,0,0,0.1)', borderRadius: '8px' }}>
-                                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎒</div>
-                                <div style={{ fontSize: '0.9rem', color: '#888' }}>Inventaire vide</div>
-                                <div style={{ fontSize: '0.75rem', color: '#666', marginTop: '0.5rem' }}>
-                                    Trouvez des objets en explorant le monde
-                                </div>
-                            </div>
-                        ) : (
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.8rem' }}>
-                                {character.inventory.map((item, i) => {
-                                    if (!item) return null; // Safety check for null items
-
-                                    const equipped = item.equipped;
-                                    const isConsumable = (item.stats && (item.stats.heal || item.stats.resource || item.stats.hp)) ||
-                                        ['consumable', 'potion', 'scroll', 'nourriture', 'boisson'].includes(item.type?.toLowerCase());
-                                    const equippable = isEquippable(item);
-
-                                    return (
-                                        <div key={i} style={{
-                                            padding: '1rem',
-                                            background: equipped ? 'rgba(212, 175, 55, 0.08)' : 'rgba(255,255,255,0.03)',
-                                            borderRadius: '8px',
-                                            border: equipped ? '1px solid var(--gold-primary)' : '1px solid rgba(255,255,255,0.1)',
-                                            boxShadow: equipped ? '0 0 15px rgba(212,175,55,0.1)' : 'none',
-                                            transition: 'all 0.2s ease'
-                                        }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
-                                                <div style={{ flex: 1 }}>
-                                                    <div style={{ fontWeight: 'bold', color: equipped ? 'var(--gold-primary)' : '#fff', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                        {item.name}
-                                                        {equipped && <span style={{ fontSize: '0.6rem', background: 'var(--gold-primary)', color: '#000', padding: '1px 4px', borderRadius: '3px', fontWeight: '900' }}>ÉQUIPÉ</span>}
-                                                    </div>
-                                                    <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', fontStyle: 'italic', marginTop: '4px', lineHeight: '1.3' }}>{item.desc || 'Aucune description.'}</div>
-                                                </div>
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                                                    {isConsumable && (
-                                                        <button
-                                                            style={{ fontSize: '0.6rem', padding: '4px 8px', background: 'rgba(84, 160, 255, 0.1)', border: '1px solid #54a0ff', color: '#54a0ff', cursor: 'pointer', borderRadius: '4px', fontWeight: 'bold', whiteSpace: 'nowrap' }}
-                                                            onClick={(e) => { e.stopPropagation(); onConsume && onConsume(item, i); }}
-                                                        >
-                                                            UTILISER
-                                                        </button>
-                                                    )}
-                                                    {equippable && (
-                                                        <button
-                                                            style={{
-                                                                fontSize: '0.6rem', padding: '4px 8px',
-                                                                background: equipped ? 'rgba(255,107,107,0.1)' : 'rgba(212,175,55,0.1)',
-                                                                border: '1px solid currentColor',
-                                                                color: equipped ? '#ff6b6b' : 'var(--gold-primary)',
-                                                                cursor: 'pointer', borderRadius: '4px', fontWeight: 'bold', whiteSpace: 'nowrap'
-                                                            }}
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                if (onEquipItem) onEquipItem(i);
-                                                                else {
-                                                                    const newInv = character.inventory.map((invItem, idx) => idx === i ? { ...invItem, equipped: !equipped } : invItem);
-                                                                    onUpdateInventory(newInv);
-                                                                }
-                                                            }}
-                                                        >
-                                                            {equipped ? 'RETIRER' : 'ÉQUIPER'}
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            {item.stats && Object.keys(item.stats).length > 0 && (
-                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                                                    {Object.entries(item.stats).map(([k, v]) => (
-                                                        <span key={k} style={{ fontSize: '0.55rem', color: '#48dbfb', textTransform: 'uppercase', background: 'rgba(72,219,251,0.05)', padding: '2px 6px', borderRadius: '3px', border: '1px solid rgba(72,219,251,0.1)', fontWeight: 'bold' }}>
-                                                            {k} {v > 0 ? `+${v}` : v}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
+                    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                        <InventoryPanel 
+                            inventory={character.inventory}
+                            onEquipItem={onEquipItem}
+                            onConsume={onConsume}
+                            onUpdateInventory={onUpdateInventory}
+                        />
                     </div>
                 )}
 
@@ -1161,25 +1093,42 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                     }}>
                         {/* Serments et Hiérarchies de Métiers */}
                         {(() => {
-                            // Récupérer les professions depuis gameSystemsManager si non présentes dans character
-                            const professions = character.professions || gameSystemsManager.gameState?.player_professions?.map(pp => {
-                                const profData = gameSystemsManager.getProfessionData?.(pp.profession_id);
-                                if (!profData) return null;
-                                const currentRank = profData.ranks?.find(r => r.level === pp.level);
-                                const nextRank = profData.ranks?.find(r => r.level === pp.level + 1);
-                                return {
-                                    profession_id: pp.profession_id,
-                                    name: profData.name,
-                                    level: pp.level,
-                                    xp: pp.xp,
-                                    next_rank_xp: nextRank?.xp_required,
-                                    ranks: profData.ranks?.map(r => ({
-                                        level: r.level,
-                                        title: r.title
-                                    })),
-                                    isGathering: ['mining', 'herbalism', 'fishing', 'hunting', 'skinning', 'logging'].includes(pp.profession_id)
-                                };
-                            }).filter(Boolean) || [];
+                            // Helper pour transformer les données brutes en format riche
+                            const transformProfessions = (rawProfessions) => {
+                                if (!rawProfessions || rawProfessions.length === 0) return [];
+                                return rawProfessions.map(pp => {
+                                    const profData = gameSystemsManager.getProfessionData?.(pp.profession_id);
+                                    if (!profData) {
+                                        return {
+                                            profession_id: pp.profession_id,
+                                            name: pp.profession_id,
+                                            level: pp.level || 1,
+                                            xp: pp.xp || 0,
+                                            next_rank_xp: null,
+                                            ranks: [],
+                                            isGathering: ['mining', 'herbalism', 'fishing', 'hunting', 'skinning', 'logging'].includes(pp.profession_id)
+                                        };
+                                    }
+                                    const nextRank = profData.ranks?.find(r => r.level === (pp.level || 1) + 1);
+                                    return {
+                                        profession_id: pp.profession_id,
+                                        name: profData.name,
+                                        level: pp.level || 1,
+                                        xp: pp.xp || 0,
+                                        next_rank_xp: nextRank?.xp_required,
+                                        ranks: profData.ranks?.map(r => ({ level: r.level, title: r.title })),
+                                        isGathering: ['mining', 'herbalism', 'fishing', 'hunting', 'skinning', 'logging'].includes(pp.profession_id)
+                                    };
+                                }).filter(Boolean);
+                            };
+                            
+                            // Essayer d'abord character.professions, puis gameSystemsManager
+                            let professions = [];
+                            if (character.professions?.length > 0) {
+                                professions = transformProfessions(character.professions);
+                            } else if (gameSystemsManager.gameState?.player_professions?.length > 0) {
+                                professions = transformProfessions(gameSystemsManager.gameState.player_professions);
+                            }
                             
                             if (professions.length === 0) {
                                 return (
@@ -1217,6 +1166,8 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                                         <span style={{ fontSize: '1.2rem' }}>⚒️</span>
                                         <span>Serments Prêtés</span>
                                     </h4>
+                                    
+                                    <MaterialInventory materialInventory={character.materialInventory} />
                                     
                                     {/* Section Récolte */}
                                     {gatheringProfessions.length > 0 && (
