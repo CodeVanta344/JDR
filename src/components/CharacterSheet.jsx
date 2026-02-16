@@ -353,7 +353,24 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
         setTimeout(() => setGatheringResult(null), 3000);
     };
 
-    // Utility to check if item is equippable
+    const handleDestroyItem = async (index) => {
+        if (!character || !character.inventory) return;
+        
+        const item = character.inventory[index];
+        if (!item) return;
+        
+        // Ne pas détruire les items de quête ou liés
+        if (item.questItem || item.bound) {
+            alert("Cet objet ne peut pas être détruit.");
+            return;
+        }
+        
+        // Retirer l'item de l'inventaire
+        const newInventory = character.inventory.filter((_, idx) => idx !== index);
+        
+        // Mettre à jour le personnage
+        onUpdateInventory(newInventory);
+    };
     const isEquippable = (item) => {
         const equippableTypes = ['weapon', 'armor', 'shield', 'ring', 'amulet', 'boots', 'cloak', 'helmet', 'gloves', 'head', 'chest', 'mainhand', 'offhand'];
         const consumableTypes = ['consumable', 'potion', 'scroll', 'food', 'drink'];
@@ -951,6 +968,7 @@ export const CharacterSheet = ({ character, onUpdateInventory, onEquipItem, onTo
                             onEquipItem={onEquipItem}
                             onConsume={onConsume}
                             onUpdateInventory={onUpdateInventory}
+                            onDestroyItem={handleDestroyItem}
                         />
                     </div>
                 )}

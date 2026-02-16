@@ -11,9 +11,10 @@ const CATEGORIES = {
   other: { id: 'other', label: 'Autres', icon: HelpCircle, color: '#888' }
 };
 
-export const InventoryPanel = ({ inventory, onEquipItem, onConsume, onUpdateInventory }) => {
+export const InventoryPanel = ({ inventory, onEquipItem, onConsume, onUpdateInventory, onDestroyItem }) => {
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedItem, setSelectedItem] = useState(null);
+  const [confirmDestroy, setConfirmDestroy] = useState(false);
 
   // Filtrer les items par catégorie
   const filteredItems = useMemo(() => {
@@ -133,6 +134,16 @@ export const InventoryPanel = ({ inventory, onEquipItem, onConsume, onUpdateInve
     return equippableTypes.includes(item.type?.toLowerCase()) || (item.slot && item.slot !== 'none' && item.slot !== 'consumable');
   };
 
+  // Vérifier si un item peut être détruit (pas questItem ni bound)
+  const isDestroyable = (item) => {
+    if (!item) return false;
+    // Ne pas détruire les items de quête ou liés
+    if (item.questItem || item.bound) return false;
+    // Ne détruire que les armes, armures, consommables
+    const destroyableTypes = ['weapon', 'armor', 'shield', 'consumable', 'potion', 'scroll', 'food'];
+    return destroyableTypes.includes(item.type?.toLowerCase());
+  };
+
   const handleUseItem = (item, index, e) => {
     e.stopPropagation();
     if (isConsumable(item) && onConsume) {
@@ -150,6 +161,18 @@ export const InventoryPanel = ({ inventory, onEquipItem, onConsume, onUpdateInve
       );
       onUpdateInventory(newInv);
     }
+  };
+
+  const handleDestroyItem = (item, index) => {
+    if (onDestroyItem) {
+      onDestroyItem(index);
+    } else if (onUpdateInventory) {
+      // Retirer l'item de l'inventaire
+      const newInv = inventory.filter((_, idx) => idx !== index);
+      onUpdateInventory(newInv);
+    }
+    setSelectedItem(null);
+    setConfirmDestroy(false);
   };
 
   return (
@@ -640,7 +663,7 @@ export const InventoryPanel = ({ inventory, onEquipItem, onConsume, onUpdateInve
             )}
 
             {/* Actions */}
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               {isEquippable(selectedItem.item) && (
                 <button
                   onClick={(e) => {
@@ -683,7 +706,84 @@ export const InventoryPanel = ({ inventory, onEquipItem, onConsume, onUpdateInve
                   Utiliser
                 </button>
               )}
+              {/* Bouton Détruire */}
+              {isDestroyable(selectedItem.item) && (
+                <button
+                  onClick={() => setConfirmDestroy(true)}
+                  style={{
+                    flex: 1,
+                    padding: '0.7rem',
+                    background: 'rgba(231,76,60,0.2)',
+                    border: '1px solid #e74c3c',
+                    color: '#e74c3c',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    fontSize: '0.85rem'
+                  }}
+                >
+                  🗑️ Détruire
+                </button>
+              )}
             </div>
+
+            {/* Confirmation de destruction */}
+            {confirmDestroy && (
+              <div style={{
+                marginTop: '1rem',
+                padding: '1rem',
+                background: 'rgba(231,76,60,0.15)',
+                border: '1px solid #e74c3c',
+                borderRadius: '8px'
+              }}>
+                <p style={{
+                  color: '#e74c3c',
+                  fontSize: '0.85rem',
+                  marginBottom: '0.8rem',
+                  textAlign: 'center',
+                  fontWeight: 'bold'
+                }}>
+                  ⚠️ Détruire "{selectedItem.item.name}" ?<br />
+                  <span style={{ fontSize: '0.75rem', fontWeight: 'normal' }}>
+                    Cette action est irréversible.
+                  </span>
+                </p>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    onClick={() => handleDestroyItem(selectedItem.item, selectedItem.index)}
+                    style={{
+                      flex: 1,
+                      padding: '0.6rem',
+                      background: '#e74c3c',
+                      border: 'none',
+                      color: '#fff',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontWeight: 'bold',
+                      fontSize: '0.8rem'
+                    }}
+                  >
+                    Confirmer
+                  </button>
+                  <button
+                    onClick={() => setConfirmDestroy(false)}
+                    style={{
+                      flex: 1,
+                      padding: '0.6rem',
+                      background: 'rgba(255,255,255,0.1)',
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      color: '#888',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontWeight: 'bold',
+                      fontSize: '0.8rem'
+                    }}
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
