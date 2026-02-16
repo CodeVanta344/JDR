@@ -66,18 +66,24 @@ export const HUDHeader = ({
                         onClick={onToggleCodex} 
                         className="hud-btn codex-btn"
                         style={{
-                            fontSize: '0.75rem',
-                            padding: '6px 16px',
-                            background: 'linear-gradient(135deg, var(--gold-primary) 0%, var(--gold-dark) 100%)',
-                            color: 'var(--bg-dark)',
+                            fontSize: '0.85rem',
+                            padding: '8px 20px',
+                            background: 'linear-gradient(135deg, #f4e4a6 0%, #d4a853 50%, #b8941f 100%)',
+                            color: '#1a1a2e',
                             fontWeight: 'bold',
-                            border: '2px solid var(--gold-light)',
-                            boxShadow: '0 0 12px rgba(197, 168, 100, 0.5), inset 0 1px 0 rgba(255,255,255,0.3)',
+                            border: '3px solid #f4e4a6',
+                            borderRadius: '8px',
+                            boxShadow: '0 0 20px rgba(212, 168, 83, 0.8), inset 0 1px 0 rgba(255,255,255,0.4), 0 4px 8px rgba(0,0,0,0.3)',
                             textShadow: 'none',
-                            letterSpacing: '0.5px'
+                            letterSpacing: '1px',
+                            transform: 'scale(1.05)',
+                            animation: 'codexPulse 2s ease-in-out infinite',
+                            position: 'relative',
+                            overflow: 'hidden'
                         }}
                     >
-                        📖 CODEX
+                        <span style={{ marginRight: '4px', fontSize: '1em' }}>📖</span>
+                        <span style={{ fontSize: '0.9em' }}>CODEX</span>
                     </button>
                 )}
                 {onToggleDMPanel && isGM && (
