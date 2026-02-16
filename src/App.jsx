@@ -2061,6 +2061,14 @@ export default function App() {
 
         if (!challengeToRef) return;
 
+        // Marquer les anciens messages de preview comme complétés
+        setMessages(prev => prev.map(m => {
+            if (m.role === 'system' && m.content?.includes('Cliquez sur le bouton ci-dessus pour lancer les dés')) {
+                return { ...m, completed: true };
+            }
+            return m;
+        }));
+
         // Créer message avec animation 3D du dé
         const diceRollData = {
             type: 'dice_roll',
@@ -2069,7 +2077,7 @@ export default function App() {
             modifier: result.modifier,
             total: result.total,
             target: result.dc,
-            action: challengeToRef.label,
+            action: challengeToRef.label || 'Test de compétence',
             stat: result.stat.toUpperCase(),
             outcome: result.outcome
         };
