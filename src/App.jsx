@@ -755,7 +755,7 @@ export default function App() {
 
         const deactivateSession = () => {
             if (!session?.id) return;
-            const url = `https://okanuafsmkuzyuyqibpu.supabase.com/rest/v1/sessions?id=eq.${session.id}`;
+            const url = `https://okanuafsmkuzyuyqibpu.supabase.co/rest/v1/sessions?id=eq.${session.id}`;
             const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rYW51YWZzbWt1enl1eXFpYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0ODQyMjgsImV4cCI6MjA4NjA2MDIyOH0.w93viTCCxc48GNw2n_HFKGq2yQRUvwZSt6lq-FqJb9E';
             fetch(url, {
                 method: 'PATCH',
