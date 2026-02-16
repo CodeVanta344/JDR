@@ -1781,11 +1781,22 @@ export default function App() {
     };
 
     const handleUpdateMaterialInventory = async (newMaterialInventory) => {
-        if (!character?.id) return;
-        const { data } = await supabase.from('players').update({
+        console.log('[MaterialInventory] Updating:', newMaterialInventory);
+        if (!character?.id) {
+            console.log('[MaterialInventory] No character ID');
+            return;
+        }
+        const { data, error } = await supabase.from('players').update({
             material_inventory: newMaterialInventory
         }).eq('id', character.id).select().single();
-        if (data) setCharacter(data);
+        
+        if (error) {
+            console.error('[MaterialInventory] Error:', error);
+        }
+        if (data) {
+            console.log('[MaterialInventory] Success:', data);
+            setCharacter(data);
+        }
     };
 
     const handleEquipItem = async (index) => {

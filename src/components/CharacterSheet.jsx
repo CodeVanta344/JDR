@@ -325,20 +325,30 @@ export const CharacterSheet = ({ character, onUpdateInventory, onUpdateMaterialI
 
         // Si succès, ajouter au materialInventory (pas à l'inventaire principal)
         if (result.success && result.quantityGathered > 0) {
+            console.log('[Gathering] Success! Adding materials:', result.quantityGathered, 'of', spot.resourceId);
             const currentMaterialInventory = character.materialInventory || {};
+            console.log('[Gathering] Current inventory:', currentMaterialInventory);
             const newMaterialInventory = addMaterialToInventory(
                 currentMaterialInventory,
                 spot.resourceId,
                 result.quantityGathered
             );
+            console.log('[Gathering] New inventory:', newMaterialInventory);
             
             // Mettre à jour le personnage avec le nouveau materialInventory
-            onUpdateMaterialInventory(newMaterialInventory);
+            if (onUpdateMaterialInventory) {
+                console.log('[Gathering] Calling onUpdateMaterialInventory');
+                onUpdateMaterialInventory(newMaterialInventory);
+            } else {
+                console.error('[Gathering] onUpdateMaterialInventory is not defined!');
+            }
 
             // Gain d'XP dans le métier
             if (resource.gatheredBy) {
                 gameSystemsManager.gainProfessionXP(resource.gatheredBy, result.experienceGained);
             }
+        } else {
+            console.log('[Gathering] No materials gathered. Success:', result.success, 'Qty:', result.quantityGathered);
         }
 
         // Mettre à jour le spot (quantité réduite)
