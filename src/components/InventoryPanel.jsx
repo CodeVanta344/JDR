@@ -20,10 +20,8 @@ export const InventoryPanel = ({ inventory, onEquipItem, onConsume, onUpdateInve
     if (!inventory) return [];
     
     if (activeCategory === 'all') {
-      // Séparer équipé vs non équipé
-      const equipped = inventory.filter(item => item?.equipped);
-      const unequipped = inventory.filter(item => item && !item.equipped);
-      return [...equipped, ...unequipped];
+      // Retourner tous les items pour traitement spécial dans l'affichage
+      return inventory.filter(item => item);
     }
     
     return inventory.filter(item => {
@@ -44,6 +42,49 @@ export const InventoryPanel = ({ inventory, onEquipItem, onConsume, onUpdateInve
           return !['weapon', 'armor', 'consumable', 'potion', 'scroll', 'food', 'quest', 'artifact', 'shield', 'helmet', 'boots', 'gloves', 'cloak'].includes(item.type) && !item.questItem;
       }
     });
+  }, [inventory, activeCategory]);
+
+  // Grouper les items par catégorie pour l'onglet "Tout"
+  const groupedItems = useMemo(() => {
+    if (!inventory || activeCategory !== 'all') return null;
+    
+    const groups = {
+      equipped: { label: 'Équipé', color: '#d4af37', items: [], icon: '✓' },
+      weapon: { label: 'Armes', color: '#ff6b6b', items: [], icon: '⚔️' },
+      armor: { label: 'Armures', color: '#54a0ff', items: [], icon: '🛡️' },
+      consumable: { label: 'Consommables', color: '#4cd137', items: [], icon: '🧪' },
+      quest: { label: 'Quêtes', color: '#f39c12', items: [], icon: '📜' },
+      artifact: { label: 'Artefacts', color: '#9b59b6', items: [], icon: '💎' },
+      other: { label: 'Autres', color: '#888', items: [], icon: '📦' }
+    };
+    
+    inventory.forEach((item, index) => {
+      if (!item) return;
+      
+      const itemWithIndex = { ...item, originalIndex: index };
+      
+      if (item.equipped) {
+        groups.equipped.items.push(itemWithIndex);
+        return;
+      }
+      
+      if (item.type === 'weapon') {
+        groups.weapon.items.push(itemWithIndex);
+      } else if (item.type === 'armor' || ['shield', 'helmet', 'boots', 'gloves', 'cloak'].includes(item.type)) {
+        groups.armor.items.push(itemWithIndex);
+      } else if (['consumable', 'potion', 'scroll', 'food'].includes(item.type)) {
+        groups.consumable.items.push(itemWithIndex);
+      } else if (item.type === 'quest' || item.questItem) {
+        groups.quest.items.push(itemWithIndex);
+      } else if (item.type === 'artifact' || item.rarity === 'artifact' || item.rarity === 'legendary') {
+        groups.artifact.items.push(itemWithIndex);
+      } else {
+        groups.other.items.push(itemWithIndex);
+      }
+    });
+    
+    // Filtrer les groupes vides
+    return Object.entries(groups).filter(([_, group]) => group.items.length > 0);
   }, [inventory, activeCategory]);
 
   // Compter les items par catégorie
@@ -180,131 +221,293 @@ export const InventoryPanel = ({ inventory, onEquipItem, onConsume, onUpdateInve
         })}
       </div>
 
-      {/* Grille d'items */}
+      {/* Affichage des items */}
       <div style={{
         flex: 1,
         overflowY: 'auto',
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))',
-        gap: '0.5rem',
         padding: '0.5rem',
         background: 'rgba(0,0,0,0.2)',
         borderRadius: '8px',
         border: '1px solid rgba(255,255,255,0.05)'
       }}>
-        {filteredItems.length === 0 ? (
-          <div style={{
-            gridColumn: '1 / -1',
-            textAlign: 'center',
-            padding: '2rem',
-            color: '#666',
-            fontSize: '0.85rem'
-          }}>
-            Aucun objet dans cette catégorie
+        {activeCategory === 'all' && groupedItems ? (
+          // Affichage par catégories pour l'onglet "Tout"
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {groupedItems.length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '2rem',
+                color: '#666',
+                fontSize: '0.85rem'
+              }}>
+                Inventaire vide
+              </div>
+            ) : (
+              groupedItems.map(([groupKey, group]) => (
+                <div key={groupKey} style={{
+                  background: 'rgba(0,0,0,0.3)',
+                  borderRadius: '8px',
+                  border: `1px solid ${group.color}33`,
+                  overflow: 'hidden'
+                }}>
+                  {/* Header de catégorie */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.6rem 0.8rem',
+                    background: `${group.color}15`,
+                    borderBottom: `1px solid ${group.color}33`
+                  }}>
+                    <span style={{ fontSize: '1rem' }}>{group.icon}</span>
+                    <span style={{
+                      fontSize: '0.75rem',
+                      color: group.color,
+                      fontWeight: 'bold',
+                      textTransform: 'uppercase',
+                      letterSpacing: '1px',
+                      flex: 1
+                    }}>
+                      {group.label}
+                    </span>
+                    <span style={{
+                      fontSize: '0.7rem',
+                      color: '#888',
+                      background: 'rgba(0,0,0,0.3)',
+                      padding: '2px 8px',
+                      borderRadius: '10px'
+                    }}>
+                      {group.items.length}
+                    </span>
+                  </div>
+                  
+                  {/* Grille d'items de cette catégorie */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))',
+                    gap: '0.4rem',
+                    padding: '0.6rem'
+                  }}>
+                    {group.items.map((item, idx) => {
+                      const rarityColor = getItemRarityColor(item.rarity);
+                      const equipped = item.equipped;
+                      
+                      return (
+                        <div
+                          key={`${groupKey}-${idx}`}
+                          onClick={() => setSelectedItem({ item, index: item.originalIndex })}
+                          style={{
+                            aspectRatio: '1',
+                            background: equipped 
+                              ? `linear-gradient(135deg, rgba(212,175,55,0.3), rgba(212,175,55,0.1))` 
+                              : `linear-gradient(135deg, rgba(${parseInt(rarityColor.slice(1,3),16)}, ${parseInt(rarityColor.slice(3,5),16)}, ${parseInt(rarityColor.slice(5,7),16)}, 0.15), rgba(0,0,0,0.3))`,
+                            border: equipped ? '2px solid #d4af37' : `2px solid ${rarityColor}44`,
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '0.3rem',
+                            position: 'relative',
+                            transition: 'all 0.2s',
+                            boxShadow: equipped ? '0 0 10px rgba(212,175,55,0.3)' : 'none'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'scale(1.05)';
+                            e.currentTarget.style.borderColor = rarityColor;
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'scale(1)';
+                            e.currentTarget.style.borderColor = equipped ? '#d4af37' : `${rarityColor}44`;
+                          }}
+                        >
+                          <div style={{
+                            width: '28px',
+                            height: '28px',
+                            background: `radial-gradient(circle, ${rarityColor}22, transparent)`,
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '1rem'
+                          }}>
+                            {item.type === 'weapon' && '⚔️'}
+                            {item.type === 'armor' && '🛡️'}
+                            {['consumable', 'potion'].includes(item.type) && '🧪'}
+                            {item.type === 'quest' && '📜'}
+                            {item.type === 'artifact' && '💎'}
+                            {['tool', 'material'].includes(item.type) && '📦'}
+                          </div>
+                          
+                          <span style={{
+                            fontSize: '0.55rem',
+                            color: equipped ? '#d4af37' : '#fff',
+                            textAlign: 'center',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            maxWidth: '100%',
+                            fontWeight: equipped ? 'bold' : 'normal'
+                          }}>
+                            {item.name.length > 10 ? item.name.slice(0, 8) + '...' : item.name}
+                          </span>
+
+                          {equipped && (
+                            <span style={{
+                              position: 'absolute',
+                              top: '-3px',
+                              right: '-3px',
+                              background: '#d4af37',
+                              color: '#000',
+                              fontSize: '0.5rem',
+                              fontWeight: 'bold',
+                              padding: '1px 2px',
+                              borderRadius: '2px'
+                            }}>
+                              ✓
+                            </span>
+                          )}
+
+                          {item.quantity > 1 && (
+                            <span style={{
+                              position: 'absolute',
+                              bottom: '2px',
+                              right: '3px',
+                              color: '#fff',
+                              fontSize: '0.6rem',
+                              fontWeight: 'bold',
+                              textShadow: '0 0 2px #000'
+                            }}>
+                              {item.quantity}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         ) : (
-          filteredItems.map((item, index) => {
-            if (!item) return null;
-            const rarityColor = getItemRarityColor(item.rarity);
-            const equipped = item.equipped;
-            
-            return (
-              <div
-                key={index}
-                onClick={() => setSelectedItem({ item, index })}
-                style={{
-                  aspectRatio: '1',
-                  background: equipped 
-                    ? `linear-gradient(135deg, rgba(212,175,55,0.3), rgba(212,175,55,0.1))` 
-                    : `linear-gradient(135deg, rgba(${parseInt(rarityColor.slice(1,3),16)}, ${parseInt(rarityColor.slice(3,5),16)}, ${parseInt(rarityColor.slice(5,7),16)}, 0.15), rgba(0,0,0,0.3))`,
-                  border: equipped ? '2px solid #d4af37' : `2px solid ${rarityColor}44`,
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '0.4rem',
-                  position: 'relative',
-                  transition: 'all 0.2s',
-                  boxShadow: equipped ? '0 0 10px rgba(212,175,55,0.3)' : 'none'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.05)';
-                  e.currentTarget.style.borderColor = rarityColor;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.borderColor = equipped ? '#d4af37' : `${rarityColor}44`;
-                }}
-              >
-                {/* Icon placeholder */}
-                <div style={{
-                  width: '32px',
-                  height: '32px',
-                  background: `radial-gradient(circle, ${rarityColor}22, transparent)`,
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.2rem'
-                }}>
-                  {item.type === 'weapon' && '⚔️'}
-                  {item.type === 'armor' && '🛡️'}
-                  {['consumable', 'potion'].includes(item.type) && '🧪'}
-                  {item.type === 'quest' && '📜'}
-                  {item.type === 'artifact' && '💎'}
-                  {['tool', 'material'].includes(item.type) && '📦'}
-                </div>
-                
-                {/* Nom tronqué */}
-                <span style={{
-                  fontSize: '0.6rem',
-                  color: equipped ? '#d4af37' : '#fff',
-                  textAlign: 'center',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  maxWidth: '100%',
-                  fontWeight: equipped ? 'bold' : 'normal'
-                }}>
-                  {item.name.length > 12 ? item.name.slice(0, 10) + '...' : item.name}
-                </span>
-
-                {/* Badge équipé */}
-                {equipped && (
-                  <span style={{
-                    position: 'absolute',
-                    top: '-4px',
-                    right: '-4px',
-                    background: '#d4af37',
-                    color: '#000',
-                    fontSize: '0.5rem',
-                    fontWeight: 'bold',
-                    padding: '1px 3px',
-                    borderRadius: '3px'
-                  }}>
-                    ✓
-                  </span>
-                )}
-
-                {/* Quantité */}
-                {item.quantity > 1 && (
-                  <span style={{
-                    position: 'absolute',
-                    bottom: '2px',
-                    right: '4px',
-                    color: '#fff',
-                    fontSize: '0.65rem',
-                    fontWeight: 'bold',
-                    textShadow: '0 0 2px #000'
-                  }}>
-                    {item.quantity}
-                  </span>
-                )}
+          // Affichage normal pour les autres catégories
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))',
+            gap: '0.5rem'
+          }}>
+            {filteredItems.length === 0 ? (
+              <div style={{
+                gridColumn: '1 / -1',
+                textAlign: 'center',
+                padding: '2rem',
+                color: '#666',
+                fontSize: '0.85rem'
+              }}>
+                Aucun objet dans cette catégorie
               </div>
-            );
-          })
+            ) : (
+              filteredItems.map((item, index) => {
+                if (!item) return null;
+                const rarityColor = getItemRarityColor(item.rarity);
+                const equipped = item.equipped;
+                
+                return (
+                  <div
+                    key={index}
+                    onClick={() => setSelectedItem({ item, index })}
+                    style={{
+                      aspectRatio: '1',
+                      background: equipped 
+                        ? `linear-gradient(135deg, rgba(212,175,55,0.3), rgba(212,175,55,0.1))` 
+                        : `linear-gradient(135deg, rgba(${parseInt(rarityColor.slice(1,3),16)}, ${parseInt(rarityColor.slice(3,5),16)}, ${parseInt(rarityColor.slice(5,7),16)}, 0.15), rgba(0,0,0,0.3))`,
+                      border: equipped ? '2px solid #d4af37' : `2px solid ${rarityColor}44`,
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '0.4rem',
+                      position: 'relative',
+                      transition: 'all 0.2s',
+                      boxShadow: equipped ? '0 0 10px rgba(212,175,55,0.3)' : 'none'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'scale(1.05)';
+                      e.currentTarget.style.borderColor = rarityColor;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.borderColor = equipped ? '#d4af37' : `${rarityColor}44`;
+                    }}
+                  >
+                    <div style={{
+                      width: '32px',
+                      height: '32px',
+                      background: `radial-gradient(circle, ${rarityColor}22, transparent)`,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.2rem'
+                    }}>
+                      {item.type === 'weapon' && '⚔️'}
+                      {item.type === 'armor' && '🛡️'}
+                      {['consumable', 'potion'].includes(item.type) && '🧪'}
+                      {item.type === 'quest' && '📜'}
+                      {item.type === 'artifact' && '💎'}
+                      {['tool', 'material'].includes(item.type) && '📦'}
+                    </div>
+                    
+                    <span style={{
+                      fontSize: '0.6rem',
+                      color: equipped ? '#d4af37' : '#fff',
+                      textAlign: 'center',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      maxWidth: '100%',
+                      fontWeight: equipped ? 'bold' : 'normal'
+                    }}>
+                      {item.name.length > 12 ? item.name.slice(0, 10) + '...' : item.name}
+                    </span>
+
+                    {equipped && (
+                      <span style={{
+                        position: 'absolute',
+                        top: '-4px',
+                        right: '-4px',
+                        background: '#d4af37',
+                        color: '#000',
+                        fontSize: '0.5rem',
+                        fontWeight: 'bold',
+                        padding: '1px 3px',
+                        borderRadius: '3px'
+                      }}>
+                        ✓
+                      </span>
+                    )}
+
+                    {item.quantity > 1 && (
+                      <span style={{
+                        position: 'absolute',
+                        bottom: '2px',
+                        right: '4px',
+                        color: '#fff',
+                        fontSize: '0.65rem',
+                        fontWeight: 'bold',
+                        textShadow: '0 0 2px #000'
+                      }}>
+                        {item.quantity}
+                      </span>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
         )}
       </div>
 
