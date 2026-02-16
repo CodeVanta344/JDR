@@ -31,6 +31,34 @@ import { SceneBackground } from './components/SceneBackground';
 import { ParticleSystem } from './components/ParticleSystem';
 import { useGameState } from './hooks/useGameState';
 import { getPartyAverageLevel, scaleEnemyForPartyLevel } from './utils/combat-progression';
+import { setSaveProfessionCallback } from './lore/game-systems-manager';
+
+// Utility function to calculate text similarity (Levenshtein-based)
+const calculateSimilarity = (str1, str2) => {
+    if (!str1 || !str2) return 0;
+    const s1 = str1.toLowerCase().trim();
+    const s2 = str2.toLowerCase().trim();
+    
+    // If identical, return 1
+    if (s1 === s2) return 1;
+    
+    // If one contains the other, high similarity
+    if (s1.includes(s2) || s2.includes(s1)) {
+        const minLen = Math.min(s1.length, s2.length);
+        const maxLen = Math.max(s1.length, s2.length);
+        return minLen / maxLen;
+    }
+    
+    // Simple word overlap calculation
+    const words1 = s1.split(/\s+/).filter(w => w.length > 3);
+    const words2 = s2.split(/\s+/).filter(w => w.length > 3);
+    
+    const common = words1.filter(w => words2.includes(w));
+    const total = new Set([...words1, ...words2]).size;
+    
+    return total > 0 ? common.length / total : 0;
+};
+
 const STARTING_LOCKS = new Set();
 
 
@@ -78,7 +106,6 @@ export default function App() {
 
     const [lastSFX, setLastSFX] = useState(null);
     const [activeVFX, setActiveVFX] = useState(null);
-    const [tension] = useState(0); // 0-100 scale
     const [adventureStarted, setAdventureStarted] = useState(false);
 
     // Integrated Game State Hook
@@ -159,6 +186,8 @@ export default function App() {
     };
 
     const isFetchingRef = useRef(false);
+    const lastMessageIdsRef = useRef(new Set());
+    
     const fetchData = React.useCallback(async () => {
         if (!session?.id || isFetchingRef.current) return;
         isFetchingRef.current = true;
@@ -185,7 +214,41 @@ export default function App() {
             const filteredMsgs = (msgData || []).filter(m =>
                 (!m.content?.startsWith('(MÉMOIRE:') || m.content.includes("START_ADVENTURE_TRIGGERED"))
             );
-            setMessages(filteredMsgs);
+            
+            // Merge with existing messages to prevent losing optimistic updates
+            setMessages(prev => {
+                const existingIds = new Set(prev.map(m => m.id));
+                const dbIds = new Set(filteredMsgs.map(m => m.id));
+                
+                // Keep messages from DB that we don't have
+                const newFromDb = filteredMsgs.filter(m => !existingIds.has(m.id));
+                
+                // Keep local messages that aren't in DB yet (optimistic updates)
+                const localOnly = prev.filter(m => !dbIds.has(m.id) && m.role !== 'temp');
+                
+                // Merge and sort by created_at
+                const merged = [...filteredMsgs, ...localOnly];
+                
+                // Deduplicate by content similarity (for MJ messages that might have different IDs)
+                const uniqueMsgs = [];
+                const seenContents = new Set();
+                
+                for (const msg of merged) {
+                    // For assistant/system messages, check content similarity
+                    if (msg.role === 'assistant' || msg.role === 'system') {
+                        const normalized = msg.content?.toLowerCase().trim().substring(0, 100);
+                        if (normalized && seenContents.has(normalized)) {
+                            console.log('[DEDUP] Skipping duplicate message by content:', normalized.substring(0, 50));
+                            continue;
+                        }
+                        if (normalized) seenContents.add(normalized);
+                    }
+                    uniqueMsgs.push(msg);
+                }
+                
+                return uniqueMsgs.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            });
+            
             const lastImg = [...(msgData || [])].reverse().find(m => m.role === 'image');
             if (lastImg) setSceneImage(lastImg.content);
 
@@ -227,44 +290,6 @@ export default function App() {
                 if (pc) setCharacter(pc);
             }
         };
-
-        const interval = setInterval(pollPlayerState, 15000); // Polling every 15s
-        return () => clearInterval(interval);
-    }, [session?.id, adventureStarted, profile?.id, setPlayers, setCharacter]);
-
-    // --- REAL-TIME MESSAGE SUBSCRIPTION ---
-    useEffect(() => {
-        if (!session?.id) return;
-
-        const channel = supabase
-            .channel(`messages_${session.id}`)
-            .on('postgres_changes', {
-                event: 'INSERT',
-                schema: 'public',
-                table: 'messages',
-                filter: `session_id=eq.${session.id}`
-            }, (payload) => {
-                const newMsg = payload.new;
-                // Skip memory markers (except START trigger) and duplicates
-                if ((newMsg.content?.startsWith('(MEMOIRE:') || newMsg.content?.startsWith('(MÉMOIRE:')) && !newMsg.content.includes("START_ADVENTURE_TRIGGERED")) return;
-
-                setMessages(prev => {
-                    // Check if message already exists
-                    if (prev.some(m => m.id === newMsg.id)) return prev;
-                    return [...prev, newMsg];
-                });
-            })
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [session?.id]);
-
-    // --- TRADE CHANNEL LISTENER (global - not tied to modal) ---
-    useEffect(() => {
-        if (!session?.id || !character?.id) return;
-
         const tradeChannel = supabase
             .channel(`trade_${session.id}`)
             .on('broadcast', { event: 'trade_offer' }, (payload) => {
@@ -724,17 +749,17 @@ export default function App() {
     };
 
     // --- HOST CLEANUP: beforeunload + visibilitychange ---
+
     useEffect(() => {
-        if (!session || !profile || session.host_id !== profile.id) return;
+        if (!session?.id) return;
 
         const deactivateSession = () => {
             if (!session?.id) return;
-            const url = `https://okanuafsmkuzyuyqibpu.supabase.co/rest/v1/sessions?id=eq.${session.id}`;
+            const url = `https://okanuafsmkuzyuyqibpu.supabase.com/rest/v1/sessions?id=eq.${session.id}`;
             const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rYW51YWZzbWt1enl1eXFpYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0ODQyMjgsImV4cCI6MjA4NjA2MDIyOH0.w93viTCCxc48GNw2n_HFKGq2yQRUvwZSt6lq-FqJb9E';
             fetch(url, {
                 method: 'PATCH',
                 headers: {
-                    'Content-Type': 'application/json',
                     'apikey': anonKey,
                     'Authorization': `Bearer ${anonKey}`,
                     'Prefer': 'return=minimal'
@@ -882,6 +907,64 @@ export default function App() {
         const interval = setInterval(refreshPlayers, 5000);
         return () => clearInterval(interval);
     }, [session?.id, profile?.id, adventureStarted, setPlayers, setCharacter, setSession]);
+
+    useEffect(() => {
+        if (!character?.id) return;
+        
+        // Charger les métiers depuis la table player_professions
+        const loadProfessions = async () => {
+            const { data, error } = await supabase
+                .from('player_professions')
+                .select('*')
+                .eq('player_id', character.id);
+            
+            if (error) {
+                console.error('[Profession] Failed to load:', error);
+                return;
+            }
+            
+            if (data && data.length > 0) {
+                setCharacter(prev => ({ ...prev, professions: data }));
+                console.log('[Profession] Loaded from DB:', data.length, 'professions');
+            }
+        };
+        
+        loadProfessions();
+        
+        // Configure the callback to save professions to DB
+        setSaveProfessionCallback(async (professionId) => {
+            // Check if already exists in local state
+            const currentProfessions = character.professions || [];
+            if (currentProfessions.some(p => p.profession_id === professionId)) {
+                console.log('[Profession] Already known:', professionId);
+                return;
+            }
+            
+            // Insert into player_professions table
+            const { data, error } = await supabase
+                .from('player_professions')
+                .insert({
+                    player_id: character.id,
+                    profession_id: professionId,
+                    level: 1,
+                    xp: 0
+                })
+                .select()
+                .single();
+            
+            if (error) {
+                console.error('[Profession] Failed to save to DB:', error);
+                throw error;
+            }
+            
+            // Update local state
+            setCharacter(prev => ({ 
+                ...prev, 
+                professions: [...(prev.professions || []), data]
+            }));
+            console.log('[Profession] Saved to DB:', professionId);
+        });
+    }, [character?.id]);
 
     useEffect(() => {
         chatRef.current?.scrollTo(0, chatRef.current.scrollHeight);
@@ -1350,7 +1433,10 @@ export default function App() {
             is_ready: charData.is_ready ?? false,
             mechanic: charData.mechanic || '',
             description: charData.description || '',
-            life_path: charData.life_path || {}
+            life_path: charData.life_path || {},
+            // CRITICAL FIX: Add LifePath traits and skills for multiplayer sync
+            mechanical_traits: charData.mechanical_traits || [],
+            skill_bonuses: charData.skill_bonuses || []
         };
     };
 
@@ -1582,7 +1668,8 @@ export default function App() {
         const playersWithClass = players.filter(p => p.class);
         const allPlayersReady = playersWithClass.length === players.length && players.every(p => p.class && p.is_ready);
         const hasMarker = messages.some(m => m.content && m.content.includes("START_ADVENTURE_TRIGGERED"));
-        const hasGMIntro = messages.some(m => m.role === 'gm' && m.content && m.content.length > 100 && !m.content.includes("START_ADVENTURE"));
+        // CRITICAL FIX: Check for existing GM intro with correct role 'assistant' (not 'gm')
+        const hasGMIntro = messages.some(m => m.role === 'assistant' && m.content && m.content.length > 100 && !m.content.includes("START_ADVENTURE"));
 
         // If adventure already started (marker exists), sync ALL players
         if (hasMarker && !adventureStarted) {
@@ -1607,6 +1694,9 @@ export default function App() {
 
                     if (data && data.length > 0) {
                         setAdventureStarted(true);
+                        // CRITICAL FIX: Fetch all messages when adventure starts for non-host players
+                        // This ensures they get the GM intro message that was already sent
+                        await fetchData();
                         clearInterval(pollInterval);
                     }
                 }, 1000);
@@ -1840,22 +1930,6 @@ export default function App() {
             const statsNow = calculateTotalStats(character);
             const newMaxRes = calculateMaxResource(character.class, newLevel, statsNow);
 
-            await supabase.from('players').update({
-                max_resource: newMaxRes,
-                resource: newMaxRes // Restore resource on level up? Usually yes.
-            }).eq('id', character.id);
-
-            setCharacter(prev => ({
-                ...prev,
-                xp: newXp,
-                level: newLevel,
-                max_hp: currentMaxHp,
-                hp: currentHp,
-                spells: currentSpells,
-                attribute_points: (prev.attribute_points || 0) + 2,
-                max_resource: newMaxRes,
-                resource: newMaxRes
-            }));
             // Trigger Level Up Modal
             setShowLevelUp(true);
         } else {
@@ -2013,10 +2087,10 @@ export default function App() {
         // Envoyer aussi en DB pour synchro
         if (session) {
             const { error } = await supabase.from('messages').insert({
+                id: diceMessage.id,
                 session_id: session.id,
-                sender: 'SYSTEM',
-                content: diceMessage.content,
-                role: 'system'
+                role: 'system',
+                content: diceMessage.content
             });
             if (error) console.error('Error saving dice roll message:', error);
         }
@@ -2086,6 +2160,17 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
 
             if (aiResponse) {
                 const narrative = aiResponse.narrative || formatAIContent(aiResponse);
+                
+                // Deduplication: Skip if narrative is too similar to last message
+                const lastMsg = messages[messages.length - 1];
+                if (lastMsg?.role === 'assistant' && lastMsg?.content) {
+                    const similarity = calculateSimilarity(lastMsg.content, narrative);
+                    if (similarity > 0.7) {
+                        console.log('[DEDUP] Skipping similar narrative from MJ');
+                        return;
+                    }
+                }
+                
                 const gmMsg = {
                     id: crypto.randomUUID(),
                     session_id: session?.id,
@@ -2628,6 +2713,24 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                         setTimeout(() => handleChallengeResult(autoResult), 100);
                     } else {
                         // Challenge normal - afficher le modal
+                        // Ajouter un message système pour prévenir le joueur
+                        const previewMsg = {
+                            id: crypto.randomUUID(),
+                            role: 'system',
+                            content: `🎲 **Test de ${challenge.stat?.toUpperCase() || 'compétence'}** - "${challenge.label}"\n\nObjectif : ${challenge.dc || 50} | Modificateur : ${(character?.stats?.[challenge.stat?.toLowerCase()] || 10) * 2 >= 0 ? '+' : ''}${(character?.stats?.[challenge.stat?.toLowerCase()] || 10) * 2}\n\n*Cliquez sur le bouton ci-dessus pour lancer les dés...*`,
+                            created_at: new Date().toISOString()
+                        };
+                        setMessages(prev => [...prev, previewMsg]);
+                        
+                        // Sauvegarder en DB
+                        if (session) {
+                            await supabase.from('messages').insert({
+                                session_id: session.id,
+                                role: 'system',
+                                content: previewMsg.content
+                            });
+                        }
+                        
                         setActiveChallenge(challenge);
                     }
                 }
@@ -2886,7 +2989,6 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                         <HUDHeader
                             gameTime={gameTime}
                             getTimeLabel={getTimeLabel}
-                            tension={tension}
                             realTimeSync={realTimeSync}
                             onToggleRealTime={() => setRealTimeSync(!realTimeSync)}
                             onInvite={() => {

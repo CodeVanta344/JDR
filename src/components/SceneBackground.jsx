@@ -6,7 +6,7 @@ export const SceneBackground = ({ currentImage }) => {
     const [activeLayer, setActiveLayer] = useState(1);
     const [transitioning, setTransitioning] = useState(false);
 
-    const fallbackImage = 'https://okanuafsmkuzyuyqibpu.supabase.co/storage/v1/object/public/assets/Aethelgard_Map_v3.png';
+    const fallbackImage = 'https://okanuafsmkuzyuyqibpu.supabase.com/storage/v1/object/public/assets/Aethelgard_Map_v3.png';
 
     useEffect(() => {
         let rawImage = currentImage || fallbackImage;
@@ -23,7 +23,7 @@ export const SceneBackground = ({ currentImage }) => {
                 nextImage = rawImage.replace(/ /g, '_');
             } else if (!rawImage.startsWith('http') && !rawImage.startsWith('data:')) {
                 // Handle cases where only filename is passed
-                const supabaseBase = 'https://okanuafsmkuzyuyqibpu.supabase.co/storage/v1/object/public/assets/';
+                const supabaseBase = 'https://okanuafsmkuzyuyqibpu.supabase.com/storage/v1/object/public/assets/';
                 nextImage = `${supabaseBase}${rawImage.replace(/ /g, '_')}`;
             } else {
                 // It's a full URL, just sanitize spaces for browser safety
