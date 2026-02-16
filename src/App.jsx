@@ -2200,7 +2200,18 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                 }
 
                 if (aiResponse.challenge) {
-                    setActiveChallenge(aiResponse.challenge);
+                    // Vérifier que ce n'est pas le même challenge qui revient (doublon)
+                    const newChallenge = aiResponse.challenge;
+                    const isDuplicate = challengeToRef && 
+                        newChallenge.label === challengeToRef.label && 
+                        newChallenge.stat === challengeToRef.stat &&
+                        newChallenge.dc === challengeToRef.dc;
+                    
+                    if (!isDuplicate) {
+                        setActiveChallenge(newChallenge);
+                    } else {
+                        console.log('[Challenge] Doublon détecté, ignoré:', newChallenge.label);
+                    }
                 }
             }
         } catch (err) {
