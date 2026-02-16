@@ -130,6 +130,138 @@ export interface ItemDefinition {
 }
 
 // ============================================================================
+// ITEMS LIFEPATH - Objet de départ personnalisés
+// ============================================================================
+
+export const LIFEPATH_LIBRARY_CARD: ItemDefinition = {
+  id: 'library_card_royal',
+  name: 'Carte Royale de Bibliothèque',
+  type: 'quest',
+  rarity: 'uncommon',
+  description: 'Une carte d\'accès privilégié aux archives royales d\'Aethelgard.',
+  lore: 'Permet d\'accéder aux archives secrètes et de révéler des connaissances oubliées.',
+  value: 50,
+  stats: { intelligence: 1 },
+  effects: [
+    {
+      type: 'buff',
+      magnitude: 10,
+      target: 'self',
+      description: '+10 aux jets de connaissance et investigation'
+    }
+  ],
+  stackable: false,
+  questItem: true
+};
+
+export const LIFEPATH_FINE_QUILL: ItemDefinition = {
+  id: 'fine_quill_set',
+  name: 'Set de Plumes d\'Écrivain',
+  type: 'tool',
+  rarity: 'common',
+  description: 'Plumes de qualité supérieure avec encre illimitée.',
+  lore: 'Écrire avec ces plumes inspire la confiance et la clarté.',
+  value: 30,
+  stats: { intelligence: 1, charisma: 1 },
+  effects: [
+    {
+      type: 'buff',
+      magnitude: 5,
+      target: 'self',
+      description: '+5 aux jets de diplomatie et persuasion'
+    }
+  ],
+  stackable: false
+};
+
+export const LIFEPATH_CITY_MAP: ItemDefinition = {
+  id: 'city_map_detailed',
+  name: 'Carte Détaillée de la Cité',
+  type: 'tool',
+  rarity: 'common',
+  description: 'Carte précise des rues, passages secrets et points d\'intérêt.',
+  lore: 'Révèle les raccourcis cachés et les zones dangereuses de la ville.',
+  value: 25,
+  stats: { wisdom: 1 },
+  effects: [
+    {
+      type: 'buff',
+      magnitude: 5,
+      target: 'self',
+      description: '+5 aux jets de survie et orientation en milieu urbain'
+    }
+  ],
+  stackable: false,
+  questItem: true
+};
+
+export const LIFEPATH_FAMILY_HEIRLOOM: ItemDefinition = {
+  id: 'family_heirloom',
+  name: 'Héritage Familial',
+  type: 'artifact',
+  rarity: 'rare',
+  description: 'Un objet précieux transmis de génération en génération.',
+  lore: 'Porte la bénédiction des ancêtres et protège son porteur.',
+  value: 200,
+  stats: { charisma: 2 },
+  effects: [
+    {
+      type: 'buff',
+      magnitude: 5,
+      target: 'self',
+      description: '+5 aux jets de diplomatie avec la noblesse'
+    },
+    {
+      type: 'buff',
+      magnitude: 1,
+      target: 'self',
+      description: 'Une fois par jour: +1 à un jet de sauvegarde de choix'
+    }
+  ],
+  stackable: false,
+  bound: true
+};
+
+export const LIFEPATH_QUALITY_SWORD: ItemDefinition = {
+  id: 'quality_sword',
+  name: 'Épée de Qualité',
+  type: 'weapon',
+  rarity: 'uncommon',
+  category: 'sword',
+  description: 'Une lame bien équilibrée, digne d\'un guerrier.',
+  value: 80,
+  stats: { damage: '1d8', attackBonus: 1 },
+  requirements: { strength: 10 }
+};
+
+export const LIFEPATH_VETERAN_BADGE: ItemDefinition = {
+  id: 'veteran_badge',
+  name: 'Insigne du Vétéran',
+  type: 'quest',
+  rarity: 'uncommon',
+  description: 'Symbole de reconnaissance pour service militaire honorable.',
+  lore: 'Commande le respect des soldats et des anciens combattants.',
+  value: 60,
+  stats: { strength: 1, constitution: 1 },
+  effects: [
+    {
+      type: 'buff',
+      magnitude: 5,
+      target: 'self',
+      description: '+5 aux jets de persuasion avec les militaires'
+    },
+    {
+      type: 'buff',
+      magnitude: 2,
+      target: 'self',
+      description: '+2 aux jets de moral pour les alliés soldats'
+    }
+  ],
+  stackable: false,
+  bound: true
+};
+
+// ============================================================================
 // ARMES COMMUNES
 // ============================================================================
 
@@ -990,7 +1122,18 @@ export const ALL_MATERIALS: ItemDefinition[] = [
   MATERIAL_DRAGONBONE
 ];
 
+// LifePath items array
+export const ALL_LIFEPATH_ITEMS: ItemDefinition[] = [
+  LIFEPATH_LIBRARY_CARD,
+  LIFEPATH_FINE_QUILL,
+  LIFEPATH_CITY_MAP,
+  LIFEPATH_FAMILY_HEIRLOOM,
+  LIFEPATH_QUALITY_SWORD,
+  LIFEPATH_VETERAN_BADGE
+];
+
 export const ALL_ITEMS: ItemDefinition[] = [
+  ...ALL_LIFEPATH_ITEMS,
   ...ALL_WEAPONS_COMMON,
   ...ALL_WEAPONS_RARE,
   ...ALL_ARMORS,
