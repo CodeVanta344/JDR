@@ -1203,6 +1203,20 @@ export default function App({ user }) {
         handleUpdateInventory(newInventory);
     };
 
+    // Handle codex updates from AI responses
+    const handleCodexUpdate = useCallback((codexData) => {
+        if (!codexData || !session?.id) return;
+        try {
+            const key = codexData.type || 'misc';
+            const entry = { ...codexData, discovered_at: new Date().toISOString() };
+            supabase.from('world_state').upsert({
+                key: `codex_${session.id}_${key}_${Date.now()}`,
+                value: entry
+            }).then(() => {});
+            console.log('[Codex] Nouvelle entrée:', codexData.title || key);
+        } catch (e) { console.warn('[Codex] Update error:', e); }
+    }, [session?.id]);
+
     const handleExperienceGain = async (amount, reason) => {
         if (!character?.id || !amount) return;
         const result = computeExperienceGain(character, amount, reason);
