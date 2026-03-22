@@ -348,8 +348,14 @@ export default function App({ user }) {
     const handleCharacterCreate = async (charData) => {
         if (!session?.id || !profile?.id || !character?.id) return;
         try {
+            // Only send columns that exist in the players table
+            const safeData = {};
+            const allowedFields = ['name', 'class', 'subclass', 'level', 'xp', 'stats', 'hp', 'max_hp', 'gold', 'inventory', 'spells', 'portrait', 'backstory', 'backstory_gm_context', 'lifepath', 'proficiencies', 'equipped_items', 'resource', 'max_resource', 'resource_name', 'traits'];
+            for (const key of allowedFields) {
+                if (charData[key] !== undefined) safeData[key] = charData[key];
+            }
             const { data, error } = await supabase.from('players').update({
-                ...charData,
+                ...safeData,
                 is_ready: true
             }).eq('id', character.id).select().single();
             if (error) throw error;

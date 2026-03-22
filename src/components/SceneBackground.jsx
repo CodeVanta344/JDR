@@ -58,11 +58,11 @@ export const SceneBackground = ({ currentImage }) => {
         <div className="scene-background-container">
             <div
                 className={`scene-layer layer-1 ${activeLayer === 1 ? 'active' : 'inactive'}`}
-                style={{ backgroundImage: `url(${bg1 || fallbackImage})` }}
+                style={bg1 ? { backgroundImage: `url(${bg1})` } : {}}
             />
             <div
                 className={`scene-layer layer-2 ${activeLayer === 2 ? 'active' : 'inactive'}`}
-                style={{ backgroundImage: `url(${bg2 || fallbackImage})` }}
+                style={bg2 ? { backgroundImage: `url(${bg2})` } : {}}
             />
             <div className="scene-overlay" />
         </div>
