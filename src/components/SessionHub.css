@@ -186,6 +186,227 @@
     }
 }
 
+/* ===== PLAYER CARDS ===== */
+
+.players-registry {
+    width: 100%;
+    margin-bottom: 1.5rem;
+}
+
+.registry-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-family: 'Cinzel', serif;
+    font-size: 0.9rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #c8b88a;
+    margin-bottom: 1rem;
+}
+
+.registry-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,175,55,0.3), transparent);
+}
+
+.players-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.player-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.8rem 1.2rem;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.player-card.player-self {
+    background: rgba(212,175,55,0.05);
+    border-color: rgba(212,175,55,0.2);
+}
+
+.player-avatar {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.avatar-ring {
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    border: 1px solid rgba(212,175,55,0.3);
+}
+
+.avatar-inner {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(30,30,40,0.8);
+    border: 1px solid rgba(212,175,55,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    color: #d4af37;
+}
+
+.host-crown {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    font-size: 0.75rem;
+}
+
+.player-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.player-name {
+    font-family: 'Cinzel', serif;
+    font-size: 0.95rem;
+    color: #f0e6d0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.host-badge {
+    font-size: 0.65rem;
+    padding: 1px 6px;
+    background: rgba(212,175,55,0.15);
+    border: 1px solid rgba(212,175,55,0.3);
+    border-radius: 3px;
+    color: #d4af37;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-family: 'Inter', sans-serif;
+}
+
+.player-status-label {
+    font-size: 0.75rem;
+    color: #888;
+    margin-top: 2px;
+}
+
+.player-ready-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.ready-text {
+    font-size: 0.8rem;
+    color: #5dff98;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.ready-text.waiting {
+    color: #888;
+    font-weight: normal;
+}
+
+.ready-orb {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #555;
+    transition: all 0.3s;
+}
+
+.ready-orb.ready-orb-active {
+    background: #5dff98;
+    box-shadow: 0 0 8px #5dff98;
+}
+
+/* ===== HUB ACTIONS ===== */
+
+.hub-actions {
+    width: 100%;
+}
+
+.actions-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,175,55,0.3), transparent);
+    margin-bottom: 1.5rem;
+}
+
+.button-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.button-group .btn-medieval,
+.button-group .btn-gold {
+    min-width: 280px;
+    text-align: center;
+    justify-content: center;
+}
+
+/* ===== HUB HEADER ===== */
+
+.hub-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.session-seal {
+    width: 60px;
+    height: 60px;
+    color: rgba(212,175,55,0.5);
+    margin-bottom: 1rem;
+}
+
+.seal-svg {
+    width: 100%;
+    height: 100%;
+}
+
+.session-info-grid {
+    text-align: center;
+}
+
+.info-label {
+    font-size: 0.75rem;
+    color: #888;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.info-value {
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    color: #f0e6d0;
+    margin-top: 0.2rem;
+}
+
+.info-value.code-value {
+    font-family: monospace;
+    letter-spacing: 3px;
+    color: #d4af37;
+}
+
+.info-divider {
+    height: 1px;
+    background: rgba(212,175,55,0.15);
+    margin: 0.8rem 0;
+}
+
 /* ===== RESPONSIVE - AMÉLIORÉ ===== */
 
 /* Extra small devices (phones, 480px and down) */
