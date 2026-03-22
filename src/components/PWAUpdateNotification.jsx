@@ -16,7 +16,7 @@ export function PWAUpdateNotification() {
             border: '2px solid #d4af37',
             borderRadius: '8px',
             padding: '16px 24px',
-            zIndex: 9999,
+            zIndex: 99999,
             boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
             display: 'flex',
             alignItems: 'center',

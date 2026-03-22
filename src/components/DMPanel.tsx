@@ -224,6 +224,10 @@ export function DMPanel({ isOpen, onClose, gameState, onSpawnNPC, onTriggerComba
   const isChoiceMade = (sceneId: string, choiceId: string, optionLabel: string) =>
     choiceHistory.some(h => h.sceneId === sceneId && h.choiceId === choiceId && h.optionLabel === optionLabel);
 
+  // Check if ANY option in this choice group has been selected (mutually exclusive)
+  const isChoiceGroupResolved = (sceneId: string, choiceId: string) =>
+    choiceHistory.some(h => h.sceneId === sceneId && h.choiceId === choiceId);
+
   const undoChoice = (index: number) => {
     const choice = choiceHistory[index];
     if (choice?.reputationChanges) {
@@ -630,11 +634,16 @@ export function DMPanel({ isOpen, onClose, gameState, onSpawnNPC, onTriggerComba
                             <div className="choice-options">
                               {choice.options.map((opt, j) => {
                                 const chosen = isChoiceMade(currentScene.id, choice.id, opt.label);
+                                const groupResolved = isChoiceGroupResolved(currentScene.id, choice.id);
+                                const lockedOut = groupResolved && !chosen; // Another option was picked
                                 return (
-                                <div key={j} className={`choice-option ${chosen ? 'choice-chosen' : ''}`}>
+                                <div key={j} className={`choice-option ${chosen ? 'choice-chosen' : ''} ${lockedOut ? 'choice-locked' : ''}`}
+                                  style={lockedOut ? { opacity: 0.4, pointerEvents: 'none' } : undefined}>
                                   <div className="choice-option-header">
-                                    <strong>{chosen ? '✓ ' : ''}{opt.label}</strong>
-                                    {opt.reputationChange && (
+                                    <strong>{chosen ? '✓ ' : lockedOut ? '✗ ' : ''}{opt.label}</strong>
+                                    {chosen && <span style={{ color: '#5dff98', fontSize: '0.75rem', marginLeft: 'auto' }}>APPLIQUÉ</span>}
+                                    {lockedOut && <span style={{ color: '#ff6666', fontSize: '0.75rem', marginLeft: 'auto' }}>VERROUILLÉ</span>}
+                                    {opt.reputationChange && !lockedOut && (
                                       <div className="rep-badges">
                                         {opt.reputationChange.map((rc, k) => (
                                           <span key={k} className={`rep-badge ${rc.amount > 0 ? 'rep-positive' : 'rep-negative'}`}>
@@ -644,9 +653,9 @@ export function DMPanel({ isOpen, onClose, gameState, onSpawnNPC, onTriggerComba
                                       </div>
                                     )}
                                   </div>
-                                  <p className="choice-description">{opt.description}</p>
-                                  <p className="choice-consequence"><strong>Conséquence:</strong> {opt.consequence}</p>
-                                  {opt.skillCheck && (() => {
+                                  {!lockedOut && <p className="choice-description">{opt.description}</p>}
+                                  {!lockedOut && <p className="choice-consequence"><strong>Conséquence:</strong> {opt.consequence}</p>}
+                                  {!lockedOut && opt.skillCheck && (() => {
                                     const ckKey = `${currentScene.id}-ch-${i}-${j}`;
                                     const ckRes = skillCheckResults[ckKey];
                                     return (
@@ -663,13 +672,19 @@ export function DMPanel({ isOpen, onClose, gameState, onSpawnNPC, onTriggerComba
                                     </div>
                                     );
                                   })()}
-                                  <button
-                                    className={`choice-select-btn ${chosen ? 'choice-select-done' : ''}`}
-                                    onClick={() => !chosen && handleChoiceSelect(currentScene.id, choice.id, opt)}
-                                    disabled={chosen}
-                                  >
-                                    {chosen ? '✓ Choix appliqué' : '⚔️ Appliquer ce choix'}
-                                  </button>
+                                  {!groupResolved && (
+                                    <button
+                                      className="choice-select-btn"
+                                      onClick={() => handleChoiceSelect(currentScene.id, choice.id, opt)}
+                                    >
+                                      ⚔️ Appliquer ce choix
+                                    </button>
+                                  )}
+                                  {chosen && (
+                                    <button className="choice-select-btn choice-select-done" disabled>
+                                      ✓ Choix appliqué
+                                    </button>
+                                  )}
                                 </div>
                                 );
                               })}

@@ -1458,6 +1458,30 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
         setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'system', content: message }]);
     };
 
+    // Bridge: AI response triggers combat with enemies
+    const initializeHostCombat = (enemies) => {
+        if (!enemies || enemies.length === 0) return;
+        // Normalize enemy data (ensure all required fields)
+        const normalizedEnemies = enemies.map((e, i) => ({
+            name: e.name || `Ennemi ${i + 1}`,
+            hp: e.hp || 20,
+            max_hp: e.max_hp || e.hp || 20,
+            atk: e.atk || 5,
+            ac: e.ac || 10,
+            id: e.id || `enemy-${i}-${Date.now()}`,
+            cr: e.cr || 1,
+            abilities: e.abilities || [],
+        }));
+        setCombatEnemies(normalizedEnemies);
+        setCombatMode(true);
+        setMessages(prev => [...prev, {
+            id: crypto.randomUUID(),
+            role: 'system',
+            content: `⚔️ Combat déclenché ! ${normalizedEnemies.map(e => e.name).join(', ')} attaquent !`,
+            created_at: new Date().toISOString()
+        }]);
+    };
+
     const _handleCombatDistanceCheck = async (combatData) => {
         if (!character) return;
         setLoading(true);
