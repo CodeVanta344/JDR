@@ -458,7 +458,6 @@ export default function App({ user }) {
                                 npcs: NPC_TEMPLATES,
                                 rumors: RUMORS_AND_GOSSIP
                             }
-                        }
                     });
 
                     const narrativeText = aiResponse?.narrative || formatAIContent(aiResponse);
@@ -1321,7 +1320,6 @@ export default function App({ user }) {
                         stats: character.stats
                     },
                     lore: { context: WORLD_CONTEXT, bestiary: { ...BESTIARY, ...BESTIARY_EXTENDED }, classes: CLASSES, chronicle, npcs: NPC_TEMPLATES, quests: QUEST_HOOKS, locations: TAVERNS_AND_LOCATIONS, rumors: RUMORS_AND_GOSSIP, encounters: RANDOM_ENCOUNTERS, myths: WORLD_MYTHS_EXTENDED, legendaryItems: LEGENDARY_ITEMS, factions: FACTION_LORE }
-                }
             });
 
             if (aiResponse) {
@@ -1471,7 +1469,6 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                         legendaryItems: LEGENDARY_ITEMS,
                         factions: FACTION_LORE
                     }
-                }
             });
 
             if (aiResponse) {
@@ -1600,7 +1597,6 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                     playerId: character.id,
                     playerProfile: { name: character.name, class: character.class },
                     context: buildDistancePrompt(combatData.enemies)
-                }
             });
 
             const distance = aiResponse?.distance || 'medium'; // Default to medium if AI fails
@@ -1750,7 +1746,6 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                         .map(m => `[${m.role === 'user' ? (players.find(p => p.id === m.player_id)?.name || 'Inconnu') : 'GM'}]: ${m.content}`)
                         .join('\n'),
                     lore: { context: WORLD_CONTEXT, bestiary: { ...BESTIARY, ...BESTIARY_EXTENDED }, classes: CLASSES, chronicle, npcs: NPC_TEMPLATES, quests: QUEST_HOOKS, locations: TAVERNS_AND_LOCATIONS, rumors: RUMORS_AND_GOSSIP, encounters: RANDOM_ENCOUNTERS, myths: WORLD_MYTHS_EXTENDED, legendaryItems: LEGENDARY_ITEMS, factions: FACTION_LORE }
-                }
             });
 
             if (aiResponse) {
@@ -1811,7 +1806,6 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                             history: [...updatedHistory, { role: 'npc', content: responseText }].map(m => ({ role: m.role, content: m.content })),
                             sessionId: session.id,
                             playerId: character?.id
-                        }
                     }).then(({ data }) => {
                         if (data?.narrative) {
                             supabase.from('messages').insert({
@@ -2132,7 +2126,6 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                         class: character.class,
                         level: character.level
                     }
-                }
             });
 
             if (aiResponse) {

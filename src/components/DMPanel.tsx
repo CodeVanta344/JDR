@@ -15,6 +15,7 @@ import { EQUIPMENT_RULES, rollDice } from '../lore/rules';
 import { GM_BOOK, MAP_LOCATIONS, findScene, findChapter, getAllScenes } from '../lore/gm-book-data';
 import type { BookScene, BookChapter, BookAct, GMNote } from '../lore/gm-book-data';
 import AethelgardMap from './AethelgardMap';
+import { DMPanelTutorial } from './DMPanelTutorial';
 import './DMPanel.css';
 
 // ============================================================================
@@ -153,6 +154,11 @@ export function DMPanel({ isOpen, onClose, gameState, onSpawnNPC, onTriggerComba
   // --- Timer ---
   const [sessionStartTime] = useState(Date.now());
   const [sessionTime, setSessionTime] = useState('00:00:00');
+
+  // --- Tutorial ---
+  const [showTutorial, setShowTutorial] = useState(() => {
+    return !localStorage.getItem('aethelgard-gm-tutorial-seen');
+  });
 
   // --- Encounter ---
   const [currentEncounter, setCurrentEncounter] = useState<string | null>(null);
@@ -403,6 +409,19 @@ export function DMPanel({ isOpen, onClose, gameState, onSpawnNPC, onTriggerComba
           </div>
           <div className="dm-header-right">
             <div className="session-timer"><span className="timer-icon">⏱️</span><span className="timer-value">{sessionTime}</span></div>
+            <button
+              className="dm-tutorial-btn"
+              onClick={() => setShowTutorial(true)}
+              title="Aide / Tutoriel du MJ"
+              style={{
+                width: '36px', height: '36px', borderRadius: '50%',
+                background: 'rgba(212, 175, 55, 0.15)', border: '1px solid #d4af37',
+                color: '#d4af37', fontSize: '1.1rem', fontFamily: "'Cinzel', serif",
+                fontWeight: 700, cursor: 'pointer', display: 'flex',
+                alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.2s',
+              }}
+            >?</button>
             <button className="dm-close" onClick={onClose}>✕</button>
           </div>
         </div>
@@ -960,6 +979,9 @@ export function DMPanel({ isOpen, onClose, gameState, onSpawnNPC, onTriggerComba
             <p>Claude Opus génère...</p>
           </div>
         )}
+
+        {/* Tutorial overlay */}
+        <DMPanelTutorial isOpen={showTutorial} onClose={() => setShowTutorial(false)} />
       </div>
     </div>
   );
