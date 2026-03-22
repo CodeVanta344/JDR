@@ -6,13 +6,18 @@ const WaitingRoom = ({ players, character, onToggleReady, onStart, loading, sess
     const isHost = profile?.id && sessionHostId && profile.id === sessionHostId; 
 
     return (
-        <div className="creation-overlay" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div className="creation-bg" style={{
+        <div style={{
+            position: 'fixed', inset: 0, zIndex: 10000,
+            background: '#000',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            overflow: 'auto', padding: '2rem'
+        }}>
+            <div style={{
+                position: 'absolute', inset: 0,
                 backgroundImage: 'url("/aethelgard_map_menu.jpg")',
                 backgroundSize: '80% auto',
                 backgroundPosition: 'center',
-                opacity: 0.4,
-                zIndex: -1
+                opacity: 0.4, pointerEvents: 'none'
             }}></div>
             <div className="stone-panel ornate-border" style={{
                 maxWidth: '700px',
@@ -22,7 +27,8 @@ const WaitingRoom = ({ players, character, onToggleReady, onStart, loading, sess
                 background: 'rgba(10, 10, 15, 0.85)',
                 backdropFilter: 'blur(12px)',
                 animation: 'fadeIn 0.8s ease-out',
-                position: 'relative'
+                position: 'relative',
+                margin: '0 auto'
             }}>
                 {/* Decoration */}
                 <div style={{ position: 'absolute', top: -20, left: '50%', transform: 'translateX(-50%)', color: 'var(--gold-dim)', fontSize: '2rem' }}>✦</div>
