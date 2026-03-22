@@ -112,6 +112,7 @@ export function SessionHub({ players, character, session, onToggleReady, onStart
         <>
             <MagicBackground />
             <div className="session-hub-container">
+                <div style={{ flex: '1 0 0' }} />
                 {/* Grand titre épique */}
                 <div className="epic-title-container">
                     <div className="subtitle">Chroniques d'Aethelgard</div>
@@ -297,6 +298,7 @@ export function SessionHub({ players, character, session, onToggleReady, onStart
                     <div className="footer-ornament">✦ ✦ ✦</div>
                     <div className="footer-text">Que votre quête soit légendaire</div>
                 </div>
+                <div style={{ flex: '1 0 0' }} />
             </div>
 
             {/* Animation Parchemin de Lore */}
