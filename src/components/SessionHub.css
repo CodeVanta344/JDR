@@ -322,7 +322,7 @@
 /* Tablets (768px to 1024px) */
 @media (min-width: 769px) and (max-width: 1024px) {
     .hub-scroll-panel {
-        max-width: 90%;
+        max-width: min(700px, 92vw);
         padding: 2.5rem 2rem;
     }
     
@@ -334,13 +334,13 @@
 /* Large screens (1440px and up) */
 @media (min-width: 1440px) {
     .hub-scroll-panel {
-        max-width: 1400px;
+        max-width: min(700px, 92vw);
     }
-    
+
     .epic-title {
         font-size: clamp(3rem, 4vw, 5rem);
     }
-    
+
     .btn-medieval {
         padding: 1.2rem 2.5rem;
         font-size: 1.1rem;
@@ -350,8 +350,7 @@
 /* Ultra-wide screens (1920px and up) */
 @media (min-width: 1920px) {
     .hub-scroll-panel {
-        max-width: 1600px;
-        padding: 4rem 4rem 3.5rem;
+        max-width: min(700px, 92vw);
     }
 }
 
