@@ -23,7 +23,7 @@ import { LootModal } from './components/LootModal';
 import { NPCDialogueModal } from './components/NPCDialogueModal';
 import { DiceChallengeModal } from './components/DiceChallengeModal';
 import { CombatDistanceModal } from './components/CombatDistanceModal';
-import { formatAIContent, calculateTotalStats, calculateMaxResource, resolvePlayerAbilities, generateArenaDecor, generateRandomCharacter } from './utils/gameUtils';
+import { formatAIContent, calculateTotalStats, calculateMaxResource, resolvePlayerAbilities, generateArenaDecor, generateRandomCharacter, getArenaConfig } from './utils/gameUtils';
 import { AudioManager } from './components/AudioManager';
 import { GameHelperModal } from './components/GameHelperModal';
 import { LevelUpModal } from './components/LevelUpModal';
@@ -1977,6 +1977,20 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
 
                     // 4. Open the modal
                     setActiveNPC(aiResponse.npc);
+                } else {
+                    // Default: display GM narrative in chat
+                    const narrative = aiResponse.narrative || formatAIContent(aiResponse);
+                    if (narrative && typeof narrative === 'string' && narrative.length > 0) {
+                        const gmMsg = {
+                            id: crypto.randomUUID(),
+                            session_id: session.id,
+                            role: 'assistant',
+                            content: narrative,
+                            created_at: new Date().toISOString()
+                        };
+                        setMessages(prev => [...prev, gmMsg]);
+                        supabase.from('messages').insert({ session_id: session.id, role: 'assistant', content: narrative }).then(() => {});
+                    }
                 }
             }
 
