@@ -56,6 +56,47 @@ const LAZY_FALLBACK = <div style={{color:'#d4af37',textAlign:'center',padding:'2
 
 const STARTING_LOCKS = new Set();
 
+// Route AI calls via Supabase ai_requests broker (VPS with Claude CLI)
+// Falls back to edge function if broker fails
+async function invokeGM(supabaseClient, body) {
+    try {
+        // 1. Insert request into ai_requests table
+        const { data: request, error: insertError } = await supabaseClient
+            .from('ai_requests')
+            .insert({
+                request_type: 'game-master',
+                request_payload: body,
+                status: 'pending',
+            })
+            .select()
+            .single();
+
+        if (insertError || !request) throw new Error(insertError?.message || 'Insert failed');
+
+        // 2. Poll for response (max 30s)
+        const startTime = Date.now();
+        while (Date.now() - startTime < 30000) {
+            await new Promise(r => setTimeout(r, 1500));
+            const { data: updated } = await supabaseClient
+                .from('ai_requests')
+                .select('status, response_payload, error_message')
+                .eq('id', request.id)
+                .single();
+
+            if (updated?.status === 'completed' && updated.response_payload) {
+                return { data: updated.response_payload };
+            }
+            if (updated?.status === 'error') {
+                throw new Error(updated.error_message || 'AI error');
+            }
+        }
+        throw new Error('Timeout waiting for GM response');
+    } catch (brokerError) {
+        console.warn('[invokeGM] Broker failed, trying edge function:', brokerError.message);
+        // Fallback to edge function
+        return await supabaseClient.functions.invoke('game-master', { body });
+    }
+}
 
 export default function App({ user }) {
     // Real-time viewport scaling
@@ -393,8 +434,7 @@ export default function App({ user }) {
                 try {
                     const playerNames = currentPlayers.map(p => `${p.name} (${p.class || 'Aventurier'})`).join(', ');
                     const introPrompt = `(SYSTEM) La partie commence. Présente-toi en tant que Maître du Jeu des Chroniques d'Aethelgard. Décris l'ambiance de la scène d'ouverture au Sanglier Doré, une taverne chaleureuse de Sol-Aureus. Le personnage du joueur (${playerNames}) vient d'arriver en ville. Sois immersif, atmosphérique, et termine par une question ou une situation qui invite le joueur à agir. Maximum 3 paragraphes.`;
-                    const { data: aiResponse } = await supabase.functions.invoke('game-master', {
-                        body: {
+                    const { data: aiResponse } = await invokeGM(supabase, {
                             action: introPrompt,
                             history: [],
                             sessionId: currentSession.id,
@@ -1263,8 +1303,7 @@ export default function App({ user }) {
         setLoading(true);
 
         try {
-            const { data: aiResponse } = await supabase.functions.invoke('game-master', {
-                body: {
+            const { data: aiResponse } = await invokeGM(supabase, {
                     action: isStagnation ? "Le silence s'installe, les joueurs attendent. Fais avancer l'histoire avec un événement imprévu." : "AUTO_INITIATIVE",
                     history: messages.slice(-10).map(m => ({ role: m.role, content: m.content })),
                     sessionId: session.id,
@@ -1380,8 +1419,7 @@ export default function App({ user }) {
                     result.outcome === 'CRITICAL_FAILURE' ? 'échec critique' :
                         result.outcome === 'SUCCESS' ? 'succès' : 'échec';
 
-            const { data: aiResponse } = await supabase.functions.invoke('game-master', {
-                body: {
+            const { data: aiResponse } = await invokeGM(supabase, {
                     action: `Résous la conséquence narrative de ce test et fais avancer l'histoire.
 Action tentée: ${challengeToRef.label}
 Stat: ${result.stat}
@@ -1555,8 +1593,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
 
         try {
             // Ask GM to determine distance based on recent history
-            const { data: aiResponse } = await supabase.functions.invoke('game-master', {
-                body: {
+            const { data: aiResponse } = await invokeGM(supabase, {
                     action: "DETERMINE_COMBAT_DISTANCE",
                     history: messages.slice(-10).map(m => ({ role: m.role, content: m.content })),
                     sessionId: session.id,
@@ -1679,8 +1716,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                 .map(m => `[${m.role === 'user' ? (players.find(p => p.id === m.player_id)?.name || 'Inconnu') : 'GM'}]: ${m.content}`)
                 .join('\n');
 
-            const { data: aiResponse } = await supabase.functions.invoke('game-master', {
-                body: {
+            const { data: aiResponse } = await invokeGM(supabase, {
                     action: `(Privé à ${npcName}) ${content}`,
                     history: updatedHistory.map(m => ({ role: m.role, content: m.content })),
                     sessionId: session.id,
@@ -1770,8 +1806,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                 if (lower.includes("au revoir") || lower.includes("sort de la pièce") || lower.includes("quitte la conversation")) {
 
                     // Trigger memory summary
-                    await supabase.functions.invoke('game-master', {
-                        body: {
+                    await invokeGM(supabase, {
                             action: `Résume brièvement ce que ${npcName} a appris sur le joueur lors de cet échange. Commence par (MÉMOIRE:${npcName}).`,
                             history: [...updatedHistory, { role: 'npc', content: responseText }].map(m => ({ role: m.role, content: m.content })),
                             sessionId: session.id,
@@ -1834,8 +1869,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
 
             // Build payload with GM context hints
             const gmContextHints = gmPreResult.context || {};
-            const { data: aiResponse } = await supabase.functions.invoke('game-master', {
-                body: buildGameMasterPayload({
+            const { data: aiResponse } = await invokeGM(supabase, buildGameMasterPayload({
                     content,
                     messages,
                     tempId,
@@ -1851,8 +1885,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                     // GM Engine enrichment
                     ...(gmContextHints.difficultyModifier ? { difficultyModifier: gmContextHints.difficultyModifier } : {}),
                     ...(gmContextHints.storyHint ? { storyHint: gmContextHints.storyHint } : {}),
-                })
-            });
+                }));
 
             if (aiResponse) {
                 // handleSubmit-specific: sync merchant to world_state (without visitors)
@@ -2088,8 +2121,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
         setLoading(true);
 
         try {
-            const { data: aiResponse } = await supabase.functions.invoke('game-master', {
-                body: {
+            const { data: aiResponse } = await invokeGM(supabase, {
                     action: content,
                     history: helperMessages.slice(-10).map(m => ({ role: m.role, content: m.content })),
                     sessionId: session.id,
@@ -2339,8 +2371,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                                 + '. Decris l\'issue du combat et attribue les recompenses (XP, Loot) si victoire.';
 
                             try {
-                                const { data: aiResponse } = await supabase.functions.invoke('game-master', {
-                                    body: {
+                                const { data: aiResponse } = await invokeGM(supabase, {
                                         action: postCombatAction,
                                         history: messages.slice(-5).map(m => ({ role: m.role, content: m.content })),
                                         sessionId: session.id,
@@ -2355,7 +2386,6 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                                         },
                                         lore: { context: WORLD_CONTEXT, bestiary: { ...BESTIARY, ...BESTIARY_EXTENDED }, classes: CLASSES, npcs: NPC_TEMPLATES, quests: QUEST_HOOKS, locations: TAVERNS_AND_LOCATIONS, rumors: RUMORS_AND_GOSSIP, encounters: RANDOM_ENCOUNTERS, factions: FACTION_LORE },
                                         playerGroup: players.map(p => ({ name: p.name, class: p.class }))
-                                    }
                                 });
 
                                 // 4. Process GM response for rewards and world changes
