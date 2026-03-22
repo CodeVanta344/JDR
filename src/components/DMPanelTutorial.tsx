@@ -27,124 +27,124 @@ interface TutorialStep {
 
 const TUTORIAL_STEPS: TutorialStep[] = [
   {
-    title: 'Bienvenue, Ma\u00eetre du Jeu\u00a0!',
-    icon: '\ud83d\udcda',
+    title: 'Bienvenue, Maitre du Jeu !',
+    icon: 'I',
     content: [
-      'Ce livre est votre compagnon pour mener les Chroniques d\u2019Aethelgard. Il contient tout le lore, les sc\u00e8nes, les PNJ, et les outils dont vous avez besoin.',
+      'Ce livre est votre compagnon pour mener les Chroniques d\'Aethelgard. Il contient tout le lore, les scenes, les PNJ, et les outils dont vous avez besoin.',
     ],
   },
   {
-    title: 'La Table des Mati\u00e8res',
-    icon: '\ud83d\udcd1',
+    title: 'La Table des Matieres',
+    icon: 'II',
     highlightArea: 'sidebar',
     content: [
-      '\u00c0 gauche, la sidebar affiche les 5 Actes de la campagne avec tous leurs chapitres et sc\u00e8nes. Cliquez sur une sc\u00e8ne pour y naviguer directement.',
+      'A gauche, la sidebar affiche les 5 Actes de la campagne avec tous leurs chapitres et scenes. Cliquez sur une scene pour y naviguer directement.',
     ],
   },
   {
-    title: 'Navigation entre Sc\u00e8nes',
-    icon: '\u2b05\ufe0f\u27a1\ufe0f',
+    title: 'Navigation entre Scenes',
+    icon: 'III',
     highlightArea: 'navigation',
     content: [
-      'Utilisez les boutons PR\u00c9C\u00c9DENT et SUIVANT pour naviguer s\u00e9quentiellement. La barre de status en haut montre votre position\u00a0: Acte, Chapitre, Sc\u00e8ne.',
+      'Utilisez les boutons PRECEDENT et SUIVANT pour naviguer sequentiellement. La barre de status en haut montre votre position : Acte, Chapitre, Scene.',
     ],
   },
   {
-    title: 'Le Texte \u00e0 Lire \u00e0 Voix Haute',
-    icon: '\ud83d\udcd6',
+    title: 'Le Texte a Lire a Voix Haute',
+    icon: 'IV',
     highlightArea: 'readAloud',
     content: [
-      'Les encadr\u00e9s dor\u00e9s contiennent le texte narratif \u00e0 lire directement aux joueurs. Le badge en haut \u00e0 droite indique l\u2019ambiance (Quotidien, \u00c9pique, Sombre\u2026).',
-      'Conseil\u00a0: Lisez lentement, avec le ton appropri\u00e9. Laissez des pauses dramatiques.',
+      'Les encadres dores contiennent le texte narratif a lire directement aux joueurs. Le badge en haut a droite indique l\'ambiance (Quotidien, Epique, Sombre...).',
+      'Conseil : Lisez lentement, avec le ton approprie. Laissez des pauses dramatiques.',
     ],
   },
   {
     title: 'Les Notes du MJ',
-    icon: '\ud83d\udcdd',
+    icon: 'V',
     highlightArea: 'notes',
     content: [
-      'Les notes color\u00e9es sont pour VOUS uniquement, ne les lisez pas aux joueurs\u00a0:',
-      '\ud83d\udcd8 Info \u2014 Contexte et explications',
-      '\ud83d\udca1 Conseil \u2014 Suggestions de mise en sc\u00e8ne',
-      '\u26a0\ufe0f Attention \u2014 Points importants \u00e0 ne pas oublier',
-      '\ud83d\udd12 Secret \u2014 Informations cach\u00e9es, ne r\u00e9v\u00e9ler que si les joueurs cherchent',
-      '\ud83d\udcdc Lore \u2014 Contexte historique approfondi',
+      'Les notes colorees sont pour VOUS uniquement, ne les lisez pas aux joueurs :',
+      'Info (bleu) -- Contexte et explications',
+      'Conseil (vert) -- Suggestions de mise en scene',
+      'Attention (orange) -- Points importants a ne pas oublier',
+      'Secret (violet) -- Informations cachees, ne reveler que si les joueurs cherchent',
+      'Lore (doré) -- Contexte historique approfondi',
     ],
   },
   {
     title: 'Les PNJ et Dialogues',
-    icon: '\ud83c\udfad',
+    icon: 'VI',
     highlightArea: 'npcs',
     content: [
-      'Chaque sc\u00e8ne liste ses PNJ avec des dialogues pr\u00e9-\u00e9crits (Accueil, Info, Qu\u00eate, Adieu). Adaptez-les \u00e0 votre style, ils sont l\u00e0 comme guide.',
+      'Chaque scene liste ses PNJ avec des dialogues pre-ecrits (Accueil, Info, Quete, Adieu). Adaptez-les a votre style, ils sont la comme guide.',
     ],
   },
   {
-    title: 'Les Jets de Comp\u00e9tence',
-    icon: '\ud83c\udfb2',
+    title: 'Les Jets de Competence',
+    icon: 'VII',
     highlightArea: 'dice',
     content: [
-      'Les jets utilisent un d100. Cliquez \u00ab\u00a0LANCER\u00a0\u00bb pour simuler le jet. Le r\u00e9sultat compare le jet au CD (Classe de Difficult\u00e9). Les textes de Succ\u00e8s et \u00c9chec sont pr\u00e9-\u00e9crits.',
+      'Les jets utilisent un d100. Cliquez LANCER pour simuler le jet. Le resultat compare le jet au CD (Classe de Difficulte). Les textes de Succes et Echec sont pre-ecrits.',
     ],
   },
   {
     title: 'Les Embranchements',
-    icon: '\ud83d\udd00',
+    icon: 'VIII',
     highlightArea: 'choices',
     content: [
-      'Les choix des joueurs m\u00e8nent \u00e0 diff\u00e9rentes sc\u00e8nes. Cliquez \u00ab\u00a0\u2192 Aller \u00e0 la sc\u00e8ne\u00a0\u00bb pour suivre le chemin choisi. Les cons\u00e9quences (r\u00e9putation, items) sont appliqu\u00e9es automatiquement.',
+      'Les choix des joueurs menent a differentes scenes. Cliquez "Aller a la scene" pour suivre le chemin choisi. Les consequences (reputation, items) sont appliquees automatiquement.',
     ],
   },
   {
     title: 'Les Rencontres de Combat',
-    icon: '\u2694\ufe0f',
+    icon: 'IX',
     highlightArea: 'combat',
     content: [
-      'Les sc\u00e8nes de combat listent les ennemis avec leurs stats (PV, CA, Attaque). Si le MJ IA est actif, le combat se d\u00e9clenche automatiquement avec les bons ennemis.',
+      'Les scenes de combat listent les ennemis avec leurs stats (PV, CA, Attaque). Si le MJ IA est actif, le combat se declenche automatiquement avec les bons ennemis.',
     ],
   },
   {
-    title: "L'Onglet Carte",
-    icon: '\ud83d\uddfa\ufe0f',
+    title: 'L\'Onglet Carte',
+    icon: 'X',
     highlightArea: 'map',
     content: [
-      "L'onglet CARTE affiche Aethelgard avec tous les lieux. La position actuelle est indiqu\u00e9e par la sc\u00e8ne en cours. Cliquez sur un lieu pour voir ses d\u00e9tails.",
+      'L\'onglet CARTE affiche Aethelgard avec tous les lieux. La position actuelle est indiquee par la scene en cours. Cliquez sur un lieu pour voir ses details.',
     ],
   },
   {
-    title: "L'Onglet Outils",
-    icon: '\ud83e\uddf0',
+    title: 'L\'Onglet Outils',
+    icon: 'XI',
     highlightArea: 'tools',
     content: [
-      "OUTILS contient\u00a0: lanceur de d\u00e9s, g\u00e9n\u00e9rateur de noms, m\u00e9t\u00e9o, horloge du monde, tracker d'initiative, et le syst\u00e8me de r\u00e9putation des factions.",
+      'OUTILS contient : lanceur de des, generateur de noms, meteo, horloge du monde, tracker d\'initiative, et le systeme de reputation des factions.',
     ],
   },
   {
-    title: "L'Onglet Notes",
-    icon: '\ud83d\udcdd',
+    title: 'L\'Onglet Notes',
+    icon: 'XII',
     highlightArea: 'notesTab',
     content: [
-      'NOTES est votre carnet personnel. Prenez des notes pendant la session, elles sont sauvegard\u00e9es automatiquement. Notez les d\u00e9cisions des joueurs, les PNJ improvis\u00e9s, les \u00e9v\u00e9nements impr\u00e9vus.',
+      'NOTES est votre carnet personnel. Prenez des notes pendant la session, elles sont sauvegardees automatiquement. Notez les decisions des joueurs, les PNJ improvises, les evenements imprevus.',
     ],
   },
   {
-    title: 'Les M\u00e9ga-Donjons',
-    icon: '\ud83c\udff0',
+    title: 'Les Mega-Donjons',
+    icon: 'XIII',
     highlightArea: 'dungeons',
     content: [
-      'Chaque acte contient un donjon optionnel (ex\u00a0: Catacombes de Sol-Aureus, Mines de Karak-Zhul). Ces chapitres sp\u00e9ciaux ont 10-12 salles interconnect\u00e9es avec boss, puzzles et tr\u00e9sors.',
+      'Chaque acte contient un donjon optionnel (ex : Catacombes de Sol-Aureus, Mines de Karak-Zhul). Ces chapitres speciaux ont 10-12 salles interconnectees avec boss, puzzles et tresors.',
     ],
   },
   {
-    title: 'Conseils de Ma\u00eetre du Jeu',
-    icon: '\u2728',
+    title: 'Conseils de Maitre du Jeu',
+    icon: 'XIV',
     content: [
-      '\u2022 Ne pr\u00e9parez pas tout \u2014 improvisez\u00a0!',
-      '\u2022 \u00c9coutez vos joueurs, adaptez l\u2019histoire',
-      '\u2022 Les r\u00e8gles sont un guide, pas un carcan',
-      '\u2022 Le fun prime sur tout',
-      '\u2022 Utilisez les sc\u00e8nes bonus pour du contenu optionnel',
-      'Bonne aventure, Ma\u00eetre\u00a0! Que les Sceaux tiennent bon.',
+      '- Ne preparez pas tout -- improvisez !',
+      '- Ecoutez vos joueurs, adaptez l\'histoire',
+      '- Les regles sont un guide, pas un carcan',
+      '- Le fun prime sur tout',
+      '- Utilisez les scenes bonus pour du contenu optionnel',
+      'Bonne aventure, Maitre ! Que les Sceaux tiennent bon.',
     ],
   },
 ];
@@ -156,10 +156,10 @@ const TUTORIAL_STEPS: TutorialStep[] = [
 const HIGHLIGHT_LABELS: Record<string, string> = {
   sidebar: 'Sidebar gauche',
   navigation: 'Barre de navigation',
-  readAloud: 'Encadr\u00e9 de lecture',
-  notes: 'Notes color\u00e9es du MJ',
+  readAloud: 'Encadre de lecture',
+  notes: 'Notes colorees du MJ',
   npcs: 'Section PNJ',
-  dice: 'Jets de comp\u00e9tence',
+  dice: 'Jets de competence',
   choices: 'Embranchements narratifs',
   combat: 'Rencontres de combat',
   map: 'Onglet Carte',
@@ -410,7 +410,7 @@ export function DMPanelTutorial({ isOpen, onClose }: DMPanelTutorialProps) {
   // Determine if last content line is a "tip" (starts with "Conseil")
   const isTipLine = (line: string) => line.startsWith('Conseil');
   // Determine if a line is a note-style item (starts with emoji + keyword)
-  const isNoteItem = (line: string) => /^[\u{1F4D8}\u{1F4A1}\u{26A0}\u{FE0F}\u{1F512}\u{1F4DC}\u2022]/u.test(line);
+  const isNoteItem = (line: string) => /^(Info |Conseil |Attention |Secret |Lore |- )/.test(line);
 
   return (
     <>
@@ -512,7 +512,7 @@ export function DMPanelTutorial({ isOpen, onClose }: DMPanelTutorialProps) {
                     (e.target as HTMLElement).style.color = '#8b7355';
                   }}
                 >
-                  \u2190 Pr\u00e9c\u00e9dent
+                  {'<'} Precedent
                 </button>
               )}
               <button
@@ -525,7 +525,7 @@ export function DMPanelTutorial({ isOpen, onClose }: DMPanelTutorialProps) {
                   (e.target as HTMLElement).style.background = 'rgba(212, 175, 55, 0.15)';
                 }}
               >
-                {currentStep < totalSteps - 1 ? 'Suivant \u2192' : 'Commencer \u2728'}
+                {currentStep < totalSteps - 1 ? 'Suivant >' : 'Commencer !'}
               </button>
             </div>
           </div>
