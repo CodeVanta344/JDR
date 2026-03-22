@@ -2334,3 +2334,834 @@
         transition: none;
     }
 }
+
+/* ════════════════════════════════════════════════════════════════
+   5-STEP CREATION FLOW - NEW LAYOUT
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Progress Bar (5 dots) ──────────────────────────────────── */
+.progress-bar-5 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    padding: 1.5rem 2rem;
+    background: rgba(5, 5, 5, 0.9);
+    border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+    width: 100%;
+    position: relative;
+    z-index: 20;
+}
+
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: default;
+    opacity: 0.3;
+    transition: all 0.4s ease;
+}
+
+.progress-step.active {
+    opacity: 1;
+}
+
+.progress-step.completed {
+    opacity: 0.7;
+    cursor: pointer;
+}
+
+.progress-step.completed:hover {
+    opacity: 1;
+}
+
+.progress-dot {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid var(--gold-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    color: var(--gold-dim);
+    background: rgba(0, 0, 0, 0.6);
+    transition: all 0.4s ease;
+}
+
+.progress-step.active .progress-dot {
+    background: var(--gold-primary);
+    color: #000;
+    border-color: var(--gold-primary);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+    font-weight: 700;
+}
+
+.progress-step.completed .progress-dot {
+    background: var(--gold-dim);
+    color: #000;
+    border-color: var(--gold-dim);
+}
+
+.progress-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+}
+
+.progress-step.active .progress-label {
+    color: var(--gold-bright);
+}
+
+/* ── Creation Body (sidebar + main) ─────────────────────────── */
+.creation-body {
+    display: flex;
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+}
+
+/* Override creation-layout for new vertical flow */
+.creation-layout {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100vh;
+    max-width: none;
+}
+
+/* ── Step Slide Animation ───────────────────────────────────── */
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(60px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-60px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.step-slide-right {
+    animation: slideInRight 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+.step-slide-left {
+    animation: slideInLeft 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+/* ── Step Headlines ─────────────────────────────────────────── */
+.step-headline {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 2.4rem;
+    color: var(--gold-bright);
+    text-align: center;
+    margin-bottom: 2.5rem;
+    letter-spacing: 4px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+.subsection-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1.3rem;
+    color: var(--gold-primary);
+    letter-spacing: 2px;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+.subsection-hint {
+    font-family: 'IM Fell English', serif;
+    font-size: 1rem;
+    color: #777;
+    font-style: italic;
+    margin-bottom: 1.5rem;
+}
+
+/* ── Sidebar additions ──────────────────────────────────────── */
+.sidebar-hero-name {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.4rem;
+    color: var(--gold-bright);
+    text-align: center;
+    letter-spacing: 3px;
+}
+
+.sidebar-class-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.sidebar-class-name {
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    color: #eee;
+    letter-spacing: 1px;
+}
+
+.sidebar-subclass-name {
+    font-family: 'IM Fell English', serif;
+    font-size: 0.95rem;
+    color: var(--gold-dim);
+    font-style: italic;
+}
+
+/* ═══ STEP 1: Identity ══════════════════════════════════════ */
+.step-identity {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+}
+
+.identity-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    padding: 2rem;
+    gap: 2rem;
+    max-width: 800px;
+    width: 100%;
+}
+
+.portrait-selection {
+    width: 100%;
+    margin-top: 2rem;
+}
+
+.portrait-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    color: var(--gold-dim);
+    text-align: center;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+}
+
+.portrait-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 1rem;
+    justify-items: center;
+}
+
+.portrait-option {
+    cursor: pointer;
+    border: 2px solid rgba(212, 175, 55, 0.15);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.portrait-option:hover {
+    border-color: var(--gold-dim);
+    transform: translateY(-3px);
+}
+
+.portrait-option.selected {
+    border-color: var(--gold-primary);
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+}
+
+.portrait-thumb {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+}
+
+.portrait-class-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    color: #888;
+    padding: 0.3rem;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+/* ═══ STEP 2: Class & Subclass merged ════════════════════════ */
+.step-class-subclass {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.class-subclass-layout {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 2rem;
+    flex: 1;
+    min-height: 0;
+}
+
+.class-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    overflow-y: auto;
+}
+
+.category-tabs {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.category-tab {
+    flex: 1;
+    padding: 0.6rem 0.5rem;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    transition: all 0.3s ease;
+    color: #888;
+    font-family: 'Cinzel', serif;
+}
+
+.category-tab:hover {
+    border-color: var(--cat-color, var(--gold-dim));
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.category-tab.active {
+    border-color: var(--cat-color, var(--gold-primary));
+    background: rgba(212, 175, 55, 0.08);
+    color: #eee;
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.15);
+}
+
+.cat-icon {
+    font-size: 1.2rem;
+}
+
+.cat-name {
+    font-size: 0.6rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.class-detail-panel {
+    overflow-y: auto;
+    padding-right: 1rem;
+}
+
+.class-detail-header {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    align-items: flex-start;
+}
+
+.class-detail-portrait {
+    width: 180px;
+    height: 220px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    flex-shrink: 0;
+}
+
+.class-detail-meta {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.class-detail-name {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 2rem;
+    color: var(--gold-primary);
+    margin: 0;
+    letter-spacing: 3px;
+}
+
+.class-detail-desc {
+    font-family: 'IM Fell English', serif;
+    font-size: 1.1rem;
+    color: #aaa;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.subclass-heading {
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    color: var(--gold-dim);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+}
+
+/* ═══ STEP 4: Stats & Abilities ══════════════════════════════ */
+.step-stats-abilities {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.stats-section {
+    margin-bottom: 3rem;
+}
+
+.stat-rune-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-bonus {
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.stat-bonus.positive { color: #4dff88; }
+.stat-bonus.negative { color: #ff4d4d; }
+
+.stat-total {
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    color: var(--gold-bright);
+    font-weight: 700;
+}
+
+.stat-rune.rolled {
+    border-color: rgba(212, 175, 55, 0.3);
+}
+
+.btn-roll-all {
+    display: block;
+    margin: 0 auto;
+    padding: 0.8rem 3rem;
+    background: linear-gradient(135deg, #d4af37 0%, #fbeea8 50%, #d4af37 100%);
+    color: #000;
+    font-family: 'Cinzel', serif;
+    font-weight: 800;
+    font-size: 1rem;
+    letter-spacing: 3px;
+    border: 2px solid var(--gold-dim);
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+    transition: all 0.3s ease;
+}
+
+.btn-roll-all:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 0 25px rgba(212, 175, 55, 0.5);
+}
+
+.btn-roll-all:disabled {
+    opacity: 0.5;
+    background: #444;
+    color: #888;
+    cursor: wait;
+    border-color: #555;
+}
+
+/* ── Abilities ──────────────────────────────────────────────── */
+.abilities-section {
+    animation: slideInRight 0.5s ease forwards;
+}
+
+.passive-ability-card {
+    background: rgba(212, 175, 55, 0.05);
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    border-radius: 8px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.passive-badge {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    color: var(--gold-primary);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+.passive-name {
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    color: var(--gold-bright);
+    margin-bottom: 0.5rem;
+}
+
+.passive-desc {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.9rem;
+    color: #ccc;
+    line-height: 1.5;
+}
+
+.ability-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.ability-card {
+    background: rgba(10, 10, 12, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.ability-card:hover {
+    border-color: var(--gold-dim);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.ability-card.selected {
+    border-color: var(--gold-primary);
+    background: rgba(212, 175, 55, 0.06);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.15);
+}
+
+.ability-card.disabled {
+    opacity: 0.35;
+    pointer-events: none;
+}
+
+.ability-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.ability-name {
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    color: var(--gold-primary);
+    margin: 0;
+}
+
+.ability-meta {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.ability-tag {
+    font-size: 0.6rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 600;
+    font-family: 'Outfit', sans-serif;
+}
+
+.ability-tag.action {
+    background: rgba(75, 207, 250, 0.15);
+    color: var(--aether-blue);
+    border: 1px solid rgba(75, 207, 250, 0.3);
+}
+
+.ability-tag.cost {
+    background: rgba(255, 77, 77, 0.15);
+    color: #ff6b6b;
+    border: 1px solid rgba(255, 77, 77, 0.3);
+}
+
+.ability-tag.cd {
+    background: rgba(255, 255, 255, 0.05);
+    color: #888;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ability-flavor {
+    font-family: 'IM Fell English', serif;
+    font-size: 0.9rem;
+    color: #999;
+    font-style: italic;
+    line-height: 1.4;
+    margin: 0;
+}
+
+.ability-desc {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85rem;
+    color: #ccc;
+    line-height: 1.4;
+    margin: 0;
+}
+
+.ability-dice {
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    color: var(--gold-primary);
+    background: rgba(212, 175, 55, 0.08);
+    padding: 0.3rem 0.8rem;
+    border-radius: 4px;
+    text-align: center;
+    width: fit-content;
+    border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+/* ═══ STEP 5: Equipment & Final Review ═══════════════════════ */
+.step-equipment-review {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.equipment-section {
+    margin-bottom: 3rem;
+}
+
+.equipment-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.equipment-loadout {
+    background: rgba(10, 10, 12, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.equipment-loadout:hover {
+    border-color: var(--gold-dim);
+    transform: translateY(-3px);
+}
+
+.equipment-loadout.selected {
+    border-color: var(--gold-primary);
+    background: rgba(212, 175, 55, 0.06);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.15);
+}
+
+.loadout-label {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.3rem;
+    color: var(--gold-primary);
+    margin-bottom: 1rem;
+    letter-spacing: 2px;
+}
+
+.loadout-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.loadout-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0.8rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-left: 2px solid rgba(212, 175, 55, 0.2);
+    border-radius: 0 4px 4px 0;
+}
+
+.item-name {
+    color: #ddd;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+}
+
+.item-stats {
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    color: var(--gold-dim);
+}
+
+.heritage-items {
+    background: rgba(212, 175, 55, 0.03);
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    border-radius: 8px;
+    padding: 1.2rem;
+}
+
+.heritage-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    color: var(--gold-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+}
+
+.heritage-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem 0;
+    color: #ccc;
+    font-size: 0.9rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.heritage-reason {
+    font-family: 'IM Fell English', serif;
+    font-size: 0.8rem;
+    color: #777;
+    font-style: italic;
+}
+
+/* ── Dossier additions ──────────────────────────────────────── */
+.dossier-hp {
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    color: #ff6b6b;
+    letter-spacing: 2px;
+    margin-top: 0.5rem;
+}
+
+.dossier-abilities {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.dossier-ability {
+    padding: 0.5rem 0.8rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-left: 2px solid var(--gold-dim);
+    color: #ddd;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+}
+
+.dossier-ability.passive {
+    border-left-color: var(--gold-primary);
+    color: var(--gold-bright);
+    font-style: italic;
+}
+
+.dossier-equipment-section {
+    margin-top: 2rem;
+    text-align: left;
+}
+
+.dossier-equipment li.heritage {
+    border-left-color: var(--gold-primary);
+    color: var(--gold-bright);
+    font-style: italic;
+}
+
+/* ── FORGER MON DESTIN button ───────────────────────────────── */
+.btn-create-final {
+    padding: 1rem 3rem;
+    background: linear-gradient(135deg, #d4af37 0%, #ffd700 50%, #d4af37 100%);
+    color: #000;
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.2rem;
+    font-weight: 900;
+    letter-spacing: 4px;
+    border: 2px solid var(--gold-primary);
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.4);
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+}
+
+.btn-create-final:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 0 50px rgba(212, 175, 55, 0.6);
+    filter: brightness(1.1);
+}
+
+.btn-create-final:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: #444;
+    color: #888;
+    border-color: #555;
+    box-shadow: none;
+}
+
+/* ── Responsive overrides for new 5-step flow ───────────────── */
+@media (max-width: 1280px) {
+    .creation-body {
+        flex-direction: column;
+    }
+
+    .class-subclass-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .class-detail-header {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .progress-bar-5 {
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .progress-label {
+        font-size: 0.55rem;
+        letter-spacing: 1px;
+    }
+
+    .progress-dot {
+        width: 28px;
+        height: 28px;
+        font-size: 0.7rem;
+    }
+
+    .step-headline {
+        font-size: 1.6rem;
+        letter-spacing: 2px;
+    }
+
+    .stat-rune-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .ability-cards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .equipment-options {
+        grid-template-columns: 1fr;
+    }
+
+    .class-detail-portrait {
+        width: 120px;
+        height: 150px;
+    }
+}

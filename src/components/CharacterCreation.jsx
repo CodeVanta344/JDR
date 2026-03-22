@@ -1,38 +1,11 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { CLASSES, CLASS_CATEGORIES, ENRICHED_BACKSTORIES, getBackstoriesForClass, formatBackstoryForGM, LOCATION_BACKGROUNDS, BIRTH_ORIGINS, CHILDHOOD_EVENTS, ADOLESCENCE_PATHS } from '../lore';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { CLASSES, CLASS_CATEGORIES } from '../lore';
 import { ITEMS_BY_ID } from '../lore/items-catalog';
 import { MagicBackground } from './MagicBackground';
 import { LifePathWizard } from './character-creation/LifePathWizard';
 import './CharacterCreation.css';
 
-// Utility: Roll 4d6 drop lowest
-const rollAttribute = () => {
-    const rolls = Array.from({ length: 4 }, () => Math.floor(Math.random() * 6) + 1);
-    rolls.sort((a, b) => a - b);
-    return rolls.slice(1).reduce((a, b) => a + b, 0);
-};
-
-// Utility: Convert lifepath itemIds to full item objects
-const resolveLifepathItems = (lifepathItems) => {
-    if (!lifepathItems || lifepathItems.length === 0) return [];
-
-    return lifepathItems.map(({ itemId, quantity, reason }) => {
-        const itemDef = ITEMS_BY_ID[itemId];
-        if (!itemDef) {
-            console.warn(`[CharacterCreation] Item "${itemId}" not found in catalog`);
-            return null;
-        }
-
-        // Return full item object with quantity
-        return {
-            ...itemDef,
-            quantity: quantity || 1,
-            equipped: false,
-            lifepathReason: reason // Keep reason for lore
-        };
-    }).filter(Boolean); // Remove nulls
-};
-
+// ── Constants ──────────────────────────────────────────────────────────
 const STAT_LABELS = {
     str: 'Force', dex: 'Dextérité', con: 'Constitution',
     int: 'Intelligence', wis: 'Sagesse', cha: 'Charisme'
@@ -43,65 +16,82 @@ const STAT_ICONS = {
     int: '📜', wis: '👁️', cha: '👑'
 };
 
-const CATEGORY_META = {
-    MIGHT: {
-        icon: '⚔️',
-        name: 'Sang et Acier',
-        desc: 'Héros de la force brute et de la résilience. Ils dominent le champ de bataille par la puissance physique.',
-        img: 'https://images.unsplash.com/photo-1599140842249-1c1e894fd4c1?q=80&w=1000&auto=format&fit=crop'
-    },
-    MAGIC: {
-        icon: '🔥',
-        name: 'Arcanes et Mystères',
-        desc: 'Maîtres des énergies cosmiques et divines. Ils plient la réalité à leur volonté.',
-        img: 'https://images.unsplash.com/photo-1519074063912-ad2a602159d7?q=80&w=1000&auto=format&fit=crop'
-    },
-    SKILL: {
-        icon: '🗡️',
-        name: 'Ombre et Ruse',
-        desc: 'Spécialistes de l\'agilité et de la précision. Ils frappent là où ça fait mal, souvent sans être vus.',
-        img: 'https://images.unsplash.com/photo-1514539079130-25950c84af65?q=80&w=1000&auto=format&fit=crop'
-    }
+const STEP_LABELS = ['Identité', 'Classe', 'Parcours', 'Stats', 'Équipement'];
+
+const CATEGORY_KEYS = ['MIGHT', 'MAGIC', 'SKILL'];
+
+const EMPTY_STATS = { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 };
+
+// ── Utilities ──────────────────────────────────────────────────────────
+const rollAttribute = () => {
+    const rolls = Array.from({ length: 4 }, () => Math.floor(Math.random() * 6) + 1);
+    rolls.sort((a, b) => a - b);
+    return rolls.slice(1).reduce((a, b) => a + b, 0);
 };
 
-export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImage, sessionId }) {
+const getModifier = (val) => {
+    const num = parseInt(val);
+    if (isNaN(num) || num <= 0) return '--';
+    const mod = Math.floor((num - 10) / 2);
+    return mod >= 0 ? `+${mod}` : `${mod}`;
+};
+
+const resolveLifepathItems = (lifepathItems) => {
+    if (!lifepathItems || lifepathItems.length === 0) return [];
+    return lifepathItems.map(({ itemId, quantity, reason }) => {
+        const itemDef = ITEMS_BY_ID[itemId];
+        if (!itemDef) { console.warn(`[CharacterCreation] Item "${itemId}" not found`); return null; }
+        return { ...itemDef, quantity: quantity || 1, equipped: false, lifepathReason: reason };
+    }).filter(Boolean);
+};
+
+// ── Main Component ─────────────────────────────────────────────────────
+export function CharacterCreation({ onCreate, onBack, onQuickStart, sessionId }) {
+    // Navigation
     const [step, setStep] = useState(1);
-    const [selectedCategory, setSelectedCategory] = useState('MIGHT');
+    const [slideDir, setSlideDir] = useState('right');
+
+    // Step 1: Identity
     const [name, setName] = useState('');
-    const [selectedClass, setSelectedClass] = useState('Guerrier');
-    const [selectedSubclass, setSelectedSubclass] = useState(null);
-    const [selectedBackstory, setSelectedBackstory] = useState(null);
-    const [lifepathData, setLifepathData] = useState(null);
-
-    // Old states kept for compatibility but will be replaced by lifepathData
-    const [selectedBirthOrigin, setSelectedBirthOrigin] = useState(null);
-    const [selectedChildhoodEvent, setSelectedChildhoodEvent] = useState(null);
-    const [selectedAdolescencePath, setSelectedAdolescencePath] = useState(null);
-
-    const [selectedEquipmentIndex, setSelectedEquipmentIndex] = useState(null);
-    const [selectedAbilityNames, setSelectedAbilityNames] = useState([]);
-    const [attributes, setAttributes] = useState({ str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 });
-    const [lifepathStats, setLifepathStats] = useState({ str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 }); // New state for real-time bonuses
-    const [lifepathProgress, setLifepathProgress] = useState(null); // New state for real-time narrative
-    const [rollingStat, setRollingStat] = useState(null);
     const [portraitUrl, setPortraitUrl] = useState(null);
     const [classPortraits, setClassPortraits] = useState({});
-    const audioRef = useRef(null);
 
-    // Callback for real-time lifepath stats
-    const handleLifepathUpdate = useCallback((effects) => {
-        setLifepathProgress(effects);
-        const stats = effects.final_stats;
-        setLifepathStats({
-            str: stats.strength || 0,
-            dex: stats.dexterity || 0,
-            con: stats.constitution || 0,
-            int: stats.intelligence || 0,
-            wis: stats.wisdom || 0,
-            cha: stats.charisma || 0
-        });
-    }, []);
+    // Step 2: Class & Subclass
+    const [selectedCategory, setSelectedCategory] = useState('MIGHT');
+    const [selectedClass, setSelectedClass] = useState('Guerrier');
+    const [selectedSubclass, setSelectedSubclass] = useState(null);
 
+    // Step 3: Lifepath
+    const [lifepathData, setLifepathData] = useState(null);
+    const [lifepathStats, setLifepathStats] = useState({ ...EMPTY_STATS });
+    const [lifepathProgress, setLifepathProgress] = useState(null);
+
+    // Step 4: Stats & Abilities
+    const [attributes, setAttributes] = useState({ ...EMPTY_STATS });
+    const [rollingStat, setRollingStat] = useState(null);
+    const [selectedAbilityNames, setSelectedAbilityNames] = useState([]);
+
+    // Step 5: Equipment
+    const [selectedEquipmentIndex, setSelectedEquipmentIndex] = useState(null);
+
+    const classData = CLASSES[selectedClass];
+
+    // ── Derived state ──────────────────────────────────────────────────
+    const allRolled = Object.values(attributes).every(v => v > 0);
+    const isRolling = rollingStat !== null;
+
+    const finalStats = useMemo(() => {
+        const result = {};
+        for (const key of Object.keys(EMPTY_STATS)) {
+            result[key] = Math.min((attributes[key] || 0) + (lifepathStats[key] || 0), 18);
+        }
+        return result;
+    }, [attributes, lifepathStats]);
+
+    const conMod = useMemo(() => Math.floor(((finalStats.con || 10) - 10) / 2), [finalStats.con]);
+    const computedHp = useMemo(() => (classData?.hitDie || 8) + 6 + conMod, [classData, conMod]);
+
+    // ── Init portraits from class data ─────────────────────────────────
     useEffect(() => {
         const defaults = {};
         Object.entries(CLASSES).forEach(([key, data]) => {
@@ -110,59 +100,83 @@ export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImag
         setClassPortraits(defaults);
     }, []);
 
+    // ── Reset dependent state on class change ──────────────────────────
     useEffect(() => {
         if (CLASSES[selectedClass]) {
             setSelectedSubclass(null);
-            setSelectedBackstory(null);
             setLifepathData(null);
             setSelectedEquipmentIndex(null);
             setSelectedAbilityNames([]);
         }
     }, [selectedClass]);
 
-    const rollStatPromise = (statKey) => {
-        return new Promise((resolve) => {
-            setRollingStat(statKey);
-            let duration = 0;
-            const interval = setInterval(() => {
-                setAttributes(prev => ({ ...prev, [statKey]: Math.floor(Math.random() * 13) + 6 }));
-                duration += 50;
-                if (duration > 600) {
-                    clearInterval(interval);
-                    const finalValue = rollAttribute();
-                    setAttributes(prev => ({ ...prev, [statKey]: finalValue }));
-                    setRollingStat(null);
-                    resolve();
-                }
-            }, 50);
-        });
-    };
+    // ── Navigation helpers ─────────────────────────────────────────────
+    const goToStep = useCallback((target) => {
+        setSlideDir(target > step ? 'right' : 'left');
+        setStep(target);
+    }, [step]);
 
-    const rollStat = async (statKey) => {
-        if (rollingStat) return;
-        await rollStatPromise(statKey);
-    };
+    // ── Stat rolling ───────────────────────────────────────────────────
+    const rollStatPromise = (statKey) => new Promise((resolve) => {
+        setRollingStat(statKey);
+        let duration = 0;
+        const interval = setInterval(() => {
+            setAttributes(prev => ({ ...prev, [statKey]: Math.floor(Math.random() * 13) + 6 }));
+            duration += 50;
+            if (duration > 600) {
+                clearInterval(interval);
+                const finalValue = rollAttribute();
+                setAttributes(prev => ({ ...prev, [statKey]: finalValue }));
+                setRollingStat(null);
+                resolve();
+            }
+        }, 50);
+    });
 
     const rollAll = async () => {
-        if (rollingStat) return;
-        const stats = Object.keys(attributes);
-        for (let stat of stats) {
+        if (isRolling) return;
+        for (const stat of Object.keys(attributes)) {
             await rollStatPromise(stat);
         }
     };
 
-    const allRolled = Object.values(attributes).every(v => v > 0);
-    const isRolling = rollingStat !== null;
+    // ── Lifepath callbacks ─────────────────────────────────────────────
+    const handleLifepathUpdate = useCallback((effects) => {
+        setLifepathProgress(effects);
+        const stats = effects.final_stats;
+        setLifepathStats({
+            str: stats.strength || 0, dex: stats.dexterity || 0, con: stats.constitution || 0,
+            int: stats.intelligence || 0, wis: stats.wisdom || 0, cha: stats.charisma || 0
+        });
+    }, []);
 
-    const handleCreate = async () => {
+    const handleLifepathComplete = useCallback((effects) => {
+        setLifepathData(effects);
+        const stats = effects.final_stats;
+        setLifepathStats({
+            str: stats.strength || 0, dex: stats.dexterity || 0, con: stats.constitution || 0,
+            int: stats.intelligence || 0, wis: stats.wisdom || 0, cha: stats.charisma || 0
+        });
+        goToStep(4);
+    }, [goToStep]);
+
+    // ── Ability toggle ─────────────────────────────────────────────────
+    const toggleAbility = (abilityName) => {
+        setSelectedAbilityNames(prev => {
+            if (prev.includes(abilityName)) return prev.filter(n => n !== abilityName);
+            if (prev.length >= 2) return prev;
+            return [...prev, abilityName];
+        });
+    };
+
+    // ── Final creation ─────────────────────────────────────────────────
+    const handleCreate = () => {
         if (!name.trim()) return;
         const clsData = CLASSES[selectedClass];
         const selectedSubclassData = clsData.subclasses[selectedSubclass];
         const selectedEquipment = clsData.starting_equipment_options[selectedEquipmentIndex].items;
         const chosenAbilities = clsData.initial_ability_options.filter(a => selectedAbilityNames.includes(a.name));
-        const finalStats = { ...attributes };
 
-        // Use NEW lifepath data if available, fallback to old system
         let allTraits = [];
         let fullNarrative = '';
         let startingReputation = {};
@@ -172,7 +186,6 @@ export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImag
         let lifePathRecord = {};
 
         if (lifepathData) {
-            // NEW SYSTEM: Use comprehensive lifepath data
             allTraits = lifepathData.all_traits || [];
             fullNarrative = lifepathData.narrative_summary || '';
             startingReputation = lifepathData.reputation_map || {};
@@ -185,61 +198,6 @@ export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImag
                 adolescence: lifepathData.adolescence?.label || '',
                 adult: lifepathData.adult?.label || ''
             };
-        } else {
-            // OLD SYSTEM: Fallback to legacy states
-            const lifePathStages = [selectedBirthOrigin, selectedChildhoodEvent, selectedAdolescencePath, selectedBackstory];
-            lifePathStages.forEach(stage => {
-                if (stage && stage.stats) {
-                    Object.entries(stage.stats).forEach(([stat, mod]) => {
-                        finalStats[stat] = (finalStats[stat] || 0) + mod;
-                    });
-                }
-            });
-
-            allTraits = [
-                ...(selectedBirthOrigin?.mechanical_traits || []),
-                ...(selectedChildhoodEvent?.mechanical_traits || []),
-                ...(selectedAdolescencePath?.mechanical_traits || []),
-                ...(selectedBackstory?.mechanical_traits || [])
-            ];
-
-            const formatStageImpacts = (stage, title) => {
-                if (!stage) return '';
-                let s = `### ${title}: ${stage.label}\n> ${stage.lore}\n`;
-                if (stage.social_impacts) s += `**Réactions Sociales**: ${stage.social_impacts.pnj_reactions}\n`;
-                if (stage.personal_secrets) s += `**Secret Personnel**: ${stage.personal_secrets}\n`;
-                if (stage.gm_hooks) s += `**Accroche MJ**: ${stage.gm_hooks}\n`;
-                if (stage.roleplay_hooks) s += `**Accroches RP**: ${stage.roleplay_hooks.join(' ; ')}\n`;
-                return s + '\n';
-            };
-
-            fullNarrative = `
-# CHRONIQUES DE ${name.toUpperCase()}
-
-${formatStageImpacts(selectedBirthOrigin, "1. ORIGINE")}
-${formatStageImpacts(selectedChildhoodEvent, "2. ENFANCE")}
-${formatStageImpacts(selectedAdolescencePath, "3. ADOLESCENCE")}
-
-${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
-> ${selectedBackstory.desc}
-**Relations Mondiales**: ${Object.entries(selectedBackstory.starting_reputation).map(([k, v]) => `${k} (${v > 0 ? '+' : ''}${v})`).join(', ')}
-**Secrets**: ${selectedBackstory.personal_secrets?.join(' ; ')}
-**Accroches RP**: ${selectedBackstory.roleplay_hooks?.join(' ; ')}
-**Notes de l'MJ**: ${selectedBackstory.gm_notes?.join(' ; ')}` : ''}
-            `.trim();
-
-            startingReputation = {
-                ...(selectedBackstory?.starting_reputation || {}),
-                ...(selectedChildhoodEvent?.reputation_impact || {})
-            };
-            knownNpcs = selectedBackstory?.known_npcs || [];
-            factionTies = selectedBackstory?.faction_ties || [];
-            discoveredSecrets = selectedBackstory?.personal_secrets || [];
-            lifePathRecord = {
-                birth: selectedBirthOrigin?.label,
-                childhood: selectedChildhoodEvent?.label,
-                adolescence: selectedAdolescencePath?.label
-            };
         }
 
         const charData = {
@@ -247,17 +205,17 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
             class: `${selectedClass} (${selectedSubclassData?.label || '...'})`,
             mechanic: clsData.mechanic,
             desc: clsData.desc,
-            stats: finalStats,
-            gold: Math.floor(100 * (lifepathData?.social_class_modifier || selectedBackstory?.social_class?.starting_gold_modifier || 1.0)),
+            stats: { ...finalStats },
+            gold: Math.floor(100 * (lifepathData?.social_class_modifier || 1.0)),
             abilities: chosenAbilities,
             equipment: selectedEquipment,
-            hp: (clsData.hitDie || 8) + 10 + (Math.floor((finalStats.con - 10) / 2) * 2),
-            maxHp: (clsData.hitDie || 8) + 10 + (Math.floor((finalStats.con - 10) / 2) * 2),
+            hp: computedHp,
+            maxHp: computedHp,
             resource: 100,
             max_resource: 100,
             inventory: [...selectedEquipment, ...resolveLifepathItems(lifepathData?.items)],
             portrait_url: portraitUrl || classPortraits[selectedClass],
-            backstory: lifepathData?.adult?.label || selectedBackstory?.label,
+            backstory: lifepathData?.adult?.label,
             life_path: lifePathRecord,
             mechanical_traits: allTraits,
             skill_bonuses: lifepathData?.skills || [],
@@ -274,211 +232,95 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
         onCreate(charData);
     };
 
-    const toggleAbility = (name) => {
-        setSelectedAbilityNames(prev => {
-            if (prev.includes(name)) return prev.filter(n => n !== name);
-            if (prev.length >= 2) return prev;
-            return [...prev, name];
-        });
-    };
+    // ── Classes filtered by category ───────────────────────────────────
+    const classesByCategory = useMemo(() => {
+        const result = {};
+        for (const cat of CATEGORY_KEYS) {
+            result[cat] = Object.entries(CLASSES).filter(([, cls]) => cls.category === cat);
+        }
+        return result;
+    }, []);
 
-    const getModifier = (val) => {
-        const num = parseInt(val);
-        if (isNaN(num) || num <= 0) return "--";
-        const mod = Math.floor((num - 10) / 2);
-        return mod >= 0 ? `+${mod}` : `${mod}`;
-    };
-
-    const classData = CLASSES[selectedClass];
-
+    // ════════════════════════════════════════════════════════════════════
+    // RENDER
+    // ════════════════════════════════════════════════════════════════════
     return (
         <>
             <MagicBackground />
             <div className="creation-container">
                 <div className="creation-layout">
-                    {/* STEP 1: SÉLECTION DE CLASSE (SPLIT VIEW) */}
-                    {step === 1 && (
-                        <div className="spellbook-shell">
-                            <div className="spellbook-nav">
-                                {[1, 2, 3, 4, 5, 6, 7].map(s => (
-                                    <div key={s} className={`nav-dot ${step === s ? 'active' : ''} ${step > s ? 'completed' : ''}`} />
-                                ))}
+                    {/* ── Progress Bar ───────────────────────────────── */}
+                    <div className="progress-bar-5">
+                        {STEP_LABELS.map((label, i) => (
+                            <div key={i} className={`progress-step ${step === i + 1 ? 'active' : ''} ${step > i + 1 ? 'completed' : ''}`}
+                                onClick={() => step > i + 1 ? goToStep(i + 1) : null}>
+                                <div className="progress-dot">{step > i + 1 ? '✓' : i + 1}</div>
+                                <span className="progress-label">{label}</span>
                             </div>
-                            <div className="spellbook-section">
-                                {onQuickStart && (
-                                    <div className="quick-start-banner" onClick={onQuickStart}>
-                                        <span>⚡ BESOIN D'ÉXÉCUTION ? lancez un héros aléatoire</span>
+                        ))}
+                    </div>
+
+                    <div className="creation-body">
+                        {/* ── Persistent Sidebar (steps 2+) ─────────── */}
+                        {step >= 2 && (
+                            <div className="effects-sidebar">
+                                <div className="sidebar-title">FICHE EN COURS</div>
+
+                                {name && (
+                                    <div className="sidebar-section">
+                                        <h4 className="sidebar-label">IDENTITÉ</h4>
+                                        <div className="sidebar-hero-name">{name}</div>
                                     </div>
                                 )}
-                                <div className="section-header">
-                                    <span className="section-icon">⚔️</span>
-                                    <h3>Choisissez votre Voie</h3>
-                                </div>
 
-                                <div className="class-selection-container">
-                                    <div className="class-list">
-                                        {Object.entries(CLASSES).map(([key, cls]) => (
-                                            <div key={key} className={`class-list-card ${selectedClass === key ? 'selected' : ''}`} onClick={() => setSelectedClass(key)}>
-                                                <div className="class-list-icon">{CLASS_CATEGORIES[cls.category]?.icon || '🛡️'}</div>
-                                                <div className="class-list-info">
-                                                    <div className="class-list-title">{cls.label}</div>
-                                                    <div className="class-list-desc">{cls.desc}</div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    <div className="class-preview-panel">
-                                        {selectedClass && CLASSES[selectedClass] ? (
-                                            <>
-                                                <img src={CLASSES[selectedClass].portrait || CATEGORY_META[CLASSES[selectedClass].category]?.img} className="class-preview-image" alt={selectedClass} />
-                                                <div className="class-preview-content">
-                                                    <h2 className="class-preview-title">{CLASSES[selectedClass].label}</h2>
-                                                    <div className="class-preview-quote">"{CLASSES[selectedClass].quote}"</div>
-
-                                                    {/* Recommended Attributes */}
-                                                    {CLASSES[selectedClass].recommended_stats && (
-                                                        <div className="recommended-stats-container">
-                                                            <div className="rec-stat-group">
-                                                                <span className="rec-stat-label">MAJEUR :</span>
-                                                                {CLASSES[selectedClass].recommended_stats.major.map(stat => (
-                                                                    <span key={stat} className="rec-stat-badge major">{STAT_LABELS[stat]}</span>
-                                                                ))}
-                                                            </div>
-                                                            <div className="rec-stat-group">
-                                                                <span className="rec-stat-label">MINEUR :</span>
-                                                                {CLASSES[selectedClass].recommended_stats.minor.map(stat => (
-                                                                    <span key={stat} className="rec-stat-badge minor">{STAT_LABELS[stat]}</span>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    )}
-
-                                                    <div className="class-mechanic-box">
-                                                        <span className="mechanic-title">Mécanique Unique : {CLASSES[selectedClass].mechanic.name}</span>
-                                                        <p className="mechanic-desc">
-                                                            {CLASSES[selectedClass].mechanic.desc.split('**').map((part, i) =>
-                                                                i % 2 === 1 ? <strong key={i}>{part}</strong> : part
-                                                            )}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <div className="preview-actions">
-                                                    <button className="btn-spellbook btn-back" onClick={onBack} style={{ width: 'auto', marginRight: '1rem' }}>← Retour</button>
-                                                    <button className="btn-select-class" onClick={() => setStep(2)}>Choisir la Spécialisation</button>
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <div style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>Sélectionnez une classe</div>
+                                <div className="sidebar-section">
+                                    <h4 className="sidebar-label">CLASSE</h4>
+                                    <div className="sidebar-class-info">
+                                        <span className="sidebar-class-name">{classData?.label}</span>
+                                        {selectedSubclass && classData?.subclasses?.[selectedSubclass] && (
+                                            <span className="sidebar-subclass-name">{classData.subclasses[selectedSubclass].label}</span>
                                         )}
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    )}
 
-                    {/* STEPS 2-7: UNIFIED WIZARD LAYOUT WITH SIDEBAR */}
-                    {step > 1 && (
-                        <div className="wizard-sidebar-layout">
-                            <div className="effects-sidebar">
-                                <div className="sidebar-title">HISTOIRE & STATUTS</div>
-
-                                {/* CHRONIQUES DU PARCOURS */}
-                                {(lifepathProgress || lifepathData || selectedBackstory) && (
+                                {(lifepathProgress || lifepathData) && (
                                     <div className="sidebar-section">
                                         <h4 className="sidebar-label">CHRONIQUES</h4>
                                         <div className="narrative-timeline">
-                                            {/* Data source: lifepathProgress (active), lifepathData (finished), or legacy selected items */}
                                             {(() => {
                                                 const source = lifepathProgress || lifepathData;
-                                                if (source) {
-                                                    return (
-                                                        <>
-                                                            {source.origin && (
-                                                                <div className="narrative-entry">
-                                                                    <div className="narrative-step-label">Origine</div>
-                                                                    <div className="narrative-content">{source.origin.label}</div>
-                                                                </div>
-                                                            )}
-                                                            {source.childhood && (
-                                                                <div className="narrative-entry">
-                                                                    <div className="narrative-step-label">Enfance</div>
-                                                                    <div className="narrative-content">{source.childhood.label}</div>
-                                                                </div>
-                                                            )}
-                                                            {source.adolescence && (
-                                                                <div className="narrative-entry">
-                                                                    <div className="narrative-step-label">Adolescence</div>
-                                                                    <div className="narrative-content">{source.adolescence.label}</div>
-                                                                </div>
-                                                            )}
-                                                            {source.adult && (
-                                                                <div className="narrative-entry">
-                                                                    <div className="narrative-step-label">Âge Adulte</div>
-                                                                    <div className="narrative-content">{source.adult.label}</div>
-                                                                </div>
-                                                            )}
-                                                        </>
-                                                    );
-                                                } else if (selectedBackstory) {
-                                                    // Legacy fallback or just backstory
-                                                    return (
-                                                        <div className="narrative-entry">
-                                                            <div className="narrative-step-label">Passé</div>
-                                                            <div className="narrative-content">{selectedBackstory.label}</div>
-                                                        </div>
-                                                    );
-                                                }
-                                                return <div className="placeholder-text">Votre histoire s'écrit...</div>;
+                                                return (
+                                                    <>
+                                                        {source.origin && <div className="narrative-entry"><div className="narrative-step-label">Origine</div><div className="narrative-content">{source.origin.label}</div></div>}
+                                                        {source.childhood && <div className="narrative-entry"><div className="narrative-step-label">Enfance</div><div className="narrative-content">{source.childhood.label}</div></div>}
+                                                        {source.adolescence && <div className="narrative-entry"><div className="narrative-step-label">Adolescence</div><div className="narrative-content">{source.adolescence.label}</div></div>}
+                                                        {source.adult && <div className="narrative-entry"><div className="narrative-step-label">Adulte</div><div className="narrative-content">{source.adult.label}</div></div>}
+                                                    </>
+                                                );
                                             })()}
                                         </div>
                                     </div>
                                 )}
-                                <div className="sidebar-section">
-                                    <h4 className="sidebar-label">STATISTIQUES</h4>
-                                    <div className="sidebar-stats-dashboard">
-                                        {Object.entries(attributes).map(([key, baseVal]) => {
-                                            const bonusVal = lifepathStats[key] || 0;
-                                            const totalVal = baseVal + bonusVal;
-                                            return (
-                                                <div key={key} className={`dashboard-stat ${totalVal > 10 ? 'positive' : ''}`}>
+
+                                {(allRolled || Object.values(lifepathStats).some(v => v !== 0)) && (
+                                    <div className="sidebar-section">
+                                        <h4 className="sidebar-label">STATISTIQUES</h4>
+                                        <div className="sidebar-stats-dashboard">
+                                            {Object.entries(finalStats).map(([key, val]) => (
+                                                <div key={key} className={`dashboard-stat ${val > 10 ? 'positive' : ''}`}>
                                                     <div className="stat-meta">
                                                         <span className="stat-abbr">{key.toUpperCase()}</span>
                                                         <span className="stat-full-name">{STAT_LABELS[key]}</span>
                                                     </div>
                                                     <div className="stat-display">
-                                                        <span className="stat-number">{totalVal}</span>
-                                                        <span className="stat-bracket-mod">{getModifier(totalVal)}</span>
+                                                        <span className="stat-number">{val || '?'}</span>
+                                                        <span className="stat-bracket-mod">{getModifier(val)}</span>
                                                     </div>
                                                 </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-
-                                <div className="sidebar-section">
-                                    <h4 className="sidebar-label">CAPACITÉS</h4>
-                                    <div className="sidebar-traits-container">
-                                        <div className="trait-card-mini">
-                                            <div className="trait-header">
-                                                <span className="trait-source">{selectedClass}</span>
-                                                <span className="trait-separator">•</span>
-                                                <strong className="trait-title">{CLASSES[selectedClass]?.mechanic?.name}</strong>
-                                            </div>
-                                            <p className="trait-snippet">{CLASSES[selectedClass]?.mechanic?.desc}</p>
+                                            ))}
                                         </div>
-                                        {selectedSubclass && classData?.subclasses?.[selectedSubclass] && (
-                                            <div className="trait-card-mini highlighted">
-                                                <div className="trait-header">
-                                                    <span className="trait-source">SPÉCIALISATION</span>
-                                                    <span className="trait-separator">•</span>
-                                                    <strong className="trait-title">{classData.subclasses[selectedSubclass].label}</strong>
-                                                </div>
-                                                <p className="trait-snippet">{classData.subclasses[selectedSubclass].details.feature}</p>
-                                            </div>
-                                        )}
                                     </div>
-                                </div>
+                                )}
 
                                 {selectedEquipmentIndex !== null && classData?.starting_equipment_options?.[selectedEquipmentIndex] && (
                                     <div className="sidebar-section">
@@ -491,238 +333,399 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
                                     </div>
                                 )}
                             </div>
+                        )}
 
-                            <div className="wizard-main">
-                                <div className="wizard-header">
-                                    <div className="wizard-tabs-nav">
-                                        {[2, 3, 4, 5, 6, 7].map(s => (
-                                            <div key={s}
-                                                className={`wizard-tab-item ${step === s ? 'active' : ''} ${step > s ? 'completed' : ''}`}
-                                                onClick={() => step > s ? setStep(s) : null}>
-                                                <span className="tab-number">0{s - 1}</span>
-                                                <span className="tab-label">
-                                                    {s === 2 ? 'SPÉCIALISATION' : s === 3 ? 'PARCOURS' : s === 4 ? 'ÉQUIPEMENT' : s === 5 ? 'NOM' : s === 6 ? 'ATTRIBUTS' : 'FINAL'}
-                                                </span>
+                        {/* ── Main Content Area ─────────────────────── */}
+                        <div className={`wizard-main step-slide-${slideDir}`} key={step}>
+
+                            {/* ═══════════ STEP 1: IDENTITY ═══════════ */}
+                            {step === 1 && (
+                                <div className="step-identity">
+                                    {onQuickStart && (
+                                        <div className="quick-start-banner" onClick={onQuickStart}>
+                                            <span>BESOIN D'ACTION ? Lancez un héros aléatoire</span>
+                                        </div>
+                                    )}
+                                    <div className="identity-content">
+                                        <h2 className="step-headline">NOMMEZ VOTRE HÉROS</h2>
+                                        <input
+                                            type="text"
+                                            className="magical-input"
+                                            placeholder="Nom du Héros"
+                                            value={name}
+                                            onChange={e => setName(e.target.value)}
+                                            autoFocus
+                                        />
+                                        {name && <div className="name-preview">{name}</div>}
+
+                                        <div className="portrait-selection">
+                                            <h3 className="portrait-title">Portrait</h3>
+                                            <div className="portrait-grid">
+                                                {Object.entries(classPortraits).map(([cls, url]) => (
+                                                    <div
+                                                        key={cls}
+                                                        className={`portrait-option ${(portraitUrl || classPortraits[selectedClass]) === url ? 'selected' : ''}`}
+                                                        onClick={() => setPortraitUrl(url)}
+                                                    >
+                                                        <img src={url} alt={cls} className="portrait-thumb" />
+                                                        <span className="portrait-class-label">{CLASSES[cls]?.label}</span>
+                                                    </div>
+                                                ))}
                                             </div>
-                                        ))}
+                                        </div>
                                     </div>
-                                    <h2 className="wizard-title-headline">
-                                        {step === 2 && 'CHOIX DE LA SPÉCIALISATION'}
-                                        {step === 3 && 'CHRONIQUES DU PARCOURS'}
-                                        {step === 4 && 'ARSENAL & ÉQUIPEMENT'}
-                                        {step === 5 && 'NOM DE L\'ÉVEILLÉ'}
-                                        {step === 6 && 'DÉTERMINATION DU POTENTIEL'}
-                                        {step === 7 && 'L\'ÉVEIL DU HÉROS'}
-                                    </h2>
+                                    <div className="wizard-footer">
+                                        <button className="btn-secondary" onClick={onBack}>Retour</button>
+                                        <button className="btn-primary" onClick={() => goToStep(2)} disabled={!name.trim()}>
+                                            Choisir ma Classe
+                                        </button>
+                                    </div>
                                 </div>
+                            )}
 
-                                {/* STEP 2: SUBCLASS */}
-                                {step === 2 && (
-                                    <>
-                                        <div className="subclass-selection-container">
-                                            <div className="subclass-grid">
-                                                {Object.entries(classData?.subclasses || {}).map(([key, sub]) => (
+                            {/* ═══════════ STEP 2: CLASS & SUBCLASS ═══════════ */}
+                            {step === 2 && (
+                                <div className="step-class-subclass">
+                                    <h2 className="step-headline">VOIE & SPÉCIALISATION</h2>
+                                    <div className="class-subclass-layout">
+                                        {/* Left: Category tabs + class list */}
+                                        <div className="class-picker">
+                                            <div className="category-tabs">
+                                                {CATEGORY_KEYS.map(cat => (
+                                                    <button
+                                                        key={cat}
+                                                        className={`category-tab ${selectedCategory === cat ? 'active' : ''}`}
+                                                        onClick={() => setSelectedCategory(cat)}
+                                                        style={{ '--cat-color': CLASS_CATEGORIES[cat]?.color }}
+                                                    >
+                                                        <span className="cat-icon">{CLASS_CATEGORIES[cat]?.icon}</span>
+                                                        <span className="cat-name">{CLASS_CATEGORIES[cat]?.label}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <div className="class-list">
+                                                {classesByCategory[selectedCategory]?.map(([key, cls]) => (
                                                     <div
                                                         key={key}
-                                                        className={`subclass-card ${selectedSubclass === key ? 'selected' : ''}`}
-                                                        onClick={() => setSelectedSubclass(key)}
+                                                        className={`class-list-card ${selectedClass === key ? 'selected' : ''}`}
+                                                        onClick={() => setSelectedClass(key)}
                                                     >
-                                                        <div className="subclass-header">
-                                                            <h3 className="subclass-title">{sub.label}</h3>
-                                                            {sub.details && sub.details.style && (
-                                                                <div className="subclass-style-badge">{sub.details.style}</div>
-                                                            )}
-                                                        </div>
-
-                                                        <div className="subclass-body">
-                                                            <div className="subclass-desc">"{sub.desc}"</div>
-
-                                                            {sub.details && sub.details.feature && (
-                                                                <div className="subclass-feature">
-                                                                    <span className="feature-label">Capacité Unique</span>
-                                                                    <div className="feature-text">{sub.details.feature}</div>
-                                                                </div>
-                                                            )}
-                                                        </div>
-
-                                                        <div className="subclass-icon-watermark">
-                                                            {CLASS_CATEGORIES[classData.category]?.icon || '⚔️'}
+                                                        <div className="class-list-icon">{CLASS_CATEGORIES[cls.category]?.icon || '🛡️'}</div>
+                                                        <div className="class-list-info">
+                                                            <div className="class-list-title">{cls.label}</div>
+                                                            <div className="class-list-desc">{cls.desc}</div>
                                                         </div>
                                                     </div>
                                                 ))}
                                             </div>
                                         </div>
-                                        <div className="wizard-footer" style={{ marginTop: '2rem' }}>
-                                            <button className="btn-secondary" onClick={() => setStep(1)}>← Retour</button>
-                                            <button className="btn-primary" onClick={() => setStep(3)} disabled={!selectedSubclass}>Confirmer la Spécialisation →</button>
-                                        </div>
-                                    </>
-                                )}
 
-                                {/* STEP 3: LIFEPATH */}
-                                {step === 3 && (
-                                    <LifePathWizard
-                                        hideSidebar={true}
-                                        onUpdate={handleLifepathUpdate}
-                                        onComplete={(effects) => {
-                                            setLifepathData(effects);
-                                            // Permanently apply to attributes and clear lifepathStats
-                                            setAttributes(prev => ({
-                                                str: prev.str + (effects.final_stats.strength || 0),
-                                                dex: prev.dex + (effects.final_stats.dexterity || 0),
-                                                con: prev.con + (effects.final_stats.constitution || 0),
-                                                int: prev.int + (effects.final_stats.intelligence || 0),
-                                                wis: prev.wis + (effects.final_stats.wisdom || 0),
-                                                cha: prev.cha + (effects.final_stats.charisma || 0)
-                                            }));
-                                            setLifepathStats({ str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 });
-                                            setStep(4);
-                                        }}
-                                        onCancel={() => {
-                                            setLifepathStats({ str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 });
-                                            setStep(2);
-                                        }}
-                                    />
-                                )}
-
-                                {/* STEP 4: EQUIPMENT */}
-                                {step === 4 && (
-                                    <>
-                                        <div className="wizard-options">
-                                            {classData?.starting_equipment_options.map((opt, idx) => (
-                                                <div key={idx} className={`life-choice-card ${selectedEquipmentIndex === idx ? 'selected' : ''}`} onClick={() => setSelectedEquipmentIndex(idx)}>
-                                                    <div className="card-title">{opt.label}</div>
-                                                    <div className="card-desc">
-                                                        <ul className="items-list" style={{ background: 'transparent', border: 'none', padding: 0 }}>
-                                                            {opt.items.map((item, i) => (
-                                                                <li key={i} style={{ background: 'rgba(0,0,0,0.2)', marginBottom: '0.4rem', padding: '0.5rem', borderRadius: '4px' }}>{item.name}</li>
-                                                            ))}
-                                                        </ul>
+                                        {/* Right: Class detail + subclass cards */}
+                                        <div className="class-detail-panel">
+                                            {classData && (
+                                                <>
+                                                    <div className="class-detail-header">
+                                                        <img src={classData.portrait || ''} className="class-detail-portrait" alt={selectedClass} />
+                                                        <div className="class-detail-meta">
+                                                            <h3 className="class-detail-name">{classData.label}</h3>
+                                                            <p className="class-detail-desc">{classData.desc}</p>
+                                                            {classData.recommended_stats && (
+                                                                <div className="recommended-stats-container">
+                                                                    <div className="rec-stat-group">
+                                                                        <span className="rec-stat-label">MAJEUR :</span>
+                                                                        {classData.recommended_stats.major.map(stat => (
+                                                                            <span key={stat} className="rec-stat-badge major">{STAT_LABELS[stat]}</span>
+                                                                        ))}
+                                                                    </div>
+                                                                    <div className="rec-stat-group">
+                                                                        <span className="rec-stat-label">MINEUR :</span>
+                                                                        {classData.recommended_stats.minor.map(stat => (
+                                                                            <span key={stat} className="rec-stat-badge minor">{STAT_LABELS[stat]}</span>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                            <div className="class-mechanic-box">
+                                                                <span className="mechanic-title">{classData.mechanic.name}</span>
+                                                                <p className="mechanic-desc">
+                                                                    {classData.mechanic.desc.split('**').map((part, i) =>
+                                                                        i % 2 === 1 ? <strong key={i}>{part}</strong> : part
+                                                                    )}
+                                                                </p>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <div className="wizard-footer">
-                                            <button className="btn-secondary" onClick={() => setStep(3)}>← Retour</button>
-                                            <button className="btn-primary" onClick={() => setStep(5)} disabled={selectedEquipmentIndex === null}>Valider l'Équipement →</button>
-                                        </div>
-                                    </>
-                                )}
 
-                                {/* STEP 5: NAME */}
-                                {step === 5 && (
-                                    <>
-                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '4rem 0' }}>
-                                            <input type="text" className="magical-input" placeholder="Nom du Héros" value={name} onChange={e => setName(e.target.value)} autoFocus />
-                                            {name && <div className="name-preview" style={{ marginTop: '2rem', fontSize: '1.5rem', color: 'var(--gold-dim)' }}>{name}</div>}
-                                        </div>
-                                        <div className="wizard-footer">
-                                            <button className="btn-secondary" onClick={() => setStep(4)}>← Retour</button>
-                                            <button className="btn-primary" onClick={() => setStep(6)} disabled={!name}>Confirmer l'Identité →</button>
-                                        </div>
-                                    </>
-                                )}
-
-                                {/* STEP 6: ATTRIBUTES */}
-                                {step === 6 && (
-                                    <>
-                                        <div className="wizard-options" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2rem' }}>
-                                            {Object.entries(attributes).map(([key, val]) => (
-                                                <div key={key} className={`stat-rune ${rollingStat === key ? 'rolling' : ''}`} onClick={() => rollStat(key)} style={{ cursor: 'pointer' }}>
-                                                    <div className="stat-label" style={{ fontSize: '0.8rem', color: '#666', letterSpacing: '2px' }}>{STAT_LABELS[key].toUpperCase()}</div>
-                                                    <div className="stat-value" style={{ fontSize: '3rem', color: 'var(--gold-primary)', fontFamily: '"Cinzel Decorative", serif' }}>{val || '?'}</div>
-                                                    <div className="stat-modifier" style={{ fontSize: '1rem', color: '#888' }}>{val ? getModifier(val) : '--'}</div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <div className="wizard-footer">
-                                            <button className="btn-secondary" onClick={() => setStep(5)}>← Retour</button>
-                                            <button
-                                                className="btn-medieval btn-epic-roll"
-                                                onClick={rollAll}
-                                                disabled={isRolling}
-                                                style={{ margin: '0 1rem' }}
-                                            >
-                                                {isRolling ? '⚡ LANÇAGE...' : '✨ TOUT LANCER'}
-                                            </button>
-                                            <button className="btn-primary" onClick={() => setStep(7)} disabled={!allRolled || isRolling}>Finaliser les Caractéristiques →</button>
-                                        </div>
-                                    </>
-                                )}
-
-                                {/* STEP 7: FINAL */}
-                                {step === 7 && (
-                                    <>
-                                        <div className="final-dossier">
-                                            <div className="dossier-header">
-                                                <h2 className="dossier-name">{name}</h2>
-                                                <div className="dossier-subtitle">
-                                                    <span>{selectedClass}</span>
-                                                    <span className="dossier-separator">•</span>
-                                                    <span>{classData.subclasses[selectedSubclass]?.label}</span>
-                                                    <span className="dossier-separator">•</span>
-                                                    <span>Niveau 1</span>
-                                                </div>
-                                            </div>
-
-                                            <div className="dossier-content-grid">
-                                                {/* Column 1: Stats */}
-                                                <div className="dossier-section">
-                                                    <h3 className="dossier-section-title">Attributs</h3>
-                                                    <div className="dossier-stats-grid">
-                                                        {Object.entries(attributes).map(([key, val]) => (
-                                                            <div key={key} className="dossier-stat-row">
-                                                                <span className="stat-label">{STAT_LABELS[key]}</span>
-                                                                <span className="stat-val">{val}</span>
-                                                                <span className="stat-mod">{getModifier(val)}</span>
+                                                    <h4 className="subclass-heading">SPÉCIALISATIONS</h4>
+                                                    <div className="subclass-grid">
+                                                        {Object.entries(classData.subclasses || {}).map(([key, sub]) => (
+                                                            <div
+                                                                key={key}
+                                                                className={`subclass-card ${selectedSubclass === key ? 'selected' : ''}`}
+                                                                onClick={() => setSelectedSubclass(key)}
+                                                            >
+                                                                <div className="subclass-header">
+                                                                    <h3 className="subclass-title">{sub.label}</h3>
+                                                                    {sub.details?.style && <div className="subclass-style-badge">{sub.details.style}</div>}
+                                                                </div>
+                                                                <div className="subclass-body">
+                                                                    <div className="subclass-desc">{sub.desc}</div>
+                                                                    {sub.details?.feature && (
+                                                                        <div className="subclass-feature">
+                                                                            <span className="feature-label">Capacité Unique</span>
+                                                                            <div className="feature-text">{sub.details.feature}</div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         ))}
                                                     </div>
-                                                </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="wizard-footer">
+                                        <button className="btn-secondary" onClick={() => goToStep(1)}>Retour</button>
+                                        <button className="btn-primary" onClick={() => goToStep(3)} disabled={!selectedClass || !selectedSubclass}>
+                                            Forger mon Parcours
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
 
-                                                {/* Column 2: Lifepath */}
-                                                <div className="dossier-section">
-                                                    <h3 className="dossier-section-title">Origines</h3>
-                                                    <div className="dossier-lifepath">
-                                                        <div className="lifepath-item">
-                                                            <span className="lp-label">Naissance</span>
-                                                            <span className="lp-val">{lifepathData?.origin?.label || selectedBirthOrigin?.label || 'Inconnu'}</span>
-                                                        </div>
-                                                        <div className="lifepath-item">
-                                                            <span className="lp-label">Enfance</span>
-                                                            <span className="lp-val">{lifepathData?.childhood?.label || selectedChildhoodEvent?.label || 'Ordinaire'}</span>
-                                                        </div>
-                                                        <div className="lifepath-item">
-                                                            <span className="lp-label">Vécu</span>
-                                                            <span className="lp-val">{lifepathData?.adult?.label || selectedBackstory?.label || 'Aventurier'}</span>
-                                                        </div>
+                            {/* ═══════════ STEP 3: LIFEPATH ═══════════ */}
+                            {step === 3 && (
+                                <div className="step-lifepath">
+                                    <LifePathWizard
+                                        hideSidebar={true}
+                                        onUpdate={handleLifepathUpdate}
+                                        onComplete={handleLifepathComplete}
+                                        onCancel={() => {
+                                            setLifepathStats({ ...EMPTY_STATS });
+                                            goToStep(2);
+                                        }}
+                                    />
+                                </div>
+                            )}
+
+                            {/* ═══════════ STEP 4: STATS & ABILITIES ═══════════ */}
+                            {step === 4 && (
+                                <div className="step-stats-abilities">
+                                    <h2 className="step-headline">ATTRIBUTS & CAPACITÉS</h2>
+
+                                    {/* Stat Allocator */}
+                                    <div className="stats-section">
+                                        <h3 className="subsection-title">Détermination du Potentiel</h3>
+                                        <p className="subsection-hint">Cliquez sur chaque attribut pour lancer les dés, ou lancez tout d'un coup.</p>
+                                        <div className="stat-rune-grid">
+                                            {Object.entries(attributes).map(([key, val]) => {
+                                                const bonus = lifepathStats[key] || 0;
+                                                const capped = Math.min((val || 0) + bonus, 18);
+                                                return (
+                                                    <div
+                                                        key={key}
+                                                        className={`stat-rune ${rollingStat === key ? 'rolling' : ''} ${val > 0 ? 'rolled' : ''}`}
+                                                        onClick={() => !isRolling && rollStatPromise(key)}
+                                                    >
+                                                        <div className="stat-label">{STAT_LABELS[key].toUpperCase()}</div>
+                                                        <div className="stat-value">{val || '?'}</div>
+                                                        {bonus !== 0 && val > 0 && (
+                                                            <div className={`stat-bonus ${bonus > 0 ? 'positive' : 'negative'}`}>
+                                                                {bonus > 0 ? '+' : ''}{bonus}
+                                                            </div>
+                                                        )}
+                                                        <div className="stat-modifier">{capped > 0 ? getModifier(capped) : '--'}</div>
+                                                        {bonus !== 0 && val > 0 && (
+                                                            <div className="stat-total">= {capped}</div>
+                                                        )}
                                                     </div>
-                                                </div>
+                                                );
+                                            })}
+                                        </div>
+                                        <button className="btn-roll-all" onClick={rollAll} disabled={isRolling}>
+                                            {isRolling ? 'LANÇAGE...' : 'TOUT LANCER'}
+                                        </button>
+                                    </div>
 
-                                                {/* Column 3: Equipment & Bio */}
-                                                <div className="dossier-section">
-                                                    <h3 className="dossier-section-title">Inventaire</h3>
-                                                    <ul className="dossier-equipment">
-                                                        {classData?.starting_equipment_options[selectedEquipmentIndex]?.items.map((item, i) => (
-                                                            <li key={i}>{item.name}</li>
+                                    {/* Abilities */}
+                                    {allRolled && (
+                                        <div className="abilities-section">
+                                            <h3 className="subsection-title">Capacités de Départ</h3>
+                                            <p className="subsection-hint">Choisissez 2 capacités parmi les 3 suivantes.</p>
+
+                                            {/* Subclass passive */}
+                                            {selectedSubclass && classData?.subclasses?.[selectedSubclass] && (
+                                                <div className="passive-ability-card">
+                                                    <div className="passive-badge">PASSIF - AUTO</div>
+                                                    <div className="passive-name">{classData.subclasses[selectedSubclass].label}</div>
+                                                    <div className="passive-desc">{classData.subclasses[selectedSubclass].details.feature}</div>
+                                                </div>
+                                            )}
+
+                                            <div className="ability-cards-grid">
+                                                {classData?.initial_ability_options?.map((ability) => (
+                                                    <div
+                                                        key={ability.name}
+                                                        className={`ability-card ${selectedAbilityNames.includes(ability.name) ? 'selected' : ''} ${selectedAbilityNames.length >= 2 && !selectedAbilityNames.includes(ability.name) ? 'disabled' : ''}`}
+                                                        onClick={() => toggleAbility(ability.name)}
+                                                    >
+                                                        <div className="ability-header">
+                                                            <h4 className="ability-name">{ability.name}</h4>
+                                                            <div className="ability-meta">
+                                                                {ability.actionType && <span className="ability-tag action">{ability.actionType}</span>}
+                                                                {ability.cost > 0 && <span className="ability-tag cost">{ability.cost} PR</span>}
+                                                                {ability.cooldown > 0 && <span className="ability-tag cd">{ability.cooldown}T CD</span>}
+                                                            </div>
+                                                        </div>
+                                                        <p className="ability-flavor">{ability.flavor}</p>
+                                                        <p className="ability-desc">{ability.desc}</p>
+                                                        {ability.dice && <div className="ability-dice">{ability.dice}</div>}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="wizard-footer">
+                                        <button className="btn-secondary" onClick={() => goToStep(3)}>Retour</button>
+                                        <button className="btn-primary" onClick={() => goToStep(5)} disabled={!allRolled || selectedAbilityNames.length < 2}>
+                                            Équipement & Révision
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* ═══════════ STEP 5: EQUIPMENT & FINAL REVIEW ═══════════ */}
+                            {step === 5 && (
+                                <div className="step-equipment-review">
+                                    <h2 className="step-headline">ARSENAL & REVUE FINALE</h2>
+
+                                    {/* Equipment loadouts */}
+                                    <div className="equipment-section">
+                                        <h3 className="subsection-title">Choisissez votre Arsenal</h3>
+                                        <div className="equipment-options">
+                                            {classData?.starting_equipment_options.map((opt, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    className={`equipment-loadout ${selectedEquipmentIndex === idx ? 'selected' : ''}`}
+                                                    onClick={() => setSelectedEquipmentIndex(idx)}
+                                                >
+                                                    <div className="loadout-label">{opt.label}</div>
+                                                    <ul className="loadout-items">
+                                                        {opt.items.map((item, i) => (
+                                                            <li key={i} className="loadout-item">
+                                                                <span className="item-name">{item.name}</span>
+                                                                <span className="item-stats">
+                                                                    {item.stats.atk && `+${item.stats.atk} ATK`}
+                                                                    {item.stats.ac && `+${item.stats.ac} CA`}
+                                                                </span>
+                                                            </li>
                                                         ))}
                                                     </ul>
                                                 </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Lifepath heritage items */}
+                                        {lifepathData?.items?.length > 0 && (
+                                            <div className="heritage-items">
+                                                <h4 className="heritage-title">Objets Hérités du Parcours</h4>
+                                                {resolveLifepathItems(lifepathData.items).map((item, i) => (
+                                                    <div key={i} className="heritage-item">
+                                                        <span>{item.name}</span>
+                                                        {item.lifepathReason && <span className="heritage-reason">{item.lifepathReason}</span>}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Final Review Sheet */}
+                                    <div className="final-dossier">
+                                        <div className="dossier-header">
+                                            <h2 className="dossier-name">{name}</h2>
+                                            <div className="dossier-subtitle">
+                                                <span>{selectedClass}</span>
+                                                <span className="dossier-separator">-</span>
+                                                <span>{classData?.subclasses[selectedSubclass]?.label}</span>
+                                                <span className="dossier-separator">-</span>
+                                                <span>Niveau 1</span>
+                                            </div>
+                                            <div className="dossier-hp">PV : {computedHp}</div>
+                                        </div>
+
+                                        <div className="dossier-content-grid">
+                                            {/* Stats */}
+                                            <div className="dossier-section">
+                                                <h3 className="dossier-section-title">Attributs</h3>
+                                                <div className="dossier-stats-grid">
+                                                    {Object.entries(finalStats).map(([key, val]) => (
+                                                        <div key={key} className="dossier-stat-row">
+                                                            <span className="stat-label">{STAT_LABELS[key]}</span>
+                                                            <span className="stat-val">{val}</span>
+                                                            <span className="stat-mod">{getModifier(val)}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
 
-                                            <div className="dossier-bio">
-                                                <p>"{classData.subclasses[selectedSubclass]?.desc}"</p>
+                                            {/* Abilities */}
+                                            <div className="dossier-section">
+                                                <h3 className="dossier-section-title">Capacités</h3>
+                                                <div className="dossier-abilities">
+                                                    {classData?.initial_ability_options
+                                                        .filter(a => selectedAbilityNames.includes(a.name))
+                                                        .map((a, i) => (
+                                                            <div key={i} className="dossier-ability">{a.name}</div>
+                                                        ))}
+                                                    {selectedSubclass && classData?.subclasses?.[selectedSubclass] && (
+                                                        <div className="dossier-ability passive">{classData.subclasses[selectedSubclass].label} (Passif)</div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Lifepath summary */}
+                                            <div className="dossier-section">
+                                                <h3 className="dossier-section-title">Origines</h3>
+                                                <div className="dossier-lifepath">
+                                                    {lifepathData?.origin && <div className="lifepath-item"><span className="lp-label">Naissance</span><span className="lp-val">{lifepathData.origin.label}</span></div>}
+                                                    {lifepathData?.childhood && <div className="lifepath-item"><span className="lp-label">Enfance</span><span className="lp-val">{lifepathData.childhood.label}</span></div>}
+                                                    {lifepathData?.adolescence && <div className="lifepath-item"><span className="lp-label">Adolescence</span><span className="lp-val">{lifepathData.adolescence.label}</span></div>}
+                                                    {lifepathData?.adult && <div className="lifepath-item"><span className="lp-label">Adulte</span><span className="lp-val">{lifepathData.adult.label}</span></div>}
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="wizard-footer">
-                                            <button className="btn-secondary" onClick={() => setStep(6)}>← Retour</button>
-                                            <button className="btn-primary" onClick={handleCreate}>Lancer l'Aventure →</button>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
+
+                                        {/* Equipment preview */}
+                                        {selectedEquipmentIndex !== null && (
+                                            <div className="dossier-equipment-section">
+                                                <h3 className="dossier-section-title">Inventaire</h3>
+                                                <ul className="dossier-equipment">
+                                                    {classData.starting_equipment_options[selectedEquipmentIndex].items.map((item, i) => (
+                                                        <li key={i}>{item.name}</li>
+                                                    ))}
+                                                    {resolveLifepathItems(lifepathData?.items).map((item, i) => (
+                                                        <li key={`lp-${i}`} className="heritage">{item.name}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="wizard-footer">
+                                        <button className="btn-secondary" onClick={() => goToStep(4)}>Retour</button>
+                                        <button
+                                            className="btn-create-final"
+                                            onClick={handleCreate}
+                                            disabled={selectedEquipmentIndex === null}
+                                        >
+                                            FORGER MON DESTIN
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                    )}
+                    </div>
                 </div>
             </div>
         </>
