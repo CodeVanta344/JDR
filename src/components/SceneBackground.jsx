@@ -6,7 +6,7 @@ export const SceneBackground = ({ currentImage }) => {
     const [activeLayer, setActiveLayer] = useState(1);
     const [transitioning, setTransitioning] = useState(false);
 
-    const fallbackImage = 'https://okanuafsmkuzyuyqibpu.supabase.co/storage/v1/object/public/assets/Aethelgard_Map_v3.png';
+    const fallbackImage = null; // No external fallback — use CSS gradient
 
     useEffect(() => {
         let rawImage = currentImage || fallbackImage;
