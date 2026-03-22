@@ -474,6 +474,16 @@ export default function App({ user }) {
                     }
                 } catch (e) {
                     console.error('GM intro error:', e);
+                    // Fallback: static intro message
+                    const fallbackMsg = {
+                        id: crypto.randomUUID(),
+                        session_id: currentSession.id,
+                        role: 'assistant',
+                        content: `🎭 *Le Maître du Jeu s'installe derrière son paravent...*\n\nBienvenue, aventurier${currentPlayers.length > 1 ? 's' : ''}, dans les **Chroniques d'Aethelgard**.\n\nLa lumière dorée du couchant baigne les rues pavées de Sol-Aureus. Vous poussez la porte du **Sanglier Doré**, la taverne la plus réputée du Val Doré. L'odeur de ragoût et de pain frais vous accueille, mêlée au brouhaha chaleureux des conversations.\n\nDerrière le comptoir, **Brok**, un colosse aux bras couverts de cicatrices d'ancien aventurier, vous fait signe. *« Nouveaux visages ! Installez-vous, la première tournée est offerte aux voyageurs qui ont une histoire à raconter. »*\n\nQue faites-vous ?`,
+                        created_at: new Date().toISOString()
+                    };
+                    await supabase.from('messages').insert(fallbackMsg);
+                    setMessages(prev => [...prev, fallbackMsg]);
                 }
             }
         } catch (err) {
@@ -1202,6 +1212,21 @@ export default function App({ user }) {
         const newInventory = toggleEquipItem(character.inventory, index);
         handleUpdateInventory(newInventory);
     };
+
+    // Handle game over (player death in combat)
+    const handleGameOver = useCallback(() => {
+        setCombatMode(false);
+        setCombatEnemies([]);
+        const deathMsg = {
+            id: crypto.randomUUID(),
+            session_id: session?.id,
+            role: 'system',
+            content: '💀 **Votre aventure prend fin ici...** Les ténèbres vous engloutissent. Mais toute légende mérite une seconde chance. Créez un nouveau personnage ou chargez une sauvegarde.',
+            created_at: new Date().toISOString()
+        };
+        setMessages(prev => [...prev, deathMsg]);
+        if (session?.id) supabase.from('messages').insert(deathMsg).then(() => {});
+    }, [session?.id]);
 
     // Handle codex updates from AI responses
     const handleCodexUpdate = useCallback((codexData) => {
