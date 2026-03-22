@@ -17,7 +17,7 @@
   inset: 0;
   background: radial-gradient(circle at center, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.9) 100%);
   backdrop-filter: blur(12px) saturate(150%);
-  z-index: 2000;
+  z-index: 10002;
   display: flex;
   align-items: center;
   justify-content: center;

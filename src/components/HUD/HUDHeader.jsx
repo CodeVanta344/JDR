@@ -3,8 +3,6 @@ import React from 'react';
 export const HUDHeader = ({
     gameTime,
     getTimeLabel,
-    realTimeSync,
-    onToggleRealTime,
     onInvite,
     onToggleHelper,
     showHelper,
@@ -16,7 +14,9 @@ export const HUDHeader = ({
     audioVolume,
     onVolumeChange,
     onToggleCodex,
-    onToggleDMPanel
+    onToggleDMPanel,
+    onToggleItemSharePanel,
+    itemShareCount
 }) => {
     return (
         <div className="hud-header">
@@ -25,15 +25,8 @@ export const HUDHeader = ({
                 <span className="clock-icon">{gameTime.hour >= 6 && gameTime.hour < 18 ? '☀️' : '🌙'}</span>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <span className="clock-time">{String(gameTime.hour).padStart(2, '0')}:{String(gameTime.minute || 0).padStart(2, '0')}</span>
-                    <span className="day-sync-indicator">{getTimeLabel()} {realTimeSync ? '(Réel)' : `(Jour ${gameTime.day})`}</span>
+                    <span className="day-sync-indicator">{getTimeLabel()} (Jour {gameTime.day})</span>
                 </div>
-                <button
-                    onClick={onToggleRealTime}
-                    className="sync-btn"
-                    title="Synchroniser avec l'heure réelle"
-                >
-                    🔄
-                </button>
             </div>
 
             {/* Top Right Controls */}
@@ -86,9 +79,19 @@ export const HUDHeader = ({
                         <span style={{ fontSize: '0.9em' }}>CODEX</span>
                     </button>
                 )}
-                {onToggleDMPanel && isGM && (
-                    <button onClick={onToggleDMPanel} className="hud-btn dm-panel-btn" title="Interface Maître du Jeu (Claude Opus)">
-                        🎭 MJ
+                {onToggleItemSharePanel && itemShareCount > 0 && (
+                    <button 
+                        onClick={onToggleItemSharePanel} 
+                        className="hud-btn item-share-btn"
+                        title="Objets partagés"
+                        style={{
+                            background: 'rgba(155, 89, 182, 0.2)',
+                            border: '1px solid rgba(155, 89, 182, 0.5)',
+                            color: '#9b59b6',
+                            position: 'relative'
+                        }}
+                    >
+                        📦 {itemShareCount}
                     </button>
                 )}
                 <button

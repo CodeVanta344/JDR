@@ -8,7 +8,7 @@ import { ALL_RESOURCES } from '../lore/resources';
 import MaterialInventory from './MaterialInventory';
 import { InventoryPanel } from './InventoryPanel';
 
-export const CharacterSheet = ({ character, onUpdateInventory, onUpdateMaterialInventory, onEquipItem, onToggleSettings, onConsume, onLevelUpClick, onTradeClick }) => {
+export const CharacterSheet = ({ character, onUpdateInventory, onUpdateMaterialInventory, onEquipItem, onToggleSettings, onConsume, onLevelUpClick, onTradeClick, onShareItem }) => {
     const [activeTab, setActiveTab] = React.useState('stats');
     const [enlargedImage, setEnlargedImage] = React.useState(null);
     const [selectedTrait, setSelectedTrait] = React.useState(null);
@@ -19,6 +19,8 @@ export const CharacterSheet = ({ character, onUpdateInventory, onUpdateMaterialI
     const [gatheringSpots, setGatheringSpots] = React.useState([]);
     const [selectedGatheringSpot, setSelectedGatheringSpot] = React.useState(null);
     const [gatheringResult, setGatheringResult] = React.useState(null);
+    const [lastScanTime, setLastScanTime] = React.useState(null);
+    const [scanError, setScanError] = React.useState(null);
     const statNames = {
         str: { full: "Force", desc: "Puissance et impact" },
         dex: { full: "Dextérité", desc: "Agilité et tir" },
@@ -152,14 +154,24 @@ export const CharacterSheet = ({ character, onUpdateInventory, onUpdateMaterialI
         const dexMod = Math.floor(((character.stats?.dex || 10) - 10) / 2);
         const intMod = Math.floor(((character.stats?.int || 10) - 10) / 2);
         
+        // Safe formula evaluator - only allows basic math operations
+        function safeEvalFormula(formula, variables = {}) {
+            let expr = formula;
+            for (const [key, value] of Object.entries(variables)) {
+                expr = expr.replaceAll(key, String(Number(value) || 0));
+            }
+            // Only allow digits, operators, parentheses, dots
+            if (!/^[\d+\-*/().%\s]+$/.test(expr)) return 0;
+            try {
+                return Function('"use strict"; return (' + expr + ')')();
+            } catch { return 0; }
+        }
+
         // Évaluer la formule de taux de réussite
         let successRate = 60;
         if (recipe.success_rate_formula) {
-            try {
-                successRate = eval(recipe.success_rate_formula.replace('level', playerLevel).replace('str_mod', strMod).replace('dex_mod', dexMod).replace('int_mod', intMod));
-            } catch {
-                successRate = 60 + (playerLevel * 3);
-            }
+            const result = safeEvalFormula(recipe.success_rate_formula, { level: playerLevel, skill: skillLevel, str_mod: strMod, dex_mod: dexMod, int_mod: intMod });
+            successRate = result || (60 + (playerLevel * 3));
         }
         
         // Simulation du délai de fabrication
@@ -268,14 +280,37 @@ export const CharacterSheet = ({ character, onUpdateInventory, onUpdateMaterialI
 
     // Fonction pour scanner les ressources de la zone
     const scanForResources = (biome = 'forest') => {
+        // Vérifier si on est en ville
+        const location = character.current_location || 'Zone Inconnue';
+        const urbanKeywords = ['ville', 'city', 'auberge', 'taverne', 'temple', 'marché', 'market', 'place', 'rue', 'commerçant', 'forge', 'caserne'];
+        const isInCity = urbanKeywords.some(keyword => location.toLowerCase().includes(keyword));
+        
+        if (isInCity) {
+            setScanError('❌ Impossible de scanner dans une ville. Allez dans la nature pour chercher des ressources.');
+            setTimeout(() => setScanError(null), 3000);
+            return 0;
+        }
+        
+        // Vérifier le cooldown (10 minutes = 600000ms)
+        const now = Date.now();
+        if (lastScanTime && (now - lastScanTime) < 600000) {
+            const remaining = Math.ceil((600000 - (now - lastScanTime)) / 60000);
+            setScanError(`⏳ Cooldown actif. Attendez encore ${remaining} minute(s).`);
+            setTimeout(() => setScanError(null), 3000);
+            return 0;
+        }
+        
+        setLastScanTime(now);
+        setScanError(null);
+        
         const spots = gatheringSystem.generateSpotsForLocation(
-            character.current_location || 'Zone Inconnue',
+            location,
             biome,
             character.level || 1,
-            3
+            2
         );
         // Découvrir automatiquement les spots évidents
-        const discovered = gatheringSystem.discoverObviousSpots(character.current_location || 'Zone Inconnue');
+        const discovered = gatheringSystem.discoverObviousSpots(location);
         setGatheringSpots([...spots, ...discovered]);
         return spots.length + discovered.length;
     };
@@ -323,10 +358,10 @@ export const CharacterSheet = ({ character, onUpdateInventory, onUpdateMaterialI
             total: roll + statModifier
         });
 
-        // Si succès, ajouter au materialInventory (pas à l'inventaire principal)
+        // Si succès, ajouter au material_inventory (pas à l'inventaire principal)
         if (result.success && result.quantityGathered > 0) {
             console.log('[Gathering] Success! Adding materials:', result.quantityGathered, 'of', spot.resourceId);
-            const currentMaterialInventory = character.materialInventory || {};
+            const currentMaterialInventory = character.material_inventory || {};
             console.log('[Gathering] Current inventory:', currentMaterialInventory);
             const newMaterialInventory = addMaterialToInventory(
                 currentMaterialInventory,
@@ -708,7 +743,7 @@ export const CharacterSheet = ({ character, onUpdateInventory, onUpdateMaterialI
                                         <span>Serments Prêtés</span>
                                     </h4>
                                     
-                                    <MaterialInventory materialInventory={character.materialInventory} />
+                                    <MaterialInventory materialInventory={character.material_inventory || character.materialInventory} />
                                     
                                     {/* Section Récolte */}
                                     {gatheringProfessions.length > 0 && (
@@ -724,7 +759,7 @@ export const CharacterSheet = ({ character, onUpdateInventory, onUpdateMaterialI
                                                 style={{
                                                     width: '100%',
                                                     padding: '0.6rem',
-                                                    marginBottom: '1rem',
+                                                    marginBottom: scanError ? '0.5rem' : '1rem',
                                                     background: 'rgba(76,209,55,0.15)',
                                                     border: '1px solid #4cd137',
                                                     color: '#4cd137',
@@ -741,6 +776,22 @@ export const CharacterSheet = ({ character, onUpdateInventory, onUpdateMaterialI
                                                 <span>🔍</span>
                                                 <span>Scanner la zone pour des ressources</span>
                                             </button>
+                                            
+                                            {/* Message d'erreur de scan */}
+                                            {scanError && (
+                                                <div style={{
+                                                    padding: '0.6rem',
+                                                    background: 'rgba(255,107,107,0.15)',
+                                                    border: '1px solid #ff6b6b',
+                                                    borderRadius: '6px',
+                                                    marginBottom: '1rem',
+                                                    fontSize: '0.7rem',
+                                                    color: '#ff6b6b',
+                                                    textAlign: 'center'
+                                                }}>
+                                                    {scanError}
+                                                </div>
+                                            )}
                                             
                                             {/* Spots de récolte découverts */}
                                             {gatheringSpots.length > 0 && (
@@ -976,6 +1027,8 @@ export const CharacterSheet = ({ character, onUpdateInventory, onUpdateMaterialI
                             onConsume={onConsume}
                             onUpdateInventory={onUpdateInventory}
                             onDestroyItem={handleDestroyItem}
+                            onShareItem={onShareItem}
+                            onTradeClick={onTradeClick}
                         />
                     </div>
                 )}
@@ -1192,7 +1245,7 @@ export const CharacterSheet = ({ character, onUpdateInventory, onUpdateMaterialI
                                         <span>Serments Prêtés</span>
                                     </h4>
                                     
-                                    <MaterialInventory materialInventory={character.materialInventory} />
+                                    <MaterialInventory materialInventory={character.material_inventory || character.materialInventory} />
                                     
                                     {/* Section Récolte */}
                                     {gatheringProfessions.length > 0 && (
@@ -1208,7 +1261,7 @@ export const CharacterSheet = ({ character, onUpdateInventory, onUpdateMaterialI
                                                 style={{
                                                     width: '100%',
                                                     padding: '0.6rem',
-                                                    marginBottom: '1rem',
+                                                    marginBottom: scanError ? '0.5rem' : '1rem',
                                                     background: 'rgba(76,209,55,0.15)',
                                                     border: '1px solid #4cd137',
                                                     color: '#4cd137',
@@ -1225,6 +1278,22 @@ export const CharacterSheet = ({ character, onUpdateInventory, onUpdateMaterialI
                                                 <span>🔍</span>
                                                 <span>Scanner la zone pour des ressources</span>
                                             </button>
+                                            
+                                            {/* Message d'erreur de scan */}
+                                            {scanError && (
+                                                <div style={{
+                                                    padding: '0.6rem',
+                                                    background: 'rgba(255,107,107,0.15)',
+                                                    border: '1px solid #ff6b6b',
+                                                    borderRadius: '6px',
+                                                    marginBottom: '1rem',
+                                                    fontSize: '0.7rem',
+                                                    color: '#ff6b6b',
+                                                    textAlign: 'center'
+                                                }}>
+                                                    {scanError}
+                                                </div>
+                                            )}
                                             
                                             {/* Spots de récolte découverts */}
                                             {gatheringSpots.length > 0 && (

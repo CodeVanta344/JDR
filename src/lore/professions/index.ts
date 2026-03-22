@@ -79,3 +79,40 @@ export * from './gather/fishing';
 export * from './gather/hunting';
 export * from './gather/woodcutting';
 export * from './gather/skinning';
+
+// ============================================================
+// ALL PROFESSIONS ARRAY
+// ============================================================
+
+import { BLACKSMITHING } from './craft/blacksmithing';
+import { ALCHEMY } from './craft/alchemy';
+import { ENCHANTING } from './craft/enchanting';
+import { COOKING } from './craft/cooking';
+import { LEATHERWORKING } from './craft/leatherworking';
+import { TAILORING } from './craft/tailoring';
+import { CARPENTRY } from './craft/carpentry';
+import { JEWELCRAFTING } from './craft/jewelcrafting';
+
+import { MINING } from './gather/mining';
+import { HERBALISM } from './gather/herbalism';
+import { FISHING } from './gather/fishing';
+import { HUNTING } from './gather/hunting';
+import { WOODCUTTING } from './gather/woodcutting';
+import { SKINNING } from './gather/skinning';
+
+export const ALL_PROFESSIONS = [
+  BLACKSMITHING,
+  ALCHEMY,
+  ENCHANTING,
+  COOKING,
+  LEATHERWORKING,
+  TAILORING,
+  CARPENTRY,
+  JEWELCRAFTING,
+  MINING,
+  HERBALISM,
+  FISHING,
+  HUNTING,
+  WOODCUTTING,
+  SKINNING,
+];

@@ -18,7 +18,7 @@ export function NPCDialogueModal({ npc, messages, onSendMessage, onClose, loadin
     };
 
     return (
-        <div className="npc-dialogue-overlay animate-fade-in" style={{
+        <div className="npc-dialogue-overlay animate-fade-in" role="dialog" aria-modal="true" style={{
             position: 'fixed',
             inset: 0,
             zIndex: 2500,

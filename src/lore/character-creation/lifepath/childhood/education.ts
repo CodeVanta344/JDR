@@ -34,11 +34,7 @@ export const EDUCATIONS: LifeChoice[] = [
         { itemId: 'academic_robes', quantity: 1, reason: 'Tenue cérémoniale' },
         { itemId: 'diploma', quantity: 1, reason: 'Parchemin diplôme' }
       ],
-      skills: [
-        { skillId: 'arcana', bonus: 2, reason: 'Cours théoriques magie' },
-        { skillId: 'history', bonus: 2, reason: 'Curriculum obligatoire' },
-        { skillId: 'persuasion', bonus: 1, reason: 'Débats académiques' }
-      ],
+      skills: [{ skillId: 'arcana', bonus: 2, reason: 'Cours théoriques magie' }],
       languages: ['Langue Ancienne', 'Latin Érudit'],
       tags: ['educated', 'intellectual', 'prestigious', 'theoretical']
     },
@@ -126,11 +122,7 @@ export const EDUCATIONS: LifeChoice[] = [
       items: [
         { itemId: 'street_knife', quantity: 1, reason: 'Arme improvisée fidèle' }
       ],
-      skills: [
-        { skillId: 'stealth', bonus: 2, reason: 'Éviter patrouilles depuis enfance' },
-        { skillId: 'sleight_of_hand', bonus: 2, reason: 'Pickpocket nécessaire' },
-        { skillId: 'insight', bonus: 1, reason: 'Lire intentions pour survivre' }
-      ],
+      skills: [{ skillId: 'stealth', bonus: 2, reason: 'Éviter patrouilles depuis enfance' }],
       languages: ['Argot des Rues'],
       tags: ['street', 'survivor', 'pragmatic', 'illiterate']
     },
@@ -176,11 +168,7 @@ export const EDUCATIONS: LifeChoice[] = [
         { itemId: 'prayer_beads', quantity: 1, reason: 'Chapelet consacré' },
         { itemId: 'meditation_mat', quantity: 1, reason: 'Tapis de prière' }
       ],
-      skills: [
-        { skillId: 'religion', bonus: 2, reason: 'Études théologiques' },
-        { skillId: 'insight', bonus: 2, reason: 'Contemplation spirituelle' },
-        { skillId: 'athletics', bonus: 1, reason: 'Entraînement martial' }
-      ],
+      skills: [{ skillId: 'religion', bonus: 2, reason: 'Études théologiques' }],
       languages: ['Langue Sacrée'],
       tags: ['spiritual', 'disciplined', 'ascetic', 'contemplative']
     },
@@ -224,11 +212,7 @@ export const EDUCATIONS: LifeChoice[] = [
         { itemId: 'training_sword', quantity: 1, reason: 'Arme d\'entraînement' },
         { itemId: 'military_insignia', quantity: 1, reason: 'Insigne de promotion' }
       ],
-      skills: [
-        { skillId: 'athletics', bonus: 2, reason: 'Entraînement physique intensif' },
-        { skillId: 'intimidation', bonus: 1, reason: 'Voix de commandement' },
-        { skillId: 'tactics', bonus: 2, reason: 'Études stratégiques' }
-      ],
+      skills: [{ skillId: 'athletics', bonus: 2, reason: 'Entraînement physique intensif' }],
       languages: ['Code militaire'],
       tags: ['military', 'disciplined', 'tactical', 'martial']
     },
@@ -285,10 +269,7 @@ export const EDUCATIONS: LifeChoice[] = [
       ],
       reputation: [],
       items: [],
-      skills: [
-        { skillId: 'survival', bonus: 2, reason: 'Apprentissage pratique' },
-        { skillId: 'animal_handling', bonus: 1, reason: 'Communication non-verbale' }
-      ],
+      skills: [{ skillId: 'survival', bonus: 2, reason: 'Apprentissage pratique' }],
       languages: [],
       tags: ['illiterate', 'practical', 'instinctive', 'disadvantaged']
     },

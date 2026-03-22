@@ -24,10 +24,7 @@ export const TRAININGS: LifeChoice[] = [
       ],
       reputation: [{ factionId: 'guerriers', delta: 5, reason: 'Diplômé académie' }],
       items: [{ itemId: 'quality_sword', quantity: 1, reason: 'Arme de graduation' }],
-      skills: [
-        { skillId: 'athletics', bonus: 2, reason: 'Condition physique extrême' },
-        { skillId: 'intimidation', bonus: 1, reason: 'Présence martiale' }
-      ],
+      skills: [{ skillId: 'athletics', bonus: 2, reason: 'Condition physique extrême' }],
       languages: [],
       tags: ['warrior', 'disciplined', 'combat', 'martial']
     },
@@ -57,10 +54,7 @@ export const TRAININGS: LifeChoice[] = [
       ],
       reputation: [{ factionId: 'mages', delta: 6, reason: 'Diplôme académique' }],
       items: [{ itemId: 'spellbook_advanced', quantity: 1, reason: 'Grimoire personnel' }],
-      skills: [
-        { skillId: 'arcana', bonus: 3, reason: 'Études intensives' },
-        { skillId: 'history', bonus: 1, reason: 'Histoire de la magie' }
-      ],
+      skills: [{ skillId: 'arcana', bonus: 3, reason: 'Études intensives' }],
       languages: ['Langue Arcanique'],
       tags: ['mage', 'scholar', 'arcane', 'intellectual']
     },
@@ -90,10 +84,7 @@ export const TRAININGS: LifeChoice[] = [
       ],
       reputation: [{ factionId: 'guilde_voleurs', delta: 7, reason: 'Membre initié' }],
       items: [{ itemId: 'shadow_blade', quantity: 1, reason: 'Dague consacrée' }],
-      skills: [
-        { skillId: 'stealth', bonus: 3, reason: 'Entraînement intensif' },
-        { skillId: 'sleight_of_hand', bonus: 2, reason: 'Pickpocket maître' }
-      ],
+      skills: [{ skillId: 'stealth', bonus: 3, reason: 'Entraînement intensif' }],
       languages: ['Cant des Voleurs'],
       tags: ['rogue', 'stealthy', 'criminal', 'deadly']
     },

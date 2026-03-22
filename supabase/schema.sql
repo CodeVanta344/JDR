@@ -53,6 +53,38 @@ create table assets (
   type text -- character, location, item
 );
 
+-- 6. BUG REPORTS (Debug Reports from Players)
+create table bug_reports (
+  id uuid default gen_random_uuid() primary key,
+  session_id uuid references sessions(id) on delete set null,
+  player_id uuid,
+  player_name text,
+  description text not null,
+  screenshots text[] default '{}',
+  logs jsonb default '[]',
+  user_agent text,
+  url text,
+  timestamp timestamptz default timezone('utc'::text, now()),
+  status text default 'open' check (status in ('open', 'in_progress', 'resolved', 'closed')),
+  notes text,
+  resolved_at timestamptz,
+  created_at timestamptz default timezone('utc'::text, now()),
+  updated_at timestamptz default timezone('utc'::text, now())
+);
+
+-- Indexes for bug_reports
+create index idx_bug_reports_session on bug_reports(session_id);
+create index idx_bug_reports_status on bug_reports(status);
+create index idx_bug_reports_timestamp on bug_reports(timestamp desc);
+
+-- RLS for bug_reports
+alter table bug_reports enable row level security;
+create policy "Allow anonymous bug report submission" on bug_reports for insert with check (true);
+create policy "Players can view own reports" on bug_reports for select using (player_id = auth.uid());
+
+-- Enable realtime for bug_reports
+alter publication supabase_realtime add table bug_reports;
+
 -- RLS POLICIES (Simplified for dev)
 alter table profiles enable row level security;
 alter table sessions enable row level security;

@@ -20,14 +20,14 @@ export const SceneBackground = ({ currentImage }) => {
                 // but lacks the full URL, we should treat it carefully.
                 // However, there's a logic in App.jsx that might pass just the filename.
                 // Assuming everything should eventually be a valid URL:
-                nextImage = rawImage.replace(/ /g, '_');
+                nextImage = encodeURI(rawImage.replace(/ /g, '_'));
             } else if (!rawImage.startsWith('http') && !rawImage.startsWith('data:')) {
                 // Handle cases where only filename is passed
                 const supabaseBase = 'https://okanuafsmkuzyuyqibpu.supabase.co/storage/v1/object/public/assets/';
-                nextImage = `${supabaseBase}${rawImage.replace(/ /g, '_')}`;
+                nextImage = `${supabaseBase}${encodeURIComponent(rawImage.replace(/ /g, '_'))}`;
             } else {
-                // It's a full URL, just sanitize spaces for browser safety
-                nextImage = rawImage.replace(/ /g, '_');
+                // It's a full URL, just sanitize spaces for browser safety and encode properly
+                nextImage = encodeURI(rawImage.replace(/ /g, '_'));
             }
         } else {
             nextImage = rawImage;

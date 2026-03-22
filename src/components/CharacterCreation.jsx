@@ -86,8 +86,6 @@ export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImag
     const [rollingStat, setRollingStat] = useState(null);
     const [portraitUrl, setPortraitUrl] = useState(null);
     const [classPortraits, setClassPortraits] = useState({});
-    const [isMuted, setIsMuted] = useState(false);
-    const [needsAudioGesture, setNeedsAudioGesture] = useState(false);
     const audioRef = useRef(null);
 
     // Callback for real-time lifepath stats
@@ -121,63 +119,6 @@ export function CharacterCreation({ onCreate, onBack, onQuickStart, generateImag
             setSelectedAbilityNames([]);
         }
     }, [selectedClass]);
-
-    // Music effect: Play character creation theme
-    useEffect(() => {
-        const audio = new Audio('/Music/Creation de personnages/Wii Sports Theme (Medieval Cover).mp3');
-        audio.loop = true;
-        audio.volume = 0.3; // Volume à 30%
-        audioRef.current = audio;
-
-        if (!isMuted) {
-            const playPromise = audio.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(() => {
-                    // Browser blocked autoplay: wait for first user interaction.
-                    setNeedsAudioGesture(true);
-                });
-            }
-        }
-
-        return () => {
-            audio.pause();
-            audio.currentTime = 0;
-            audioRef.current = null;
-        };
-    }, []);
-
-    // Handle mute state changes
-    useEffect(() => {
-        if (!audioRef.current) return;
-
-        if (isMuted) {
-            audioRef.current.pause();
-        } else {
-            audioRef.current.play().catch(() => {
-                setNeedsAudioGesture(true);
-            });
-        }
-    }, [isMuted]);
-
-    useEffect(() => {
-        if (!needsAudioGesture || isMuted) return;
-
-        const handleFirstInteraction = () => {
-            if (!audioRef.current || isMuted) return;
-
-            audioRef.current.play()
-                .then(() => setNeedsAudioGesture(false))
-                .catch(() => { });
-        };
-
-        window.addEventListener('pointerdown', handleFirstInteraction, { once: true });
-        window.addEventListener('keydown', handleFirstInteraction, { once: true });
-
-        return () => {
-            window.removeEventListener('pointerdown', handleFirstInteraction);
-            window.removeEventListener('keydown', handleFirstInteraction);
-        };
-    }, [needsAudioGesture, isMuted]);
 
     const rollStatPromise = (statKey) => {
         return new Promise((resolve) => {
@@ -354,13 +295,6 @@ ${selectedBackstory ? `## PASSÉ ADULTE: ${selectedBackstory.label}
         <>
             <MagicBackground />
             <div className="creation-container">
-                <button
-                    className="mute-toggle"
-                    onClick={() => setIsMuted(!isMuted)}
-                    title={isMuted ? "Réactiver la musique" : "Couper la musique"}
-                >
-                    {isMuted ? '🔇' : '🔊'}
-                </button>
                 <div className="creation-layout">
                     {/* STEP 1: SÉLECTION DE CLASSE (SPLIT VIEW) */}
                     {step === 1 && (

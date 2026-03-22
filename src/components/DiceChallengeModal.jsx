@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { DieVisual } from './DieVisual';
-import { DiceOverlay } from './Dice3D';
+import { DiceOverlay2D } from './Dice2D';
+import './Dice2D.css';
 
 /**
  * DiceChallengeModal
@@ -42,8 +43,8 @@ export const DiceChallengeModal = ({
     useEffect(() => {
         if (playerStats && stat) {
             const val = playerStats[stat.toLowerCase()] || 10;
-            // D100 Scaling: Stat * 2
-            setModifier(val * 2);
+            // D100 Scaling: Stat value directly (no multiplier)
+            setModifier(val);
         }
     }, [playerStats, stat]);
 
@@ -53,11 +54,20 @@ export const DiceChallengeModal = ({
         setIsRolling(true);
         if (onRollStart) onRollStart();
 
+        const rollValue = Math.floor(Math.random() * parseInt(dieType.substring(1))) + 1;
         setRolls([{
             type: dieType,
-            value: Math.floor(Math.random() * parseInt(dieType.substring(1))) + 1,
+            value: rollValue,
             completed: false
         }]);
+
+        // Auto-finalize after animation delay
+        setTimeout(() => {
+            setTotalNatural(rollValue * multiplier);
+            setIsRolling(false);
+            setRolled(true);
+            setShowOutcome(true);
+        }, 1500);
     };
 
     const finalizeRoll = () => {
@@ -121,25 +131,17 @@ export const DiceChallengeModal = ({
     };
 
     return (
-        <div className="modal-overlay" style={{
+        <div className="modal-overlay" role="dialog" aria-modal="true" style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.5)', // Pure background dimming only
+            background: 'rgba(0,0,0,0.92)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 10000,
             animation: 'fadeIn 0.3s ease'
         }}>
-            {/* Multi-Dice Physics Overlay */}
-            {isRolling ? (
-                <DiceOverlay
-                    diceRolls={rolls}
-                    onAllComplete={() => {
-                        finalizeRoll();
-                    }}
-                />
-            ) : null}
+            {/* Dice overlay removed - using inline dice display only */}
 
             <div className="dice-interface-overlay" style={{
                 position: 'relative',
@@ -182,10 +184,41 @@ export const DiceChallengeModal = ({
                         <button
                             onClick={handleRoll}
                             className="btn-action"
-                            style={{ padding: '1.2rem 4rem', fontSize: '1.4rem', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
+                            style={{ 
+                                padding: '1.2rem 4rem', 
+                                fontSize: '1.4rem', 
+                                boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                                background: 'linear-gradient(135deg, #D4AF37 0%, #FFD700 100%)',
+                                color: '#1a1a1a',
+                                border: 'none',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                fontWeight: 'bold',
+                                display: 'inline-block',
+                                opacity: 1,
+                                visibility: 'visible'
+                            }}
                         >
                             LANCER LES DÉS
                         </button>
+                    )}
+
+                    {isRolling && !showOutcome && rolls.length > 0 && (
+                        <div style={{ 
+                            display: 'flex', 
+                            justifyContent: 'center', 
+                            alignItems: 'center',
+                            padding: '2rem'
+                        }}>
+                            <div className="dice-simple-container crit">
+                                <div className="dice-simple" style={{ width: '100px', height: '100px' }}>
+                                    <span className="dice-simple-value" style={{ fontSize: '3rem' }}>
+                                        {rolls[0]?.value || '?'}
+                                    </span>
+                                </div>
+                                <div className="dice-simple-shadow"></div>
+                            </div>
+                        </div>
                     )}
 
                     {showOutcome && (

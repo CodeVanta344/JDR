@@ -50,12 +50,8 @@
     "src"
   ],
   "exclude": [
-    "src/hooks/useMessages.ts",
-    "src/hooks/useReconnection.ts",
-    "src/components/LazyComponents.tsx",
-    "src/types/index.ts",
-    "src/lore/index.ts",
-    "src/lore/classes.ts"
+    "node_modules",
+    "dist"
   ],
   "references": [
     {

@@ -11,7 +11,7 @@ const CATEGORIES = {
   other: { id: 'other', label: 'Autres', icon: HelpCircle, color: '#888' }
 };
 
-export const InventoryPanel = ({ inventory, onEquipItem, onConsume, onUpdateInventory, onDestroyItem }) => {
+export const InventoryPanel = ({ inventory, onEquipItem, onConsume, onUpdateInventory, onDestroyItem, onShareItem, onTradeClick }) => {
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedItem, setSelectedItem] = useState(null);
   const [confirmDestroy, setConfirmDestroy] = useState(false);
@@ -173,6 +173,24 @@ export const InventoryPanel = ({ inventory, onEquipItem, onConsume, onUpdateInve
     }
     setSelectedItem(null);
     setConfirmDestroy(false);
+  };
+
+  const handleShareItem = (item) => {
+    if (onShareItem) {
+      // Format item data for sharing
+      const itemData = {
+        type: 'item_share',
+        name: item.name,
+        itemType: item.type,
+        rarity: item.rarity,
+        description: item.desc || item.description,
+        stats: item.stats,
+        effects: item.effects,
+        equipped: item.equipped
+      };
+      onShareItem(itemData);
+      setSelectedItem(null);
+    }
   };
 
   return (
@@ -704,6 +722,50 @@ export const InventoryPanel = ({ inventory, onEquipItem, onConsume, onUpdateInve
                   }}
                 >
                   Utiliser
+                </button>
+              )}
+              {/* Bouton Partager */}
+              {onShareItem && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleShareItem(selectedItem.item);
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '0.7rem',
+                    background: 'rgba(155, 89, 182, 0.2)',
+                    border: '1px solid #9b59b6',
+                    color: '#9b59b6',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    fontSize: '0.85rem'
+                  }}
+                >
+                  📤 Partager
+                </button>
+              )}
+              {/* Bouton Échanger */}
+              {onTradeClick && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onTradeClick(selectedItem.item, selectedItem.index);
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '0.7rem',
+                    background: 'rgba(46, 204, 113, 0.2)',
+                    border: '1px solid #2ecc71',
+                    color: '#2ecc71',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    fontSize: '0.85rem'
+                  }}
+                >
+                  🔄 Échanger
                 </button>
               )}
               {/* Bouton Détruire */}

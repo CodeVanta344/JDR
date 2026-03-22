@@ -78,6 +78,20 @@ export interface Ability {
     canTargetSelf?: boolean;
     /** Effet visuel associé */
     vfx?: string;
+    /** Type de dégâts (physical, fire, cold, arcane, divine, etc.) */
+    damageType?: string;
+    /** Si true, nécessite concentration (CON save si dégâts reçus) */
+    concentration?: boolean;
+    /** Zone d'effet */
+    aoe?: { shape: 'circle' | 'cone' | 'line' | 'square'; radius?: number; length?: number; width?: number };
+    /** Effet de statut appliqué à la cible */
+    statusEffect?: { type: string; duration: number; saveStat?: string; saveDC?: number };
+    /** Dés de dégâts spécifiques (override progression) */
+    damage_dice?: string;
+    /** Bonus de dégâts fixe */
+    damage_bonus?: number;
+    /** Si true, c'est une réaction (opportunity attack, counterspell, etc.) */
+    isReaction?: boolean;
 }
 
 export interface SubclassDetails {
@@ -170,9 +184,9 @@ export const CLASSES: Record<string, Class> = {
             }
         ],
         initial_ability_options: [
-            { name: "Frappe Puissante", cost: 15, cooldown: 2, level: 1, dice: "1d10", scaling: "str", type: "Physique", actionType: "Action", flavor: "Un coup d'une brutalité sauvage, capable d'écraser les os et de traverser le cuir le plus épais.", desc: "Ignore 2 points d'armure de la cible.", vfx: "slash_red", target: "enemy" },
-            { name: "Heurt de Bouclier", cost: 10, cooldown: 3, level: 1, dice: "1d4", scaling: "str", type: "Physique", actionType: "Action", flavor: "Vous utilisez votre bouclier non pas pour parer, mais comme un marteau de fer pour sonner l'adversaire.", desc: "Chance d'étourdir la cible pendant 1 tour.", vfx: "impact_white", target: "enemy" },
-            { name: "Posture Défensive", cost: 5, cooldown: 4, level: 1, type: "Posture", actionType: "Action Bonus", flavor: "Vous ancrez vos pieds dans le sol et serrez les dents, vous préparant à l'inévitable déferlement de coups.", desc: "Réduit les dégâts subis de 3 pendant 1 tour.", vfx: "shield_glow", target: "self" }
+            { name: "Frappe Puissante", cost: 15, cooldown: 2, level: 1, dice: "1d10", scaling: "str", type: "Physique", actionType: "Action", flavor: "Un coup d'une brutalité sauvage, capable d'écraser les os et de traverser le cuir le plus épais.", desc: "Ignore 2 points d'armure de la cible.", vfx: "slash_red", target: "enemy", damageType: "physical", damage_dice: "1d10", damage_bonus: 2 },
+            { name: "Heurt de Bouclier", cost: 10, cooldown: 3, level: 1, dice: "1d4", scaling: "str", type: "Physique", actionType: "Action", flavor: "Vous utilisez votre bouclier non pas pour parer, mais comme un marteau de fer pour sonner l'adversaire.", desc: "Chance d'étourdir la cible pendant 1 tour.", vfx: "impact_white", target: "enemy", damageType: "bludgeoning", damage_dice: "1d4", statusEffect: { type: "stunned", duration: 1, saveStat: "con", saveDC: 40 } },
+            { name: "Posture Défensive", cost: 5, cooldown: 4, level: 1, type: "Posture", actionType: "Action Bonus", flavor: "Vous ancrez vos pieds dans le sol et serrez les dents, vous préparant à l'inévitable déferlement de coups.", desc: "Réduit les dégâts subis de 3 pendant 1 tour.", vfx: "shield_glow", target: "self", statusEffect: { type: "shielded", duration: 1 } }
         ],
         subclasses: {
             "juggernaut": { label: "Juggernaut", desc: "Une muraille vivante.", details: { style: "Défenseur", feature: "Forteresse Vivante : Réduit tous les dégâts subis de 50%, mais votre vitesse tombe à 0 pour ce tour." } },
@@ -181,21 +195,21 @@ export const CLASSES: Record<string, Class> = {
         },
         abilities: [],
         unlockables: [
-            { name: "Second Souffle", cost: 0, cooldown: 5, level: 2, dice: "1d10", scaling: "level", desc: "Récupère 1d10 + Niveau PV (Action Bonus)." },
-            { name: "Provocation", cost: 10, cooldown: 3, level: 3, range: 2, desc: "Force les ennemis à 2 cases à vous attaquer." },
+            { name: "Second Souffle", cost: 0, cooldown: 5, level: 2, dice: "1d10", scaling: "level", desc: "Récupère 1d10 + Niveau PV (Action Bonus).", target: "self", heal: "1d10" },
+            { name: "Provocation", cost: 10, cooldown: 3, level: 3, range: 2, desc: "Force les ennemis à 2 cases à vous attaquer.", target: "enemy", aoe: { shape: "circle", radius: 2 }, statusEffect: { type: "charmed", duration: 1, saveStat: "wis", saveDC: 45 } },
             { name: "Critique Amélioré", cost: 0, cooldown: 0, level: 4, desc: "Vos coups critiques se déclenchent sur 19-20 (Passif)." },
             { name: "Attaque Supplémentaire", cost: 0, cooldown: 0, level: 5, desc: "Vous pouvez attaquer deux fois par action (Passif)." },
-            { name: "Brise-Genoux", cost: 20, cooldown: 4, level: 6, scaling: "str", desc: "Inflige des dégâts normaux et réduit la vitesse de la cible à 0." },
-            { name: "Défense Absolue", cost: 30, cooldown: 6, level: 7, desc: "Réaction : Annule une attaque qui vous toucherait." },
-            { name: "Cri de Guerre", cost: 40, cooldown: 8, level: 8, range: 4, desc: "Tous les alliés à 4 cases gagnent Avantage et +10 PV temp." },
+            { name: "Brise-Genoux", cost: 20, cooldown: 4, level: 6, scaling: "str", desc: "Inflige des dégâts normaux et réduit la vitesse de la cible à 0.", target: "enemy", damageType: "bludgeoning", damage_dice: "2d8", statusEffect: { type: "slowed", duration: 2 } },
+            { name: "Défense Absolue", cost: 30, cooldown: 6, level: 7, desc: "Réaction : Annule une attaque qui vous toucherait.", target: "self", isReaction: true },
+            { name: "Cri de Guerre", cost: 40, cooldown: 8, level: 8, range: 4, desc: "Tous les alliés à 4 cases gagnent Avantage et +10 PV temp.", target: "ally", aoe: { shape: "circle", radius: 4 }, statusEffect: { type: "strengthened", duration: 3 } },
             { name: "Indomptable", cost: 0, cooldown: 0, level: 9, desc: "Si vous tombez à 0 PV, vous remontez à 1 PV (1/Long Repos)." },
-            { name: "Avatar de la Guerre", cost: 100, cooldown: 20, level: 10, desc: "ULTIME : Pendant 3 tours, vous êtes invulnérable aux dégâts non-magiques et infligez double dégâts." },
+            { name: "Avatar de la Guerre", cost: 100, cooldown: 20, level: 10, desc: "ULTIME : Pendant 3 tours, vous êtes invulnérable aux dégâts non-magiques et infligez double dégâts.", target: "self", statusEffect: { type: "shielded", duration: 3 } },
             { name: "Maîtrise du Recul", cost: 0, cooldown: 0, level: 12, desc: "Chaque fois que vous touchez, vous pouvez repousser la cible de 1 case (Passif)." },
-            { name: "Frappe Sismique", cost: 50, cooldown: 5, level: 15, dice: "5d10", scaling: "str", range: 3, desc: "Frappe le sol, infligeant des dégâts de zone et mettant à terre les ennemis à 3 cases." },
+            { name: "Frappe Sismique", cost: 50, cooldown: 5, level: 15, dice: "5d10", scaling: "str", range: 3, desc: "Frappe le sol, infligeant des dégâts de zone et mettant à terre les ennemis à 3 cases.", target: "area", damageType: "physical", damage_dice: "5d10", aoe: { shape: "circle", radius: 3 }, statusEffect: { type: "prone", duration: 1, saveStat: "dex", saveDC: 50 } },
             { name: "Sang de Titan", cost: 0, cooldown: 0, level: 18, desc: "Votre maximum de PV augmente de 20% (Passif)." },
-            { name: "LÉGENDAIRE : Brise-Âme", cost: 75, cooldown: 10, level: 20, dice: "10d10", scaling: "str", desc: "Une attaque qui ignore l'armure et réduit les stats de la cible de moitié pendant 2 tours." },
+            { name: "LÉGENDAIRE : Brise-Âme", cost: 75, cooldown: 10, level: 20, dice: "10d10", scaling: "str", desc: "Une attaque qui ignore l'armure et réduit les stats de la cible de moitié pendant 2 tours.", target: "enemy", damageType: "physical", damage_dice: "10d10" },
             { name: "Résilience Éternelle", cost: 0, cooldown: 0, level: 25, desc: "Immunité aux effets de peur, de charme et de paralysie (Passif)." },
-            { name: "ASCENSION : Dieu du Champ de Bataille", cost: 150, cooldown: 50, level: 30, desc: "Pendant 5 tours, vous devenez gigantesque. Vos attaques frappent tous les ennemis dans un rayon de 5 cases et vous ne pouvez pas tomber en dessous de 1 PV." }
+            { name: "ASCENSION : Dieu du Champ de Bataille", cost: 150, cooldown: 50, level: 30, desc: "Pendant 5 tours, vous devenez gigantesque. Vos attaques frappent tous les ennemis dans un rayon de 5 cases et vous ne pouvez pas tomber en dessous de 1 PV.", target: "self", aoe: { shape: "circle", radius: 5 } }
         ],
         portrait: "/portraits/guerrier.png"
     },
@@ -230,9 +244,9 @@ export const CLASSES: Record<string, Class> = {
             }
         ],
         initial_ability_options: [
-            { name: "Trait Arcanique", cost: 8, cooldown: 0, level: 1, dice: "1d10", scaling: "int", range: 10, type: "Arcane", actionType: "Action", flavor: "Un dard de lumière azurée, crépitant d'énergie instable, s'élance de vos doigts vers le cœur de l'ennemi.", desc: "Projectile magique à longue portée.", vfx: "magic_bolt_blue", target: "enemy" },
-            { name: "Onde de Choc", cost: 15, cooldown: 2, level: 1, dice: "2d6", scaling: "int", range: 3, type: "Élémentaire", actionType: "Action", flavor: "Vous frappez l'air de vos paumes, créant une distorsion violente qui balaie tout sur son passage.", desc: "Repousse les ennemis proches de 2 cases.", vfx: "shockwave_purple", target: "area" },
-            { name: "Bouclier de Mana", cost: 5, cooldown: 3, level: 1, type: "Abjuration", actionType: "Réaction", flavor: "Au moment de l'impact, une membrane de géométrie éthérée se matérialise pour absorber le choc.", desc: "Consomme 1 MP pour chaque point de dégât absorbé.", vfx: "mana_shield", target: "self" }
+            { name: "Trait Arcanique", cost: 8, cooldown: 0, level: 1, dice: "1d10", scaling: "int", range: 10, type: "Arcane", actionType: "Action", flavor: "Un dard de lumière azurée, crépitant d'énergie instable, s'élance de vos doigts vers le cœur de l'ennemi.", desc: "Projectile magique à longue portée.", vfx: "magic_bolt_blue", target: "enemy", damageType: "arcane", damage_dice: "1d10" },
+            { name: "Onde de Choc", cost: 15, cooldown: 2, level: 1, dice: "2d6", scaling: "int", range: 3, type: "Élémentaire", actionType: "Action", flavor: "Vous frappez l'air de vos paumes, créant une distorsion violente qui balaie tout sur son passage.", desc: "Repousse les ennemis proches de 2 cases.", vfx: "shockwave_purple", target: "area", damageType: "arcane", damage_dice: "2d6", aoe: { shape: "circle", radius: 3 } },
+            { name: "Bouclier de Mana", cost: 5, cooldown: 3, level: 1, type: "Abjuration", actionType: "Réaction", flavor: "Au moment de l'impact, une membrane de géométrie éthérée se matérialise pour absorber le choc.", desc: "Consomme 1 MP pour chaque point de dégât absorbé.", vfx: "mana_shield", target: "self", isReaction: true, statusEffect: { type: "shielded", duration: 1 } }
         ],
         subclasses: {
             "elementaliste": { label: "Élémentaliste", desc: "Maître des éléments.", details: { style: "Artillerie", feature: "Maîtrise Élémentaire : Vos sorts percent les défenses et ignorent la résistance élémentaire de la cible." } },
@@ -241,19 +255,19 @@ export const CLASSES: Record<string, Class> = {
         },
         abilities: [],
         unlockables: [
-            { name: "Bouclier de Mana", cost: 15, cooldown: 3, level: 2, desc: "Absorbe les dégâts en échange de stabilité." },
-            { name: "Nova", cost: 30, cooldown: 5, level: 3, dice: "3d6", scaling: "int", range: 2, desc: "Explosion de zone autour du mage (Rayon : 2 cases)." },
-            { name: "Méditation", cost: 0, cooldown: 10, level: 4, resource: 50, desc: "Régénère 50 Mana hors combat (Canalisé)." },
-            { name: "Boule de Feu", cost: 40, cooldown: 4, level: 5, dice: "8d6", scaling: "int", range: 8, desc: "Dégâts de feu dans une zone de 2 cases (Portée : 8 cases)." },
-            { name: "Hâte", cost: 30, cooldown: 6, level: 6, range: 4, desc: "Double la vitesse et +2 CA pour un allié à 4 cases." },
-            { name: "Contresort", cost: 20, cooldown: 2, level: 7, range: 6, desc: "Réaction : Annule un sort adverse à 6 cases." },
-            { name: "Métamorphose", cost: 50, cooldown: 8, level: 8, range: 6, desc: "Transforme une cible à 6 cases en mouton." },
-            { name: "Désintégration", cost: 60, cooldown: 5, level: 9, dice: "10d6+40", scaling: "int", range: 7, desc: "Gros dégâts de force (Portée : 7 cases)." },
-            { name: "Arrêt du Temps", cost: 100, cooldown: 30, level: 10, desc: "ULTIME : Vous jouez 3 tours de suite sans interruption." },
+            { name: "Bouclier de Mana", cost: 15, cooldown: 3, level: 2, desc: "Absorbe les dégâts en échange de stabilité.", target: "self", isReaction: true, statusEffect: { type: "shielded", duration: 1 } },
+            { name: "Nova", cost: 30, cooldown: 5, level: 3, dice: "3d6", scaling: "int", range: 2, desc: "Explosion de zone autour du mage (Rayon : 2 cases).", target: "area", damageType: "arcane", damage_dice: "3d6", aoe: { shape: "circle", radius: 2 } },
+            { name: "Méditation", cost: 0, cooldown: 10, level: 4, resource: 50, desc: "Régénère 50 Mana hors combat (Canalisé).", target: "self", concentration: true },
+            { name: "Boule de Feu", cost: 40, cooldown: 4, level: 5, dice: "8d6", scaling: "int", range: 8, desc: "Dégâts de feu dans une zone de 2 cases (Portée : 8 cases).", target: "area", damageType: "fire", damage_dice: "8d6", aoe: { shape: "circle", radius: 2 } },
+            { name: "Hâte", cost: 30, cooldown: 6, level: 6, range: 4, desc: "Double la vitesse et +2 CA pour un allié à 4 cases.", target: "ally", concentration: true, statusEffect: { type: "strengthened", duration: 10, saveStat: "con", saveDC: 0 } },
+            { name: "Contresort", cost: 20, cooldown: 2, level: 7, range: 6, desc: "Réaction : Annule un sort adverse à 6 cases.", target: "enemy", isReaction: true },
+            { name: "Métamorphose", cost: 50, cooldown: 8, level: 8, range: 6, desc: "Transforme une cible à 6 cases en mouton.", target: "enemy", damageType: "arcane", concentration: true, statusEffect: { type: "charmed", duration: 10, saveStat: "wis", saveDC: 50 } },
+            { name: "Désintégration", cost: 60, cooldown: 5, level: 9, dice: "10d6+40", scaling: "int", range: 7, desc: "Gros dégâts de force (Portée : 7 cases).", target: "enemy", damageType: "arcane", damage_dice: "10d6+40" },
+            { name: "Arrêt du Temps", cost: 100, cooldown: 30, level: 10, desc: "ULTIME : Vous jouez 3 tours de suite sans interruption.", target: "self", statusEffect: { type: "strengthened", duration: 3 } },
             { name: "Esprit de Cristal", cost: 0, cooldown: 0, level: 15, desc: "Votre intelligence augmente de façon permanente et vous régénérez 5 Mana par tour (Passif)." },
-            { name: "LÉGENDAIRE : Singularité", cost: 80, cooldown: 10, level: 20, dice: "20d6", scaling: "int", range: 10, desc: "Crée un trou noir qui aspire et désintègre les ennemis dans un rayon de 4 cases." },
-            { name: "Morsure de l'Abysse", cost: 50, cooldown: 5, level: 25, dice: "12d8", scaling: "int", range: 8, desc: "Draine la force vitale d'une cible et vous soigne de la moitié des dégâts." },
-            { name: "ASCENSION : Entité Purement Arcanique", cost: 200, cooldown: 60, level: 30, desc: "Pendant 3 tours, vous n'avez plus de coûts de Mana, vos sorts n'ont plus de cooldown, et vous êtes immunisé à tous les dégâts magiques." }
+            { name: "LÉGENDAIRE : Singularité", cost: 80, cooldown: 10, level: 20, dice: "20d6", scaling: "int", range: 10, desc: "Crée un trou noir qui aspire et désintègre les ennemis dans un rayon de 4 cases.", target: "area", damageType: "arcane", damage_dice: "20d6", aoe: { shape: "circle", radius: 4 } },
+            { name: "Morsure de l'Abysse", cost: 50, cooldown: 5, level: 25, dice: "12d8", scaling: "int", range: 8, desc: "Draine la force vitale d'une cible et vous soigne de la moitié des dégâts.", target: "enemy", damageType: "arcane", damage_dice: "12d8", heal: "6d8" },
+            { name: "ASCENSION : Entité Purement Arcanique", cost: 200, cooldown: 60, level: 30, desc: "Pendant 3 tours, vous n'avez plus de coûts de Mana, vos sorts n'ont plus de cooldown, et vous êtes immunisé à tous les dégâts magiques.", target: "self", statusEffect: { type: "shielded", duration: 3 } }
         ],
         portrait: "/portraits/mage.png"
     },
@@ -289,9 +303,9 @@ export const CLASSES: Record<string, Class> = {
             }
         ],
         initial_ability_options: [
-            { name: "Attaque Sournoise", cost: 12, cooldown: 0, level: 1, dice: "1d6", scaling: "dex", type: "Précision", actionType: "Passif", flavor: "Vous profitez de la moindre seconde d'inattention pour loger votre lame entre deux vertèbres.", desc: "Ajoute +1d6 dégâts si vous avez l'avantage.", vfx: "slash_purple", target: "enemy" },
-            { name: "Disparition", cost: 15, cooldown: 4, level: 1, type: "Ombre", actionType: "Action Bonus", flavor: "Un mouvement fluide dans les angles morts, une ombre qui se fond dans les ténèbres... et vous n'êtes plus là.", desc: "Entrez en état d'invisibilité.", vfx: "smoke_puff", target: "self" },
-            { name: "Lancer de Dague", cost: 5, cooldown: 0, level: 1, dice: "1d4", scaling: "dex", range: 8, type: "Physique", actionType: "Action", flavor: "Une lueur argentée, le sifflement du vent, et l'acier trouve sa cible avant même qu'elle n'ait pu crier.", desc: "Attaque rapide à distance.", vfx: "dagger_throw", target: "enemy" }
+            { name: "Attaque Sournoise", cost: 12, cooldown: 0, level: 1, dice: "1d6", scaling: "dex", type: "Précision", actionType: "Passif", flavor: "Vous profitez de la moindre seconde d'inattention pour loger votre lame entre deux vertèbres.", desc: "Ajoute +1d6 dégâts si vous avez l'avantage.", vfx: "slash_purple", target: "enemy", damageType: "piercing", damage_dice: "1d6" },
+            { name: "Disparition", cost: 15, cooldown: 4, level: 1, type: "Ombre", actionType: "Action Bonus", flavor: "Un mouvement fluide dans les angles morts, une ombre qui se fond dans les ténèbres... et vous n'êtes plus là.", desc: "Entrez en état d'invisibilité.", vfx: "smoke_puff", target: "self", statusEffect: { type: "invisible", duration: 1 } },
+            { name: "Lancer de Dague", cost: 5, cooldown: 0, level: 1, dice: "1d4", scaling: "dex", range: 8, type: "Physique", actionType: "Action", flavor: "Une lueur argentée, le sifflement du vent, et l'acier trouve sa cible avant même qu'elle n'ait pu crier.", desc: "Attaque rapide à distance.", vfx: "dagger_throw", target: "enemy", damageType: "piercing", damage_dice: "1d4" }
         ],
         subclasses: {
             "assassin": { label: "Assassin", desc: "Tueur silencieux.", details: { style: "Burst", feature: "Marque de Mort : Toute attaque portée contre une créature surprise est automatiquement un coup critique." } },
@@ -300,19 +314,19 @@ export const CLASSES: Record<string, Class> = {
         },
         abilities: [],
         unlockables: [
-            { name: "Disparition", cost: 15, cooldown: 4, level: 2, desc: "Action bonus pour se cacher en plein combat." },
-            { name: "Esquive Étrange", cost: 20, cooldown: 3, level: 3, desc: "Réduit de moitié les dégâts d'une attaque perçue." },
+            { name: "Disparition", cost: 15, cooldown: 4, level: 2, desc: "Action bonus pour se cacher en plein combat.", target: "self", statusEffect: { type: "invisible", duration: 1 } },
+            { name: "Esquive Étrange", cost: 20, cooldown: 3, level: 3, desc: "Réduit de moitié les dégâts d'une attaque perçue.", target: "self", isReaction: true },
             { name: "Expertise", cost: 0, cooldown: 0, level: 4, desc: "+2 à tous les jets de compétences (Passif)." },
-            { name: "Coup Bas", cost: 15, cooldown: 2, level: 5, range: 1, desc: "Aveugle l'ennemi adjacent (1 case) pour 1 tour." },
-            { name: "Pas de l'Ombre", cost: 25, cooldown: 3, level: 6, range: 6, desc: "Téléportation de 6 cases d'une ombre à l'autre." },
-            { name: "Poison Mortel", cost: 20, cooldown: 4, level: 7, dice: "2d6", scaling: "dex", desc: "Applique un poison au contact." },
-            { name: "Assassinat", cost: 50, cooldown: 5, level: 8, dice: "x3", scaling: "dex", desc: "Attaque qui inflige x3 dégâts si caché." },
-            { name: "Réflexes Éclairs", cost: 40, cooldown: 10, level: 9, desc: "Vous jouez deux tours complets au premier round." },
-            { name: "Ombre Dansante", cost: 80, cooldown: 15, level: 10, desc: "ULTIME : Invincible et invisible pendant 2 tours tout en attaquant." },
+            { name: "Coup Bas", cost: 15, cooldown: 2, level: 5, range: 1, desc: "Aveugle l'ennemi adjacent (1 case) pour 1 tour.", target: "enemy", damageType: "physical", statusEffect: { type: "blinded", duration: 1, saveStat: "con", saveDC: 40 } },
+            { name: "Pas de l'Ombre", cost: 25, cooldown: 3, level: 6, range: 6, desc: "Téléportation de 6 cases d'une ombre à l'autre.", target: "self" },
+            { name: "Poison Mortel", cost: 20, cooldown: 4, level: 7, dice: "2d6", scaling: "dex", desc: "Applique un poison au contact.", target: "enemy", damageType: "physical", damage_dice: "2d6", statusEffect: { type: "poisoned", duration: 3, saveStat: "con", saveDC: 45 } },
+            { name: "Assassinat", cost: 50, cooldown: 5, level: 8, dice: "x3", scaling: "dex", desc: "Attaque qui inflige x3 dégâts si caché.", target: "enemy", damageType: "piercing" },
+            { name: "Réflexes Éclairs", cost: 40, cooldown: 10, level: 9, desc: "Vous jouez deux tours complets au premier round.", target: "self", statusEffect: { type: "strengthened", duration: 1 } },
+            { name: "Ombre Dansante", cost: 80, cooldown: 15, level: 10, desc: "ULTIME : Invincible et invisible pendant 2 tours tout en attaquant.", target: "self", statusEffect: { type: "invisible", duration: 2 } },
             { name: "Manteau de l'Abysse", cost: 0, cooldown: 0, level: 15, desc: "Vous êtes considéré comme caché tant que vous ne portez pas d'attaque (Passif)." },
-            { name: "LÉGENDAIRE : Danse des Lames", cost: 100, cooldown: 12, level: 20, dice: "1d8", scaling: "dex", desc: "Vous effectuez une attaque contre chaque ennemi dans un rayon de 10 cases." },
+            { name: "LÉGENDAIRE : Danse des Lames", cost: 100, cooldown: 12, level: 20, dice: "1d8", scaling: "dex", desc: "Vous effectuez une attaque contre chaque ennemi dans un rayon de 10 cases.", target: "area", damageType: "piercing", damage_dice: "1d8", aoe: { shape: "circle", radius: 10 } },
             { name: "Cœur de Néant", cost: 0, cooldown: 0, level: 25, desc: "Vos attaques ignorent toute forme de résistance physique (Passif)." },
-            { name: "ASCENSION : Fantôme d'Aethelgard", cost: 150, cooldown: 60, level: 30, desc: "Vous devenez éthéré. Vous pouvez traverser les murs, vos attaques sont des critiques automatiques, et personne ne peut vous cibler pendant 5 tours." }
+            { name: "ASCENSION : Fantôme d'Aethelgard", cost: 150, cooldown: 60, level: 30, desc: "Vous devenez éthéré. Vous pouvez traverser les murs, vos attaques sont des critiques automatiques, et personne ne peut vous cibler pendant 5 tours.", target: "self", statusEffect: { type: "shielded", duration: 5 } }
         ],
         portrait: "/portraits/voleur.png"
     },
@@ -348,9 +362,9 @@ export const CLASSES: Record<string, Class> = {
             }
         ],
         initial_ability_options: [
-            { name: "Mot de Guérison", cost: 15, cooldown: 2, level: 1, dice: "1d4", scaling: "wis", range: 6, type: "Lumière", actionType: "Action Bonus", flavor: "Une simple syllabe du Crystal Céleste suffit à refermer les plaies et à redonner espoir aux cœurs vaillants.", desc: "Soin rapide à distance.", vfx: "heal_gold", target: "ally", canTargetSelf: true },
-            { name: "Flamme Sacrée", cost: 10, cooldown: 0, level: 1, dice: "1d8", scaling: "wis", range: 8, type: "Radieux", actionType: "Action", flavor: "Une colonne de feu blanc descend des cieux pour purifier ceux qui s'opposent à la volonté divine.", desc: "La cible ne bénéficie d'aucun bonus de couvert.", vfx: "holy_fire", target: "enemy" },
-            { name: "Bénédiction", cost: 20, cooldown: 4, level: 1, range: 4, type: "Bénédiction", actionType: "Action", flavor: "Vous tracez un symbole sacré dans l'air, insufflant une fraction de la puissance du Crystal en vos alliés.", desc: "Donne +1d4 aux jets d'attaque de 3 alliés.", vfx: "bless_glow", target: "ally", canTargetSelf: true }
+            { name: "Mot de Guérison", cost: 15, cooldown: 2, level: 1, dice: "1d4", scaling: "wis", range: 6, type: "Lumière", actionType: "Action Bonus", flavor: "Une simple syllabe du Crystal Céleste suffit à refermer les plaies et à redonner espoir aux cœurs vaillants.", desc: "Soin rapide à distance.", vfx: "heal_gold", target: "ally", canTargetSelf: true, damageType: "divine", heal: "1d4" },
+            { name: "Flamme Sacrée", cost: 10, cooldown: 0, level: 1, dice: "1d8", scaling: "wis", range: 8, type: "Radieux", actionType: "Action", flavor: "Une colonne de feu blanc descend des cieux pour purifier ceux qui s'opposent à la volonté divine.", desc: "La cible ne bénéficie d'aucun bonus de couvert.", vfx: "holy_fire", target: "enemy", damageType: "radiant", damage_dice: "1d8" },
+            { name: "Bénédiction", cost: 20, cooldown: 4, level: 1, range: 4, type: "Bénédiction", actionType: "Action", flavor: "Vous tracez un symbole sacré dans l'air, insufflant une fraction de la puissance du Crystal en vos alliés.", desc: "Donne +1d4 aux jets d'attaque de 3 alliés.", vfx: "bless_glow", target: "ally", canTargetSelf: true, damageType: "divine", concentration: true, statusEffect: { type: "strengthened", duration: 10, saveStat: "wis", saveDC: 0 } }
         ],
         subclasses: {
             "guerre": { label: "Domaine de Guerre", desc: "Combattant divin.", details: { style: "Offensif", feature: "Frappe Divine : Vos attaques d'armes infligent 1d8 dégâts radiants bonus." } },
@@ -359,19 +373,19 @@ export const CLASSES: Record<string, Class> = {
         },
         abilities: [],
         unlockables: [
-            { name: "Rayon Traceur", cost: 20, cooldown: 3, level: 2, dice: "4d6", scaling: "wis", range: 9, desc: "Dégâts radiants puissants (Portée : 9 cases)." },
-            { name: "Esprit Gardien", cost: 40, cooldown: 5, level: 3, dice: "3d8", scaling: "wis", range: 2, desc: "Aura de dégâts autour du clerc." },
-            { name: "Restauration", cost: 30, cooldown: 0, level: 4, range: 1, desc: "Dissipe les maladies et altérations." },
-            { name: "Colonne de Feu", cost: 45, cooldown: 4, level: 5, dice: "8d6", scaling: "wis", range: 8, desc: "Dégâts de feu et radiants dans une zone." },
-            { name: "Sanctuaire", cost: 25, cooldown: 6, level: 6, range: 4, desc: "Protège un allié contre les attaques." },
-            { name: "Mot de Rappel", cost: 60, cooldown: 10, level: 7, desc: "Téléporte le groupe en lieu sûr." },
-            { name: "Guérison de Masse", cost: 80, cooldown: 8, level: 8, dice: "10d8", scaling: "wis", range: 6, desc: "Soigne tous les alliés à 6 cases." },
-            { name: "Résurrection", cost: 100, cooldown: 0, level: 9, desc: "Ramène un allié à la vie." },
-            { name: "Intervention Divine", cost: 100, cooldown: 50, level: 10, desc: "ULTIME : Votre Dieu intervient directement (Effet aléatoire majeur)." },
+            { name: "Rayon Traceur", cost: 20, cooldown: 3, level: 2, dice: "4d6", scaling: "wis", range: 9, desc: "Dégâts radiants puissants (Portée : 9 cases).", target: "enemy", damageType: "radiant", damage_dice: "4d6" },
+            { name: "Esprit Gardien", cost: 40, cooldown: 5, level: 3, dice: "3d8", scaling: "wis", range: 2, desc: "Aura de dégâts autour du clerc.", target: "self", damageType: "radiant", damage_dice: "3d8", concentration: true, aoe: { shape: "circle", radius: 2 } },
+            { name: "Restauration", cost: 30, cooldown: 0, level: 4, range: 1, desc: "Dissipe les maladies et altérations.", target: "ally", canTargetSelf: true },
+            { name: "Colonne de Feu", cost: 45, cooldown: 4, level: 5, dice: "8d6", scaling: "wis", range: 8, desc: "Dégâts de feu et radiants dans une zone.", target: "area", damageType: "radiant", damage_dice: "8d6", aoe: { shape: "circle", radius: 2 } },
+            { name: "Sanctuaire", cost: 25, cooldown: 6, level: 6, range: 4, desc: "Protège un allié contre les attaques.", target: "ally", damageType: "divine", concentration: true, statusEffect: { type: "shielded", duration: 10, saveStat: "wis", saveDC: 45 } },
+            { name: "Mot de Rappel", cost: 60, cooldown: 10, level: 7, desc: "Téléporte le groupe en lieu sûr.", target: "ally" },
+            { name: "Guérison de Masse", cost: 80, cooldown: 8, level: 8, dice: "10d8", scaling: "wis", range: 6, desc: "Soigne tous les alliés à 6 cases.", target: "area", damageType: "divine", heal: "10d8", aoe: { shape: "circle", radius: 6 } },
+            { name: "Résurrection", cost: 100, cooldown: 0, level: 9, desc: "Ramène un allié à la vie.", target: "ally" },
+            { name: "Intervention Divine", cost: 100, cooldown: 50, level: 10, desc: "ULTIME : Votre Dieu intervient directement (Effet aléatoire majeur).", target: "self" },
             { name: "Saint-Suaire", cost: 0, cooldown: 0, level: 15, desc: "Immunité aux dégâts nécrotiques et résistance au poison (Passif)." },
-            { name: "LÉGENDAIRE : Jugement Dernier", cost: 120, cooldown: 15, level: 20, dice: "15d10", scaling: "wis", range: 12, desc: "Un pilier de lumière s'abat, vaporisant les morts-vivants et soignant les alliés." },
+            { name: "LÉGENDAIRE : Jugement Dernier", cost: 120, cooldown: 15, level: 20, dice: "15d10", scaling: "wis", range: 12, desc: "Un pilier de lumière s'abat, vaporisant les morts-vivants et soignant les alliés.", target: "area", damageType: "radiant", damage_dice: "15d10", heal: "15d10", aoe: { shape: "circle", radius: 12 } },
             { name: "Mains de Solarius", cost: 0, cooldown: 0, level: 25, desc: "Vos sorts de soin restaurent également 10 points de ressource à la cible (Passif)." },
-            { name: "ASCENSION : Messager du Voile", cost: 200, cooldown: 72, level: 30, desc: "Pendant 5 tours, vous êtes invulnérable, vos soins n'ont plus de portée, et chaque attaque adverse contre vous déclenche un contre-châtiment." }
+            { name: "ASCENSION : Messager du Voile", cost: 200, cooldown: 72, level: 30, desc: "Pendant 5 tours, vous êtes invulnérable, vos soins n'ont plus de portée, et chaque attaque adverse contre vous déclenche un contre-châtiment.", target: "self", statusEffect: { type: "shielded", duration: 5 } }
         ],
         portrait: "/portraits/clerc.png"
     },
@@ -407,9 +421,9 @@ export const CLASSES: Record<string, Class> = {
             }
         ],
         initial_ability_options: [
-            { name: "Imposition des Mains", cost: 10, cooldown: 3, level: 1, heal: "10", scaling: "cha", type: "Sacré", actionType: "Action", flavor: "Votre foi est si pure qu'un seul toucher peut chasser les ombres et restaurer la vitalité d'un corps brisé.", desc: "Rend 5 PV par point de Charisme.", vfx: "heal_white", target: "ally", canTargetSelf: true },
-            { name: "Châtiment Divin", cost: 25, cooldown: 0, level: 1, dice: "2d8", scaling: "cha", type: "Châtiment", actionType: "Passif", flavor: "Le Crystal guide votre lame, l'enveloppant d'une fureur sacrée qui réduit le mal en cendres.", desc: "Invoquez le châtiment pour +2d8 dégâts radiants.", vfx: "smite_yellow", target: "enemy" },
-            { name: "Bouclier de Foi", cost: 15, cooldown: 4, level: 1, type: "Abjuration", actionType: "Action Bonus", flavor: "Une aura dorée vous enveloppe, tel un rempart invisible érigé par les mains de Solarius lui-même.", desc: "Augmente la CA d'un allié de 2.", vfx: "shield_glow_gold", target: "ally", canTargetSelf: true }
+            { name: "Imposition des Mains", cost: 10, cooldown: 3, level: 1, heal: "10", scaling: "cha", type: "Sacré", actionType: "Action", flavor: "Votre foi est si pure qu'un seul toucher peut chasser les ombres et restaurer la vitalité d'un corps brisé.", desc: "Rend 5 PV par point de Charisme.", vfx: "heal_white", target: "ally", canTargetSelf: true, damageType: "divine" },
+            { name: "Châtiment Divin", cost: 25, cooldown: 0, level: 1, dice: "2d8", scaling: "cha", type: "Châtiment", actionType: "Passif", flavor: "Le Crystal guide votre lame, l'enveloppant d'une fureur sacrée qui réduit le mal en cendres.", desc: "Invoquez le châtiment pour +2d8 dégâts radiants.", vfx: "smite_yellow", target: "enemy", damageType: "radiant", damage_dice: "2d8" },
+            { name: "Bouclier de Foi", cost: 15, cooldown: 4, level: 1, type: "Abjuration", actionType: "Action Bonus", flavor: "Une aura dorée vous enveloppe, tel un rempart invisible érigé par les mains de Solarius lui-même.", desc: "Augmente la CA d'un allié de 2.", vfx: "shield_glow_gold", target: "ally", canTargetSelf: true, damageType: "divine", concentration: true, statusEffect: { type: "shielded", duration: 10 } }
         ],
         subclasses: {
             "vengeance": { label: "Serment de Vengeance", desc: "Juge impitoyable.", details: { style: "Traqueur", feature: "Vœu d'Inimitié : Désignez une cible comme ennemi juré pour avoir l'Avantage sur toutes vos attaques contre elle." } },
@@ -418,18 +432,18 @@ export const CLASSES: Record<string, Class> = {
         },
         abilities: [],
         unlockables: [
-            { name: "Sens Divin", cost: 5, cooldown: 0, level: 3, range: 6, desc: "Détecte les entités à 6 cases." },
+            { name: "Sens Divin", cost: 5, cooldown: 0, level: 3, range: 6, desc: "Détecte les entités à 6 cases.", target: "self", aoe: { shape: "circle", radius: 6 } },
             { name: "Aura de Protection", cost: 0, cooldown: 0, level: 4, range: 2, desc: "Les alliés à 2 cases gagnent votre bonus CHA aux JS (Passif)." },
-            { name: "Compagnon Fidèle", cost: 30, cooldown: 20, level: 5, desc: "Invoque un destrier céleste." },
-            { name: "Cercle de Vérité", cost: 25, cooldown: 5, level: 6, range: 3, desc: "Empêche les mensonges à 3 cases." },
-            { name: "Bannissement", cost: 40, cooldown: 4, level: 7, range: 6, desc: "Bannit une créature à 6 cases." },
+            { name: "Compagnon Fidèle", cost: 30, cooldown: 20, level: 5, desc: "Invoque un destrier céleste.", target: "self", concentration: true },
+            { name: "Cercle de Vérité", cost: 25, cooldown: 5, level: 6, range: 3, desc: "Empêche les mensonges à 3 cases.", target: "area", concentration: true, aoe: { shape: "circle", radius: 3 } },
+            { name: "Bannissement", cost: 40, cooldown: 4, level: 7, range: 6, desc: "Bannit une créature à 6 cases.", target: "enemy", damageType: "divine", concentration: true, statusEffect: { type: "stunned", duration: 10, saveStat: "cha", saveDC: 50 } },
             { name: "Aura de Courage", cost: 0, cooldown: 0, level: 8, range: 2, desc: "Immunise les alliés à 2 cases à la peur (Passif)." },
-            { name: "Croisé", cost: 50, cooldown: 10, level: 9, scaling: "cha", desc: "Gagne un bonus CA et dégâts pendant 1 minute." },
-            { name: "Ange Vengeur", cost: 100, cooldown: 30, level: 10, desc: "ULTIME : Transformation divine temporaire." },
+            { name: "Croisé", cost: 50, cooldown: 10, level: 9, scaling: "cha", desc: "Gagne un bonus CA et dégâts pendant 1 minute.", target: "self", damageType: "radiant", concentration: true, statusEffect: { type: "strengthened", duration: 10 } },
+            { name: "Ange Vengeur", cost: 100, cooldown: 30, level: 10, desc: "ULTIME : Transformation divine temporaire.", target: "self", damageType: "radiant", statusEffect: { type: "strengthened", duration: 3 } },
             { name: "Aura de Sainteté", cost: 0, cooldown: 0, level: 15, range: 10, desc: "Toutes les créatures hostiles dans un rayon de 10 cases subissent un désavantage sur leurs jets d'attaque contre vous (Passif)." },
-            { name: "LÉGENDAIRE : Condamnation Éternelle", cost: 80, cooldown: 12, level: 20, dice: "8d8", scaling: "cha", desc: "Votre prochaine attaque réussie scelle la cible dans une prison de lumière, l'immobilisant totalement et lui infligeant des dégâts radiants chaque tour." },
+            { name: "LÉGENDAIRE : Condamnation Éternelle", cost: 80, cooldown: 12, level: 20, dice: "8d8", scaling: "cha", desc: "Votre prochaine attaque réussie scelle la cible dans une prison de lumière, l'immobilisant totalement et lui infligeant des dégâts radiants chaque tour.", target: "enemy", damageType: "radiant", damage_dice: "8d8", statusEffect: { type: "stunned", duration: 3, saveStat: "cha", saveDC: 55 } },
             { name: "Sang des Sept Heros", cost: 0, cooldown: 0, level: 25, desc: "Vous récupérez 10% de vos PV max à chaque début de tour tant que vous combattez (Passif)." },
-            { name: "ASCENSION : Avatar de Solarius", cost: 180, cooldown: 60, level: 30, desc: "Vous devenez littéralement le bras du dieu soleil. Vos attaques vaporisent les cibles de bas niveau, votre aura inflige 50 dégâts radiants par tour et vous soignez tous les alliés de 100 PV au lancement." }
+            { name: "ASCENSION : Avatar de Solarius", cost: 180, cooldown: 60, level: 30, desc: "Vous devenez littéralement le bras du dieu soleil. Vos attaques vaporisent les cibles de bas niveau, votre aura inflige 50 dégâts radiants par tour et vous soignez tous les alliés de 100 PV au lancement.", target: "self", damageType: "radiant", heal: "100", aoe: { shape: "circle", radius: 10 }, statusEffect: { type: "strengthened", duration: 5 } }
         ],
         portrait: "/portraits/paladin.png"
     },
@@ -465,9 +479,9 @@ export const CLASSES: Record<string, Class> = {
             }
         ],
         initial_ability_options: [
-            { name: "Marque du Chasseur", cost: 15, cooldown: 3, level: 1, dice: "1d6", scaling: "dex", range: 7, type: "Traque", actionType: "Action Bonus", flavor: "Votre regard se fixe sur le point faible de votre proie. Aucun mouvement ne peut vous échapper dorénavant.", desc: "Ajoute +1d6 dégâts à toutes vos attaques sur la cible.", vfx: "mark_green" },
-            { name: "Tir Précis", cost: 10, cooldown: 0, level: 1, dice: "1d8", scaling: "dex", range: 10, type: "Précision", actionType: "Action", flavor: "Vous retenez votre souffle pendant que le monde s'efface, ne laissant que vous et le cœur de votre ennemi.", desc: "Ignore les bonus de couverture de la cible.", vfx: "arrow_yellow" },
-            { name: "Sens de la Bête", cost: 5, cooldown: 4, level: 1, type: "Primal", actionType: "Action", flavor: "Vous laissez vos sens s'évader au-delà de l'humain, ressentant chaque vibration du sol et chaque frémissement du vent.", desc: "+3 à la Perception et à l'Initiative.", vfx: "animal_eye" }
+            { name: "Marque du Chasseur", cost: 15, cooldown: 3, level: 1, dice: "1d6", scaling: "dex", range: 7, type: "Traque", actionType: "Action Bonus", flavor: "Votre regard se fixe sur le point faible de votre proie. Aucun mouvement ne peut vous échapper dorénavant.", desc: "Ajoute +1d6 dégâts à toutes vos attaques sur la cible.", vfx: "mark_green", target: "enemy", damageType: "physical", damage_dice: "1d6", concentration: true },
+            { name: "Tir Précis", cost: 10, cooldown: 0, level: 1, dice: "1d8", scaling: "dex", range: 10, type: "Précision", actionType: "Action", flavor: "Vous retenez votre souffle pendant que le monde s'efface, ne laissant que vous et le cœur de votre ennemi.", desc: "Ignore les bonus de couverture de la cible.", vfx: "arrow_yellow", target: "enemy", damageType: "piercing", damage_dice: "1d8" },
+            { name: "Sens de la Bête", cost: 5, cooldown: 4, level: 1, type: "Primal", actionType: "Action", flavor: "Vous laissez vos sens s'évader au-delà de l'humain, ressentant chaque vibration du sol et chaque frémissement du vent.", desc: "+3 à la Perception et à l'Initiative.", vfx: "animal_eye", target: "self", statusEffect: { type: "strengthened", duration: 10 } }
         ],
         subclasses: {
             "betes": { label: "Maître des Bêtes", desc: "Compagnon animal.", details: { style: "Duo", feature: "Attaque Coordonnée : Vous gagnez un bonus aux dégâts si votre compagnon animal est adjacent à votre cible." } },
@@ -476,18 +490,18 @@ export const CLASSES: Record<string, Class> = {
         },
         abilities: [],
         unlockables: [
-            { name: "Soins Naturels", cost: 15, cooldown: 3, level: 3, heal: "1d8", scaling: "wis", range: 2, desc: "Soigne un allié à 2 cases d'1d8 + Sagesse.", friendly: true },
+            { name: "Soins Naturels", cost: 15, cooldown: 3, level: 3, heal: "1d8", scaling: "wis", range: 2, desc: "Soigne un allié à 2 cases d'1d8 + Sagesse.", friendly: true, target: "ally", canTargetSelf: true, damageType: "nature" },
             { name: "Passif Terrain", cost: 0, cooldown: 0, level: 4, desc: "Ignore les terrains difficiles (Passif)." },
-            { name: "Tir de Barrage", cost: 30, cooldown: 3, level: 5, dice: "2d8", scaling: "dex", range: 4, desc: "Tire sur toutes les cibles dans un cône de 4 cases." },
-            { name: "Camouflage", cost: 20, cooldown: 4, level: 6, desc: "+10 Discrétion si immobile." },
-            { name: "Piège à Ours", cost: 15, cooldown: 5, level: 7, dice: "4d6", range: 1, desc: "Place un piège sur une case adjacente." },
-            { name: "Volée", cost: 40, cooldown: 5, level: 8, dice: "3d8", scaling: "dex", range: 9, desc: "Pluie de flèches (Zone : 2 cases, Portée : 9 cases)." },
-            { name: "Sens Sauvage", cost: 10, cooldown: 0, level: 9, range: 4, desc: "Détecte les invisibles à 4 cases." },
-            { name: "Maître de la Traque", cost: 80, cooldown: 20, level: 10, desc: "ULTIME : Vos attaques ne peuvent pas manquer cette cible." },
+            { name: "Tir de Barrage", cost: 30, cooldown: 3, level: 5, dice: "2d8", scaling: "dex", range: 4, desc: "Tire sur toutes les cibles dans un cône de 4 cases.", target: "area", damageType: "piercing", damage_dice: "2d8", aoe: { shape: "cone", length: 4 } },
+            { name: "Camouflage", cost: 20, cooldown: 4, level: 6, desc: "+10 Discrétion si immobile.", target: "self", statusEffect: { type: "invisible", duration: 10 } },
+            { name: "Piège à Ours", cost: 15, cooldown: 5, level: 7, dice: "4d6", range: 1, desc: "Place un piège sur une case adjacente.", target: "area", damageType: "physical", damage_dice: "4d6", statusEffect: { type: "stunned", duration: 1, saveStat: "dex", saveDC: 45 } },
+            { name: "Volée", cost: 40, cooldown: 5, level: 8, dice: "3d8", scaling: "dex", range: 9, desc: "Pluie de flèches (Zone : 2 cases, Portée : 9 cases).", target: "area", damageType: "piercing", damage_dice: "3d8", aoe: { shape: "circle", radius: 2 } },
+            { name: "Sens Sauvage", cost: 10, cooldown: 0, level: 9, range: 4, desc: "Détecte les invisibles à 4 cases.", target: "self", aoe: { shape: "circle", radius: 4 } },
+            { name: "Maître de la Traque", cost: 80, cooldown: 20, level: 10, desc: "ULTIME : Vos attaques ne peuvent pas manquer cette cible.", target: "enemy", concentration: true, statusEffect: { type: "strengthened", duration: 10 } },
             { name: "Lien de la Forêt", cost: 0, cooldown: 0, level: 15, desc: "Vous pouvez communiquer avec les animaux et les plantes sur n'importe quel sujet lié à la région actuelle (Passif)." },
-            { name: "LÉGENDAIRE : Flèche de l'Atlas", cost: 90, cooldown: 10, level: 20, dice: "12d10", scaling: "dex", range: 50, desc: "Un tir à très longue distance (50 cases) qui traverse la matière et les protections magiques." },
+            { name: "LÉGENDAIRE : Flèche de l'Atlas", cost: 90, cooldown: 10, level: 20, dice: "12d10", scaling: "dex", range: 50, desc: "Un tir à très longue distance (50 cases) qui traverse la matière et les protections magiques.", target: "enemy", damageType: "piercing", damage_dice: "12d10" },
             { name: "Esclavage de la Bête", cost: 0, cooldown: 0, level: 25, desc: "Toute créature de type 'Beast' ne peut pas vous attaquer à moins que vous ne l'attaquiez en premier (Passif)." },
-            { name: "ASCENSION : Esprit de la Sylve d'Émeraude", cost: 160, cooldown: 60, level: 30, desc: "Vous devenez corps et âme avec la nature. Pendant 5 tours, vous pouvez vous téléporter instantanément sur n'importe quelle case du terrain, vos flèches invoquent des lianes immobilisantes et vous regagnez 20 PV par tour." }
+            { name: "ASCENSION : Esprit de la Sylve d'Émeraude", cost: 160, cooldown: 60, level: 30, desc: "Vous devenez corps et âme avec la nature. Pendant 5 tours, vous pouvez vous téléporter instantanément sur n'importe quelle case du terrain, vos flèches invoquent des lianes immobilisantes et vous regagnez 20 PV par tour.", target: "self", damageType: "nature", heal: "20", statusEffect: { type: "strengthened", duration: 5 } }
         ],
         portrait: "/portraits/rodeur.png"
     },
@@ -523,9 +537,9 @@ export const CLASSES: Record<string, Class> = {
             }
         ],
         initial_ability_options: [
-            { name: "Inspiration Bardique", cost: 10, cooldown: 2, level: 1, type: "Soutien", actionType: "Action Bonus", flavor: "Une mélodie épique qui ravive la flamme dans le cœur de vos compagnons et les pousse au-delà de leurs limites.", desc: "Donne un bonus de +1d6 au prochain jet d'un allié.", vfx: "note_gold", friendly: true },
-            { name: "Mot de Guérison", cost: 15, cooldown: 2, level: 1, dice: "1d4", scaling: "cha", range: 6, type: "Sonore", actionType: "Action Bonus", flavor: "Un chant doux et apaisant qui calme les douleurs les plus vives et redonne la force de se battre.", desc: "Soin rapide par le chant.", vfx: "heal_pink", friendly: true },
-            { name: "Moquerie Vicieuse", cost: 8, cooldown: 0, level: 1, dice: "1d4", scaling: "cha", range: 8, type: "Psychique", actionType: "Action", flavor: "Une insulte si cinglante qu'elle s'enracine dans l'esprit de l'adversaire, le faisant douter de ses propres forces.", desc: "La cible a un désavantage sur son prochain jet d'attaque.", vfx: "mock_purple" }
+            { name: "Inspiration Bardique", cost: 10, cooldown: 2, level: 1, type: "Soutien", actionType: "Action Bonus", flavor: "Une mélodie épique qui ravive la flamme dans le cœur de vos compagnons et les pousse au-delà de leurs limites.", desc: "Donne un bonus de +1d6 au prochain jet d'un allié.", vfx: "note_gold", friendly: true, target: "ally", damageType: "psychic", statusEffect: { type: "strengthened", duration: 1 } },
+            { name: "Mot de Guérison", cost: 15, cooldown: 2, level: 1, dice: "1d4", scaling: "cha", range: 6, type: "Sonore", actionType: "Action Bonus", flavor: "Un chant doux et apaisant qui calme les douleurs les plus vives et redonne la force de se battre.", desc: "Soin rapide par le chant.", vfx: "heal_pink", friendly: true, target: "ally", canTargetSelf: true, damageType: "psychic", heal: "1d4" },
+            { name: "Moquerie Vicieuse", cost: 8, cooldown: 0, level: 1, dice: "1d4", scaling: "cha", range: 8, type: "Psychique", actionType: "Action", flavor: "Une insulte si cinglante qu'elle s'enracine dans l'esprit de l'adversaire, le faisant douter de ses propres forces.", desc: "La cible a un désavantage sur son prochain jet d'attaque.", vfx: "mock_purple", target: "enemy", damageType: "psychic", damage_dice: "1d4", statusEffect: { type: "weakened", duration: 1, saveStat: "wis", saveDC: 40 } }
         ],
         subclasses: {
             "savoir": { label: "Collège du Savoir", desc: "Maître des secrets.", details: { style: "Magie", feature: "Mots Coupants : Utilisez votre réaction pour distraire une cible et réduire son jet d'attaque de 1d6." } },
@@ -536,17 +550,17 @@ export const CLASSES: Record<string, Class> = {
         unlockables: [
             { name: "Chant de Repos", cost: 0, cooldown: 0, level: 2, desc: "Augmente les soins pendant les repos courts (Passif)." },
             { name: "Expertise Bardique", cost: 0, cooldown: 0, level: 3, desc: "+4 à deux compétences de votre choix (Passif)." },
-            { name: "Suggestion", cost: 25, cooldown: 5, level: 4, range: 6, desc: "Force une cible à effectuer une action simple." },
-            { name: "Confusion de Masse", cost: 45, cooldown: 6, level: 5, range: 4, desc: "Plusieurs cibles attaquent au hasard." },
+            { name: "Suggestion", cost: 25, cooldown: 5, level: 4, range: 6, desc: "Force une cible à effectuer une action simple.", target: "enemy", damageType: "psychic", concentration: true, statusEffect: { type: "charmed", duration: 10, saveStat: "wis", saveDC: 45 } },
+            { name: "Confusion de Masse", cost: 45, cooldown: 6, level: 5, range: 4, desc: "Plusieurs cibles attaquent au hasard.", target: "area", damageType: "psychic", concentration: true, aoe: { shape: "circle", radius: 4 }, statusEffect: { type: "charmed", duration: 3, saveStat: "wis", saveDC: 45 } },
             { name: "Secret Arcanique", cost: 0, cooldown: 0, level: 6, desc: "Apprenez deux sorts de n'importe quelle autre classe (Passif)." },
-            { name: "Charme de l'Irrésistible", cost: 30, cooldown: 4, level: 7, desc: "La cible ne peut pas vous attaquer." },
-            { name: "Invisibilité de Groupe", cost: 60, cooldown: 8, level: 8, desc: "Rend tout le groupe invisible pendant 1 minute." },
-            { name: "Mot de Pouvoir : Étourdissement", cost: 70, cooldown: 10, level: 9, range: 8, desc: "Étourdit instantanément une cible." },
-            { name: "Mains de l'Artiste", cost: 40, cooldown: 5, level: 10, desc: "ULTIME : Vous pouvez lancer deux sorts non-concentrés en un seul tour." },
+            { name: "Charme de l'Irrésistible", cost: 30, cooldown: 4, level: 7, desc: "La cible ne peut pas vous attaquer.", target: "enemy", damageType: "psychic", concentration: true, statusEffect: { type: "charmed", duration: 10, saveStat: "wis", saveDC: 50 } },
+            { name: "Invisibilité de Groupe", cost: 60, cooldown: 8, level: 8, desc: "Rend tout le groupe invisible pendant 1 minute.", target: "ally", concentration: true, statusEffect: { type: "invisible", duration: 10 } },
+            { name: "Mot de Pouvoir : Étourdissement", cost: 70, cooldown: 10, level: 9, range: 8, desc: "Étourdit instantanément une cible.", target: "enemy", damageType: "psychic", statusEffect: { type: "stunned", duration: 3, saveStat: "con", saveDC: 55 } },
+            { name: "Mains de l'Artiste", cost: 40, cooldown: 5, level: 10, desc: "ULTIME : Vous pouvez lancer deux sorts non-concentrés en un seul tour.", target: "self", statusEffect: { type: "strengthened", duration: 1 } },
             { name: "Harmonie Absolue", cost: 0, cooldown: 0, level: 15, desc: "Votre bonus de CHA s'ajoute à tous vos jets de sauvegarde (Passif)." },
-            { name: "LÉGENDAIRE : Chant de la Création", cost: 130, cooldown: 20, level: 20, desc: "Vous invoquez un objet ou une créature spectrale géante qui combat à vos côtés pendant 5 tours." },
+            { name: "LÉGENDAIRE : Chant de la Création", cost: 130, cooldown: 20, level: 20, desc: "Vous invoquez un objet ou une créature spectrale géante qui combat à vos côtés pendant 5 tours.", target: "self", concentration: true },
             { name: "Aura d'Euphorie", cost: 0, cooldown: 0, level: 25, desc: "Les alliés à 10 cases ont l'Avantage sur tous leurs jets (Passif)." },
-            { name: "ASCENSION : Voix de l'Univers", cost: 220, cooldown: 60, level: 30, desc: "Votre voix peut remodeler la réalité. Pendant 3 tours, chaque mot que vous prononcez devient un sort de niveau 9 gratuit." }
+            { name: "ASCENSION : Voix de l'Univers", cost: 220, cooldown: 60, level: 30, desc: "Votre voix peut remodeler la réalité. Pendant 3 tours, chaque mot que vous prononcez devient un sort de niveau 9 gratuit.", target: "self", statusEffect: { type: "strengthened", duration: 3 } }
         ],
         portrait: "/portraits/barde.png"
     },
@@ -582,9 +596,9 @@ export const CLASSES: Record<string, Class> = {
             }
         ],
         initial_ability_options: [
-            { name: "Prodige", cost: 5, cooldown: 0, level: 1, dice: "1d10", scaling: "wis", range: 2, type: "Sauvage", actionType: "Action", flavor: "Vous invoquez la sève même des anciens arbres pour durcir vos bras comme du bois de fer.", desc: "Une attaque magique au corps à corps.", vfx: "leaf_green" },
-            { name: "Baies Nourricières", cost: 15, cooldown: 0, level: 1, type: "Nature", actionType: "Action", flavor: "Le sol s'ouvre pour offrir des baies imprégnées de la vitalité de la forêt, capables de régénérer les corps fatigués.", desc: "Crée des baies de survie.", vfx: "berry_red" },
-            { name: "Forme Sauvage (Loup)", cost: 30, cooldown: 5, level: 1, type: "Mutation", actionType: "Action", flavor: "Vos os se brisent et se reforment, votre peau se couvre de poils... vous ne faites plus qu'un avec le prédateur.", desc: "Transformez-vous en loup pour le combat.", vfx: "morph_blue" }
+            { name: "Prodige", cost: 5, cooldown: 0, level: 1, dice: "1d10", scaling: "wis", range: 2, type: "Sauvage", actionType: "Action", flavor: "Vous invoquez la sève même des anciens arbres pour durcir vos bras comme du bois de fer.", desc: "Une attaque magique au corps à corps.", vfx: "leaf_green", target: "enemy", damageType: "nature", damage_dice: "1d10" },
+            { name: "Baies Nourricières", cost: 15, cooldown: 0, level: 1, type: "Nature", actionType: "Action", flavor: "Le sol s'ouvre pour offrir des baies imprégnées de la vitalité de la forêt, capables de régénérer les corps fatigués.", desc: "Crée des baies de survie.", vfx: "berry_red", target: "ally", canTargetSelf: true, damageType: "nature", heal: "1d8", statusEffect: { type: "regenerating", duration: 3 } },
+            { name: "Forme Sauvage (Loup)", cost: 30, cooldown: 5, level: 1, type: "Mutation", actionType: "Action", flavor: "Vos os se brisent et se reforment, votre peau se couvre de poils... vous ne faites plus qu'un avec le prédateur.", desc: "Transformez-vous en loup pour le combat.", vfx: "morph_blue", target: "self", concentration: true, statusEffect: { type: "strengthened", duration: 10 } }
         ],
         subclasses: {
             "terre": { label: "Cercle de la Terre", desc: "Lien profond avec le sol.", details: { style: "Sorts", feature: "Récupération Naturelle : Régénérez du Mana lors d'un court repos." } },
@@ -593,19 +607,19 @@ export const CLASSES: Record<string, Class> = {
         },
         abilities: [],
         unlockables: [
-            { name: "Croissance d'Épines", cost: 25, cooldown: 4, level: 2, range: 6, desc: "Zone de terrain difficile et dégâts." },
-            { name: "Peau d'Écorce", cost: 15, cooldown: 5, level: 3, desc: "Fixe la CA à 16 pendant 1 minute.", friendly: true },
-            { name: "Vague de Soin", cost: 30, cooldown: 4, level: 4, dice: "2d8", scaling: "wis", range: 4, desc: "Soigne en zone (Rayon : 2 cases).", friendly: true },
-            { name: "Appel de la Foudre", cost: 40, cooldown: 2, level: 5, dice: "3d10", scaling: "wis", range: 12, desc: "Frappe de foudre répétable pendant 10 tours." },
-            { name: "Invoquer des Animaux", cost: 50, cooldown: 10, level: 6, desc: "Appelle des esprits fées en forme d'animaux." },
-            { name: "Éclair de Vie", cost: 35, cooldown: 3, level: 7, dice: "5d6", range: 6, desc: "Dégâts de foudre et soin de moitié." },
-            { name: "Guerison par la Terre", cost: 45, cooldown: 5, level: 8, desc: "Soigne et retire tous les poisons." },
-            { name: "Mur de Pierre", cost: 50, cooldown: 8, level: 9, range: 10, desc: "Crée une barrière physique infranchissable." },
-            { name: "Avatar de la Nature", cost: 100, cooldown: 40, level: 10, desc: "ULTIME : Vous devenez un tréant massif pendant 3 tours." },
+            { name: "Croissance d'Épines", cost: 25, cooldown: 4, level: 2, range: 6, desc: "Zone de terrain difficile et dégâts.", target: "area", damageType: "nature", aoe: { shape: "circle", radius: 3 }, concentration: true },
+            { name: "Peau d'Écorce", cost: 15, cooldown: 5, level: 3, desc: "Fixe la CA à 16 pendant 1 minute.", friendly: true, target: "ally", canTargetSelf: true, damageType: "nature", concentration: true, statusEffect: { type: "shielded", duration: 10 } },
+            { name: "Vague de Soin", cost: 30, cooldown: 4, level: 4, dice: "2d8", scaling: "wis", range: 4, desc: "Soigne en zone (Rayon : 2 cases).", friendly: true, target: "area", damageType: "nature", heal: "2d8", aoe: { shape: "circle", radius: 2 } },
+            { name: "Appel de la Foudre", cost: 40, cooldown: 2, level: 5, dice: "3d10", scaling: "wis", range: 12, desc: "Frappe de foudre répétable pendant 10 tours.", target: "enemy", damageType: "lightning", damage_dice: "3d10", concentration: true },
+            { name: "Invoquer des Animaux", cost: 50, cooldown: 10, level: 6, desc: "Appelle des esprits fées en forme d'animaux.", target: "self", concentration: true },
+            { name: "Éclair de Vie", cost: 35, cooldown: 3, level: 7, dice: "5d6", range: 6, desc: "Dégâts de foudre et soin de moitié.", target: "enemy", damageType: "lightning", damage_dice: "5d6", heal: "2d6" },
+            { name: "Guerison par la Terre", cost: 45, cooldown: 5, level: 8, desc: "Soigne et retire tous les poisons.", target: "ally", canTargetSelf: true, damageType: "nature", heal: "4d8" },
+            { name: "Mur de Pierre", cost: 50, cooldown: 8, level: 9, range: 10, desc: "Crée une barrière physique infranchissable.", target: "area", concentration: true, aoe: { shape: "line", length: 10, width: 1 } },
+            { name: "Avatar de la Nature", cost: 100, cooldown: 40, level: 10, desc: "ULTIME : Vous devenez un tréant massif pendant 3 tours.", target: "self", concentration: true, statusEffect: { type: "strengthened", duration: 3 } },
             { name: "Sang de Gaïa", cost: 0, cooldown: 0, level: 15, desc: "Régénère 5 PV par tour en extérieur (Passif)." },
-            { name: "LÉGENDAIRE : Tempête de la Création", cost: 150, cooldown: 30, level: 20, dice: "20d10", scaling: "wis", range: 20, desc: "Une tempête déchaînée qui soigne les alliés et foudroie les ennemis pendant 3 tours." },
+            { name: "LÉGENDAIRE : Tempête de la Création", cost: 150, cooldown: 30, level: 20, dice: "20d10", scaling: "wis", range: 20, desc: "Une tempête déchaînée qui soigne les alliés et foudroie les ennemis pendant 3 tours.", target: "area", damageType: "lightning", damage_dice: "20d10", heal: "10d10", concentration: true, aoe: { shape: "circle", radius: 20 } },
             { name: "Esprit de la Forêt", cost: 0, cooldown: 0, level: 25, desc: "Toute la flore du terrain combat pour vous (Passif)." },
-            { name: "ASCENSION : Gaïa Incarnée", cost: 250, cooldown: 90, level: 30, desc: "Tant que vous êtes sur le terrain, celui-ci obéit à votre volonté. Vous pouvez faire surgir des montagnes, assécher des lacs ou créer des forêts en un instant. Tous les ennemis subissent un désavantage permanent." }
+            { name: "ASCENSION : Gaïa Incarnée", cost: 250, cooldown: 90, level: 30, desc: "Tant que vous êtes sur le terrain, celui-ci obéit à votre volonté. Vous pouvez faire surgir des montagnes, assécher des lacs ou créer des forêts en un instant. Tous les ennemis subissent un désavantage permanent.", target: "self", statusEffect: { type: "strengthened", duration: 5 } }
         ],
         portrait: "/portraits/druide.png"
     }

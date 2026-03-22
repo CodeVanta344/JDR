@@ -21,26 +21,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { charisma: 2, intelligence: 2 },  // Ancien: CHA+1 INT+1
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Enfant de la Capitale',
           desc: '+5 Persuasion et +5 Knowledge (Histoire/Politique) avec citadins/nobles, +1d20 jets diplomatiques contextes officiels',
           effect: '+5 Persuasion, +5 Knowledge',  // ×2.5
           game_effect: 'Bonus social/académique massif en milieu urbain + expertise protocole'
-        },
-        {
-          name: 'Éducation Académique Supérieure',
-          desc: 'Alphabétisation précoce, accès bibliothèques royales, +3 Investigation (archives), connaissance protocoles diplomatiques',
-          effect: '+3 Investigation',
-          game_effect: 'Recherche documentaire avancée + culture générale étendue'
-        },
-        {
-          name: 'Réseau Cosmopolite',
-          desc: 'Contacts initiaux dans 5 factions majeures (Conseil, Guildes, Académies, Temples, Garde Royale), réduction 15% prix biens luxe',
-          effect: 'Réseau social étendu',
-          game_effect: 'Avantage quêtes urbaines + commerce privilégié'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'conseil_royaumes', delta: 8, reason: 'Natif capitale, loyauté présumée' },
         { factionId: 'guildes_marchandes', delta: 5, reason: 'Familier affaires commerciales centre névralgique' },
@@ -52,12 +38,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'fine_quill_set', quantity: 1, reason: 'Set calligraphie qualité (cadeau académie)' },
         { itemId: 'city_map_detailed', quantity: 1, reason: 'Plan détaillé 7 collines Aethelmere (quartiers secrets)' }
       ],
-      skills: [
-        { skillId: 'persuasion', bonus: 5, reason: 'Élevé parmi diplomates, marchands, courtisans intrigants' },  // ×2.5
-        { skillId: 'knowledge_history', bonus: 5, reason: 'Accès bibliothèques royales, tuteurs privés érudits' },  // ×2.5
-        { skillId: 'knowledge_politics', bonus: 5, reason: 'Observation quotidienne négociations Conseil Royaumes' },
-        { skillId: 'investigation', bonus: 3, reason: 'Formation recherche archives académiques' }
-      ],
+      skills: [{ skillId: 'persuasion', bonus: 5, reason: 'Élevé parmi diplomates, marchands, courtisans intrigants' }],
       gold: 500,  // Ancien: implicite → +500 PO (famille classe moyenne aisée capitale)
       languages: ['Commun', 'Langue du Conseil (diplomatique)', 'Latin Académique'],  // +2 langues
       tags: ['urban', 'civilized', 'political', 'cosmopolitan', 'educated', 'capital']
@@ -92,26 +73,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { dexterity: 2, wisdom: 2 },  // Ancien: DEX+1 PER+1 → DEX+2 WIS+2
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Pied Marin Aguerri',
           desc: 'Immunité mal de mer, +5 Acrobatie sur navires/cordages, avantage jets équilibre surface mouvante, nage +50% vitesse',
           effect: '+5 Acrobatics (maritime)',  // ×2.5
           game_effect: 'Maîtrise environnement maritime complet + mobilité aquatique'
-        },
-        {
-          name: 'Flair Commercial Portuaire',
-          desc: '+1d20 évaluer valeur marchandises exotiques, -20% prix marché noir portuaire, détection contrefaçons/contrebande',
-          effect: '+1d20 Appraisal',
-          game_effect: 'Bonus d100 commerce maritime + instinct fraude'
-        },
-        {
-          name: 'Contacts Docks',
-          desc: 'Réseau initial contrebandiers/marins, +3 Investigation (trafics maritimes), accès informations navires arrivées/départs',
-          effect: '+3 Investigation (maritime)',
-          game_effect: 'Intelligence réseau portuaire + quêtes navales'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'guildes_marchandes', delta: 6, reason: 'Natif port commercial majeur, connaissance affaires' },
         { factionId: 'pirates_cote_tempetes', delta: 3, reason: 'Connaissance milieu, respect neutre' },
@@ -124,12 +91,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'sailors_rope_knot_kit', quantity: 1, reason: 'Kit nœuds marins (12 types essentiels survie)' },
         { itemId: 'exotic_shell_necklace', quantity: 1, reason: 'Collier coquillages rares (porte-bonheur marin)' }
       ],
-      skills: [
-        { skillId: 'navigation', bonus: 5, reason: 'Enfance passée docks, observation marins expérimentés' },  // ×2.5
-        { skillId: 'sleight_of_hand', bonus: 3, reason: 'Fréquentation contrebandiers, pickpockets portuaires' },  // ×2.5
-        { skillId: 'perception', bonus: 5, reason: 'Vigilance dangers portuaires (pirates, noyades, arnaques)' },
-        { skillId: 'swimming', bonus: 5, reason: 'Natation quotidienne eaux portuaires depuis enfance' }
-      ],
+      skills: [{ skillId: 'navigation', bonus: 5, reason: 'Enfance passée docks, observation marins expérimentés' }],
       gold: 400,  // Ancien: implicite → +400 PO (famille marchande modeste)
       languages: ['Commun', 'Argot des Docks', 'Pidgin Maritime (commercial)'],  // +2 langues
       tags: ['coastal', 'maritime', 'trade', 'adventure', 'smuggler', 'sailor']
@@ -164,26 +126,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { strength: 2, constitution: 2 },  // Ancien: STR+1 CON+1
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Né dans le Froid Glacial',
           desc: 'Résistance complète froid naturel, +5 Survival (montagne/arctique), ignore 2 niveaux épuisement environnements glacés',
           effect: '+5 Survival (cold)',  // ×2.5
           game_effect: 'Immunité froid + endurance arctique extrême'
-        },
-        {
-          name: 'Sang Nordique Vigoureux',
-          desc: '+10 HP maximum, +3 Intimidation (présence imposante), avantage jets Constitution résister alcool/poisons',
-          effect: '+10 HP, +3 Intimidation',
-          game_effect: 'Vitalité accrue + aura guerrière naturelle'
-        },
-        {
-          name: 'Formation Forgeron Précoce',
-          desc: '+1d20 réparer équipement métallique terrain, connaissance qualité armes/armures (détection failles), maîtrise outils forgeron',
-          effect: '+1d20 Repair (metal)',
-          game_effect: 'Bonus d100 maintenance équipement + expertise métallurgique'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'clans_nordiques', delta: 10, reason: 'Natif Monts Givrés, frère de sang' },
         { factionId: 'guilde_forgerons', delta: 5, reason: 'Connaissance métallurgique traditionnelle nordique' },
@@ -196,12 +144,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'mead_horn_carved', quantity: 1, reason: 'Corne hydromel sculptée (rituels fraternité)' },
         { itemId: 'flint_steel_quality', quantity: 1, reason: 'Briquet silex-acier qualité (survie garantie feu)' }
       ],
-      skills: [
-        { skillId: 'survival', bonus: 5, reason: 'Hivers rigoureux montagne depuis naissance' },  // ×2.5
-        { skillId: 'intimidation', bonus: 3, reason: 'Culture guerrière nordique, éducation martiale' },  // ×2.5
-        { skillId: 'athletics', bonus: 5, reason: 'Escalade montagneuse, natation eaux glacées, course altitude' },
-        { skillId: 'crafting_smith', bonus: 3, reason: 'Apprentissage forgeron familial dès 7 ans' }
-      ],
+      skills: [{ skillId: 'survival', bonus: 5, reason: 'Hivers rigoureux montagne depuis naissance' }],
       gold: 200,  // Ancien: implicite → +200 PO (culture nordique méprise richesse, valorise honneur)
       languages: ['Commun', 'Nordique (Járnmál)', 'Runique Ancien (lecture partielle)'],  // +2 langues
       tags: ['nordic', 'mountain', 'harsh', 'warrior', 'blacksmith', 'cold']
@@ -236,26 +179,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { wisdom: 2, intelligence: 2 },  // Ancien: WIS+1 PER+1 → WIS+2 INT+2
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Gardien Béni de la Sylve',
           desc: '+5 Nature et +5 Arcana (magie nature), communication empathique télépathique avec plantes conscientes, détection perturbations forestières 1km',
           effect: '+5 Nature, +5 Arcana',  // ×2.5
           game_effect: 'Synergie druidique/magique avancée + sens forestier surnaturel'
-        },
-        {
-          name: 'Grâce Elfique Héritée',
-          desc: '+3 Acrobatics (déplacement arboricole), avantage jets Stealth forêts, vision crépusculaire (pénombre = lumière), immunité sommeil magique',
-          effect: '+3 Acrobatics',
-          game_effect: 'Mobilité arboricole + avantages raciaux elfiques partiels'
-        },
-        {
-          name: 'Patience Millénaire Enseignée',
-          desc: '+1d20 résister charme/terreur (sérénité mentale), +5 Insight détecter mensonges (lecture micro-expressions), méditation récupère sorts mineurs',
-          effect: '+1d20 Mental Save, +5 Insight',
-          game_effect: 'Résilience mentale exceptionnelle + empathie profonde'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'elfes_sylvanor', delta: 10, reason: 'Natif Cité-Arbre, enfant béni Sylve' },
         { factionId: 'cercle_druides', delta: 7, reason: 'Éducation sylvestre profonde, initiation mystères' },
@@ -268,12 +197,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'moonstone_pendant', quantity: 1, reason: 'Pendentif pierre lune (lueur douce nuit, cadeau coming-of-age)' },
         { itemId: 'flute_living_wood', quantity: 1, reason: 'Flûte bois vivant (musique apaise animaux sauvages)' }
       ],
-      skills: [
-        { skillId: 'nature', bonus: 5, reason: 'Enfance immersion totale Grande Sylve, enseignements druides' },  // ×2.5
-        { skillId: 'arcana', bonus: 5, reason: 'Exposition quotidienne magie elfique, bibliothèques arcanes' },  // ×2.5
-        { skillId: 'medicine', bonus: 3, reason: 'Connaissance herbes médicinales forestières, remèdes elfiques' },
-        { skillId: 'insight', bonus: 5, reason: 'Méditation contemplative, lecture émotions subtiles' }
-      ],
+      skills: [{ skillId: 'nature', bonus: 5, reason: 'Enfance immersion totale Grande Sylve, enseignements druides' }],
       gold: 300,  // Ancien: implicite → +300 PO (elfes méprisent or, mais artisanat vaut fortune)
       languages: ['Commun', 'Elfique (Sylvan High)', 'Druidique (rituel)', 'Sylvan (fey dialect)'],  // +3 langues
       tags: ['elven', 'forest', 'magical', 'timeless', 'nature', 'fey']
@@ -310,26 +234,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
       // ========== STATS D100 (×2) ==========
       stats: { constitution: 2, strength: 2 },  // Ancien: CON+1 STR+1
       stats_penalty: { charisma: 2 },  // Ancien: DEX-1 → CHA-2 (rude manières souterraines)
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Fils Éternel de la Pierre',
           desc: 'Vision ténèbres complète 25m (darkvision), +5 Perception détecter passages secrets/pièges pierre, sens orientation souterrain infaillible',
           effect: '+5 Perception (underground)',  // ×2.5
           game_effect: 'Maîtrise exploration souterraine totale + sécurité donjons'
-        },
-        {
-          name: 'Maître-Forgeron Héritier',
-          desc: '+5 Crafting (métallurgie/joaillerie), +1d20 évaluer qualité gemmes/métaux, réparations équipement 50% plus rapide',
-          effect: '+5 Crafting, +1d20 Appraisal (gems)',
-          game_effect: 'Expertise artisanale légendaire + commerce gemmes'
-        },
-        {
-          name: 'Endurance Naine Légendaire',
-          desc: '+15 HP maximum, résistance poisons/maladies, ignore 2 niveaux épuisement, avantage jets Constitution marathon',
-          effect: '+15 HP',
-          game_effect: 'Vitalité surhumaine + stamina inépuisable'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'nains_karak_dun', delta: 12, reason: 'Natif citadelle, membre clan respecté' },
         { factionId: 'guilde_forgerons', delta: 8, reason: 'Tradition métallurgique familiale séculaire' },
@@ -342,12 +252,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'smithing_hammer_apprentice', quantity: 1, reason: 'Marteau forgeron apprenti (initiation 10 ans)' },
         { itemId: 'ale_keg_small', quantity: 1, reason: 'Petit fût bière naine traditionnelle (12% alcool)' }
       ],
-      skills: [
-        { skillId: 'mining', bonus: 5, reason: 'Enfance passages souterrains, extraction minerais quotidienne' },  // ×2.5
-        { skillId: 'crafting_smith', bonus: 5, reason: 'Apprentissage forgeron maître depuis 8 ans' },  // ×2.5
-        { skillId: 'stoneworking', bonus: 5, reason: 'Sculpture pierre, architecture monumentale naine' },
-        { skillId: 'perception', bonus: 5, reason: 'Vigilance éboulements, gaz toxiques, créatures ténèbres' }
-      ],
+      skills: [{ skillId: 'mining', bonus: 5, reason: 'Enfance passages souterrains, extraction minerais quotidienne' }],
       gold: 600,  // Ancien: implicite → +600 PO (famille mineurs prospères, gemmes réserves)
       languages: ['Commun', 'Nanique (Khazad)', 'Runique Nain (écriture sacrée)'],  // +2 langues
       tags: ['dwarven', 'underground', 'crafting', 'resilient', 'miner', 'smith']
@@ -383,26 +288,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { constitution: 2, wisdom: 2 },  // Ancien: CON+1 WIL+1
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Sang Paysan Robuste',
           desc: '+5 Survival tous environnements, +5 Medicine (herbes/remèdes traditionnels), résistance maladies communes, ignore 1 niveau épuisement',
           effect: '+5 Survival, +5 Medicine',  // ×2.5
           game_effect: 'Endurance accrue + connaissance nature pratique'
-        },
-        {
-          name: 'Communauté Forgée Épreuves',
-          desc: '+1d20 jets défendre alliés/innocents (rage protectrice), avantage rallier villageois/paysans cause juste',
-          effect: '+1d20 Protect Allies',
-          game_effect: 'Bonus d100 quêtes protectrices + leadership populaire'
-        },
-        {
-          name: 'Débrouillardise Frontière',
-          desc: '+3 Crafting (outils improvisés), réparations basiques sans matériaux, cuisine rations survie immangeables comestibles',
-          effect: '+3 Crafting (improvised)',
-          game_effect: 'Ingéniosité ressources limitées'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'paysans_frontiere', delta: 10, reason: 'Origine commune, solidarité fraternelle' },
         { factionId: 'milice_locale', delta: 5, reason: 'Respect défense communautaire' },
@@ -414,12 +305,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'rope_hemp_sturdy', quantity: 10, reason: 'Corde chanvre robuste (multi-usage ferme)' },
         { itemId: 'rations_dried_peasant', quantity: 5, reason: 'Rations séchées paysannes (viande salée, pain dur)' }
       ],
-      skills: [
-        { skillId: 'survival', bonus: 5, reason: 'Vie rude frontière sauvage depuis naissance' },  // ×2.5
-        { skillId: 'medicine', bonus: 5, reason: 'Remèdes traditionnels herbes, premiers soins urgence' },  // ×2.5
-        { skillId: 'animal_handling', bonus: 3, reason: 'Élevage bétail, chasse gibier forêts' },
-        { skillId: 'athletics', bonus: 3, reason: 'Travaux ferme physiques quotidiens' }
-      ],
+      skills: [{ skillId: 'survival', bonus: 5, reason: 'Vie rude frontière sauvage depuis naissance' }],
       gold: 50,  // Ancien: implicite → +50 PO (pauvreté extrême paysanne)
       languages: ['Commun', 'Dialecte Régional Rural'],  // +1 langue (limité isolement)
       tags: ['rural', 'frontier', 'humble', 'resilient', 'peasant', 'survivor']
@@ -454,26 +340,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { wisdom: 4 },  // Ancien: WIS+2 (méditati intensive)
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Discipline Monastique Transcendante',
           desc: '+3 CA naturelle sans armure (techniques esquive ki), +5 Concentration résister interruptions sorts, avantage jets Initiative (réflexes entraînés)',
           effect: '+3 AC, +5 Concentration',  // ×2.5
           game_effect: 'Défense naturelle surhumaine + focus mental inébranlable'
-        },
-        {
-          name: 'Maîtrise Ki Débutant',
-          desc: '+1d20 jets sauvetage Sagesse/Constitution (discipline intérieure), 1/jour: décharge ki (+10 dégâts attaque mains nues ou saut 6m vertical)',
-          effect: '+1d20 WIS/CON Save, Ki Strike',
-          game_effect: 'Bonus d100 résistance mentale/physique + capacité surnaturelle'
-        },
-        {
-          name: 'Ascèse Illuminée',
-          desc: 'Besoin sommeil réduit 4h/jour, besoin nourriture réduit 50%, immunité peur magique (sérénité), méditation = repos court',
-          effect: 'Reduced Needs',
-          game_effect: 'Autonomie accrue + efficacité récupération'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'ordre_moines', delta: 10, reason: 'Élevé monastère, initié voie illumination' },
         { factionId: 'temples_divers', delta: 5, reason: 'Respect discipline spirituelle universelle' },
@@ -485,12 +357,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'incense_sandalwood', quantity: 10, reason: 'Encens bois santal méditation (facilite transe)' },
         { itemId: 'scroll_wisdom_quote', quantity: 1, reason: 'Parchemin citation sagesse Grand Maître (inspiration)' }
       ],
-      skills: [
-        { skillId: 'insight', bonus: 5, reason: 'Formation contemplative lecture âmes humaines' },  // ×2.5
-        { skillId: 'athletics', bonus: 5, reason: 'Entraînement martial quotidien rigoureux (kata, combat)' },  // ×2.5
-        { skillId: 'acrobatics', bonus: 5, reason: 'Techniques esquive, équilibre, chutes contrôlées' },
-        { skillId: 'medicine', bonus: 3, reason: 'Connaissance pression points, premiers soins ki' }
-      ],
+      skills: [{ skillId: 'insight', bonus: 5, reason: 'Formation contemplative lecture âmes humaines' }],
       gold: 0,  // Ancien: implicite → 0 PO (vœu pauvreté absolue)
       languages: ['Commun', 'Langue Ancienne (textes sacrés)', 'Code Gestuel Monastique'],  // +2 langues
       tags: ['spiritual', 'ascetic', 'disciplined', 'mountain', 'monk', 'martial']
@@ -526,26 +393,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { constitution: 2, charisma: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Enfant du Désert Brûlant',
           desc: 'Résistance complète chaleur naturelle, besoin eau réduit 50%, +5 Survival (désert/aride), ignore 2 niveaux épuisement chaleur',
           effect: '+5 Survival (desert)',
           game_effect: 'Immunité chaleur + endurance désertique extrême'
-        },
-        {
-          name: 'Flair Mercantile Caravanes',
-          desc: '+5 Persuasion (négociation commerciale), +1d20 évaluer valeur marchandises exotiques, connaissance Route Épices (itinéraires secrets)',
-          effect: '+5 Persuasion, +1d20 Appraisal',
-          game_effect: 'Expertise commerce caravanes + géographie désert'
-        },
-        {
-          name: 'Navigation Stellaire Héritée',
-          desc: '+3 Navigation (déserts/nuit), lecture étoiles orientation infaillible, détection tempêtes sable 6h avance',
-          effect: '+3 Navigation (stars)',
-          game_effect: 'Orientation désertique surnaturelle + survie tempêtes'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'marchands_caravanes', delta: 8, reason: 'Natif oasis, connaissance commerciale' },
         { factionId: 'nomades_desert', delta: 6, reason: 'Respect lois hospitalité sacrées' },
@@ -557,12 +410,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'compass_magnetic_bronze', quantity: 1, reason: 'Boussole bronze navigation désert' },
         { itemId: 'spices_rare_pouch', quantity: 1, reason: 'Sacoche épices rares (safran, cardamome, valeur 100 PO)' }
       ],
-      skills: [
-        { skillId: 'survival', bonus: 5, reason: 'Vie désert hostile depuis naissance' },
-        { skillId: 'persuasion', bonus: 5, reason: 'Négociations marchandes quotidiennes caravanes' },
-        { skillId: 'animal_handling', bonus: 3, reason: 'Dressage chameaux, chevaux désert' },
-        { skillId: 'navigation', bonus: 3, reason: 'Lecture étoiles, orientation dunes mouvantes' }
-      ],
+      skills: [{ skillId: 'survival', bonus: 5, reason: 'Vie désert hostile depuis naissance' }],
       gold: 400,
       languages: ['Commun', 'Langue Désertique (al-Sahra)', 'Argot Marchands Caravanes'],
       tags: ['desert', 'trade', 'nomadic', 'harsh', 'mercantile', 'survivor']
@@ -596,26 +444,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { intelligence: 4 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Archéologue Né Ruines',
           desc: '+5 Investigation (ruines/donjons), +5 History (civilisations anciennes), +1d20 déchiffrer glyphes/langues mortes, détection pièges magiques anciens',
           effect: '+5 Investigation, +5 History, +1d20 Decipher',
           game_effect: 'Expertise exploration donjons + connaissance historique profonde'
-        },
-        {
-          name: 'Familiarité Artefacts Anciens',
-          desc: '+3 Arcana (identification magie ancienne), avantage jets sauvegarder malédictions artefacts, intuition dangers tombeaux',
-          effect: '+3 Arcana',
-          game_effect: 'Résistance malédictions + instinct sécurité archéologique'
-        },
-        {
-          name: 'Trésor Enfoui Découverte',
-          desc: 'Commence avec 1 artefact mineur ancien (amulette protection +1 AC, ou anneau langues, ou baguette lumière), valeur 500 PO',
-          effect: 'Artefact mineur',
-          game_effect: 'Item magique départ unique'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'archeologues', delta: 10, reason: 'Natif site majeur, connaissance terrain' },
         { factionId: 'mages_recherche', delta: 6, reason: 'Accès artefacts rares étude' },
@@ -628,12 +462,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'toolkit_archaeologist', quantity: 1, reason: 'Outils archéologue (pinceaux, pics délicats, loupe)' },
         { itemId: 'journal_glyphs', quantity: 1, reason: 'Journal déchiffrage glyphes parents (indices)' }
       ],
-      skills: [
-        { skillId: 'investigation', bonus: 5, reason: 'Fouilles archéologiques, recherche indices ruines' },
-        { skillId: 'history', bonus: 5, reason: 'Éducation civilisations anciennes, mythologie perdue' },
-        { skillId: 'arcana', bonus: 3, reason: 'Exposition artefacts magiques anciens quotidienne' },
-        { skillId: 'perception', bonus: 5, reason: 'Vigilance pièges tombeaux, dangers ruines' }
-      ],
+      skills: [{ skillId: 'investigation', bonus: 5, reason: 'Fouilles archéologiques, recherche indices ruines' }],
       gold: 300,
       languages: ['Commun', 'Langue Ancienne (Zhar-Kareem, partiel)', 'Glyphes Funéraires (lecture basique)'],
       tags: ['ancient', 'ruins', 'scholarly', 'cursed', 'archaeological', 'mysterious']
@@ -669,26 +498,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { dexterity: 2, wisdom: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Maître Jungle Émeraude',
           desc: '+5 Survival (jungle/tropical), +5 Stealth (forêt dense), mouvement arboricole double vitesse, immunité maladies tropicales communes',
           effect: '+5 Survival, +5 Stealth',
           game_effect: 'Domination environnement jungle totale + mobilité canopée'
-        },
-        {
-          name: 'Chasseur Tribal Aguerri',
-          desc: '+3 Perception (pistage), maîtrise sarbacane (+5 attaque poison), connaissance poisons naturels (paralysants, somnifères, mortels)',
-          effect: '+3 Perception, Blowgun Mastery',
-          game_effect: 'Pistage expert + armes exotiques tribales'
-        },
-        {
-          name: 'Lien Esprit Jaguar',
-          desc: '+1d20 jets impliquant félins (communication basique, apaisement), vision nocturne améliорée 20m, sens danger prédateurs',
-          effect: '+1d20 Feline Affinity',
-          game_effect: 'Bonus d100 interactions félins + sens bestial'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'tribus_jungle', delta: 12, reason: 'Membre respecté Yax-Balam, rite initiation accompli' },
         { factionId: 'druides', delta: 6, reason: 'Harmonie nature reconnue' },
@@ -701,12 +516,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'jaguar_tooth_necklace', quantity: 1, reason: 'Collier dent jaguar noir (trophée initiation, symbole adulte)' },
         { itemId: 'healing_herbs_jungle', quantity: 5, reason: 'Herbes médicinales jungle (soigne 1d8+2 HP chacune)' }
       ],
-      skills: [
-        { skillId: 'survival', bonus: 5, reason: 'Vie jungle hostile depuis naissance, rite initiation solitaire' },
-        { skillId: 'stealth', bonus: 5, reason: 'Chasse silencieuse canopée, techniques camouflage tribal' },
-        { skillId: 'perception', bonus: 3, reason: 'Pistage proies, vigilance prédateurs jungle' },
-        { skillId: 'athletics', bonus: 5, reason: 'Escalade arbres, nage rivières rapides, course lianes' }
-      ],
+      skills: [{ skillId: 'survival', bonus: 5, reason: 'Vie jungle hostile depuis naissance, rite initiation solitaire' }],
       gold: 100,
       languages: ['Commun (basique)', 'Tribal Yax-Balam', 'Langage Bestial (félins, rudimentaire)'],
       tags: ['tribal', 'jungle', 'primitive', 'hunter', 'spiritual', 'wild']
@@ -742,26 +552,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { dexterity: 2, charisma: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Pirate Aguerri Libertalia',
           desc: '+5 Navigation (maritime), +5 Acrobatics (cordages navire, abordages), maîtrise sabres/pistolets, immunité mal de mer, nage +50% vitesse',
           effect: '+5 Navigation, +5 Acrobatics',
           game_effect: 'Maîtrise combat naval + mobilité maritime totale'
-        },
-        {
-          name: 'Code Pirate Respecté',
-          desc: '+1d20 Persuasion/Intimidation avec pirates, accès réseau contrebande mondial, réduction 30% prix marché noir portuaire',
-          effect: '+1d20 Pirate Influence',
-          game_effect: 'Bonus d100 interactions pirates + commerce illicite'
-        },
-        {
-          name: 'Réputation Hors-la-Loi',
-          desc: '-10 disposition marines/autorités (recherché activement), +5 Intimidation (aura dangereuse), prime 500 PO tête (vivant)',
-          effect: 'Wanted Status',
-          game_effect: 'Malus légal sévère compensé terreur inspirée'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'pirates_libertalia', delta: 15, reason: 'Natif Port-Libre, frère mer reconnu' },
         { factionId: 'marines_royales', delta: -20, reason: 'Pirate recherché, ennemi naval déclaré' },
@@ -774,12 +570,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'treasure_map_fragment', quantity: 1, reason: 'Fragment carte trésor légendaire (indices partiels)' },
         { itemId: 'rum_bottle_quality', quantity: 3, reason: 'Bouteilles rhum qualité Libertalia (monnaie pirate)' }
       ],
-      skills: [
-        { skillId: 'navigation', bonus: 5, reason: 'Apprentissage navigation depuis 5 ans, voyages mondiaux' },
-        { skillId: 'acrobatics', bonus: 5, reason: 'Abordages navires, combat cordages, échapper chutes' },
-        { skillId: 'intimidation', bonus: 5, reason: 'Culture pirate agressive, réputation construite sang' },
-        { skillId: 'sleight_of_hand', bonus: 3, reason: 'Triche cartes, pickpocket ports, escamotage butin' }
-      ],
+      skills: [{ skillId: 'navigation', bonus: 5, reason: 'Apprentissage navigation depuis 5 ans, voyages mondiaux' }],
       gold: 600,
       languages: ['Commun', 'Argot Pirates (Cant Libertalia)', 'Langue Mers du Sud (commercial)'],
       tags: ['pirate', 'outlaw', 'maritime', 'free', 'dangerous', 'wanted']
@@ -815,26 +606,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { constitution: 4 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Enfant Flammes Pyroclast',
           desc: 'Résistance feu naturel (50% dégâts), +5 Survival (volcanique), immunité gaz sulfureux, peau cicatrisée (+1 AC naturelle)',
           effect: 'Fire Resistance 50%, +5 Survival',
           game_effect: 'Résistance élémentaire feu + endurance toxique'
-        },
-        {
-          name: 'Maître-Forgeron Obsidienne',
-          desc: '+5 Crafting (obsidienne/verre volcanique), +1d20 créer armes obsidienne magique (+1 tranchant, ignore 2 AC armures), expertise gemmes volcaniques',
-          effect: '+5 Crafting, +1d20 Obsidian Craft',
-          game_effect: 'Artisanat légendaire matériaux rares + armes supérieures'
-        },
-        {
-          name: 'Marcheur-Feu Honoré',
-          desc: '+10 HP maximum, avantage jets Constitution résister chaleur/poison, cicatrices intimidantes (+3 Intimidation)',
-          effect: '+10 HP, +3 Intimidation',
-          game_effect: 'Vitalité accrue + présence impressionnante'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'forgerons_obsidienne', delta: 10, reason: 'Natif Pyroclast, maîtrise artisanat volcanique' },
         { factionId: 'geomanciens', delta: 6, reason: 'Familiarité magie feu primordiale' },
@@ -847,12 +624,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'sulfur_pouches', quantity: 5, reason: 'Sachets soufre pur (composant alchimique, 20 PO chacun)' },
         { itemId: 'lava_stone_charm', quantity: 1, reason: 'Amulette pierre lave refroidie (porte-bonheur tribal)' }
       ],
-      skills: [
-        { skillId: 'survival', bonus: 5, reason: 'Vie île volcanique active, éviter dangers quotidiens' },
-        { skillId: 'crafting_obsidian', bonus: 5, reason: 'Forge obsidienne depuis enfance, techniques ancestrales' },
-        { skillId: 'athletics', bonus: 5, reason: 'Escalade falaises basalte, traversées lave, endurance chaleur' },
-        { skillId: 'intimidation', bonus: 3, reason: 'Cicatrices impressionnantes, aura danger volcanique' }
-      ],
+      skills: [{ skillId: 'survival', bonus: 5, reason: 'Vie île volcanique active, éviter dangers quotidiens' }],
       gold: 400,
       languages: ['Commun', 'Ignan (dialecte feu élémentaire, basique)', 'Langue Forgerons Pyroclast'],
       tags: ['volcanic', 'fire', 'crafting', 'dangerous', 'elemental', 'resilient']
@@ -888,26 +660,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { constitution: 2, intelligence: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Résistance Mana Sauvage',
           desc: 'Résistance magie 25% (jets sauvegarder sorts +5), immunité radiations arcaniques, +1d20 résister malédictions/corruption magique',
           effect: 'Magic Resistance 25%, +1d20 vs Curses',
           game_effect: 'Défense anti-magie exceptionnelle + survie zones corrompues'
-        },
-        {
-          name: 'Mutation Bénéfique Mineure',
-          desc: 'Yeux luisent faiblement ténèbres (vision crépuscule améliorée 15m), +5 Arcana (magie sauvage), détection zones mana instables 30m',
-          effect: '+5 Arcana, Mana Sense',
-          game_effect: 'Sens magique surnaturel + expertise chaos arcanique'
-        },
-        {
-          name: 'Chasseur Artefacts Expérimenté',
-          desc: '+5 Investigation (ruines magiques), +3 Perception (pièges magiques), connaissance désarmement sécurités arcaniques basiques',
-          effect: '+5 Investigation, +3 Perception',
-          game_effect: 'Expertise donjons magiques + survie pièges'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'mages_recherche', delta: 8, reason: 'Résistance mana rare, sujet étude fascinant' },
         { factionId: 'chasseurs_artefacts', delta: 6, reason: 'Connaissance terrain Cinder, guide fiable' },
@@ -920,12 +678,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'goggles_mana_sight', quantity: 1, reason: 'Lunettes vision flux mana (détecte magie invisible)' },
         { itemId: 'rations_preserved_magic', quantity: 10, reason: 'Rations préservées magiquement (ne pourrissent jamais)' }
       ],
-      skills: [
-        { skillId: 'arcana', bonus: 5, reason: 'Exposition quotidienne magie sauvage, observations phénomènes' },
-        { skillId: 'investigation', bonus: 5, reason: 'Fouilles ruines tours mages, récupération artefacts' },
-        { skillId: 'survival', bonus: 5, reason: 'Vie zone apocalyptique hostile, éviter dangers magiques' },
-        { skillId: 'perception', bonus: 3, reason: 'Vigilance pièges magiques, créatures mutées' }
-      ],
+      skills: [{ skillId: 'arcana', bonus: 5, reason: 'Exposition quotidienne magie sauvage, observations phénomènes' }],
       gold: 300,
       languages: ['Commun', 'Arcanique Ancien (ruines, fragments)', 'Code Chasseurs Artefacts'],
       tags: ['cursed', 'magical', 'wasteland', 'mutant', 'dangerous', 'arcane']
@@ -961,26 +714,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { intelligence: 4 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Prodige Arcane Formé',
           desc: '+5 Arcana (tous domaines), +1d20 identifier sorts/artefacts magiques, connaissance 3 sorts niveau 0 (cantrips, usage illimité)',
           effect: '+5 Arcana, +1d20 Spellcraft, 3 Cantrips',
           game_effect: 'Expertise magique profonde + capacités lanceur débutant'
-        },
-        {
-          name: 'Éducation Bibliothèque Arcane',
-          desc: '+5 Knowledge (Histoire/Religion/Arcanes), alphabétisation 5 langues, accès mental bibliothèque 1000 tomes (rappel parfait lectures)',
-          effect: '+5 Knowledge, Eidetic Memory',
-          game_effect: 'Érudition encyclopédique + mémoire surhumaine'
-        },
-        {
-          name: 'Marqué Cosmos Stellaire',
-          desc: '+3 Perception (vision nocturne étoiles), rêves prophétiques 1/semaine (indices vagues futurs possibles), résistance psychique +3',
-          effect: '+3 Perception, Prophetic Dreams',
-          game_effect: 'Sens cosmique + intuition surnaturelle événements'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'mages_academies', delta: 10, reason: 'Élève archmage renommé, éducation supérieure' },
         { factionId: 'bibliotheques', delta: 8, reason: 'Accès connaissances rares, contribution recherche' },
@@ -993,12 +732,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'star_map_enchanted', quantity: 1, reason: 'Carte stellaire enchantée (navigation astrale, prophéties)' },
         { itemId: 'component_pouch_quality', quantity: 1, reason: 'Sacoche composants qualité (cristaux, poudres rares)' }
       ],
-      skills: [
-        { skillId: 'arcana', bonus: 5, reason: 'Études quotidiennes magie, expériences laboratoire depuis enfance' },
-        { skillId: 'knowledge_history', bonus: 5, reason: 'Lectures bibliothèque exhaustive, chroniques millénaires' },
-        { skillId: 'knowledge_religion', bonus: 5, reason: 'Étude panthéons divins, plans extérieurs, théologies' },
-        { skillId: 'perception', bonus: 3, reason: 'Observations astronomiques, vigilance expériences dangereuses' }
-      ],
+      skills: [{ skillId: 'arcana', bonus: 5, reason: 'Études quotidiennes magie, expériences laboratoire depuis enfance' }],
       gold: 200,
       languages: ['Commun', 'Arcanique Classique', 'Célestien (stellaire)', 'Draconique (invocations)', 'Infernal (études planes)'],
       tags: ['magical', 'scholarly', 'isolated', 'prodigy', 'cosmic', 'arcane']
@@ -1034,26 +768,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { strength: 2, constitution: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Formation Militaire Complète',
           desc: '+5 Athletics (endurance marches), +5 Intimidation (commandement), maîtrise armes martiales (épées/lances/arbalètes), +1 CA armures lourdes',
           effect: '+5 Athletics, +5 Intimidation, Weapon Mastery',
           game_effect: 'Compétence martiale professionnelle + autorité naturelle'
-        },
-        {
-          name: 'Tacticien Terrain Formé',
-          desc: '+1d20 jets tactiques bataille (planification, embuscades), +3 Perception (dangers militaires, ennemis cachés), connaissance fortifications',
-          effect: '+1d20 Tactics, +3 Perception',
-          game_effect: 'Bonus d100 stratégie combat + vigilance entraînée'
-        },
-        {
-          name: 'Frère Armes Respecté',
-          desc: '+5 disposition soldats/gardes (reconnaissance fraternité), avantage rallier troupes morales basses, contacts militaires 5 garnisons',
-          effect: 'Military Brotherhood',
-          game_effect: 'Réseau martial étendu + leadership inspire'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'armee_royale', delta: 10, reason: 'Natif avant-poste, famille militaire reconnue' },
         { factionId: 'veterans_guerre', delta: 8, reason: 'Respect épreuves combat partagées' },
@@ -1066,12 +786,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'medal_bronze_courage', quantity: 1, reason: 'Médaille Étoile Courage Bronze (décoration officielle)' },
         { itemId: 'military_rations', quantity: 10, reason: 'Rations militaires standardisées (longue conservation)' }
       ],
-      skills: [
-        { skillId: 'athletics', bonus: 5, reason: 'Entraînement physique martial quotidien depuis enfance' },
-        { skillId: 'intimidation', bonus: 5, reason: 'Commandement troupes, présence martiale autoritaire' },
-        { skillId: 'survival', bonus: 3, reason: 'Patrouilles terres hostiles, bivouacs terrain ennemi' },
-        { skillId: 'perception', bonus: 3, reason: 'Vigilance sentinelle, détection embuscades ennemies' }
-      ],
+      skills: [{ skillId: 'athletics', bonus: 5, reason: 'Entraînement physique martial quotidien depuis enfance' }],
       gold: 300,
       languages: ['Commun', 'Nordique (ennemi, basique)', 'Code Militaire (signaux, ordres)'],
       tags: ['military', 'frontier', 'disciplined', 'warrior', 'loyal', 'tactical']
@@ -1107,26 +822,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { charisma: 2, intelligence: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Négociateur Commercial Né',
           desc: '+5 Persuasion (négociations marchandes), +5 Insight (détecter arnaques), réduction 15% prix achats villes fluviales, connaissance valeurs marchés',
           effect: '+5 Persuasion, +5 Insight',
           game_effect: 'Expertise commerce + détection fraudes'
-        },
-        {
-          name: 'Connaissance Réseaux Fluviaux',
-          desc: '+3 Navigation (fleuves/rivières), connaissance ports 20 villes fleuve Aethel, contacts capitaines barges/guildes dockers',
-          effect: '+3 Navigation',
-          game_effect: 'Réseau transport fluvial + géographie commerciale'
-        },
-        {
-          name: 'Fils du Pont Légendaire',
-          desc: '+1d20 jets impliquant coopération communautaire (rallier foules causes communes), réputation positive villes alliées Pont-de-Pierre',
-          effect: '+1d20 Community Rally',
-          game_effect: 'Bonus d100 leadership civique + diplomatie régionale'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'guildes_marchandes', delta: 8, reason: 'Natif centre commercial, familiarité affaires' },
         { factionId: 'dockers_fluviaux', delta: 6, reason: 'Respect travailleurs fleuve, solidarité crise' },
@@ -1139,12 +840,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'guild_seal_merchants', quantity: 1, reason: 'Sceau guilde marchands Pont-de-Pierre (crédit commercial)' },
         { itemId: 'fine_silk_bolt', quantity: 1, reason: 'Rouleau soie qualité (valeur 80 PO, marchandise type)' }
       ],
-      skills: [
-        { skillId: 'persuasion', bonus: 5, reason: 'Négociations marchandes quotidiennes, marchandages péages' },
-        { skillId: 'insight', bonus: 5, reason: 'Détection arnaques commerçants, évaluation honnêteté' },
-        { skillId: 'navigation', bonus: 3, reason: 'Observation trafic fluvial, connaissance courants/dangers' },
-        { skillId: 'knowledge_commerce', bonus: 5, reason: 'Éducation affaires familiales, observation économie régionale' }
-      ],
+      skills: [{ skillId: 'persuasion', bonus: 5, reason: 'Négociations marchandes quotidiennes, marchandages péages' }],
       gold: 500,
       languages: ['Commun', 'Langue Marchande (jargon commercial)', 'Code Signaux Fluviaux'],
       tags: ['urban', 'trade', 'river', 'prosperous', 'mercantile', 'cooperative']
@@ -1180,26 +876,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { wisdom: 2, constitution: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Nomade Désertique Aguerri',
           desc: '+5 Survival (déserts), +5 Animal Handling (chameaux/chevaux), résistance chaleur/soif (besoin eau -40%), navigation stellaire infaillible',
           effect: '+5 Survival, +5 Animal Handling',
           game_effect: 'Maîtrise désert totale + symbiose animaux caravanes'
-        },
-        {
-          name: 'Navigateur Stellaire Héritier',
-          desc: '+1d20 Navigation (déserts nuit, lecture étoiles), orientation instinctive parfaite, prédiction météo 48h avance (observation nuages/vents)',
-          effect: '+1d20 Navigation',
-          game_effect: 'Bonus d100 orientation + intuition climatique'
-        },
-        {
-          name: 'Hospitalité Sacrée Nomade',
-          desc: '+3 Persuasion (traditions hospitalité respectées), avantage négociations tribus nomades, réseau contacts 12 tribus désertiques',
-          effect: '+3 Persuasion',
-          game_effect: 'Diplomatie tribale + réseau caravanes étendu'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'tribus_nomades', delta: 12, reason: 'Membre Bani-Sahra respecté, rite passage accompli' },
         { factionId: 'marchands_caravanes', delta: 6, reason: 'Connaissance routes commerciales désertiques' },
@@ -1211,12 +893,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'star_navigation_tool', quantity: 1, reason: 'Astrolabe rudimentaire bois (navigation stellaire précise)' },
         { itemId: 'salt_blocks_trade', quantity: 5, reason: 'Blocs sel gemme (monnaie nomade, 20 PO chacun)' }
       ],
-      skills: [
-        { skillId: 'survival', bonus: 5, reason: 'Vie nomade désertique depuis naissance, autonomie totale' },
-        { skillId: 'animal_handling', bonus: 5, reason: 'Élevage chameaux/chèvres, équitation depuis 4 ans' },
-        { skillId: 'navigation', bonus: 5, reason: 'Navigation stellaire héritée, traversées désert solo' },
-        { skillId: 'perception', bonus: 3, reason: 'Vigilance tempêtes sable, prédateurs, pillards' }
-      ],
+      skills: [{ skillId: 'survival', bonus: 5, reason: 'Vie nomade désertique depuis naissance, autonomie totale' }],
       gold: 200,
       languages: ['Commun', 'Dialecte Nomade Bani-Sahra', 'Langue Signes Caravanes (silencieux)'],
       tags: ['nomadic', 'desert', 'free', 'tribal', 'pastoral', 'wanderer']
@@ -1251,26 +928,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { intelligence: 2, dexterity: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Explorateur Ruines Jungle Né',
           desc: '+5 Investigation (temples anciens), +5 Survival (jungle tropicale), +1d20 désactiver pièges mécaniques anciens, connaissance glyphes serpentins basique',
           effect: '+5 Investigation, +5 Survival, +1d20 Disarm Traps',
           game_effect: 'Expertise donjons jungle + sécurité pièges archéologiques'
-        },
-        {
-          name: 'Familiarité Serpents Sacrés',
-          desc: '+3 Animal Handling (serpents), immunité venin serpents jungle communs (résistance 75%), communication empathique reptiles',
-          effect: '+3 Animal Handling, Venom Resist',
-          game_effect: 'Affinité reptilienne + survie morsures'
-        },
-        {
-          name: 'Trésor Jade Découvert',
-          desc: 'Commence 1 idole jade vert impérial (valeur 400 PO, +1 WIS si portée, mais malédiction mineure : cauchemars anciens 1/semaine)',
-          effect: 'Jade Idol (+1 WIS, Cursed Dreams)',
-          game_effect: 'Artefact précieux pouvoir/malédiction'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'archeologues', delta: 10, reason: 'Natif Xal-Kotep, connaissance site unique' },
         { factionId: 'aventuriers', delta: 6, reason: 'Respect survie dangers jungle/ruines' },
@@ -1283,12 +946,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'antivenom_jungle', quantity: 3, reason: 'Antivenin jungle (neutralise poisons reptiles, 50 PO chacun)' },
         { itemId: 'map_ruins_partial', quantity: 1, reason: 'Carte partielle niveaux Xal-Kotep (3/7 étages)' }
       ],
-      skills: [
-        { skillId: 'investigation', bonus: 5, reason: 'Exploration temples, déchiffrage glyphes depuis enfance' },
-        { skillId: 'survival', bonus: 5, reason: 'Vie jungle tropicale hostile, dangers quotidiens' },
-        { skillId: 'animal_handling', bonus: 3, reason: 'Interaction serpents sacrés, reptiles jungle' },
-        { skillId: 'acrobatics', bonus: 3, reason: 'Escalade ruines, échapper pièges, passages étroits' }
-      ],
+      skills: [{ skillId: 'investigation', bonus: 5, reason: 'Exploration temples, déchiffrage glyphes depuis enfance' }],
       gold: 400,
       languages: ['Commun', 'Glyphes Xal-Kotep (basique)', 'Langage Reptilien (empathique)'],
       tags: ['ruins', 'jungle', 'ancient', 'cursed', 'archaeological', 'dangerous']
@@ -1324,26 +982,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { dexterity: 2, constitution: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Enfant Océan Tropical',
           desc: '+5 Swimming (vitesse nage ×2), +5 Athletics (escalade, plongée apnée 5min), résistance noyade (flottabilité naturelle), vision sous-marine claire 15m',
           effect: '+5 Swimming, +5 Athletics',
           game_effect: 'Maîtrise aquatique totale + endurance plongée'
-        },
-        {
-          name: 'Pêcheur Récifs Coralliens',
-          desc: '+1d20 Survival (océanique, pêche récifs), connaissance faune marine 200+ espèces, détection requins 50m (sixième sens vibrations)',
-          effect: '+1d20 Survival (ocean)',
-          game_effect: 'Bonus d100 pêche + instinct prédateurs marins'
-        },
-        {
-          name: 'Artisan Nacre Insulaire',
-          desc: '+3 Crafting (bijoux nacre/coquillages), commerce perles/colliers (+20% prix vente), réputation artisan insulaire reconnue',
-          effect: '+3 Crafting',
-          game_effect: 'Artisanat précieux + commerce maritime'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'insulaires_pacifique', delta: 12, reason: 'Natif Maui-Lani, héros cyclone reconnu' },
         { factionId: 'pecheurs', delta: 8, reason: 'Maîtrise techniques récifs coralliens' },
@@ -1355,12 +999,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'coconut_water_skin', quantity: 3, reason: 'Noix coco pleines eau fraîche (hydratation parfaite)' },
         { itemId: 'wave_tattoo_sacred', quantity: 1, reason: 'Tatouage vague sacrée épaule (symbole courage, +2 disp insulaires)' }
       ],
-      skills: [
-        { skillId: 'swimming', bonus: 5, reason: 'Natation quotidienne lagon/océan depuis 6 mois' },
-        { skillId: 'athletics', bonus: 5, reason: 'Plongée apnée, escalade cocotiers, endurance aquatique' },
-        { skillId: 'survival', bonus: 5, reason: 'Pêche récifs, cueillette fruits, prévision tempêtes' },
-        { skillId: 'crafting', bonus: 3, reason: 'Artisanat colliers nacre, filets pêche, pirogues' }
-      ],
+      skills: [{ skillId: 'swimming', bonus: 5, reason: 'Natation quotidienne lagon/océan depuis 6 mois' }],
       gold: 250,
       languages: ['Commun', 'Dialecte Insulaire Maui-Lani', 'Langage Dauphins (rudimentaire)'],
       tags: ['tropical', 'island', 'paradise', 'aquatic', 'peaceful', 'isolated']
@@ -1396,26 +1035,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { wisdom: 2, constitution: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Touché Lumière Exorciste',
           desc: '+5 Religion (exorcismes), +1d20 repousser morts-vivants, résistance nécromancie 50% (jets sauvegarder +5), détection morts-vivants 30m',
           effect: '+5 Religion, +1d20 Turn Undead',
           game_effect: 'Pouvoir exorciste inné + défense nécromantique'
-        },
-        {
-          name: 'Survivant Marais Maudits',
-          desc: '+5 Survival (marécages), +5 Stealth (brumes), immunité maladies marais (fièvres, parasites), résistance toxines naturelles',
-          effect: '+5 Survival, +5 Stealth',
-          game_effect: 'Maîtrise marécages + santé renforcée'
-        },
-        {
-          name: 'Herboriste Plantes Maudites',
-          desc: '+3 Medicine (herbes rares), connaissance lotus noir/mandragore, commerce composants alchimiques 200+ PO valeur',
-          effect: '+3 Medicine',
-          game_effect: 'Expertise botanique obscure + commerce lucratif'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'exorcistes', delta: 10, reason: 'Touché Lumière reconnu, résistance innée' },
         { factionId: 'morts_vivants', delta: -15, reason: 'Ennemi naturel, pouvoir repousser redouté' },
@@ -1428,12 +1053,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'mandrake_root_living', quantity: 1, reason: 'Racine mandragore vivante (potion résurrection partielle, 200 PO)' },
         { itemId: 'spectral_ward_charm', quantity: 1, reason: 'Amulette protection spectres (résistance possession +3)' }
       ],
-      skills: [
-        { skillId: 'religion', bonus: 5, reason: 'Exorcismes quotidiens, rites funéraires, prières protection' },
-        { skillId: 'survival', bonus: 5, reason: 'Vie marais toxiques, navigation brumes, éviter morts-vivants' },
-        { skillId: 'stealth', bonus: 5, reason: 'Déplacement silencieux marais, éviter patrouilles spectres' },
-        { skillId: 'medicine', bonus: 3, reason: 'Herboristerie marais, antidotes toxines, soins maladies' }
-      ],
+      skills: [{ skillId: 'religion', bonus: 5, reason: 'Exorcismes quotidiens, rites funéraires, prières protection' }],
       gold: 300,
       languages: ['Commun', 'Latin Exorciste (prières)', 'Murmures Spectraux (compréhension partielle)'],
       tags: ['cursed', 'swamp', 'undead', 'haunted', 'dangerous', 'holy']
@@ -1468,26 +1088,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { constitution: 2, wisdom: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Né Guerre Éternelle',
           desc: '+5 Intimidation (présence martiale spectrale), +1d20 résister terreur/désespoir, immunité peur magique (exposition quotidienne horreurs), aura lugubre (+3 Intimidation)',
           effect: '+5 Intimidation, +1d20 Fear Resist',
           game_effect: 'Résistance mentale légendaire + terreur inspirée'
-        },
-        {
-          name: 'Connaissance Tactiques Anciennes',
-          desc: '+5 History (guerres anciennes), +3 Tactics (stratégies bataille classiques), détection embuscades militaires (+5 Perception contexte martial)',
-          effect: '+5 History, +3 Tactics',
-          game_effect: 'Expertise militaire historique + sens tactique'
-        },
-        {
-          name: 'Apaiseur Âmes Guerrières',
-          desc: '+3 Religion (rites funéraires militaires), avantage négociations spectres guerriers, +1d20 briser malédictions mineures liées guerre',
-          effect: '+3 Religion, +1d20 Break War Curses',
-          game_effect: 'Pacification spectres + exorcisme spécialisé'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'veterans_guerre', delta: 10, reason: 'Comprend traumatisme guerre intimement' },
         { factionId: 'fantomes_guerriers', delta: 8, reason: 'Apaiseur reconnu, libérateur âmes' },
@@ -1500,12 +1106,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'war_medal_tarnished', quantity: 1, reason: 'Médaille militaire ternie 150 ans (symbole sacrifice)' },
         { itemId: 'field_journal_soldier', quantity: 1, reason: 'Journal soldat derniers jours (récit poignant bataille)' }
       ],
-      skills: [
-        { skillId: 'intimidation', bonus: 5, reason: 'Aura guerre traumatisante, présence lugubre' },
-        { skillId: 'history', bonus: 5, reason: 'Connaissance intime Dernière Bataille, tactiques anciennes' },
-        { skillId: 'religion', bonus: 3, reason: 'Rites funéraires militaires, apaisement spectres' },
-        { skillId: 'perception', bonus: 5, reason: 'Vigilance dangers champ bataille, pièges oubliés' }
-      ],
+      skills: [{ skillId: 'intimidation', bonus: 5, reason: 'Aura guerre traumatisante, présence lugubre' }],
       gold: 250,
       languages: ['Commun', 'Cant Militaire Ancien', 'Murmures Spectres Guerriers (compréhension)'],
       tags: ['cursed', 'battlefield', 'haunted', 'war', 'traumatic', 'undead']
@@ -1541,26 +1142,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { intelligence: 2, constitution: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Enfant Nexus Élémentaire',
           desc: 'Résistance 25% quatre éléments (feu/froid/électricité/acide), +5 Arcana (magie élémentaire), connaissance 2 cantrips élémentaires (usage illimité), détection déséquilibre élémentaire 50m',
           effect: 'Elemental Resist 25%, +5 Arcana, 2 Cantrips',
           game_effect: 'Défense multi-élémentaire + magie innée'
-        },
-        {
-          name: 'Canalisation Éléments Instinctive',
-          desc: '+1d20 lancer sorts élémentaires (feu/eau/air/terre), +3 dégâts sorts élémentaires, 1/jour : invoquer élémentaire mineur (4h service)',
-          effect: '+1d20 Elemental Spells, Summon Minor Elemental',
-          game_effect: 'Bonus d100 magie élémentaire + invocation'
-        },
-        {
-          name: 'Mutation Élémentaire Bénéfique',
-          desc: 'Yeux bicolores feu/eau (vision ténèbres 20m, détection magie élémentaire), peau teinte bleutée (CHA -1 mais +3 Intimidation contexte magique)',
-          effect: 'Darkvision, Detect Elemental Magic',
-          game_effect: 'Sens magique + apparence imposante'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'elementalistes', delta: 12, reason: 'Enfant Nexus rare, destinée prophétisée' },
         { factionId: 'elementaires', delta: 8, reason: 'Reconnaissance affinité naturelle' },
@@ -1573,12 +1160,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'water_breathing_potion', quantity: 2, reason: 'Potion respiration aquatique (1h chacune, gravité inversée Sud)' },
         { itemId: 'robe_elemental_weave', quantity: 1, reason: 'Robe tissage élémentaire (résistance +5% quatre éléments)' }
       ],
-      skills: [
-        { skillId: 'arcana', bonus: 5, reason: 'Immersion quotidienne magie élémentaire, observations phénomènes' },
-        { skillId: 'survival', bonus: 3, reason: 'Vie environnements élémentaires extrêmes hostiles' },
-        { skillId: 'knowledge_planes', bonus: 5, reason: 'Familiarité plans élémentaires, créatures natives' },
-        { skillId: 'perception', bonus: 3, reason: 'Détection instabilités magiques, dangers élémentaires' }
-      ],
+      skills: [{ skillId: 'arcana', bonus: 5, reason: 'Immersion quotidienne magie élémentaire, observations phénomènes' }],
       gold: 300,
       languages: ['Commun', 'Ignan (feu)', 'Aquan (eau)', 'Auran (air)', 'Terran (terre)'],
       tags: ['magical', 'elemental', 'chaotic', 'mutant', 'powerful', 'destined']
@@ -1613,26 +1195,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { charisma: 2, dexterity: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Touche Féérique Héritée',
           desc: '+5 Persuasion (charme naturel fée), +5 Performance (danse/chant enchanteur), avantage résister charme/sommeil magique, +1d20 négociations créatures féeriques',
           effect: '+5 Persuasion, +5 Performance, +1d20 Fey Influence',
           game_effect: 'Charisme surnaturel + diplomatie féérique'
-        },
-        {
-          name: 'Ami Nature Consciente',
-          desc: '+3 Nature (communication plantes/animaux basique), +3 Animal Handling (créatures forestières), détection présences féeriques 30m',
-          effect: '+3 Nature, +3 Animal Handling',
-          game_effect: 'Empathie naturelle + sens féérique'
-        },
-        {
-          name: 'Bénédiction Fée Marraine',
-          desc: '1/jour : invoquer fée marraine aide mineure (conseil, petite magie, distraction ennemis 1 round), mais dette accumulée nécessite service futur',
-          effect: 'Fey Patron Boon (Debt Accrued)',
-          game_effect: 'Assistance surnaturelle coût obligations'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'fey_court', delta: 10, reason: 'Protégé fée marraine, touche féérique reconnue' },
         { factionId: 'druides', delta: 8, reason: 'Respect harmonie nature, bénédiction féerique' },
@@ -1645,12 +1213,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'pixie_dust_pouch', quantity: 3, reason: 'Poussière pixie (lévitation 10min chacune, ou invisibilité 1min)' },
         { itemId: 'singing_stream_vial', quantity: 1, reason: 'Fiole eau ruisseau chantant (apaise colère, soigne 1d6 HP)' }
       ],
-      skills: [
-        { skillId: 'persuasion', bonus: 5, reason: 'Charme féérique naturel, négociations enchantées' },
-        { skillId: 'performance', bonus: 5, reason: 'Danse cercles fées, chant mélodies hypnotiques' },
-        { skillId: 'nature', bonus: 3, reason: 'Communication arbres/plantes, connaissance écosystème magique' },
-        { skillId: 'animal_handling', bonus: 3, reason: 'Affinité créatures forestières, familiers féeriques' }
-      ],
+      skills: [{ skillId: 'persuasion', bonus: 5, reason: 'Charme féérique naturel, négociations enchantées' }],
       gold: 250,
       languages: ['Commun', 'Sylvan (féérique)', 'Langage Arbres (empathique)', 'Chants Oiseaux (compréhension)'],
       tags: ['fey', 'magical', 'forest', 'enchanted', 'charming', 'mysterious']
@@ -1686,26 +1249,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { strength: 2, wisdom: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Pionnier Frontière Aguerri',
           desc: '+5 Survival (forêts/frontières), +5 Athletics (défrichage, construction), maîtrise haches/scies (outils = armes 1d8), +10 HP (endurance pionnière)',
           effect: '+5 Survival, +5 Athletics, +10 HP',
           game_effect: 'Polyvalence frontière + vitalité accrue'
-        },
-        {
-          name: 'Bâtisseur Communauté Né',
-          desc: '+1d20 jets construction (bâtiments, palissades, ponts), +3 Persuasion (rallier colons causes communes), réduction 30% coûts constructions (ingéniosité)',
-          effect: '+1d20 Construction, +3 Persuasion',
-          game_effect: 'Bonus d100 génie civil + leadership civique'
-        },
-        {
-          name: 'Première Génération Fierté',
-          desc: '+3 inspiration alliés colons (moral +1 combat défense colonie), réseau contacts 5 colonies pionnières frontières',
-          effect: 'Inspire Settlers',
-          game_effect: 'Buff moral + réseau pionnier'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'pionniers_colonies', delta: 12, reason: 'Gardien Nouvelle Espérance, héros défense' },
         { factionId: 'fermiers_frontiere', delta: 8, reason: 'Solidarité travail terre dur partagé' },
@@ -1718,12 +1267,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'cabin_deed', quantity: 1, reason: 'Titre propriété cabane familiale Nouvelle Espérance (patrimoine)' },
         { itemId: 'militia_badge', quantity: 1, reason: 'Insigne milice colonie (badge Gardien, autorité locale)' }
       ],
-      skills: [
-        { skillId: 'survival', bonus: 5, reason: 'Vie frontière sauvage depuis naissance, autonomie totale' },
-        { skillId: 'athletics', bonus: 5, reason: 'Travaux défrichage, construction, chasse quotidiens' },
-        { skillId: 'animal_handling', bonus: 3, reason: 'Élevage bétail, chevaux, défense contre prédateurs' },
-        { skillId: 'persuasion', bonus: 3, reason: 'Rallier colons projets communs, leadership jeune' }
-      ],
+      skills: [{ skillId: 'survival', bonus: 5, reason: 'Vie frontière sauvage depuis naissance, autonomie totale' }],
       gold: 250,
       languages: ['Commun', 'Dialecte Pionniers Frontière', 'Signes Natifs (rudimentaire)'],
       tags: ['frontier', 'pioneer', 'settler', 'builder', 'hardy', 'community']
@@ -1759,26 +1303,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { constitution: 2, intelligence: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Bourgeois Fortifié Expérimenté',
           desc: '+5 Persuasion (négociations guildes), +3 Knowledge (lois/commerce), familiarité milice urbaine (+2 Tactics défense murailles), réseau guildes artisanales 8 métiers',
           effect: '+5 Persuasion, +3 Knowledge',
           game_effect: 'Expertise commerce urbain + connaissance défense'
-        },
-        {
-          name: 'Privilège Seigneurial Accordé',
-          desc: 'Exemption taxe commerciale Rochefort 10 ans (économies 15% achats locaux), accès archives château (recherches historiques), audience seigneur 1/an garantie',
-          effect: 'Tax Exemption, Archive Access',
-          game_effect: 'Avantages économiques + accès politique'
-        },
-        {
-          name: 'Défenseur Siège Vétéran',
-          desc: '+1d20 jets défense fortifications (sièges, embuscades urbaines), +3 Intimidation (présence martiale civique), connaissance ingénierie militaire basique',
-          effect: '+1d20 Siege Defense',
-          game_effect: 'Bonus d100 défense urbaine + autorité'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'guildes_artisanales', delta: 8, reason: 'Membre familles guilde, réseau établi' },
         { factionId: 'noblesse_locale', delta: 6, reason: 'Reconnaissance seigneur, privilège accordé' },
@@ -1791,12 +1321,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'city_map_detailed', quantity: 1, reason: 'Plan détaillé Rochefort (passages secrets, caches)' },
         { itemId: 'quality_tools_trade', quantity: 1, reason: 'Outils métier qualité (forgeron ou tanneur ou tisserand)' }
       ],
-      skills: [
-        { skillId: 'persuasion', bonus: 5, reason: 'Négociations guildes, marchandages marché quotidiens' },
-        { skillId: 'knowledge_commerce', bonus: 5, reason: 'Éducation commerciale, observation économie régionale' },
-        { skillId: 'crafting', bonus: 3, reason: 'Apprentissage guilde métier familial' },
-        { skillId: 'perception', bonus: 3, reason: 'Vigilance urbaine, détection pickpockets, dangers rues' }
-      ],
+      skills: [{ skillId: 'persuasion', bonus: 5, reason: 'Négociations guildes, marchandages marché quotidiens' }],
       gold: 400,
       languages: ['Commun', 'Jargon Guildes Artisanales', 'Latin Légal (contrats)'],
       tags: ['urban', 'fortified', 'trade', 'guild', 'secure', 'prosperous']
@@ -1831,26 +1356,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { strength: 2, constitution: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Enfant Mines Argent',
           desc: '+5 Athletics (minage, tunnels), +3 Survival (souterrain), vision pénombre 15m (yeux adaptés ténèbres galeries), résistance poussières toxiques',
           effect: '+5 Athletics, +3 Survival, Lowlight Vision',
           game_effect: 'Endurance minière + adaptation souterraine'
-        },
-        {
-          name: 'Sauveteur Galeries Héros',
-          desc: '+1d20 jets sauvetage (effondrements, noyades, incendies), +5 Medicine (premiers soins urgence), avantage rallier mineurs causes urgentes',
-          effect: '+1d20 Rescue, +5 Medicine',
-          game_effect: 'Bonus d100 sauvetages + soins traumatiques'
-        },
-        {
-          name: 'Fortune Minière Héritée',
-          desc: 'Commence 800 PO économies familiales (taverne prospère + pépites trouvées), réseau contacts mineurs 50+ galeries, accès claims miniers familiaux',
-          effect: '800 Gold, Mining Network',
-          game_effect: 'Richesse départ + opportunités exploitation'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'mineurs', delta: 15, reason: 'Ange Galeries vénéré, sauveteur héroïque' },
         { factionId: 'prospecteurs', delta: 6, reason: 'Respect connaissance terrains miniers' },
@@ -1863,12 +1374,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'miners_lamp_quality', quantity: 1, reason: 'Lampe mineur huile qualité (lumière 30m, 12h autonomie)' },
         { itemId: 'claim_deed_family', quantity: 1, reason: 'Titre claim minier familial (galerie productive, revenu passif 50 PO/mois)' }
       ],
-      skills: [
-        { skillId: 'athletics', bonus: 5, reason: 'Travaux minage, creusage tunnels, endurance physique' },
-        { skillId: 'survival', bonus: 3, reason: 'Orientation galeries, détection gaz, éviter effondrements' },
-        { skillId: 'medicine', bonus: 5, reason: 'Premiers soins accidents miniers quotidiens urgence' },
-        { skillId: 'persuasion', bonus: 3, reason: 'Négociations taverne, rallier mineurs causes' }
-      ],
+      skills: [{ skillId: 'athletics', bonus: 5, reason: 'Travaux minage, creusage tunnels, endurance physique' }],
       gold: 800,
       languages: ['Commun', 'Cant Mineurs (jargon technique)', 'Signes Main Silencieux (galeries)'],
       tags: ['mining', 'mountain', 'prosperous', 'dangerous', 'hardworking', 'heroic']
@@ -1904,26 +1410,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { constitution: 2, strength: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Enfant Haute Altitude Aguerri',
           desc: '+5 Survival (montagnes), +5 Athletics (escalade, alpinisme), immunité mal altitude (acclimatation permanente), résistance froid extrême (besoin chaleur -50%)',
           effect: '+5 Survival, +5 Athletics',
           game_effect: 'Maîtrise montagne totale + endurance climatique'
-        },
-        {
-          name: 'Formation Milice Précoce',
-          desc: '+1d20 Tactics (défense positions fortifiées), +3 Intimidation (présence militaire), maîtrise arbalètes/piques (armes garnison standard), +10 HP (endurance spartiate)',
-          effect: '+1d20 Tactics, +3 Intimidation, +10 HP',
-          game_effect: 'Bonus d100 stratégie défensive + vitalité militaire'
-        },
-        {
-          name: 'Guide Passage Certifié',
-          desc: '+3 Navigation (cols montagneux), détection avalanches 80% précision (lecture neige), connaissance 12 routes alternatives secrètes, réseau guides montagne 30+ professionnels',
-          effect: '+3 Navigation, Avalanche Sense',
-          game_effect: 'Guidage expert + instinct dangers montagne'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'garnison_militaire', delta: 12, reason: 'Caporal honoraire 13 ans, héros avalanche' },
         { factionId: 'caravanes_commerciales', delta: 10, reason: 'Sauveteur passage, guide fiable' },
@@ -1936,12 +1428,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'avalanche_beacon', quantity: 1, reason: 'Balise avalanche magique (localisation sous neige 50m)' },
         { itemId: 'military_rank_insignia', quantity: 1, reason: 'Insigne caporal honoraire (autorité garnisons, respect soldats)' }
       ],
-      skills: [
-        { skillId: 'survival', bonus: 5, reason: 'Vie haute altitude hostile depuis naissance, autonomie montagne' },
-        { skillId: 'athletics', bonus: 5, reason: 'Escalade quotidienne, alpinisme, corvées militaires' },
-        { skillId: 'tactics', bonus: 5, reason: 'Formation défense fortifications, observation stratégie garnison' },
-        { skillId: 'intimidation', bonus: 3, reason: 'Discipline militaire, présence martiale, rang caporal' }
-      ],
+      skills: [{ skillId: 'survival', bonus: 5, reason: 'Vie haute altitude hostile depuis naissance, autonomie montagne' }],
       gold: 350,
       languages: ['Commun', 'Cant Militaire Garnison', 'Dialecte Guides Montagne', 'Signes Main Avalanche (urgence)'],
       tags: ['mountain', 'military', 'strategic', 'fortress', 'hardy', 'tactical']
@@ -1977,26 +1464,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { wisdom: 2, constitution: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Psychologie Criminelle Experte',
           desc: '+5 Insight (détection mensonges), +5 Investigation (interrogatoires), +1d20 résister intimidation/manipulation, immunité charme/coercition mentale (exposition quotidienne manipulation)',
           effect: '+5 Insight, +5 Investigation, +1d20 Mental Resist',
           game_effect: 'Lecture humaine légendaire + défense psychologique'
-        },
-        {
-          name: 'Défenseur Ordre Aguerri',
-          desc: '+3 Intimidation (présence autoritaire pénitentiaire), +3 Athletics (maîtrise prisonniers), connaissance protocoles sécurité maximum, réseau gardiens 12 prisons royaume',
-          effect: '+3 Intimidation, +3 Athletics',
-          game_effect: 'Autorité carcérale + force physique contrôle'
-        },
-        {
-          name: 'Survivant Émeute Héroïque',
-          desc: '+10 HP (endurance combats brutaux), avantage jets sauvegarder contexte foules hostiles, +2 initiative (réflexes survie aiguisés)',
-          effect: '+10 HP, +2 Initiative',
-          game_effect: 'Vitalité renforcée + réactivité combat'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'gardiens_prisons', delta: 15, reason: 'Héros émeute Île Fers, fils gardien-chef' },
         { factionId: 'forces_ordre', delta: 10, reason: 'Respect maintien ordre, compétence sécuritaire' },
@@ -2009,12 +1482,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'warden_badge_authority', quantity: 1, reason: 'Insigne gardien-fils chef (autorité carcérale, accès prisons royaume)' },
         { itemId: 'interrogation_manual', quantity: 1, reason: 'Manuel interrogatoire pénitentiaire (techniques psychologiques avancées)' }
       ],
-      skills: [
-        { skillId: 'insight', bonus: 5, reason: 'Observation détenus quotidienne, détection mensonges, manipulation' },
-        { skillId: 'investigation', bonus: 5, reason: 'Interrogatoires assistés, fouilles cellules, enquêtes internes' },
-        { skillId: 'intimidation', bonus: 3, reason: 'Maintien ordre autoritaire, présence pénitentiaire' },
-        { skillId: 'athletics', bonus: 3, reason: 'Maîtrise physique prisonniers, patrouilles, défense' }
-      ],
+      skills: [{ skillId: 'insight', bonus: 5, reason: 'Observation détenus quotidienne, détection mensonges, manipulation' }],
       gold: 400,
       languages: ['Commun', 'Cant Criminels (compréhension)', 'Codes Gardiens Prisons', 'Signes Main Silencieux (surveillance)'],
       tags: ['prison', 'law', 'dark', 'brutal', 'authoritarian', 'isolated']
@@ -2049,26 +1517,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { dexterity: 2, intelligence: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Enfant Ténèbres Absolues',
           desc: 'Vision ténèbres parfaite 40m (écholocalisation + yeux adaptés), +5 Stealth (ténèbres), +1d20 Navigation (souterrain total), désavantage lumière vive (sensibilité solaire douloureuse)',
           effect: 'Darkvision 40m, +5 Stealth, +1d20 Underground Nav',
           game_effect: 'Maîtrise ténèbres totale mais faiblesse lumière'
-        },
-        {
-          name: 'Survivant Souterrain Extrême',
-          desc: '+5 Survival (souterrain), immunité maladies fongiques (exposition générationnelle), +3 Athletics (escalade tunnels verticaux), résistance toxines champignons 75%',
-          effect: '+5 Survival, +3 Athletics, Fungal Immunity',
-          game_effect: 'Endurance souterraine + santé adaptée'
-        },
-        {
-          name: 'Connaissance Ossuaires Anciens',
-          desc: '+3 Religion (rites funéraires obscurs), +3 History (secrets enterrés), détection passages secrets catacombes (+5 Investigation contexte souterrain), réseau contacts 5 niveaux catacombes',
-          effect: '+3 Religion, +3 History',
-          game_effect: 'Sagesse mortuaire + archéologie souterraine'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'habitants_catacombes', delta: 12, reason: 'Enfant Ténèbres Béni, survie légendaire' },
         { factionId: 'mages_tenebres', delta: 8, reason: 'Affinité obscurité naturelle, respect adaptation' },
@@ -2081,12 +1535,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'echolocation_whistle', quantity: 1, reason: 'Sifflet écholocalisation (navigation ténèbres 30m précision)' },
         { itemId: 'catacomb_map_partial', quantity: 1, reason: 'Carte partielle 5 niveaux supérieurs (passages secrets marqués)' }
       ],
-      skills: [
-        { skillId: 'stealth', bonus: 5, reason: 'Déplacement silencieux ténèbres absolues quotidien' },
-        { skillId: 'survival', bonus: 5, reason: 'Vie souterraine hostile, chasse rats, cueillette champignons' },
-        { skillId: 'athletics', bonus: 3, reason: 'Escalade tunnels verticaux, passages étroits' },
-        { skillId: 'religion', bonus: 3, reason: 'Rites funéraires catacombes, respect ossements anciens' }
-      ],
+      skills: [{ skillId: 'stealth', bonus: 5, reason: 'Déplacement silencieux ténèbres absolues quotidien' }],
       gold: 200,
       languages: ['Commun', 'Dialecte Catacombes (chuchotements)', 'Écholocalisation (clics/échos)', 'Latin Funéraire (inscriptions anciennes)'],
       tags: ['underground', 'dark', 'isolated', 'cursed', 'albino', 'eerie']
@@ -2121,26 +1570,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { charisma: 2, intelligence: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Théologien Hérétique Éduqué',
           desc: '+5 Religion (théologie orthodoxe/hérétique), +5 Arcana (magie démoniaque), +1d20 résister détection/bannissement divin (aura corrompue masquée), connaissance 3 invocations démons mineurs',
           effect: '+5 Religion, +5 Arcana, +1d20 Divine Resist',
           game_effect: 'Érudition blasphématoire + défense céleste'
-        },
-        {
-          name: 'Survivant Massacre Exorcisme',
-          desc: '+3 Persuasion (négociation désespérée), +3 Deception (cacher nature hérétique), stigmate pénitence visible (CHA -1 interactions cléricales, +2 Intimidation contexte démoniaque)',
-          effect: '+3 Persuasion, +3 Deception',
-          game_effect: 'Diplomatie salvatrice + dissimulation identité'
-        },
-        {
-          name: 'Résilience Ténèbres Corrompues',
-          desc: 'Résistance nécromancie/démonologie 25% (exposition générationnelle), immunité possession démons mineurs (âme marquée démoniaque), détection présences infernales 20m',
-          effect: 'Dark Resist 25%, Possession Immunity',
-          game_effect: 'Défense ténèbres + sens infernal'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'cultistes_demoniaques', delta: 8, reason: 'Enfant temple, éducation hérétique, survie massacre' },
         { factionId: 'eglise_orthodoxe', delta: -15, reason: 'Stigmate pénitence, origine blasphématoire, hérésie' },
@@ -2153,12 +1588,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'penance_scar_visible', quantity: 1, reason: 'Stigmate pénitence front (marque permanente, CHA -1 prêtres)' },
         { itemId: 'sanctuary_key_corrupted', quantity: 1, reason: 'Clé sanctuaire corrompu (accès cryptes secrètes temple)' }
       ],
-      skills: [
-        { skillId: 'religion', bonus: 5, reason: 'Éducation théologique hérétique/orthodoxe comparative intensive' },
-        { skillId: 'arcana', bonus: 5, reason: 'Observation rituels démoniaques, magie noire quotidienne' },
-        { skillId: 'persuasion', bonus: 3, reason: 'Négociation survie massacre, diplomatie désespérée' },
-        { skillId: 'deception', bonus: 3, reason: 'Cacher origines hérétiques, éviter persécution cléricale' }
-      ],
+      skills: [{ skillId: 'religion', bonus: 5, reason: 'Éducation théologique hérétique/orthodoxe comparative intensive' }],
       gold: 250,
       languages: ['Commun', 'Infernal (démonique)', 'Latin Ecclésiastique (prières corrompues)', 'Cant Cultistes (rituel)'],
       tags: ['cursed', 'heretical', 'demonic', 'dark', 'stigmatized', 'blasphemous']
@@ -2194,26 +1624,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { wisdom: 2, charisma: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Béni Déesse Joie',
           desc: 'Respiration aquatique 10min, +5 Swimming (torrents), immunité noyade (flottabilité divine), +1d20 jets sauvegarder joie/désespoir (équilibre émotionnel béni)',
           effect: 'Water Breathing, +5 Swimming, +1d20 Emotion Saves',
           game_effect: 'Affinité aquatique divine + sérénité mentale'
-        },
-        {
-          name: 'Enfant Arc-en-Ciel Sacré',
-          desc: '+5 Performance (chant harmonie cascade), +3 Medicine (eaux curatives), aura apaisante (+3 Persuasion contextes conflits), connaissance prières eau 12 traditions',
-          effect: '+5 Performance, +3 Medicine',
-          game_effect: 'Charisme harmonieux + guérison aquatique'
-        },
-        {
-          name: 'Sauveteur Héroïque Cascade',
-          desc: '+3 Athletics (natation torrents), +10 HP (endurance noyade survécue), avantage secourir personnes eaux dangereuses, réseau pèlerins 200+ fidèles reconnaissants',
-          effect: '+3 Athletics, +10 HP',
-          game_effect: 'Force sauvetage + vitalité aquatique'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'pelerins_cascade', delta: 15, reason: 'Béni Déesse Joie, sauveteur miraculeux' },
         { factionId: 'druides_eau', delta: 12, reason: 'Affinité esprits eau, bénédiction divine reconnue' },
@@ -2226,12 +1642,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'pilgrims_blessing_token', quantity: 1, reason: 'Médaillon bénédiction pèlerins (symbole sacré reconnu universellement)' },
         { itemId: 'silk_rope_waterproof', quantity: 20, reason: 'Corde soie imperméable (sauvetages aquatiques, 300kg charge)' }
       ],
-      skills: [
-        { skillId: 'swimming', bonus: 5, reason: 'Natation torrents cascade quotidienne depuis enfance' },
-        { skillId: 'performance', bonus: 5, reason: 'Chant harmonie eau, cérémonies pèlerins' },
-        { skillId: 'medicine', bonus: 3, reason: 'Connaissance propriétés curatives eaux sacrées' },
-        { skillId: 'athletics', bonus: 3, reason: 'Escalade rochers mouillés, sauvetages aquatiques' }
-      ],
+      skills: [{ skillId: 'swimming', bonus: 5, reason: 'Natation torrents cascade quotidienne depuis enfance' }],
       gold: 300,
       languages: ['Commun', 'Aquan (esprits eau)', 'Chants Cascade (mélodies sacrées)', 'Prières Joie (12 traditions)'],
       tags: ['natural', 'sacred', 'aquatic', 'blessed', 'beautiful', 'healing']
@@ -2266,26 +1677,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { intelligence: 2, wisdom: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Maître Échos Canyon',
           desc: '+5 Perception (auditive), +1d20 Navigation (écholocalisation canyon), détection créatures invisibles sons 50m, cartographie mentale 3D environnements acoustiques',
           effect: '+5 Perception, +1d20 Echo Navigation',
           game_effect: 'Ouïe légendaire + orientation sonore'
-        },
-        {
-          name: 'Acousticien Prodige',
-          desc: '+5 Performance (chant harmoniques), connaissance théorie musicale avancée, amplifier sons ×10 volume (architecture acoustique), +3 Arcana (magie sonore/thunder)',
-          effect: '+5 Performance, +3 Arcana',
-          game_effect: 'Expertise son + magie tonnerre'
-        },
-        {
-          name: 'Langage Silence Moines',
-          desc: 'Communication signes parfaite (100 mots/min silencieux), +3 Stealth (déplacement silencieux absolu), avantage résister sorts thunder/sonic (acclimatation quotidienne)',
-          effect: 'Sign Language, +3 Stealth',
-          game_effect: 'Communication muette + défense sonique'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'bardes_canyon', delta: 12, reason: 'Prodige acoustique, sauveteur échos' },
         { factionId: 'moines_silence', delta: 10, reason: 'Maîtrise langage signes, respect discipline sonore' },
@@ -2298,12 +1695,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'silent_boots_monk', quantity: 1, reason: 'Bottes silence moines (Stealth +5, déplacement totalement muet)' },
         { itemId: 'voice_amplifier_horn', quantity: 1, reason: 'Corne amplification voix (porte son 5km canyon, communication longue distance)' }
       ],
-      skills: [
-        { skillId: 'perception', bonus: 5, reason: 'Écoute attentive quotidienne échos, détection sons subtils' },
-        { skillId: 'performance', bonus: 5, reason: 'Chant acoustique canyon, composition harmoniques' },
-        { skillId: 'stealth', bonus: 3, reason: 'Déplacement silencieux absolu, discipline moines' },
-        { skillId: 'arcana', bonus: 3, reason: 'Étude magie sonore, sorts thunder observés' }
-      ],
+      skills: [{ skillId: 'perception', bonus: 5, reason: 'Écoute attentive quotidienne échos, détection sons subtils' }],
       gold: 300,
       languages: ['Commun', 'Langage Signes Canyon (complet)', 'Harmoniques Musicales (notation)', 'Écholocalisation (clics)'],
       tags: ['natural', 'acoustic', 'silent', 'unique', 'scholarly', 'mysterious']
@@ -2338,26 +1730,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { intelligence: 2, constitution: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Conduit Mana Vivant',
           desc: 'Slots sorts +3 niveau 1 (réserve mana accrue), +1d20 Arcana (magie arcan brute), récupération repos court restaure 50% slots (métabolisme magique), absorption énergie arcan environnement',
           effect: '+3 Level 1 Slots, +1d20 Arcana',
           game_effect: 'Réserve magique titanesque + affinité arcan'
-        },
-        {
-          name: 'Alchimiste Geysers Expérimenté',
-          desc: '+5 Alchemy (potions eau magique), connaissance 20 formules rares, +30% efficacité potions créées (eau geysers supérieure), réseau alchimistes 15 guildes',
-          effect: '+5 Alchemy, Potion Boost 30%',
-          game_effect: 'Maîtrise alchimique + commerce lucratif'
-        },
-        {
-          name: 'Résistance Mutation Arcan',
-          desc: 'Résistance dégâts magie arcan 25%, immunité mutations magiques involontaires (stabilité génétique), détection pics mana 50m (instinct survie)',
-          effect: 'Arcane Resist 25%, Mutation Immunity',
-          game_effect: 'Défense magie + santé protégée'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'alchimistes', delta: 12, reason: 'Accès eau geysers qualité suprême, expertise formules' },
         { factionId: 'mages_academies', delta: 10, reason: 'Conduit Mana Vivant rare, étude phénomène' },
@@ -2370,12 +1748,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'heat_resistant_gloves', quantity: 1, reason: 'Gants résistance chaleur alchimique (manipulation eau bouillante sûre)' },
         { itemId: 'alchemy_portable_lab', quantity: 1, reason: 'Laboratoire alchimie portable (créer potions terrain, 200 PO valeur)' }
       ],
-      skills: [
-        { skillId: 'arcana', bonus: 5, reason: 'Immersion quotidienne énergie arcan, observations phénomènes' },
-        { skillId: 'alchemy', bonus: 5, reason: 'Apprentissage alchimie geysers, formules eau magique' },
-        { skillId: 'survival', bonus: 3, reason: 'Vie zone géothermique dangereuse, esquive geysers' },
-        { skillId: 'perception', bonus: 3, reason: 'Détection éruptions imminentes, instinct survie mana' }
-      ],
+      skills: [{ skillId: 'arcana', bonus: 5, reason: 'Immersion quotidienne énergie arcan, observations phénomènes' }],
       gold: 500,
       languages: ['Commun', 'Draconic (notation alchimique)', 'Formules Arcaniques (symbolique)', 'Cant Alchimistes (jargon)'],
       tags: ['magical', 'alchemical', 'geothermal', 'prosperous', 'dangerous', 'scholarly']
@@ -2411,26 +1784,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { charisma: 2, intelligence: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Courtisan Politique Élevé',
           desc: '+5 Persuasion (intrigue noblesse), +5 Insight (détection mensonges politiques), +1d20 Diplomacy (négociations traités), connaissance protocoles 20 nations, réseau 50+ nobles influents',
           effect: '+5 Persuasion, +5 Insight, +1d20 Diplomacy',
           game_effect: 'Maîtrise intrigue + réseau pouvoir étendu'
-        },
-        {
-          name: 'Noble Mineur Titré',
-          desc: 'Titre noblesse héréditaire (Chevalier/Dame), fief 500 hectares (revenu passif 100 PO/mois), accès exclusif palais ducal, audiences duc garanties trimestrielles',
-          effect: 'Noble Title, Estate Income',
-          game_effect: 'Statut social + richesse passive'
-        },
-        {
-          name: 'Héros Complot Déjoué',
-          desc: '+3 Investigation (conspirations), +3 Deception (contre-espionnage), avantage résister intimidation/charme politique (exposition quotidienne manipulation), faveur duc utilisable 1×',
-          effect: '+3 Investigation, +3 Deception',
-          game_effect: 'Expertise sécurité + capital politique'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'noblesse_regionale', delta: 12, reason: 'Titre héréditaire, héros complot, famille établie' },
         { factionId: 'garde_ducale', delta: 10, reason: 'Alerte complot sauvé duc, confiance sécurité' },
@@ -2443,12 +1802,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'palace_access_token', quantity: 1, reason: 'Jeton accès palais ducal permanent (sécurité, privilège)' },
         { itemId: 'diplomatic_protocols_manual', quantity: 1, reason: 'Manuel protocoles 20 nations (référence négociations)' }
       ],
-      skills: [
-        { skillId: 'persuasion', bonus: 5, reason: 'Éducation courtisan, intrigue noblesse quotidienne' },
-        { skillId: 'insight', bonus: 5, reason: 'Détection mensonges politiques, observation comportements' },
-        { skillId: 'investigation', bonus: 3, reason: 'Recherche complot, enquêtes discrètes' },
-        { skillId: 'deception', bonus: 3, reason: 'Dissimulation intentions, contre-espionnage' }
-      ],
+      skills: [{ skillId: 'persuasion', bonus: 5, reason: 'Éducation courtisan, intrigue noblesse quotidienne' }],
       gold: 800,
       languages: ['Commun', 'Langues Diplomatiques (4 nations)', 'Latin Légal (droit)', 'Cant Courtisans (intrigue)'],
       tags: ['urban', 'noble', 'political', 'wealthy', 'intrigue', 'influential']
@@ -2483,26 +1837,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { wisdom: 2, charisma: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Béni Saint Aurélien',
           desc: '1/jour : Lay on Hands (2d8 HP restaurés toucher), +5 Religion (théologie approfondie), +1d20 résister maladies/poisons (immunité miraculeuse), détection alignements maléfiques 20m',
           effect: 'Lay on Hands 2d8, +5 Religion, +1d20 Disease Resist',
           game_effect: 'Pouvoir guérison divin + piété protectrice'
-        },
-        {
-          name: 'Orphelin Cathédrale Élevé',
-          desc: '+5 Persuasion (prédication foi), +3 Medicine (soins malades), vœu pauvreté (richesse max 100 PO possédées, surplus donné charité obligatoire), réseau ecclésiastique 30 diocèses',
-          effect: '+5 Persuasion, +3 Medicine',
-          game_effect: 'Charisme spirituel + contrainte pauvreté'
-        },
-        {
-          name: 'Témoin Miracles Quotidiens',
-          desc: '+3 Insight (discerner foi sincère/hypocrite), avantage jets Inspiration (foi inébranlable), +2 jets sauvegarder désespoir/peur (espoir béni)',
-          effect: '+3 Insight, Inspiration Advantage',
-          game_effect: 'Discernement spirituel + moral renforcé'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'eglise_lumiere', delta: 18, reason: 'Béni Saint Aurélien reconnu, orphelin cathédrale vénéré' },
         { factionId: 'pelerins', delta: 12, reason: 'Guérisseur miraculeux, espoir fidèles' },
@@ -2515,12 +1855,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'pilgrims_robe_simple', quantity: 1, reason: 'Robe pèlerin simple (vœu pauvreté, reconnaissance universelle)' },
         { itemId: 'prayer_book_illuminated', quantity: 1, reason: 'Livre prières enluminé (théologie 200 pages, valeur sentimentale)' }
       ],
-      skills: [
-        { skillId: 'religion', bonus: 5, reason: 'Éducation théologique intensive cathédrale depuis enfance' },
-        { skillId: 'persuasion', bonus: 5, reason: 'Prédication foi, inspiration fidèles, charité quotidienne' },
-        { skillId: 'medicine', bonus: 3, reason: 'Soins malades orphelinat/épidémie, premiers soins' },
-        { skillId: 'insight', bonus: 3, reason: 'Observation fidèles, discernement foi sincère' }
-      ],
+      skills: [{ skillId: 'religion', bonus: 5, reason: 'Éducation théologique intensive cathédrale depuis enfance' }],
       gold: 100,
       languages: ['Commun', 'Latin Ecclésiastique', 'Langues Pèlerins (4 dialectes)', 'Chants Liturgiques'],
       tags: ['sacred', 'urban', 'blessed', 'charitable', 'poor', 'healing']
@@ -2556,26 +1891,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { intelligence: 2, wisdom: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Prodige Académique Reconnu',
           desc: '+5 Arcana/History/Religion (au choix, expertise faculté), +5 Investigation (recherches académiques), +1d20 jets apprentissage compétences nouvelles (méthodologie universitaire), accès bibliothèque 500.000 volumes',
           effect: '+5 Academic Skill, +5 Investigation, +1d20 Learning',
           game_effect: 'Érudition légendaire + apprentissage accéléré'
-        },
-        {
-          name: 'Bourse Universitaire Complète',
-          desc: 'Admission université 14 ans (record), bourse 10 ans couvrant scolarité/logement/livres (valeur 10.000 PO totale), réseau professeurs 50+ érudits influents, accès archives secrètes niveau 3/5',
-          effect: 'University Scholarship, Archive Access',
-          game_effect: 'Éducation gratuite + réseau académique étendu'
-        },
-        {
-          name: 'Correcteur Théorème Historique',
-          desc: '+3 Logic (mathématiques/philosophie), +3 Persuasion (débats intellectuels), célébrité académique (reconnaissance universités 20 nations), +2 jets Intelligence (confiance intellectuelle)',
-          effect: '+3 Logic, +3 Persuasion, Fame',
-          game_effect: 'Réputation savant + raisonnement supérieur'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'universite_erudis', delta: 18, reason: 'Prodige record, correcteur théorème, fils bibliothécaires' },
         { factionId: 'academies_royaume', delta: 12, reason: 'Célébrité intellectuelle, correction historique' },
@@ -2588,12 +1909,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'research_notes_theorem', quantity: 1, reason: 'Notes recherche correction théorème (preuve originale, patrimoine intellectuel)' },
         { itemId: 'archive_key_level3', quantity: 1, reason: 'Clé archives secrètes niveau 3 (accès manuscrits anciens restreints)' }
       ],
-      skills: [
-        { skillId: 'arcana', bonus: 5, reason: 'Études faculté magie arcan, observations expériences quotidiennes' },
-        { skillId: 'investigation', bonus: 5, reason: 'Méthodologie recherche universitaire, bibliothèque explorations' },
-        { skillId: 'history', bonus: 3, reason: 'Lectures massives archives, correction théorème historique' },
-        { skillId: 'persuasion', bonus: 3, reason: 'Débats académiques, présentation congrès, défense thèses' }
-      ],
+      skills: [{ skillId: 'arcana', bonus: 5, reason: 'Études faculté magie arcan, observations expériences quotidiennes' }],
       gold: 400,
       languages: ['Commun', 'Latin Académique', 'Langues Anciennes (3 dialectes)', 'Notation Mathématique Universelle'],
       tags: ['urban', 'scholarly', 'intellectual', 'prestigious', 'bookish', 'prodigy']
@@ -2628,26 +1944,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { strength: 2, constitution: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Étoile Havre Navigateur',
           desc: '+5 Navigation (maritime), +5 Survival (océan), +1d20 prédire météo marine 48h avance (lecture nuages/vents/marées), capitaine certifié jeune (commande équipages 20+ marins)',
           effect: '+5 Navigation, +5 Survival, +1d20 Weather Predict',
           game_effect: 'Maîtrise mer totale + instinct tempêtes'
-        },
-        {
-          name: 'Pêcheur Hauturier Aguerri',
-          desc: '+5 Athletics (manœuvres navales), +3 Animal Handling (poissons/dauphins), résistance mal mer immunité, endurance froid marin (hypothermie résistance 75%), maîtrise filets/harpons',
-          effect: '+5 Athletics, +3 Animal Handling',
-          game_effect: 'Endurance maritime + techniques pêche'
-        },
-        {
-          name: 'Héritier Chalutier Familial',
-          desc: 'Propriété chalutier "Écume Salée" 20m (valeur 2000 PO, revenu pêche 80 PO/mois), équipage 6 marins loyaux famille, réseau guilde pêcheurs 40 ports côtiers',
-          effect: 'Ship Ownership, Crew',
-          game_effect: 'Patrimoine naval + revenu passif'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'pecheurs_cote', delta: 15, reason: 'Étoile Havre héros, sauveteur tempête, famille établie' },
         { factionId: 'guilde_marins', delta: 12, reason: 'Capitaine certifié record, compétence navigation' },
@@ -2660,12 +1962,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'fishing_nets_reinforced', quantity: 10, reason: 'Filets pêche renforcés (charge 500kg chacun, réparation facile)' },
         { itemId: 'sailors_lucky_charm', quantity: 1, reason: 'Porte-bonheur marin grand-père (dent requin, +1 jets sauvegarder mer)' }
       ],
-      skills: [
-        { skillId: 'navigation', bonus: 5, reason: 'Navigation océanique quotidienne depuis 8 ans, instinct météo' },
-        { skillId: 'survival', bonus: 5, reason: 'Vie haute mer hostile, tempêtes, autonomie alimentaire poisson' },
-        { skillId: 'athletics', bonus: 5, reason: 'Manœuvres navales physiques, hissage voiles, combat vagues' },
-        { skillId: 'animal_handling', bonus: 3, reason: 'Pêche techniques diverses, interaction faune marine' }
-      ],
+      skills: [{ skillId: 'navigation', bonus: 5, reason: 'Navigation océanique quotidienne depuis 8 ans, instinct météo' }],
       gold: 500,
       languages: ['Commun', 'Cant Marins (jargon maritime)', 'Signes Main Navires (communication distance)', 'Superstitions Océan (folklore)'],
       tags: ['coastal', 'maritime', 'hardworking', 'seafaring', 'prosperous', 'communal']
@@ -2700,26 +1997,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { charisma: 2, intelligence: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Médiateur Cinq Nations',
           desc: '+5 Persuasion (négociations interculturelles), +5 Insight (lecture cultures diverses), +1d20 Diplomacy (conflits internationaux), citoyenneté honoraire 5 nations (libre passage frontières, protection diplomatique)',
           effect: '+5 Persuasion, +5 Insight, +1d20 Diplomacy',
           game_effect: 'Expertise diplomatique + statut unique'
-        },
-        {
-          name: 'Polyglotte Naturel',
-          desc: '+6 langues parlées couramment (total 8+), +3 Deception (mensonges multiculturels crédibles), avantage jets compréhension langues inconnues (racines communes identifiées), réseau contacts 5 nations 200+ marchands',
-          effect: '+6 Languages, +3 Deception',
-          game_effect: 'Communication universelle + réseau international'
-        },
-        {
-          name: 'Héritier Commerce Multiculturel',
-          desc: 'Propriété échoppe textiles familiale (valeur 1500 PO, revenu 70 PO/mois), +20% profits commerce interculturel (connaissance marchés 5 nations), accès contrebande légale zone grise',
-          effect: 'Shop Ownership, Trade Bonus',
-          game_effect: 'Patrimoine commercial + avantage économique'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'marchands_pont_cinq', delta: 15, reason: 'Médiateur Prodige, héros crise diplomatique, famille établie' },
         { factionId: 'ambassades_5_nations', delta: 12, reason: 'Citoyenneté honoraire unique, respect diplomatie' },
@@ -2732,12 +2015,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'exotic_goods_samples', quantity: 10, reason: 'Échantillons marchandises exotiques (épices, soieries, gemmes, 500 PO valeur totale)' },
         { itemId: 'translation_dictionary_12languages', quantity: 1, reason: 'Dictionnaire 12 langues polyglotte (référence commerciale, 80 PO valeur)' }
       ],
-      skills: [
-        { skillId: 'persuasion', bonus: 5, reason: 'Négociations commerciales quotidiennes depuis 7 ans, médiation' },
-        { skillId: 'insight', bonus: 5, reason: 'Lecture comportements 20 cultures, détection mensonges interculturels' },
-        { skillId: 'deception', bonus: 3, reason: 'Commerce zone grise, dissimulation origines marchandises' },
-        { skillId: 'history', bonus: 3, reason: 'Connaissance 5 nations histoires/cultures, traités diplomatiques' }
-      ],
+      skills: [{ skillId: 'persuasion', bonus: 5, reason: 'Négociations commerciales quotidiennes depuis 7 ans, médiation' }],
       gold: 600,
       languages: ['Commun', 'Elfique', 'Nain', 'Halfelin', 'Langue Orientale', 'Dialecte Nordique', 'Cant Marchands (universel)', 'Signes Commerce (international)'],
       tags: ['urban', 'cosmopolitan', 'diplomatic', 'multilingual', 'prosperous', 'neutral']
@@ -2772,26 +2050,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { wisdom: 2, charisma: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Thaumaturge Thermal Certifié',
           desc: '+5 Medicine (hydrothérapie), +1d20 soigner maladies chroniques (traitement thermal 7 jours requis), connaissance 30 pathologies curables sources, réseau médecins 20 nations',
           effect: '+5 Medicine, +1d20 Chronic Disease Cure',
           game_effect: 'Expertise curative thermale + guérisons rares'
-        },
-        {
-          name: 'Héritier Hôtel Thermal',
-          desc: 'Propriété hôtel "Vapeurs Bienfaisantes" 50 chambres (valeur 5000 PO, revenu 150 PO/mois), personnel 12 employés loyaux, accès sources privées illimité, clientèle aristocratique établie',
-          effect: 'Hotel Ownership, Passive Income',
-          game_effect: 'Patrimoine thermal + richesse passive'
-        },
-        {
-          name: 'Peau Parfaite Thermale',
-          desc: '+2 CHA (beauté naturelle bains quotidiens), résistance maladies peau 90% (immunité acné/eczéma/psoriasis), guérison blessures ×1.5 vitesse (régénération thermale), aura santé rayonnante',
-          effect: '+2 CHA, Disease Resist, Fast Healing',
-          game_effect: 'Beauté surnaturelle + santé visible'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'medecins_thermaux', delta: 15, reason: 'Thaumaturge certifié, guérison noble miraculeuse' },
         { factionId: 'aristocratie', delta: 12, reason: 'Service thermal famille respectée, clientèle fidèle' },
@@ -2804,12 +2068,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'hotel_deed_thermal', quantity: 1, reason: 'Titre propriété hôtel 50 chambres (patrimoine familial, revenu passif)' },
         { itemId: 'duke_reward_medal', quantity: 1, reason: 'Médaille duc reconnaissance (symbole prestige, +5 disp nobles)' }
       ],
-      skills: [
-        { skillId: 'medicine', bonus: 5, reason: 'Hydrothérapie quotidienne, observation guérisons, formation soigneurs' },
-        { skillId: 'persuasion', bonus: 5, reason: 'Service clientèle aristocratique, négociations tarifs, diplomatie' },
-        { skillId: 'insight', bonus: 3, reason: 'Diagnostic pathologies observation, empathie malades' },
-        { skillId: 'nature', bonus: 3, reason: 'Connaissance herbes médicinales locales, propriétés minérales' }
-      ],
+      skills: [{ skillId: 'medicine', bonus: 5, reason: 'Hydrothérapie quotidienne, observation guérisons, formation soigneurs' }],
       gold: 700,
       languages: ['Commun', 'Latin Médical', 'Protocoles Aristocratiques (4 nations)', 'Terminologie Hydrothérapie'],
       tags: ['urban', 'healing', 'prosperous', 'peaceful', 'beautiful', 'aristocratic']
@@ -2844,26 +2103,12 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
     effects: {
       // ========== STATS D100 (×2) ==========
       stats: { constitution: 2, intelligence: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Maître-Ingénieur Karak-Azur',
           desc: '+5 Engineering (architecture/mécanique), +1d20 construire structures souterraines (tunnels, ponts, forteresses), vision ténèbres parfaite 60m (yeux adaptés), détection failles pierre 95% précision',
           effect: '+5 Engineering, +1d20 Underground Build, Darkvision 60m',
           game_effect: 'Génie architectural + sens pierre légendaire'
-        },
-        {
-          name: 'Forgeron Armurier Lignée',
-          desc: '+5 Smithing (armes/armures), maîtrise forge runique basique, créer équipement qualité supérieure (+1 dégâts/AC), réseau guildes forgerons 30 cités naines',
-          effect: '+5 Smithing, Runic Basics, Quality Gear',
-          game_effect: 'Artisanat légendaire + équipement supérieur'
-        },
-        {
-          name: 'Hache Runique Ancestrale',
-          desc: 'Hache guerre runique "Fend-Roc" (2d8+2, +3 vs créatures souterraines, indestructible, héritage royal Barbe-Pierre), +10 HP (endurance forge quotidienne), résistance poison/alcool 75%',
-          effect: 'Runic Axe 2d8+2, +10 HP',
-          game_effect: 'Arme légendaire + vitalité naine'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'nains_karak_azur', delta: 18, reason: 'Maître-Ingénieur record, sauveteur séisme, lignée réputée' },
         { factionId: 'guildes_forgerons', delta: 15, reason: 'Artisan prodige, hache runique royale portée' },
@@ -2876,12 +2121,7 @@ export const BIRTH_LOCATIONS: LifeChoice[] = [
         { itemId: 'smithing_tools_masterwork', quantity: 1, reason: 'Outils forge chef-d\'œuvre (qualité supérieure garantie, 300 PO valeur)' },
         { itemId: 'clan_genealogy_scroll', quantity: 1, reason: 'Parchemin généalogie clan 15 générations (honneur ancestral, 200 PO)' }
       ],
-      skills: [
-        { skillId: 'engineering', bonus: 5, reason: 'Conception étaiement innovant, architecture souterraine quotidienne' },
-        { skillId: 'smithing', bonus: 5, reason: 'Forge armurier familiale 15 générations, apprentissage intensif' },
-        { skillId: 'history', bonus: 3, reason: 'Mémoire orale clan 2000 ans, culture naine approfondie' },
-        { skillId: 'survival', bonus: 3, reason: 'Vie souterraine hostile, navigation tunnels, dangers Profond' }
-      ],
+      skills: [{ skillId: 'engineering', bonus: 5, reason: 'Conception étaiement innovant, architecture souterraine quotidienne' }],
       gold: 800,
       languages: ['Commun', 'Nain (dialecte Karak-Azur)', 'Khuzdul Ancien (runes)', 'Cant Forgerons (technique)'],
       tags: ['underground', 'dwarven', 'engineering', 'smithing', 'legendary', 'honored']

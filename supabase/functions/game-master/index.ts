@@ -1019,8 +1019,9 @@ Deno.serve(async (req: Request) => {
             result.combat = { trigger: true, enemies: [{ name: "Ennemi", hp: 20, max_hp: 20, atk: 5, ac: 10, id: "e1" }] };
         }
 
-        // Save to DB
-        if (context !== 'GAME_ASSISTANT') {
+        // Save to DB only if NOT a narrative response (frontend handles narrative messages)
+        // This prevents duplicate messages since frontend also saves AI responses
+        if (context !== 'GAME_ASSISTANT' && !result.narrative) {
             await supabase.from('messages').insert([{
                 session_id: sessionId,
                 role: 'system',

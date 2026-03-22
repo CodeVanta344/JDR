@@ -27,15 +27,15 @@ export const CombatLogger = {
             }
             
             localStorage.setItem(LOG_KEY, JSON.stringify(logs));
-        } catch (e) {
-            console.error('Failed to store log:', e);
+        } catch {
+            console.error('Failed to store log');
         }
     },
 
     getLogs: () => {
         try {
             return JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
-        } catch (e) {
+        } catch {
             return [];
         }
     },

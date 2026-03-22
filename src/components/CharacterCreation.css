@@ -1,7 +1,5 @@
 /* ===== CHARACTER CREATION - STYLE GRIMOIRE SOMBRE ===== */
 
-@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;800&family=IM+Fell+English:ital@0;1&family=Outfit:wght@300;400;600&display=swap');
-
 :root {
     --gold-bright: #fbeea8;
     --gold-primary: #d4af37;
@@ -13,6 +11,11 @@
     --aether-blue: #4bcffa;
     --crimson-blood: #ff4d4d;
     --text-gold-light: #f4eee0;
+}
+
+:focus-visible {
+    outline: 2px solid var(--gold-primary, #d4af37);
+    outline-offset: 2px;
 }
 
 .creation-container {
@@ -259,7 +262,7 @@
 }
 
 .input-field:focus {
-    outline: none;
+    outline: 2px solid transparent;
     border-color: var(--gold-primary);
     background: rgba(0, 0, 0, 0.8);
     box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
@@ -941,7 +944,7 @@
     color: var(--gold-bright);
     text-align: center;
     transition: all 0.4s ease;
-    outline: none;
+    outline: 2px solid transparent;
     text-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
 }
 
@@ -2064,5 +2067,270 @@
 
     .dashboard-stat {
         padding: 1rem;
+    }
+}
+
+/* ============================================================
+   COMPREHENSIVE RESPONSIVE DESIGN
+   ============================================================ */
+
+/* Small phones (480px and down) */
+@media (max-width: 480px) {
+    .creation-container {
+        padding: 0.5rem;
+        align-items: flex-start;
+        padding-top: 0.5rem;
+    }
+    
+    .spellbook-shell {
+        width: 100%;
+        max-height: 98vh;
+        padding: 1rem;
+        border-radius: 12px;
+    }
+    
+    .spellbook-nav {
+        gap: 0.4rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .nav-dot {
+        width: 8px;
+        height: 8px;
+    }
+    
+    .nav-dot.active {
+        transform: scale(1.2);
+    }
+    
+    .quick-start-banner {
+        padding: 0.4rem;
+        margin-bottom: 1rem;
+    }
+    
+    .quick-start-banner span {
+        font-size: 0.65rem;
+        letter-spacing: 2px;
+    }
+    
+    .mute-toggle {
+        top: 0.5rem;
+        right: 0.5rem;
+        width: 35px;
+        height: 35px;
+        font-size: 1rem;
+    }
+    
+    .class-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.6rem;
+    }
+    
+    .class-card {
+        padding: 1rem 0.8rem;
+    }
+    
+    .class-icon {
+        font-size: 1.8rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .class-name {
+        font-size: 0.8rem;
+    }
+    
+    .subclass-grid {
+        grid-template-columns: 1fr;
+        gap: 0.8rem;
+    }
+    
+    .subclass-card {
+        padding: 1rem;
+    }
+    
+    .subclass-name {
+        font-size: 1rem;
+    }
+    
+    .subclass-desc {
+        font-size: 0.8rem;
+    }
+    
+    .stat-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.6rem;
+    }
+    
+    .stat-card {
+        padding: 0.8rem;
+    }
+    
+    .stat-value {
+        font-size: 1.8rem;
+    }
+    
+    .btn-epic-roll {
+        min-width: unset;
+        width: 100%;
+        padding: 0.8rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .creation-buttons {
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+    
+    .creation-buttons button {
+        width: 100%;
+        padding: 0.8rem;
+        font-size: 0.85rem;
+    }
+}
+
+/* Tablets (481px to 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+    .creation-container {
+        padding: 1rem;
+    }
+    
+    .spellbook-shell {
+        width: 98%;
+        padding: 1.5rem;
+    }
+    
+    .class-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.8rem;
+    }
+    
+    .subclass-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .stat-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Large tablets (769px to 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .spellbook-shell {
+        max-width: 95%;
+        padding: 2rem;
+    }
+    
+    .class-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .subclass-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Large screens (1440px and up) */
+@media (min-width: 1440px) {
+    .spellbook-shell {
+        max-width: 1600px;
+        padding: 3rem;
+    }
+    
+    .class-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+    }
+    
+    .subclass-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+    }
+    
+    .stat-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+    }
+}
+
+/* Ultra-wide screens (1920px and up) */
+@media (min-width: 1920px) {
+    .spellbook-shell {
+        max-width: 1800px;
+        padding: 3.5rem;
+    }
+    
+    .class-card {
+        padding: 2rem 1.5rem;
+    }
+    
+    .class-icon {
+        font-size: 3rem;
+    }
+    
+    .class-name {
+        font-size: 1.2rem;
+    }
+}
+
+/* Landscape mode on phones */
+@media (max-height: 500px) and (orientation: landscape) {
+    .creation-container {
+        align-items: flex-start;
+        padding-top: 0.5rem;
+    }
+    
+    .spellbook-shell {
+        max-height: 95vh;
+    }
+    
+    .class-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.5rem;
+    }
+    
+    .class-card {
+        padding: 0.6rem;
+    }
+    
+    .class-icon {
+        font-size: 1.5rem;
+    }
+}
+
+/* Touch-friendly for mobile */
+@media (pointer: coarse) {
+    .class-card,
+    .subclass-card,
+    .stat-card,
+    .creation-buttons button,
+    .btn-epic-roll {
+        min-height: 44px;
+    }
+    
+    .nav-dot {
+        min-width: 44px;
+        min-height: 44px;
+    }
+}
+
+/* High DPI / Retina displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .spellbook-shell {
+        box-shadow:
+            0 60px 150px rgba(0, 0, 0, 0.95),
+            0 0 0 1px var(--gold-dim),
+            inset 0 0 100px rgba(0, 0, 0, 0.9);
+    }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    .spellbook-shell,
+    .class-card,
+    .subclass-card,
+    .nav-dot,
+    .mute-toggle {
+        animation: none;
+        transition: none;
     }
 }

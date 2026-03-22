@@ -1,16 +1,24 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { supabase } from './supabaseClient';
 import { WORLD_CONTEXT, BESTIARY, LEVEL_THRESHOLDS, CLASSES, ENVIRONMENTAL_RULES, EQUIPMENT_RULES, NPC_TEMPLATES, IMPORTANT_NPCS, QUEST_HOOKS, TAVERNS_AND_LOCATIONS, RUMORS_AND_GOSSIP, RANDOM_ENCOUNTERS, BESTIARY_EXTENDED, WORLD_MYTHS_EXTENDED, LEGENDARY_ITEMS, WORLD_HISTORY, FACTION_LORE, WORLD_MYTHS_AND_LEGENDS, CULTURAL_LORE, LOCATION_BACKGROUNDS } from './lore';
 import { initializeLoreSystem } from './lore';
 import { preloadCommonData } from './lore/optimization';
-import { CharacterCreation } from './components/CharacterCreation';
-import { CharacterSheet } from './components/CharacterSheet';
-import { SessionLobby } from './components/SessionLobby';
+import {
+    LazyCombatManager as CombatManager,
+    LazyCharacterSheet as CharacterSheet,
+    LazyCodexPanel as CodexPanel,
+    LazyDMPanel as DMPanel,
+    LazyCharacterCreation as CharacterCreation,
+    LazySessionLobby as SessionLobby,
+    LazyMerchantModal as MerchantModal,
+    LazyTradeModal as TradeModal,
+    LazyDebugPanel as DebugPanel,
+    LazyVoiceChatPanel as VoiceChatPanel,
+} from './components/LazyComponents';
 import { SessionHub } from './components/SessionHub';
-import { CombatManager } from './components/CombatManager';
-import { DebugPanel } from './components/DebugPanel';
+import { GameModalProvider, alert as gameAlert } from './components/GameModals';
 import { PartyHUD } from './components/PartyHUD';
-import { MerchantModal } from './components/MerchantModal';
+import { PartyInfoPanel } from './components/PartyInfoPanel';
 import { LootModal } from './components/LootModal';
 import { NPCDialogueModal } from './components/NPCDialogueModal';
 import { DiceChallengeModal } from './components/DiceChallengeModal';
@@ -20,80 +28,435 @@ import { AudioManager } from './components/AudioManager';
 import { GameHelperModal } from './components/GameHelperModal';
 import { LevelUpModal } from './components/LevelUpModal';
 import { TransactionPrompt } from './components/TransactionPrompt';
-import { TradeModal } from './components/TradeModal';
 import { HUDHeader } from './components/HUD/HUDHeader';
 import { NarrationPanel } from './components/HUD/NarrationPanel';
-import { CodexPanel } from './components/CodexPanel';
-import { DMPanel } from './components/DMPanel';
+import { ItemSharePanel } from './components/HUD/ItemSharePanel';
+import { useVoiceChat } from './hooks/useVoiceChat';
 import WaitingRoom from './components/WaitingRoom';
 import { WeatherOverlay } from './components/WeatherOverlay';
 import { SceneBackground } from './components/SceneBackground';
 import { ParticleSystem } from './components/ParticleSystem';
 import { useGameState } from './hooks/useGameState';
+import { useGameStore } from './store/gameStore';
+import { useViewportScale } from './hooks/useViewportScale';
 import { getPartyAverageLevel, scaleEnemyForPartyLevel } from './utils/combat-progression';
-import { setSaveProfessionCallback } from './lore/game-systems-manager';
+import { distanceToTurns, resolveJoinStatus, isImmediateJoin, buildDistancePrompt } from './managers/combatInit';
+import * as sessionManager from './managers/sessionManager';
+import { buildGameMasterPayload, isTrivialChallenge, isValidChallengeInput, resolveNextPhase } from './managers/messageManager';
+import { checkProficiency, toggleEquipItem, computeConsumeEffect, buildItemSharePayload } from './managers/inventoryManager';
+import { computeExperienceGain, applyStatBoosts, deduplicateAbilities } from './managers/progressionManager';
+import { processAIResponse } from './managers/aiResponseProcessor';
+import { isDuplicateNarrative } from './managers/narrativeDedup';
+import { buildCombatEndHandler, buildMerchantCloseHandler, buildSaveGameHandler } from './managers/gameCallbacks';
+import { PWAUpdateNotification } from './components/PWAUpdateNotification';
+import { useGMEngine } from './hooks/useGMEngine';
 
-// Utility function to calculate text similarity (Levenshtein-based)
-const calculateSimilarity = (str1, str2) => {
-    if (!str1 || !str2) return 0;
-    const s1 = str1.toLowerCase().trim();
-    const s2 = str2.toLowerCase().trim();
-    
-    // If identical, return 1
-    if (s1 === s2) return 1;
-    
-    // If one contains the other, high similarity
-    if (s1.includes(s2) || s2.includes(s1)) {
-        const minLen = Math.min(s1.length, s2.length);
-        const maxLen = Math.max(s1.length, s2.length);
-        return minLen / maxLen;
-    }
-    
-    // Simple word overlap calculation
-    const words1 = s1.split(/\s+/).filter(w => w.length > 3);
-    const words2 = s2.split(/\s+/).filter(w => w.length > 3);
-    
-    const common = words1.filter(w => words2.includes(w));
-    const total = new Set([...words1, ...words2]).size;
-    
-    return total > 0 ? common.length / total : 0;
-};
+const LAZY_FALLBACK = <div style={{color:'#d4af37',textAlign:'center',padding:'2rem'}}>Chargement...</div>;
 
 const STARTING_LOCKS = new Set();
 
 
-export default function App() {
-    const [profile, setProfile] = useState(null);
-    const [messages, setMessages] = useState([]);
-    const [userMsg, setUserMsg] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [sceneImage, setSceneImage] = useState(null);
-    const [showSettings, setShowSettings] = useState(false);
-    const [combatMode, setCombatMode] = useState(false);
-    const [combatEnemies, setCombatEnemies] = useState([]);
-    const [activeNPC, setActiveNPC] = useState(null);
-    const [activeMerchant, setActiveMerchant] = useState(null);
-    const [activeLoot, setActiveLoot] = useState(null);
-    const [pendingCombat, setPendingCombat] = useState(null);
-    const [pendingTransaction, setPendingTransaction] = useState(null);
-    const [activeChallenge, setActiveChallenge] = useState(null);
-    const [showLevelUp, setShowLevelUp] = useState(false);
-    const [npcConversations, setNpcConversations] = useState({});
-    const [audioEnabled, setAudioEnabled] = useState(false);
-    const [audioVolume, setAudioVolume] = useState(0.5);
-    const [showCodex, setShowCodex] = useState(false);
-    const [showDMPanel, setShowDMPanel] = useState(false);
-    const [showHelper, setShowHelper] = useState(false);
-    const [helperMessages, setHelperMessages] = useState([]);
-    const [typingUsers, setTypingUsers] = useState([]);
-    // Weather moved to useGameState
-    const [availableSessions, setAvailableSessions] = useState([]);
-    const [gamePhase, setGamePhase] = useState('INTRO'); // INTRO, EXPLORATION, DRAMA
-    const [showTradeModal, setShowTradeModal] = useState(false);
-    const [incomingTrade, setIncomingTrade] = useState(null);
-    const [pendingTradeResponse, setPendingTradeResponse] = useState(null);
+export default function App({ user }) {
+    // Real-time viewport scaling
+    const viewport = useViewportScale();
 
-    // ... (rest of state)
+    // GM Engine - AI systems v2/v3/v4 (events, karma, economy, storytelling, world sim)
+    const gmEngine = useGMEngine();
+    
+    // Profile derived from Supabase Auth user
+    const profile = user ? { id: user.id, name: user.user_metadata?.display_name || user.email?.split('@')[0] || 'Traveler' } : null;
+
+    // === Zustand Store State ===
+    const messages = useGameStore(state => state.messages);
+    const setMessages = useGameStore(state => state.setMessages);
+    const loading = useGameStore(state => state.loading);
+    const setLoading = useGameStore(state => state.setLoading);
+    const sceneImage = useGameStore(state => state.sceneImage);
+    const setSceneImage = useGameStore(state => state.setSceneImage);
+    const showSettings = useGameStore(state => state.showSettings);
+    const setShowSettings = useGameStore(state => state.setShowSettings);
+    const combatMode = useGameStore(state => state.combatMode);
+    const setCombatMode = useGameStore(state => state.setCombatMode);
+    const combatEnemies = useGameStore(state => state.combatEnemies);
+    const setCombatEnemies = useGameStore(state => state.setCombatEnemies);
+    const activeNPC = useGameStore(state => state.activeNPC);
+    const setActiveNPC = useGameStore(state => state.setActiveNPC);
+    const activeMerchant = useGameStore(state => state.activeMerchant);
+    const setActiveMerchant = useGameStore(state => state.setActiveMerchant);
+    const activeLoot = useGameStore(state => state.activeLoot);
+    const setActiveLoot = useGameStore(state => state.setActiveLoot);
+    const pendingCombat = useGameStore(state => state.pendingCombat);
+    const setPendingCombat = useGameStore(state => state.setPendingCombat);
+    const pendingTransaction = useGameStore(state => state.pendingTransaction);
+    const setPendingTransaction = useGameStore(state => state.setPendingTransaction);
+    const activeChallenge = useGameStore(state => state.activeChallenge);
+    const setActiveChallenge = useGameStore(state => state.setActiveChallenge);
+    const showLevelUp = useGameStore(state => state.showLevelUp);
+    const setShowLevelUp = useGameStore(state => state.setShowLevelUp);
+    const npcConversations = useGameStore(state => state.npcConversations);
+    const setNpcConversations = useGameStore(state => state.setNpcConversations);
+    const audioEnabled = useGameStore(state => state.audioEnabled);
+    const setAudioEnabled = useGameStore(state => state.setAudioEnabled);
+    const audioVolume = useGameStore(state => state.audioVolume);
+    const setAudioVolume = useGameStore(state => state.setAudioVolume);
+    const showCodex = useGameStore(state => state.showCodex);
+    const setShowCodex = useGameStore(state => state.setShowCodex);
+    const showDMPanel = useGameStore(state => state.showDMPanel);
+    const setShowDMPanel = useGameStore(state => state.setShowDMPanel);
+    const showHelper = useGameStore(state => state.showHelper);
+    const setShowHelper = useGameStore(state => state.setShowHelper);
+    const helperMessages = useGameStore(state => state.helperMessages);
+    const setHelperMessages = useGameStore(state => state.setHelperMessages);
+    const typingUsers = useGameStore(state => state.typingUsers);
+    const setTypingUsers = useGameStore(state => state.setTypingUsers);
+    const gamePhase = useGameStore(state => state.gamePhase);
+    const setGamePhase = useGameStore(state => state.setGamePhase);
+    const showTradeModal = useGameStore(state => state.showTradeModal);
+    const setShowTradeModal = useGameStore(state => state.setShowTradeModal);
+    const incomingTrade = useGameStore(state => state.incomingTrade);
+    const setIncomingTrade = useGameStore(state => state.setIncomingTrade);
+    const pendingTradeResponse = useGameStore(state => state.pendingTradeResponse);
+    const setPendingTradeResponse = useGameStore(state => state.setPendingTradeResponse);
+    const itemShares = useGameStore(state => state.itemShares);
+    const setItemShares = useGameStore(state => state.setItemShares);
+    const showItemSharePanel = useGameStore(state => state.showItemSharePanel);
+    const setShowItemSharePanel = useGameStore(state => state.setShowItemSharePanel);
+
+    // Local state (not prop-drilled, only used in App.jsx)
+    const [userMsg, setUserMsg] = useState('');
+    const [availableSessions, setAvailableSessions] = useState([]);
+
+    // Memoize the close handler to prevent unnecessary re-renders
+    const handleCloseItemSharePanel = useCallback(() => {
+        console.log('[App] Closing ItemSharePanel');
+        setShowItemSharePanel(false);
+        // Vider les itemShares pour que le bouton disparaisse aussi
+        setItemShares([]);
+    }, []);
+
+    const [savedGames, setSavedGames] = useState([]);
+
+    // Fetch saved games on mount - FILTERED BY HOST (only show user's own saves)
+    useEffect(() => {
+        const fetchSavedGames = async () => {
+            if (!profile?.id) return;
+            
+            const { data } = await supabase
+                .from('world_state')
+                .select('*')
+                .like('key', 'save_%')
+                .order('updated_at', { ascending: false })
+                .limit(10);
+            
+            if (data) {
+                // Filter to only show saves where current user is the host
+                const games = data
+                    .filter(save => save.value?.hostId === profile.id || save.value?.players?.[0]?.user_id === profile.id)
+                    .map(save => ({
+                        id: save.id,
+                        sessionId: save.value?.sessionId || save.key.replace('save_', ''),
+                        host_name: save.value?.players?.[0]?.name || 'MJ',
+                        timestamp: save.value?.timestamp || save.updated_at,
+                        playerCount: save.value?.players?.length || 0,
+                        saveData: save.value
+                    }));
+                setSavedGames(games);
+            }
+        };
+        fetchSavedGames();
+    }, [profile?.id]);
+
+    const handleLoadGame = async (sessionId) => {
+        setLoading(true);
+        try {
+            const result = await sessionManager.loadGame(sessionId, profile, fetchSession);
+            if (result) {
+                setSession(result.session);
+                if (result.savedPlayer) {
+                    setCharacter(result.savedPlayer);
+                    setPlayers(result.players);
+                }
+                setAdventureStarted(false);
+
+                if (result.isSolo && result.session?.host_id === profile?.id) {
+                    setTimeout(() => handleStartAdventure(true, result.session, result.players), 2000);
+                }
+                gameAlert('✅ Partie chargée ! En attente des coéquipiers...', 'Succès');
+            } else {
+                gameAlert('❌ Aucune sauvegarde trouvée', 'Erreur');
+            }
+        } catch (err) {
+            console.error('Load error:', err);
+            gameAlert('❌ Erreur lors du chargement', 'Erreur');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleJoinSession = async (sessionId) => {
+        if (!profile?.id) return;
+        setLoading(true);
+        try {
+            const { session: s } = await sessionManager.joinSession(sessionId);
+            if (s) {
+                setSession(s);
+                gameAlert('Rejoint la session avec succès !', 'Succès');
+            } else {
+                gameAlert('Session non trouvée', 'Erreur');
+            }
+        } catch (err) {
+            console.error('Join error:', err);
+            gameAlert('Erreur lors de la connexion à la session', 'Erreur');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCreateSession = async () => {
+        if (!profile?.id) return;
+        setLoading(true);
+        try {
+            const { session: s } = await sessionManager.createSession(profile);
+            if (s) {
+                setSession(s);
+                gameAlert('Session créée avec succès !', 'Succès');
+            }
+        } catch (err) {
+            console.error('Create error:', err);
+            gameAlert('Erreur lors de la création de la session', 'Erreur');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleQuickStart = async () => {
+        if (!profile?.id) return;
+        setLoading(true);
+        try {
+            const { session: s, player } = await sessionManager.quickStartSession(profile);
+            if (s) {
+                setSession(s);
+                setAdventureStarted(true);
+                if (player) setCharacter(player);
+                gameAlert('Partie rapide lancée !', 'Succès');
+            }
+        } catch (err) {
+            console.error('Quick start error:', err);
+            gameAlert('Erreur lors du démarrage rapide', 'Erreur');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSoloAdventure = async () => {
+        if (!profile?.id) return;
+        setLoading(true);
+        try {
+            const { session: s, player } = await sessionManager.soloAdventure(profile);
+            if (s) {
+                setSession(s);
+                if (player) setCharacter(player);
+                gameAlert('Aventure solo créée !', 'Succès');
+            }
+        } catch (err) {
+            console.error('Solo adventure error:', err);
+            gameAlert('Erreur lors de la création de l\'aventure solo', 'Erreur');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSoloCustom = async () => {
+        if (!profile?.id) return;
+        setLoading(true);
+        try {
+            const { session: s } = await sessionManager.soloCustomSession(profile);
+            if (s) {
+                setSession(s);
+                gameAlert('Session solo créée ! Créez votre personnage.', 'Succès');
+            }
+        } catch (err) {
+            console.error('Solo custom error:', err);
+            gameAlert('Erreur lors de la création de la session', 'Erreur');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleJoinQuickStart = async () => {
+        if (!profile?.id || availableSessions.length === 0) return;
+        // Join the first available session
+        const targetSession = availableSessions[0];
+        await handleJoinSession(targetSession.id);
+    };
+
+    const handleLeaveSession = async () => {
+        if (!session?.id) return;
+        await sessionManager.leaveSession(session, profile);
+        setSession(null);
+        setCharacter(null);
+        setMessages([]);
+        setPlayers([]);
+        setCombatMode(false);
+        setAdventureStarted(false);
+        setSavedGames([]);
+        gameAlert('Vous avez quitté la session', 'Information');
+    };
+
+    const handleCharacterCreate = async (charData) => {
+        if (!session?.id || !profile?.id || !character?.id) return;
+        try {
+            const { data, error } = await supabase.from('players').update({
+                ...charData,
+                is_ready: true
+            }).eq('id', character.id).select().single();
+            if (error) throw error;
+            if (data) setCharacter(data);
+        } catch (err) {
+            console.error('Character create error:', err);
+            gameAlert('Erreur lors de la création du personnage', 'Erreur');
+        }
+    };
+
+    const handleCharacterQuickStart = async () => {
+        if (!session?.id || !profile?.id || !character?.id) return;
+        try {
+            const randomChar = generateRandomCharacter(session.id, profile.id);
+            const { data, error } = await supabase.from('players').update({
+                ...randomChar,
+                id: character.id,
+                session_id: session.id,
+                user_id: profile.id,
+                is_ready: true
+            }).eq('id', character.id).select().single();
+            if (error) throw error;
+            if (data) setCharacter(data);
+        } catch (err) {
+            console.error('Quick start character error:', err);
+            gameAlert('Erreur lors de la création rapide', 'Erreur');
+        }
+    };
+
+    const handleKickPlayer = async (playerId) => {
+        if (!session?.id) return;
+        try {
+            await supabase.from('players').delete().eq('id', playerId).eq('session_id', session.id);
+            setPlayers(prev => prev.filter(p => p.id !== playerId));
+            gameAlert('Joueur expulsé', 'Information');
+        } catch (err) {
+            console.error('Kick error:', err);
+        }
+    };
+
+    const handleToggleReady = async () => {
+        if (!character?.id) return;
+        const { is_ready } = await sessionManager.toggleReady(character);
+        setCharacter(prev => ({ ...prev, is_ready }));
+    };
+
+    const handleStartAdventure = async (force = false, customSession = null, customPlayers = null) => {
+        const currentSession = customSession || session;
+        const currentPlayers = customPlayers || players;
+        
+        if (!currentSession?.id) return;
+        if (currentSession.host_id !== profile?.id && !force) {
+            gameAlert('Seul le Maître du Jeu peut démarrer l\'aventure', 'Erreur');
+            return;
+        }
+        
+        // Check if all players are ready
+        const allReady = currentPlayers.every(p => p.is_ready);
+        if (!allReady && !force) {
+            gameAlert('Tous les joueurs doivent être prêts', 'Information');
+            return;
+        }
+        
+        setLoading(true);
+        try {
+            // Mark session as started
+            await supabase.from('sessions').update({ is_started: true }).eq('id', currentSession.id);
+            
+            // Insert start marker message (ignore errors for duplicates)
+            try {
+                await supabase.from('messages').insert({
+                    session_id: currentSession.id,
+                    role: 'system',
+                    content: "(MEMOIRE:SYSTEM) START_ADVENTURE_TRIGGERED"
+                });
+            } catch (_) { /* ignore duplicate */ }
+            
+            setAdventureStarted(true);
+            
+            // Trigger GM intro if host
+            if (currentSession.host_id === profile?.id || !customSession) {
+                try {
+                    const { data: aiResponse } = await supabase.functions.invoke('game-master', {
+                        body: {
+                            action: "COMMENCER_L_AVENTURE",
+                            history: [],
+                            sessionId: currentSession.id,
+                            playerId: character?.id,
+                            context: "GAME_START",
+                            playerProfile: character ? {
+                                name: character.name,
+                                class: character.class,
+                                level: character.level,
+                                stats: character.stats
+                            } : null,
+                            playerGroup: currentPlayers.map(p => ({
+                                name: p.name,
+                                class: p.class || 'Aventurier'
+                            })),
+                            lore: { context: WORLD_CONTEXT }
+                        }
+                    });
+                    
+                    if (aiResponse?.narrative) {
+                        const gmMsg = {
+                            id: crypto.randomUUID(),
+                            session_id: currentSession.id,
+                            role: 'assistant',
+                            content: aiResponse.narrative,
+                            created_at: new Date().toISOString()
+                        };
+                        await supabase.from('messages').insert(gmMsg);
+                        setMessages(prev => [...prev, gmMsg]);
+                    }
+                } catch (e) {
+                    console.error('GM intro error:', e);
+                }
+            }
+        } catch (err) {
+            console.error('Start error:', err);
+            gameAlert('Erreur lors du démarrage de l\'aventure', 'Erreur');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeleteSession = async (sessionId) => {
+        if (!profile?.id) return;
+        try {
+            await sessionManager.deleteSession(sessionId);
+            setAvailableSessions(prev => prev.filter(s => s.id !== sessionId));
+            gameAlert('Session supprimée avec succès', 'Succès');
+        } catch (err) {
+            console.error('Delete session error:', err);
+            gameAlert('Erreur lors de la suppression de la session', 'Erreur');
+        }
+    };
+
+    const handleDeleteSave = async (saveId) => {
+        if (!profile?.id) return;
+        try {
+            await sessionManager.deleteSave(saveId);
+            setSavedGames(prev => prev.filter(s => s.id !== saveId));
+            gameAlert('Sauvegarde supprimée avec succès', 'Succès');
+        } catch (err) {
+            console.error('Delete save error:', err);
+            gameAlert('Erreur lors de la suppression de la sauvegarde', 'Erreur');
+        }
+    };
 
 
     const _pollInterval = useRef(null);
@@ -104,11 +467,14 @@ export default function App() {
     const lastActivityRef = useRef(Date.now());
     const hasFledRef = useRef(false);
 
-    const [lastSFX, setLastSFX] = useState(null);
-    const [activeVFX, setActiveVFX] = useState(null);
-    const [adventureStarted, setAdventureStarted] = useState(false);
+    const lastSFX = useGameStore(state => state.lastSFX);
+    const setLastSFX = useGameStore(state => state.setLastSFX);
+    const activeVFX = useGameStore(state => state.activeVFX);
+    const setActiveVFX = useGameStore(state => state.setActiveVFX);
+    const adventureStarted = useGameStore(state => state.adventureStarted);
+    const setAdventureStarted = useGameStore(state => state.setAdventureStarted);
 
-    // Integrated Game State Hook
+    // Integrated Game State Hook - DOIT être avant useVoiceChat
     const {
         session, setSession,
         character, setCharacter,
@@ -119,11 +485,12 @@ export default function App() {
         titles, setTitles,
         gameTime,
         syncedCombatState, setSyncedCombatState,
-        realTimeSync, setRealTimeSync,
         fetchSession,
         fetchWorldState,
         fetchPlayerExtras: _fetchPlayerExtras,
         handleHPChange,
+        handleResourceChange,
+        handleConsumeItem: _handleConsumeItem,
         chronicle,
         addToChronicle,
         resetChronicle,
@@ -131,6 +498,33 @@ export default function App() {
         weather, setWeather,
         fetchAvailableSessions
     } = useGameState(profile);
+
+    const getTimeLabel = useCallback(() => {
+        const h = gameTime?.hour ?? 12;
+        if (h >= 5 && h < 7) return 'Aube';
+        if (h >= 7 && h < 12) return 'Matin';
+        if (h >= 12 && h < 14) return 'Midi';
+        if (h >= 14 && h < 17) return 'Après-midi';
+        if (h >= 17 && h < 20) return 'Crépuscule';
+        if (h >= 20 && h < 23) return 'Soir';
+        return 'Nuit';
+    }, [gameTime?.hour]);
+
+    // Voice Chat Hook - doit être après useGameState pour avoir accès à session
+    const {
+        isMuted: voiceMuted,
+        isTalking: voiceTalking,
+        isPushToTalk,
+        pushToTalkKey,
+        speakers,
+        toggleMute: toggleVoiceMute,
+        togglePushToTalk,
+        changePushToTalkKey
+    } = useVoiceChat(
+        session?.id,
+        profile?.id,
+        character?.name
+    );
 
     // --- LORE SYSTEM INITIALIZATION ---
     useEffect(() => {
@@ -278,18 +672,10 @@ export default function App() {
         }
     }, [adventureStarted, fetchData]); // Run only when starting
 
-    // --- PLAYER STATE POLLING FALLBACK ---
+    // --- TRADE CHANNEL (broadcast) ---
     useEffect(() => {
-        if (!session?.id || !adventureStarted) return;
+        if (!session?.id || !adventureStarted || !character?.id) return;
 
-        const pollPlayerState = async () => {
-            const { data: pData } = await supabase.from('players').select('*').eq('session_id', session.id);
-            if (pData) {
-                setPlayers(pData);
-                const pc = pData.find(p => p.user_id === profile?.id);
-                if (pc) setCharacter(pc);
-            }
-        };
         const tradeChannel = supabase
             .channel(`trade_${session.id}`)
             .on('broadcast', { event: 'trade_offer' }, (payload) => {
@@ -314,10 +700,212 @@ export default function App() {
         };
     }, [session?.id, character?.id, fetchSession]);
 
+    // --- REALTIME: messages, players, sessions via postgres_changes ---
+    useEffect(() => {
+        if (!session?.id) return;
+
+        const channel = supabase.channel(`realtime-session-${session.id}`)
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'messages',
+                filter: `session_id=eq.${session.id}`
+            }, (payload) => {
+                console.log('[Realtime] messages event:', payload.eventType);
+                if (payload.eventType === 'INSERT') {
+                    const msg = payload.new;
+                    // Skip memory-only messages (same filter as fetchData)
+                    if (msg.content?.startsWith('(MÉMOIRE:') && !msg.content.includes("START_ADVENTURE_TRIGGERED")) return;
+                    // Check for adventure start marker
+                    if (msg.content?.includes("START_ADVENTURE_TRIGGERED")) {
+                        setAdventureStarted(true);
+                    }
+                    setMessages(prev => {
+                        if (prev.some(m => m.id === msg.id)) return prev;
+                        // Deduplicate by content similarity for assistant/system messages
+                        if (msg.role === 'assistant' || msg.role === 'system') {
+                            const normalized = msg.content?.toLowerCase().trim().substring(0, 100);
+                            if (normalized && prev.some(m =>
+                                (m.role === 'assistant' || m.role === 'system') &&
+                                m.content?.toLowerCase().trim().substring(0, 100) === normalized
+                            )) {
+                                console.log('[Realtime DEDUP] Skipping duplicate message');
+                                return prev;
+                            }
+                        }
+                        return [...prev, msg].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+                    });
+                    // Update scene image if it's an image message
+                    if (msg.role === 'image') {
+                        setSceneImage(msg.content);
+                    }
+                } else if (payload.eventType === 'DELETE') {
+                    setMessages(prev => prev.filter(m => m.id !== payload.old.id));
+                }
+            })
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'players',
+                filter: `session_id=eq.${session.id}`
+            }, (payload) => {
+                console.log('[Realtime] players event:', payload.eventType);
+                if (payload.eventType === 'INSERT') {
+                    setPlayers(prev => {
+                        if (prev.some(p => p.id === payload.new.id)) return prev;
+                        return [...prev, payload.new];
+                    });
+                    if (payload.new.user_id === profile?.id) {
+                        setCharacter(payload.new);
+                    }
+                } else if (payload.eventType === 'UPDATE') {
+                    setPlayers(prev => prev.map(p => p.id === payload.new.id ? payload.new : p));
+                    if (payload.new.user_id === profile?.id) {
+                        setCharacter(prev => {
+                            if (JSON.stringify(prev) !== JSON.stringify(payload.new)) return payload.new;
+                            return prev;
+                        });
+                    }
+                } else if (payload.eventType === 'DELETE') {
+                    setPlayers(prev => prev.filter(p => p.id !== payload.old.id));
+                }
+            })
+            .on('postgres_changes', {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'sessions',
+                filter: `id=eq.${session.id}`
+            }, (payload) => {
+                console.log('[Realtime] session updated');
+                setSession(prev => {
+                    if (!prev) return payload.new;
+                    if (JSON.stringify(prev) !== JSON.stringify(payload.new)) return payload.new;
+                    return prev;
+                });
+            })
+            .subscribe((status, err) => {
+                if (status === 'SUBSCRIBED') {
+                    console.log('[Realtime] Subscribed to session channel');
+                } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                    console.error('[Realtime] Subscription error:', status, err);
+                }
+            });
+
+        // Initial fetch to populate state
+        fetchData();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [session?.id, profile?.id, fetchData, setSession, setAdventureStarted]);
+
+    // --- TYPING STATUS (light poll every 5s) ---
+    const lastTypingUpdateRef = useRef(0);
+    
+    // Update typing status in DB when user types
+    const updateTypingStatus = async (isTyping) => {
+        if (!session?.id || !character?.id) return;
+        
+        const now = Date.now();
+        // Throttle updates to every 500ms
+        if (now - lastTypingUpdateRef.current < 500) return;
+        lastTypingUpdateRef.current = now;
+        
+        const key = `typing_${session.id}_${character.id}`;
+        const value = isTyping ? {
+            name: character.name,
+            timestamp: now
+        } : null;
+        
+        await supabase.from('world_state').upsert({
+            key,
+            value,
+            updated_at: new Date().toISOString()
+        });
+    };
+    
+    // Poll for other players' typing status (light poll - 5s)
+    useEffect(() => {
+        if (!session?.id || !players?.length) return;
+        
+        const pollTypingStatus = async () => {
+            const now = Date.now();
+            const activeTypers = [];
+            
+            for (const player of players) {
+                if (player.id === character?.id) continue; // Skip self
+                
+                const { data } = await supabase
+                    .from('world_state')
+                    .select('value, updated_at')
+                    .eq('key', `typing_${session.id}_${player.id}`)
+                    .maybeSingle();
+                
+                if (data?.value && data.value.name) {
+                    const timestamp = data.value.timestamp || new Date(data.updated_at).getTime();
+                    // Consider typing if updated in last 6 seconds (wider window for 5s poll)
+                    if (now - timestamp < 6000) {
+                        activeTypers.push(data.value.name);
+                    }
+                }
+            }
+            
+            setTypingUsers(activeTypers);
+        };
+        
+        const interval = setInterval(pollTypingStatus, 5000);
+        return () => clearInterval(interval);
+    }, [session?.id, players, character?.id]);
+
+    // --- ITEM SHARES (light poll - 5s) ---
+    useEffect(() => {
+        if (!session?.id) return;
+        
+        const pollItemShares = async () => {
+            const { data } = await supabase
+                .from('world_state')
+                .select('value')
+                .eq('key', `item_shares_${session.id}`)
+                .maybeSingle();
+            
+            if (data?.value && Array.isArray(data.value)) {
+                setItemShares(data.value);
+            }
+        };
+        
+        // Poll immediately and then every 5 seconds
+        pollItemShares();
+        const interval = setInterval(pollItemShares, 5000);
+        return () => clearInterval(interval);
+    }, [session?.id]);
+
     // --- AUTO-CREATE LOBBY PLAYER ---
     useEffect(() => {
         if (session && profile && !character && !loading && !creatingPlayerRef.current) {
             creatingPlayerRef.current = true;
+            
+            // CRITICAL FIX: Check if we're currently loading a saved game
+            // In that case, the players are being restored via upsert in handleLoadGame
+            // and we should wait for that to complete instead of creating a new player
+            const isLoadingSave = sessionStorage.getItem('loading_save_' + session.id);
+            if (isLoadingSave) {
+                // Wait a bit for the save to be fully loaded, then check DB
+                setTimeout(() => {
+                    supabase.from('players').select('*').eq('session_id', session.id).eq('user_id', profile.id).maybeSingle()
+                        .then(({ data: existing }) => {
+                            if (existing) {
+                                setCharacter(existing);
+                            }
+                            creatingPlayerRef.current = false;
+                            sessionStorage.removeItem('loading_save_' + session.id);
+                        }).catch(() => {
+                            creatingPlayerRef.current = false;
+                            sessionStorage.removeItem('loading_save_' + session.id);
+                        });
+                }, 500);
+                return;
+            }
+            
             // Check directly in DB to avoid race conditions with empty `players` state
             supabase.from('players').select('*').eq('session_id', session.id).eq('user_id', profile.id).maybeSingle()
                 .then(({ data: existing }) => {
@@ -378,15 +966,6 @@ export default function App() {
     }, [helperMessages, npcConversations, session?.id, character?.id]);
 
     useEffect(() => {
-        const storedProfile = localStorage.getItem('profile');
-        if (storedProfile) {
-            setProfile(JSON.parse(storedProfile));
-        } else {
-            const newProfile = { id: crypto.randomUUID(), name: 'Traveler' };
-            localStorage.setItem('profile', JSON.stringify(newProfile));
-            setProfile(newProfile);
-        }
-
         const query = new URLSearchParams(window.location.search);
         const sid = query.get('s');
         if (sid) {
@@ -428,1316 +1007,6 @@ export default function App() {
         VESTIBULE: { blocksX: 20, blocksY: 20, shapeType: 'STANDARD' }
     };
 
-    const getArenaConfig = () => {
-        const lastNarrative = [...messages].reverse().find(m => (m.role === 'assistant' || m.role === 'system') && !m.content.includes('(MÉMOIRE:'))?.content || '';
-        const content = lastNarrative.toLowerCase();
-
-        // Heuristic Mapping
-        if (content.includes('pont') || content.includes('passerelle')) return ARENA_TEMPLATES.PONT_PIERRE;
-        if (content.includes('balcon') || content.includes('corniche') || content.includes('falaise')) return ARENA_TEMPLATES.FALAISE;
-        if (content.includes('couloir') || content.includes('étroit') || content.includes('tunnel')) return ARENA_TEMPLATES.TUNNEL_LONG;
-        if (content.includes('trône') || content.includes('audience')) return ARENA_TEMPLATES.SALLE_TRONE;
-        if (content.includes('crypte') || content.includes('tombeau') || content.includes('caveau')) return ARENA_TEMPLATES.CRYPTE;
-        if (content.includes('cercle') || content.includes('arène') || content.includes('rond') || content.includes('place')) return ARENA_TEMPLATES.PLACE;
-        if (content.includes('puits') || content.includes('dôme')) return ARENA_TEMPLATES.PUITS;
-        if (content.includes('cachot') || content.includes('cellule')) return ARENA_TEMPLATES.CACHOT;
-        if (content.includes('rue') || content.includes('quartier') || content.includes('chemin')) return ARENA_TEMPLATES.RUE;
-        if (content.includes('temple') || content.includes('sanctuaire')) return ARENA_TEMPLATES.TEMPLE;
-        if (content.includes('laboratoire') || content.includes('atelier')) return ARENA_TEMPLATES.LABORATOIRE;
-        if (content.includes('majestueux') || content.includes('immense') || content.includes('basilique')) return ARENA_TEMPLATES.HALL_MAJESTUEUX;
-        if (content.includes('salle') || content.includes('chambre')) return content.length > 500 ? ARENA_TEMPLATES.GRANDE_SALLE : ARENA_TEMPLATES.PETITE_CHAMBRE;
-
-        return ARENA_TEMPLATES.VESTIBULE;
-    };
-
-
-
-    // Initialize Combat and broadcast to all players via world_state
-    const initializeHostCombat = async (enemiesData) => {
-
-        // 1. Define Arena & Positions
-        const playersList = (players || []).filter(p => p.class); // Only take players with a class
-
-        // Safety: Ensure all players involved are HEALED before combat state is saved
-        const healedPlayers = playersList.map(p => {
-            const hasNoHp = p.hp === undefined || p.hp === null || p.hp <= 0;
-            if (hasNoHp) {
-                const fullHp = p.max_hp || 100;
-                // Background update
-                if (p.id === character?.id) handleHPChange(p.id, fullHp);
-                return { ...p, hp: fullHp, max_hp: fullHp };
-            }
-            return p;
-        });
-
-        const arenaConfig = getArenaConfig();
-
-        const generatePositions = (count, isEnemy) => {
-            const positions = [];
-            const maxX = Math.floor(arenaConfig.blocksX / 2);
-            for (let i = 0; i < count; i++) {
-                let x, y, attempts = 0;
-                do {
-                    if (isEnemy) x = Math.floor(Math.random() * 3) + (maxX - 4); // East side
-                    else x = -Math.floor(Math.random() * 3) - 2; // West side
-                    y = Math.floor(Math.random() * (arenaConfig.blocksY - 2)) - Math.floor(arenaConfig.blocksY / 2) + 1;
-                    attempts++;
-                } while (positions.some(p => p.x === x && p.y === y) && attempts < 100);
-                positions.push({ x, y });
-            }
-            return positions;
-        };
-
-        // deduplicate by user_id to avoid ghost duplicates in same session
-        const uniquePlayers = [];
-        const seenUsers = new Set();
-        healedPlayers.forEach(p => {
-            if (!seenUsers.has(p.user_id)) {
-                seenUsers.add(p.user_id);
-                uniquePlayers.push(p);
-            }
-        });
-
-        const partyLevel = getPartyAverageLevel(uniquePlayers);
-
-        const playerPositions = generatePositions(uniquePlayers.length, false);
-        const enemyPositions = generatePositions(enemiesData.length, true);
-
-        const combatants = [
-            ...uniquePlayers.map((p, i) => ({
-                id: p.id, user_id: p.user_id, name: p.name, class: p.class,
-                hp: p.hp, maxHp: p.max_hp || 100, resource: p.resource, maxResource: p.max_resource,
-                initiative: Math.floor(Math.random() * 20) + 1,
-                isEnemy: false, portrait_url: p.portrait_url,
-                posX: playerPositions[i].x, posY: playerPositions[i].y,
-                maxPM: Math.floor(((p.stats?.dex || 10) + (p.stats?.con || 10) - 20) / 4) + 5,
-                currentPM: Math.floor(((p.stats?.dex || 10) + (p.stats?.con || 10) - 20) / 4) + 5,
-                hasActed: false, facing: 'EAST',
-                spells: resolvePlayerAbilities(p)
-            })),
-            ...enemiesData.map((e, i) => {
-                const baseEnemy = BESTIARY[e.name.split(' ')[0]] || BESTIARY[e.class] || {};
-                const rawEnemy = {
-                    id: e.id || `enemy-${i}`, name: e.name, class: e.class || 'Monstre',
-                    hp: e.hp || baseEnemy.stats?.hp || 20,
-                    maxHp: e.maxHp || e.max_hp || e.hp || baseEnemy.stats?.hp || 20,
-                    resource: e.resource || 20, maxResource: e.resource || 20,
-                    initiative: e.initiative || Math.floor(Math.random() * 20) + 1,
-                    isEnemy: true, portrait_url: e.portrait || baseEnemy.portrait_url,
-                    posX: enemyPositions[i].x, posY: enemyPositions[i].y,
-                    maxPM: baseEnemy.stats?.maxPM || 5, currentPM: baseEnemy.stats?.maxPM || 5,
-                    behavior_type: e.behavior_type || baseEnemy.behavior_type || "MELEE",
-                    actions: e.actions || baseEnemy.actions || [{ name: 'Attaque', range: 1.5 }],
-                    hasActed: false, facing: 'WEST',
-                    atk: e.atk || baseEnemy.stats?.atk || 5,
-                    ac: e.ac || baseEnemy.stats?.ac || 12
-                };
-
-                return scaleEnemyForPartyLevel(rawEnemy, partyLevel);
-            })
-        ].sort((a, b) => b.initiative - a.initiative);
-
-        const initialState = {
-            active: true,
-            round: 1,
-            turnIndex: 0,
-            combatants: combatants,
-            arenaConfig: arenaConfig,
-            decor: generateArenaDecor(arenaConfig),
-            logs: [],
-            updatedAt: Date.now()
-        };
-
-        await supabase.from('world_state').upsert({ key: `combat_${session.id}`, value: initialState });
-    };
-
-    const _handleDebugCombat = () => {
-        if (!session || !character) return;
-
-        // Safety: ensure character is alive
-        if (character.hp <= 0) {
-            setCharacter(prev => ({ ...prev, hp: prev.max_hp }));
-            handleHPChange(character.id, character.max_hp);
-        }
-
-        const mockEnemies = [
-            { id: 'debug-1', name: 'Gobelin d\'Entrainement', hp: 20, max_hp: 20, atk: 4, ac: 11, cr: 0.25 },
-            { id: 'debug-2', name: 'Squelette Cible', hp: 15, max_hp: 15, atk: 3, ac: 12, cr: 0.5 }
-        ];
-        initializeHostCombat(mockEnemies);
-        setCombatEnemies(mockEnemies);
-        setCombatMode(true);
-    };
-
-    // SYNC: Auto-enter combat when shared state is active (Multiplayer Sync)
-    useEffect(() => {
-        if (syncedCombatState?.active) {
-            const enemies = (syncedCombatState.combatants || []).filter(c => c?.isEnemy);
-            const hasValidCombat = enemies.length > 0;
-
-            // Guard against stale/broken sync states that mark combat active without enemies.
-            if (!hasValidCombat) {
-                setCombatMode(false);
-                setCombatEnemies([]);
-                return;
-            }
-
-            if (!hasFledRef.current) {
-                setCombatMode(true);
-                setCombatEnemies(enemies);
-            }
-        } else if (syncedCombatState && syncedCombatState.active === false) {
-            setCombatMode(false);
-            setCombatEnemies([]);
-            hasFledRef.current = false; // Reset flee status when global combat ends
-        }
-    }, [syncedCombatState]);
-
-    const updateSyncedCombat = async (newState) => {
-        // Any client can request an update (e.g. they attacked), but ideally we check validity
-        // For simplicity, we trust the client logic from CombatManager for now, but we push the result to DB
-        const timestampedState = { ...newState, updatedAt: Date.now() };
-        await supabase.from('world_state').upsert({ key: `combat_${session.id}`, value: timestampedState });
-    };
-
-
-
-
-
-    const handleAffinityChange = async (npcName, change) => {
-        const current = affinities[npcName] || 0;
-        const next = Math.max(-100, Math.min(100, current + change));
-
-        setAffinities(prev => ({ ...prev, [npcName]: next }));
-
-        await supabase.from('npc_affinities').upsert({
-            player_id: character.id,
-            npc_name: npcName,
-            score: next,
-            updated_at: new Date().toISOString()
-        }, { onConflict: 'player_id,npc_name' });
-    };
-
-    const handleTitleUnlock = async (title) => {
-        if (titles.includes(title)) return;
-        setTitles(prev => [...prev, title]);
-        await supabase.from('player_titles').insert({ player_id: character.id, title });
-
-        setMessages(prev => [...prev, {
-            id: crypto.randomUUID(),
-            role: 'system',
-            content: `TITRE DÉBLOQUÉ : ${title}`,
-            created_at: new Date().toISOString()
-        }]);
-    };
-
-    const handleCodexUpdate = async (codexUpdate) => {
-        if (!character?.id || !codexUpdate) return;
-
-        const updates = {};
-
-        if (codexUpdate.new_npc) {
-            const currentNpcs = character.visited_npcs || [];
-            const npcEntry = typeof codexUpdate.new_npc === 'string'
-                ? codexUpdate.new_npc
-                : codexUpdate.new_npc;
-            const exists = currentNpcs.some(n =>
-                (typeof n === 'object' ? n.name : n) === (typeof npcEntry === 'object' ? npcEntry.name : npcEntry)
-            );
-            if (!exists) {
-                updates.visited_npcs = [...currentNpcs, npcEntry];
-            }
-        }
-
-        if (codexUpdate.new_location) {
-            const currentLocs = character.discovered_locations || [];
-            const locEntry = typeof codexUpdate.new_location === 'string'
-                ? codexUpdate.new_location
-                : codexUpdate.new_location;
-            const exists = currentLocs.some(l =>
-                (typeof l === 'object' ? l.name : l) === (typeof locEntry === 'object' ? locEntry.name : locEntry)
-            );
-            if (!exists) {
-                updates.discovered_locations = [...currentLocs, locEntry];
-            }
-        }
-
-        if (codexUpdate.new_quest) {
-            const currentQuests = character.active_quests || [];
-            const questEntry = typeof codexUpdate.new_quest === 'string'
-                ? { name: codexUpdate.new_quest }
-                : codexUpdate.new_quest;
-            const exists = currentQuests.some(q =>
-                (typeof q === 'object' ? q.name : q) === questEntry.name
-            );
-            if (!exists) {
-                updates.active_quests = [...currentQuests, questEntry];
-            }
-        }
-
-        if (codexUpdate.new_secret) {
-            const currentSecrets = character.discovered_secrets || [];
-            if (!currentSecrets.includes(codexUpdate.new_secret)) {
-                updates.discovered_secrets = [...currentSecrets, codexUpdate.new_secret];
-            }
-        }
-
-        if (codexUpdate.new_event) {
-            const currentEvents = character.important_events || [];
-            if (!currentEvents.includes(codexUpdate.new_event)) {
-                updates.important_events = [...currentEvents, codexUpdate.new_event];
-            }
-        }
-
-        if (codexUpdate.new_visual) {
-            const currentVisuals = character.discovered_visuals || [];
-            const exists = currentVisuals.some(v => v.name === codexUpdate.new_visual.name);
-            if (!exists) {
-                let visualEntry = { ...codexUpdate.new_visual };
-                // Generate image if missing
-                if (!visualEntry.url) {
-                    try {
-                        const prompt = `A highly detailed fantasy ${visualEntry.type || 'document'}: ${visualEntry.name}. ${visualEntry.description || ''}. Aged parchment, hand-drawn ink, mystical atmosphere, lore-accurate.`;
-                        const url = await generateImage(prompt);
-                        if (url) visualEntry.url = url;
-                    } catch (e) {
-                        console.error("Failed to generate visual codex image:", e);
-                    }
-                }
-
-                if (visualEntry.url) {
-                    updates.discovered_visuals = [...currentVisuals, visualEntry];
-                }
-            }
-        }
-
-        if (Object.keys(updates).length > 0) {
-            await supabase.from('players').update(updates).eq('id', character.id);
-            setCharacter(prev => ({ ...prev, ...updates }));
-        }
-    };
-
-    const getTimeLabel = () => {
-        const { hour, minute } = gameTime;
-        if (hour >= 5 && hour < 8) return `Aube (${hour}h${minute.toString().padStart(2, '0')})`;
-        if (hour >= 8 && hour < 12) return `Matin (${hour}h${minute.toString().padStart(2, '0')})`;
-        if (hour >= 12 && hour < 14) return `Midi (${hour}h${minute.toString().padStart(2, '0')})`;
-        if (hour >= 14 && hour < 18) return `Après-midi (${hour}h${minute.toString().padStart(2, '0')})`;
-        if (hour >= 18 && hour < 21) return `Crépuscule (${hour}h${minute.toString().padStart(2, '0')})`;
-        return `Nuit (${hour}h${minute.toString().padStart(2, '0')})`;
-    };
-
-    const _getOverlayColor = () => {
-        const { hour } = gameTime;
-        if (hour >= 21 || hour < 5) return 'var(--night-color)';
-        if (hour >= 5 && hour < 8) return 'var(--dawn-color)';
-        if (hour >= 18 && hour < 21) return 'var(--dusk-color)';
-        return 'var(--day-color)';
-    };
-
-    const handleJoinSession = async (id) => {
-        setLoading(true);
-        // ... (existing logic might be here, adding fetchPlayerExtras after character is set)
-        const data = await fetchSession(id);
-        if (data) {
-            setSession(data);
-            window.history.pushState({}, '', `?s=${data.id}`);
-        } else {
-            alert("Session introuvable. Vérifiez le code.");
-        }
-        setLoading(false);
-    };
-
-    // --- HOST CLEANUP: beforeunload + visibilitychange ---
-
-    useEffect(() => {
-        if (!session?.id) return;
-
-        const deactivateSession = () => {
-            if (!session?.id) return;
-            const url = `https://okanuafsmkuzyuyqibpu.supabase.co/rest/v1/sessions?id=eq.${session.id}`;
-            const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rYW51YWZzbWt1enl1eXFpYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0ODQyMjgsImV4cCI6MjA4NjA2MDIyOH0.w93viTCCxc48GNw2n_HFKGq2yQRUvwZSt6lq-FqJb9E';
-            fetch(url, {
-                method: 'PATCH',
-                headers: {
-                    'apikey': anonKey,
-                    'Authorization': `Bearer ${anonKey}`,
-                    'Prefer': 'return=minimal'
-                },
-                body: JSON.stringify({ active: false }),
-                keepalive: true
-            });
-        };
-
-        window.addEventListener('beforeunload', deactivateSession);
-        return () => window.removeEventListener('beforeunload', deactivateSession);
-    }, [session, profile]);
-
-    useEffect(() => {
-        if (!session?.id || !profile?.id) return;
-
-        let channel;
-        const setupRealtime = () => {
-            setConnStatus('connecting');
-            channel = supabase
-                .channel(`session_${session.id}`)
-                .on('postgres_changes', {
-                    event: 'INSERT',
-                    schema: 'public',
-                    table: 'messages',
-                    filter: `session_id=eq.${session.id}`
-                }, () => {
-                    // Optimized sync: just fetch everything to ensure consistency
-                    fetchData();
-                })
-                .on('postgres_changes', {
-                    event: '*',
-                    schema: 'public',
-                    table: 'world_state',
-                    filter: `key=eq.weather_${session.id}`
-                }, (payload) => {
-                    if (payload.new && payload.new.value) {
-                        setWeather(payload.new.value);
-                    }
-                })
-                .on('postgres_changes', {
-                    event: '*',
-                    schema: 'public',
-                    table: 'world_state',
-                    filter: `key=eq.merchant_${session.id}`
-                }, (payload) => {
-                    if (payload.new && payload.new.value) {
-                        const val = payload.new.value;
-                        const currentCharacterId = characterIdRef.current;
-                        if (val.active === false) {
-                            setActiveMerchant(null);
-                        } else {
-                            // Only open/update if I am in the visitors list (or if list doesn't exist for legacy compatibility)
-                            if (!val.visitors || (currentCharacterId && val.visitors.includes(currentCharacterId))) {
-                                setActiveMerchant(val);
-                            } else {
-                                // If the shop is active but I am NOT in the visitors list, close it for me.
-                                setActiveMerchant(null);
-                            }
-                        }
-                    }
-                })
-                .on('postgres_changes', {
-                    event: '*',
-                    schema: 'public',
-                    table: 'players',
-                    filter: `session_id=eq.${session.id}`
-                }, () => {
-                    fetchData();
-                })
-                .on('presence', { event: 'sync' }, () => {
-                    const state = channel.presenceState();
-                    const presences = [];
-                    const typers = [];
-                    for (const key in state) {
-                        state[key].forEach(p => {
-                            presences.push(p.user_id);
-                            if (p.is_typing && p.user_id !== profile?.id) {
-                                typers.push(p.name || 'Un aventurier');
-                            }
-                        });
-                    }
-                    setOnlineUsers([...new Set(presences)]);
-                    setTypingUsers([...new Set(typers)]);
-                })
-                .on('postgres_changes', {
-                    event: 'UPDATE',
-                    schema: 'public',
-                    table: 'sessions',
-                    filter: `id=eq.${session.id}`
-                }, (payload) => {
-                    if (payload.new.active === false) {
-                        setSession(null);
-                        setCharacter(null);
-                        setMessages([]);
-                        setPlayers([]);
-                        setCombatMode(false);
-                        window.history.pushState({}, '', window.location.pathname);
-                    } else {
-                        setSession(prev => ({ ...prev, ...payload.new }));
-                    }
-                })
-                .subscribe(async (status) => {
-                    if (status === 'SUBSCRIBED') {
-                        setConnStatus('connected');
-                        await channel.track({
-                            user_id: profile.id,
-                            name: character?.name || profile.name,
-                            online_at: new Date().toISOString(),
-                            is_typing: false
-                        });
-                    } else if (status === 'TIMED_OUT' || status === 'CLOSED') {
-                        setConnStatus('polling');
-                    }
-                });
-
-            window.activeChannel = channel;
-        };
-
-        setupRealtime();
-        fetchData();
-
-        return () => {
-            if (channel) supabase.removeChannel(channel);
-        };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [session?.id, profile?.id, fetchData]);
-
-    // --- PLAYER LIST POLLING FALLBACK (Hub phase only) ---
-    useEffect(() => {
-        if (!session?.id || adventureStarted) return;
-        const refreshPlayers = async () => {
-            const { data: pData } = await supabase.from('players').select('*').eq('session_id', session.id);
-            if (pData) {
-                setPlayers(pData);
-                const pc = pData.find(p => p.user_id === profile?.id);
-                if (pc) setCharacter(pc);
-            }
-            // Also poll session state to ensure is_started sync
-            const { data: sData } = await supabase.from('sessions').select('*').eq('id', session.id).maybeSingle();
-            if (sData) {
-                setSession(prev => prev?.is_started === sData.is_started && prev?.active === sData.active ? prev : sData);
-            }
-        };
-        const interval = setInterval(refreshPlayers, 5000);
-        return () => clearInterval(interval);
-    }, [session?.id, profile?.id, adventureStarted, setPlayers, setCharacter, setSession]);
-
-    useEffect(() => {
-        if (!character?.id) return;
-        
-        // Charger les métiers depuis la table player_professions
-        const loadProfessions = async () => {
-            const { data, error } = await supabase
-                .from('player_professions')
-                .select('*')
-                .eq('player_id', character.id);
-            
-            if (error) {
-                console.error('[Profession] Failed to load:', error);
-                return;
-            }
-            
-            if (data && data.length > 0) {
-                setCharacter(prev => ({ ...prev, professions: data }));
-                console.log('[Profession] Loaded from DB:', data.length, 'professions');
-            }
-        };
-        
-        loadProfessions();
-        
-        // Configure the callback to save professions to DB
-        setSaveProfessionCallback(async (professionId) => {
-            // Check if already exists in local state
-            const currentProfessions = character.professions || [];
-            if (currentProfessions.some(p => p.profession_id === professionId)) {
-                console.log('[Profession] Already known:', professionId);
-                return;
-            }
-            
-            // Insert into player_professions table
-            const { data, error } = await supabase
-                .from('player_professions')
-                .insert({
-                    player_id: character.id,
-                    profession_id: professionId,
-                    level: 1,
-                    xp: 0
-                })
-                .select()
-                .single();
-            
-            if (error) {
-                console.error('[Profession] Failed to save to DB:', error);
-                throw error;
-            }
-            
-            // Update local state
-            setCharacter(prev => ({ 
-                ...prev, 
-                professions: [...(prev.professions || []), data]
-            }));
-            console.log('[Profession] Saved to DB:', professionId);
-        });
-    }, [character?.id]);
-
-    useEffect(() => {
-        chatRef.current?.scrollTo(0, chatRef.current.scrollHeight);
-    }, [messages]);
-
-    useEffect(() => {
-        characterIdRef.current = character?.id || null;
-    }, [character?.id]);
-
-    // --- AUTOMATIC LOCATION BACKGROUND SWITCHING ---
-    useEffect(() => {
-        if (messages.length === 0) return;
-        const lastMsg = messages[messages.length - 1];
-
-        // Only trigger on GM/Narrator messages
-        if (lastMsg.role === 'narrage' || lastMsg.role === 'assistant') {
-            const content = lastMsg.content.toLowerCase();
-
-            // Check for location mentions
-            for (const [locName, imgPath] of Object.entries(LOCATION_BACKGROUNDS)) {
-                if (content.includes(locName.toLowerCase())) {
-                    setSceneImage(imgPath);
-                    break;
-                }
-            }
-        }
-    }, [messages]);
-
-    const handleCreateSession = async () => {
-        if (!profile) return;
-        setLoading(true);
-        const { data } = await supabase.from('sessions').insert({ host_id: profile.id }).select().single();
-        if (data) {
-            setSession(data);
-            window.history.pushState({}, '', `?s=${data.id}`);
-        }
-        setLoading(false);
-    };
-
-    const handleCharacterQuickStart = async () => {
-        if (!character || !session) return;
-        setLoading(true);
-        try {
-            const randomData = generateRandomCharacter(session.id, profile.id);
-            const randomCharFields = mapCharacterDataToDb(randomData);
-            const finalChar = {
-                ...randomCharFields,
-                id: character.id,
-                is_ready: true
-            };
-            const { data, error } = await supabase
-                .from('players')
-                .update(finalChar)
-                .eq('id', character.id)
-                .select()
-                .single();
-
-            if (error) throw error;
-            setCharacter(data);
-
-            if (session.is_started) {
-                const catchupMsg = `[SYSTEM] ${data.name} (un ${data.class}) rejoint l'aventure en cours. Intègre-le narrativement à la scène actuelle.`;
-                await supabase.functions.invoke('game-master', {
-                    body: {
-                        action: catchupMsg,
-                        sessionId: session.id,
-                        playerId: data.id,
-                        lore: { context: WORLD_CONTEXT, bestiary: { ...BESTIARY, ...BESTIARY_EXTENDED }, classes: CLASSES }
-                    }
-                });
-            }
-        } catch (e) {
-            console.error("Character Quick Start Error:", e);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleJoinQuickStart = async (id) => {
-        setLoading(true);
-        try {
-            const data = await fetchSession(id);
-            if (data) {
-                setSession(data);
-                window.history.pushState({}, '', `?s=${data.id}`);
-
-                // Better: set a "pendingQuickStart" flag
-                window.pendingQuickStart = true;
-            } else {
-                alert("Session introuvable.");
-            }
-        } catch (e) {
-            console.error("Join Quick Start Error:", e);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleSoloAdventure = async () => {
-        if (!profile) return;
-        setLoading(true);
-        try {
-            // 1. Create Session already marked as started
-            const { data: sessionData, error: sessionError } = await supabase
-                .from('sessions')
-                .insert({
-                    host_id: profile.id,
-                    is_started: true,
-                    active: true
-                })
-                .select()
-                .single();
-
-            if (sessionError || !sessionData) throw sessionError;
-
-            setSession(sessionData);
-            window.history.pushState({}, '', `?s=${sessionData.id}`);
-
-            // 2. Create Host Player Record
-            const { data: playerData, error: playerError } = await supabase
-                .from('players')
-                .insert({
-                    session_id: sessionData.id,
-                    user_id: profile.id,
-                    name: profile.name || 'Hero',
-                    is_host: true
-                })
-                .select()
-                .single();
-
-            if (playerError || !playerData) throw playerError;
-
-            // 3. Generate Random Character Data
-            const randomData = generateRandomCharacter(sessionData.id, profile.id);
-
-            // 4. Apply Random Data & Ready Status
-            const finalChar = {
-                ...randomData,
-                id: playerData.id,
-                is_ready: true
-            };
-
-            const { data: charData, error: charError } = await supabase
-                .from('players')
-                .update(finalChar)
-                .eq('id', playerData.id)
-                .select()
-                .single();
-
-            if (charError || !charData) throw charError;
-
-            setCharacter(charData);
-            setPlayers([charData]);
-
-            // 5. Trigger Adventure Start (AI Intro)
-            // Force start to bypass locks and checks
-            setTimeout(() => {
-                handleStartAdventure(true, sessionData, [charData]);
-            }, 500);
-
-        } catch (e) {
-            console.error("Solo Adventure Error:", e);
-            alert("Erreur lors du Solo Adventure : " + e.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleSoloCustom = async () => {
-        if (!profile) return;
-        setLoading(true);
-        try {
-            // 1. Create Session marked as started (to skip SessionHub/Lobby)
-            const { data: sessionData, error: sessionError } = await supabase
-                .from('sessions')
-                .insert({
-                    host_id: profile.id,
-                    is_started: true,
-                    active: true
-                })
-                .select()
-                .single();
-
-            if (sessionError || !sessionData) throw sessionError;
-
-            setSession(sessionData);
-            window.history.pushState({}, '', `?s=${sessionData.id}`);
-
-            // 2. Create Host Player Record (Empty/Skeleton)
-            const { data: playerData, error: playerError } = await supabase
-                .from('players')
-                .insert({
-                    session_id: sessionData.id,
-                    user_id: profile.id,
-                    name: profile.name || 'Hero',
-                    is_host: true
-                    // No class/stats yet -> Trigger CharacterCreation
-                })
-                .select()
-                .single();
-
-            if (playerError || !playerData) throw playerError;
-
-            setCharacter(playerData);
-            setPlayers([playerData]);
-
-            // Flow will naturally go to CharacterCreation because character.class is undefined
-
-        } catch (e) {
-            console.error("Solo Custom Error:", e);
-            alert("Erreur lors de la création Solo : " + e.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleQuickStart = async () => {
-        if (!profile) return;
-        setLoading(true);
-        try {
-            // 1. Create Session
-            const { data: sessionData, error: sessionError } = await supabase
-                .from('sessions')
-                .insert({ host_id: profile.id, is_started: false })
-                .select()
-                .single();
-
-            if (sessionError || !sessionData) throw sessionError;
-
-            setSession(sessionData);
-            window.history.pushState({}, '', `?s=${sessionData.id}`);
-
-            // 2. Create Host Player Record
-            const { data: playerData, error: playerError } = await supabase
-                .from('players')
-                .insert({
-                    session_id: sessionData.id,
-                    user_id: profile.id,
-                    name: profile.name || 'DebugHero',
-                    is_host: true
-                })
-                .select()
-                .single();
-
-            if (playerError || !playerData) throw playerError;
-            setCharacter(playerData);
-
-            // 3. Generate Random Character Data
-            const randomData = generateRandomCharacter(sessionData.id, profile.id);
-
-            // 4. Finalize Character
-            const randomCharFields = mapCharacterDataToDb(randomData);
-            const finalChar = {
-                ...randomCharFields,
-                id: playerData.id,
-                is_ready: true
-            };
-
-            const { data: charData, error: charError } = await supabase
-                .from('players')
-                .update(finalChar)
-                .eq('id', playerData.id)
-                .select()
-                .single();
-
-            if (charError || !charData) throw charError;
-            setCharacter(charData);
-            setPlayers([charData]);
-
-            // 5. Force Start Adventure (Wait slightly for state sync if needed, but we pass true)
-            setTimeout(() => {
-                handleStartAdventure(true, sessionData, [charData]);
-            }, 500);
-
-        } catch (e) {
-            console.error("Quick Start Error:", e);
-            alert("Erreur lors du Quick Start : " + e.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleLeaveSession = async () => {
-        // If the host leaves, deactivate the session so it disappears for everyone
-        if (session && profile && session.host_id === profile.id) {
-            await supabase.from('sessions').update({ active: false }).eq('id', session.id);
-        }
-        setSession(null);
-        setCharacter(null);
-        setMessages([]);
-        setPlayers([]);
-        setCombatMode(false);
-        window.history.pushState({}, '', window.location.pathname);
-    };
-
-
-    const handleResourceChange = async (playerId, newResource) => {
-        await supabase.from('players').update({ resource: newResource }).eq('id', playerId);
-    };
-
-    const handleGameOver = async () => {
-        if (!session || !character) return;
-        setLoading(true);
-        try {
-            // 1. Delete all messages for this session
-            await supabase.from('messages').delete().eq('session_id', session.id);
-            setMessages([]);
-
-            // 2. Delete the player character and related records
-            const isSolo = players.length <= 1;
-
-            // Delete dynamic references first
-            await supabase.from('player_titles').delete().eq('player_id', character.id);
-            await supabase.from('npc_affinities').delete().eq('player_id', character.id);
-
-            // Delete messages linked to this player specifically (extra safety)
-            await supabase.from('messages').delete().eq('player_id', character.id);
-
-            // Finally delete the player
-            const { error: deletePlayerError } = await supabase.from('players').delete().eq('id', character.id);
-
-            // Some DBs can still have FK constraints without ON DELETE CASCADE.
-            // In that case, keep gameplay unblocked with a soft-delete fallback.
-            if (deletePlayerError) {
-                const isConflict = deletePlayerError.code === '23503' || String(deletePlayerError.message || '').toLowerCase().includes('conflict');
-                if (isConflict) {
-                    const { error: softDeleteError } = await supabase
-                        .from('players')
-                        .update({ hp: 0, status: 'dead', resource: 0 })
-                        .eq('id', character.id);
-
-                    if (softDeleteError) throw softDeleteError;
-                } else {
-                    throw deletePlayerError;
-                }
-            }
-
-            setCharacter(null);
-            setCombatMode(false);
-
-            if (isSolo) {
-                // If solo, go back to Main Menu entirely
-                setSession(null);
-                window.history.pushState({}, '', window.location.pathname);
-                return;
-            }
-
-            // 2b. Reset narrative state & world data
-            setAdventureStarted(false);
-            setTitles([]);
-            setAffinities({});
-            await resetChronicle();
-            await resetGameTime();
-
-            // 3. Inform the world is ready for a new story
-            const startMsg = "✨ **Une nouvelle légende s'apprête à être écrite.** Le destin vous attend.";
-            setMessages([{
-                id: crypto.randomUUID(),
-                role: 'system',
-                content: startMsg,
-                created_at: new Date().toISOString()
-            }]);
-
-            // Re-invoke intro
-            await supabase.functions.invoke('game-master', { body: { action: 'intro', sessionId: session.id } });
-
-        } catch (err) { console.error(err); }
-        finally { setLoading(false); }
-    };
-
-    const handleCombatRewards = async (defeatedEnemies) => {
-        if (!character) return;
-
-        // Calculate XP & Gold
-        let totalXp = 0;
-        let totalGold = 0;
-        const rewardsItems = [];
-
-        defeatedEnemies.forEach(enemy => {
-            // XP: 50 base per enemy + something for HP/ATK
-            totalXp += 50 + (enemy.maxHp || 0);
-            // Gold: 10-30 base
-            totalGold += Math.floor(Math.random() * 20) + 10;
-
-            // Chance for item (20%)
-            if (Math.random() < 0.2) {
-                // Generate a random simple item
-                const itemTypes = ['weapon', 'armor', 'shield', 'consumable'];
-                const type = itemTypes[Math.floor(Math.random() * itemTypes.length)];
-
-                if (type === 'consumable') {
-                    rewardsItems.push({
-                        name: "Potion de Soin mineure",
-                        type: "consumable",
-                        stats: { heal: 10 },
-                        rarity: "common",
-                        desc: "Une petite fiole d'un liquide rouge scintillant.",
-                        price: 50
-                    });
-                } else {
-                    rewardsItems.push({
-                        name: "Objet de récupération",
-                        type,
-                        stats: { [type === 'weapon' ? 'atk' : 'ac']: 1 },
-                        rarity: "common",
-                        desc: "Un équipement récupéré sur le champ de bataille.",
-                        price: 25
-                    });
-                }
-            }
-        });
-
-        // Award XP
-        handleExperienceGain(totalXp, "Victoire au combat");
-
-        // Open Loot Modal
-        setActiveLoot({
-            gold: totalGold,
-            items: rewardsItems
-        });
-    };
-
-    const generateImage = async (prompt) => {
-        if (!session?.id) return null;
-        setLoading(true);
-        try {
-            const { data, error } = await supabase.functions.invoke('generate-image', {
-                body: { prompt, sessionId: session.id }
-            });
-            if (error) throw error;
-            return data?.url;
-        } catch (e) {
-            console.error("Image generation error:", e);
-            return null;
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Helper to filter character data for Supabase 'players' table
-    const mapCharacterDataToDb = (charData) => {
-        return {
-            name: charData.name,
-            class: charData.class,
-            hp: charData.hp,
-            max_hp: charData.max_hp || charData.maxHp,
-            inventory: charData.inventory || [],
-            stats: charData.stats || {},
-            abilities: charData.abilities || [],
-            spells: charData.spells || [],
-            portrait_url: charData.portrait_url,
-            resource: charData.resource,
-            max_resource: charData.max_resource,
-            level: charData.level || 1,
-            xp: charData.xp || 0,
-            gold: charData.gold || 100,
-            backstory: charData.backstory,
-            backstory_gm_context: charData.backstory_gm_context || '',
-            starting_reputation: charData.starting_reputation || {},
-            visited_npcs: charData.visited_npcs || [],
-            faction_ties: charData.faction_ties || [],
-            discovered_secrets: charData.discovered_secrets || [],
-            discovered_locations: charData.discovered_locations || [],
-            active_quests: charData.active_quests || [],
-            important_events: charData.important_events || [],
-            is_ready: charData.is_ready ?? false,
-            mechanic: charData.mechanic || '',
-            description: charData.description || '',
-            life_path: charData.life_path || {},
-            // CRITICAL FIX: Add LifePath traits and skills for multiplayer sync
-            mechanical_traits: charData.mechanical_traits || [],
-            skill_bonuses: charData.skill_bonuses || []
-        };
-    };
-
-    const handleCharacterCreate = async (charData) => {
-        setLoading(true);
-        try {
-            // CATCH-UP LOGIC: Calculate average party level/stats
-            const otherPlayers = players.filter(p => p.id !== character?.id && p.class);
-            let bonusXp = 0;
-            let bonusGold = 0;
-
-            if (otherPlayers.length > 0 && session.is_started) {
-                const avgXp = Math.floor(otherPlayers.reduce((acc, p) => acc + (p.xp || 0), 0) / otherPlayers.length);
-                const avgGold = Math.floor(otherPlayers.reduce((acc, p) => acc + (p.gold || 0), 0) / otherPlayers.length);
-
-                // Give 80% of average to stay slightly behind but relevant
-                bonusXp = Math.floor(avgXp * 0.8);
-                bonusGold = Math.floor(avgGold * 0.5);
-
-                console.log("Applying catch-up bonuses:", { bonusXp, bonusGold });
-            }
-
-            const charFields = mapCharacterDataToDb(charData);
-            const finalChar = {
-                ...charFields,
-                class: charData.subclass ? `${charData.class} (${charData.subclass})` : charData.class,
-                xp: (charData.xp || 0) + bonusXp,
-                gold: (charData.gold || 100) + bonusGold,
-                session_id: session.id,
-                user_id: profile.id,
-                is_ready: true // User just clicked "Create"
-            };
-
-            const { data, error } = await supabase
-                .from('players')
-                .update(finalChar)
-                .eq('id', character.id)
-                .select()
-                .single();
-
-            if (error) {
-                console.error("DEBUG - Character Create Error:", error);
-                alert(`Erreur Supabase (400?): ${error.message}\nDetails: ${error.details}`);
-            }
-
-            if (!error && data) {
-                setCharacter(data);
-
-                if (session.is_started) {
-                    const catchupMsg = `[SYSTEM] ${data.name} (un ${data.class}) rejoint l'aventure en cours. Intègre-le narrativement à la scène actuelle.`;
-                    await supabase.functions.invoke('game-master', {
-                        body: {
-                            action: catchupMsg,
-                            sessionId: session.id,
-                            playerId: data.id,
-                            lore: { context: WORLD_CONTEXT, bestiary: { ...BESTIARY, ...BESTIARY_EXTENDED }, classes: CLASSES }
-                        }
-                    });
-                }
-            }
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleToggleReady = async () => {
-        if (!character) return;
-        const newReadyState = !character.is_ready;
-        // Optimistic update for instant UI feedback
-        setCharacter(prev => ({ ...prev, is_ready: newReadyState }));
-        setPlayers(prev => prev.map(p => p.id === character.id ? { ...p, is_ready: newReadyState } : p));
-
-        const { data } = await supabase
-            .from('players')
-            .update({ is_ready: newReadyState })
-            .eq('id', character.id)
-            .select()
-            .single();
-
-        if (data) {
-            setCharacter(data);
-            setPlayers(prev => prev.map(p => p.id === data.id ? data : p));
-        }
-    };
-
-    // Effect: When all players are ready in SessionHub, advance to character creation
-    useEffect(() => {
-        if (!session || session.is_started || players.length < 2) return;
-        if (!profile || session.host_id !== profile.id) return;
-
-        const allReady = players.every(p => p.is_ready);
-        if (allReady) {
-            // Small delay to show "LANCEMENT EN COURS"
-            const timer = setTimeout(async () => {
-                await supabase.from('sessions').update({ is_started: true }).eq('id', session.id);
-                setSession(prev => ({ ...prev, is_started: true }));
-            }, 1500);
-            return () => clearTimeout(timer);
-        }
-    }, [session, players, profile, setSession]);
-
-    const handleStartAdventure = async (force = false, passedSession = null, passedPlayers = null) => {
-        const activeSession = passedSession || session;
-        const activePlayers = passedPlayers || players;
-        const activeCharacter = (passedPlayers && passedPlayers[0]) || character;
-
-        console.log("handleStartAdventure called", {
-            force,
-            session: activeSession?.id,
-            playersLen: activePlayers.length
-        });
-
-        if (!activeSession || activePlayers.length < 1) {
-            console.error("Start aborted: No session or no players");
-            return;
-        }
-        if (!force && STARTING_LOCKS.has(activeSession.id)) {
-            console.warn("Start aborted: Locked");
-            return;
-        }
-
-        const lastStartAttempt = sessionStorage.getItem(`start_attempt_${activeSession.id}`);
-        const now = Date.now();
-        if (!force && lastStartAttempt && (now - parseInt(lastStartAttempt) < 10000)) {
-            console.log("Start attempt debounced");
-            return;
-        }
-        if (!force) sessionStorage.setItem(`start_attempt_${activeSession.id}`, now.toString());
-
-        // Additional safety: check if GM intro already exists (role is 'system' or 'assistant')
-        const existingIntro = messages.find(m =>
-            (m.role === 'system' || m.role === 'assistant') &&
-            m.content &&
-            m.content.length > 100 &&
-            !m.content.includes("START_ADVENTURE") &&
-            !m.content.includes('(MÉMOIRE:')
-        );
-        if (existingIntro && !force) {
-            console.log("GM intro already exists, skipping START_ADVENTURE call");
-            setAdventureStarted(true);
-            STARTING_LOCKS.delete(activeSession.id);
-            return;
-        }
-
-        // CRITICAL: Only the host should trigger the actual AI invocation for the start
-        const isHost = activeSession.host_id === profile?.id;
-        if (!isHost && !force) {
-            console.warn("Non-host player attempted to start adventure. Waiting for host.");
-            setLoading(true);
-            return;
-        }
-
-        STARTING_LOCKS.add(activeSession.id);
-        setLoading(true);
-
-        // Forced Start: Immediate UI feedback
-        if (force) {
-            setAdventureStarted(true);
-            // Ensure session is marked as started
-            await supabase.from('sessions').update({ is_started: true }).eq('id', activeSession.id);
-            setSession(prev => ({ ...prev, is_started: true }));
-            // Inject start marker if missing
-            const hasMarker = messages.some(m => m.content && m.content.includes("START_ADVENTURE_TRIGGERED"));
-            if (!hasMarker) {
-                await supabase.from('messages').insert({
-                    session_id: activeSession.id,
-                    role: 'system',
-                    content: "(MEMOIRE:SYSTEM) START_ADVENTURE_TRIGGERED"
-                });
-            }
-        }
-
-        try {
-            // Mark session as started in DB (redundant if forced but safe)
-            if (!activeSession.is_started) {
-                await supabase.from('sessions').update({ is_started: true }).eq('id', activeSession.id);
-                setSession(prev => ({ ...prev, is_started: true }));
-            }
-
-            // Trigger AI Intro
-            const { data: aiResponse } = await supabase.functions.invoke('game-master', {
-                body: {
-                    action: "START_ADVENTURE",
-                    history: messages.map(m => ({ role: m.role, content: m.content })),
-                    sessionId: activeSession.id,
-                    playerId: activeCharacter?.id,
-                    gameTime: gameTime,
-                    timeLabel: getTimeLabel(),
-                    weather: weather,
-                    playerProfile: {
-                        name: activeCharacter.name,
-                        class: activeCharacter.class,
-                        level: activeCharacter.level,
-                        stats: activeCharacter.stats,
-                        backstory: activeCharacter.backstory
-                    },
-                    gamePhase: gamePhase,
-                    lore: { context: WORLD_CONTEXT, bestiary: { ...BESTIARY, ...BESTIARY_EXTENDED }, classes: CLASSES, npcs: NPC_TEMPLATES, quests: QUEST_HOOKS, locations: TAVERNS_AND_LOCATIONS, rumors: RUMORS_AND_GOSSIP, encounters: RANDOM_ENCOUNTERS, myths: WORLD_MYTHS_EXTENDED, legendaryItems: LEGENDARY_ITEMS, history: WORLD_HISTORY, factions: FACTION_LORE, calendar: CULTURAL_LORE },
-                    playerGroup: activePlayers.map(p => ({
-                        name: p.name,
-                        class: p.class,
-                        backstory: p.backstory
-                    }))
-                }
-            });
-
-            if (aiResponse) {
-                // Force a final sync to ensure the intro is visible immediately
-                await fetchData();
-            }
-        } catch (e) {
-            console.error("Start Adventure Error:", e);
-            // Unlock on error to allow retry
-            STARTING_LOCKS.delete(activeSession.id);
-            if (!force) alert("Erreur lors du lancement. Le Maître du Jeu est peut-être indisponible.");
-        } finally {
-            setLoading(false);
-            // We usually don't release the lock here as starting is a terminal transition
-        }
-    };
-
-    // Effect: Launch adventure when all players with class are ready
-    useEffect(() => {
-        if (!session || !profile || players.length === 0) return;
-        if (!character?.class) return;
-
-        const playersWithClass = players.filter(p => p.class);
-        const allPlayersReady = playersWithClass.length === players.length && players.every(p => p.class && p.is_ready);
-        const hasMarker = messages.some(m => m.content && m.content.includes("START_ADVENTURE_TRIGGERED"));
-        // CRITICAL FIX: Check for existing GM intro with correct role 'assistant' (not 'gm')
-        const hasGMIntro = messages.some(m => m.role === 'assistant' && m.content && m.content.length > 100 && !m.content.includes("START_ADVENTURE"));
-
-        // If adventure already started (marker exists), sync ALL players
-        if (hasMarker && !adventureStarted) {
-            setAdventureStarted(true);
-            return;
-        }
-
-        // Already started locally, don't re-trigger
-        if (adventureStarted) return;
-
-        // NON-HOST PLAYERS: Check if all are ready and wait for marker
-        if (session.host_id !== profile.id) {
-            // If all players with class are ready, poll messages more frequently to catch marker
-            if (allPlayersReady) {
-                const pollInterval = setInterval(async () => {
-                    const { data } = await supabase
-                        .from('messages')
-                        .select('content')
-                        .eq('session_id', session.id)
-                        .ilike('content', '%START_ADVENTURE_TRIGGERED%')
-                        .limit(1);
-
-                    if (data && data.length > 0) {
-                        setAdventureStarted(true);
-                        // CRITICAL FIX: Fetch all messages when adventure starts for non-host players
-                        // This ensures they get the GM intro message that was already sent
-                        await fetchData();
-                        clearInterval(pollInterval);
-                    }
-                }, 1000);
-
-                return () => clearInterval(pollInterval);
-            }
-            return;
-        }
-
-        // HOST: Trigger the actual start when all are ready (ONLY ONCE)
-        if (allPlayersReady && character?.is_ready && players.length >= 1 && !hasMarker && !hasGMIntro && !STARTING_LOCKS.has(session.id)) {
-            // Immediately set local and module locks
-            STARTING_LOCKS.add(session.id);
-            setAdventureStarted(true);
-
-            // Attempt to insert the singleton marker using the session UUID as the message ID.
-            // This leverages the database's unique constraint to prevent race conditions.
-            supabase.from('messages').insert({
-                id: session.id, // Deterministic ID
-                session_id: session.id,
-                role: 'system',
-                content: "(MEMOIRE:SYSTEM) START_ADVENTURE_TRIGGERED"
-            }).then(({ error }) => {
-                // ONLY the one who successfully inserted the marker (no error) should trigger the AI.
-                // If error.code === '23505', someone else already won and is handling it.
-                if (!error) {
-                    handleStartAdventure();
-                } else if (error.code === '23505') {
-                    console.log("Start marker already exists (race won by another instance). Waiting for sync.");
-                    // Ensure local state reflects adventure started
-                    setAdventureStarted(true);
-                } else {
-                    console.error("Failed to insert start marker:", error);
-                    STARTING_LOCKS.delete(session.id);
-                    setAdventureStarted(false);
-                }
-            });
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [players, session, profile, adventureStarted, messages, character]);
-
     // START ADVENTURE SYNC FIX
     useEffect(() => {
         if (!session || adventureStarted) return;
@@ -1760,6 +1029,52 @@ export default function App() {
             supabase.removeChannel(channel);
         };
     }, [session, adventureStarted, setSession]);
+
+    // Effect: Listen for session deactivation/deletion (host left) and disconnect clients
+    useEffect(() => {
+        if (!session?.id) return;
+
+        const channel = supabase.channel('session_active_sync')
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'sessions', filter: `id=eq.${session.id}` },
+                (payload) => {
+                    if (payload.new && payload.new.active === false) {
+                        console.log("SESSION DEACTIVATED - Host left, disconnecting...");
+                        gameAlert("Le Maître du Jeu a quitté la partie. La session se termine.", 'Information');
+                        // Force disconnect - clear all session state
+                        setSession(null);
+                        setCharacter(null);
+                        setMessages([]);
+                        setPlayers([]);
+                        setCombatMode(false);
+                        setAdventureStarted(false);
+                        window.history.pushState({}, '', window.location.pathname);
+                    }
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: 'DELETE', schema: 'public', table: 'sessions', filter: `id=eq.${session.id}` },
+                (payload) => {
+                    console.log("SESSION DELETED - Host left, disconnecting...");
+                    gameAlert("Le Maître du Jeu a quitté la partie. La session se termine.", 'Information');
+                    // Force disconnect - clear all session state
+                    setSession(null);
+                    setCharacter(null);
+                    setMessages([]);
+                    setPlayers([]);
+                    setCombatMode(false);
+                    setAdventureStarted(false);
+                    window.history.pushState({}, '', window.location.pathname);
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [session?.id]);
 
     const handleUpdateInventory = async (newInventory, newGold = null) => {
         if (!character?.id) return;
@@ -1800,165 +1115,42 @@ export default function App() {
     };
 
     const handleEquipItem = async (index) => {
-        if (!character || !character.inventory) return;
+        if (!character?.inventory) return;
         const item = character.inventory[index];
         if (!item) return;
 
-        const isEquipping = !item.equipped;
-
-        if (isEquipping) {
-            // Proficiency Check
-            const charClass = character.class.split(' ')[0];
-            const rules = EQUIPMENT_RULES.class_proficiency[charClass];
-
-            if (rules) {
-                const type = item.type; // weapon, armor, shield, offhand, etc.
-                const category = item.category; // light, medium, heavy, martial, simple, etc.
-
-                let canEquip = true;
-                let reason = "";
-
-                if (type === 'armor' && !rules.armor.includes(category)) {
-                    canEquip = false;
-                    reason = `Votre classe (${charClass}) ne peut pas porter d'armure de type ${category}.`;
-                }
-
-                if (type === 'weapon' && !rules.weapons.includes(category)) {
-                    canEquip = false;
-                    reason = `Votre classe (${charClass}) ne peut pas manier d'armes de type ${category}.`;
-                }
-
-                // Mage specific restriction for heavy armor (narrative & logic)
-                if (charClass === "Mage" && type === 'armor' && category === 'heavy') {
-                    canEquip = false;
-                    reason = "Un Mage ne peut pas canaliser la magie en armure lourde.";
-                }
-
-                if (!canEquip) {
-                    alert(reason);
-                    return;
-                }
-            }
-
-            // Slot Conflict Resolution
-            // INFERS SLOT FROM TYPE IF NOT DEFINED to prevent "double amulet" etc.
-            let slot = item.slot;
-            if (!slot && item.type) {
-                const lowerType = item.type.toLowerCase();
-                if (lowerType.includes('amulette') || lowerType.includes('collier') || lowerType.includes('medal')) slot = 'neck';
-                else if (lowerType.includes('anneau') || lowerType.includes('bague')) slot = 'finger'; // Note: Only 1 ring for now with this logic
-                else if (lowerType.includes('cape') || lowerType.includes('manteau')) slot = 'back';
-                else if (lowerType.includes('botte') || lowerType.includes('chaussure')) slot = 'feet';
-                else if (lowerType.includes('gant') || lowerType.includes('moufle')) slot = 'hands';
-                else if (lowerType.includes('casque') || lowerType.includes('coiffe') || lowerType.includes('chapeau')) slot = 'head';
-                else if (lowerType.includes('ceinture')) slot = 'waist';
-                else if (lowerType.includes('armure') || lowerType.includes('plastron') || lowerType.includes('robe') || lowerType.includes('tunique')) slot = 'body';
-                else if (lowerType.includes('bouclier')) slot = 'offhand';
-            }
-
-            if (slot) {
-                const newInventory = character.inventory.map((invItem, i) => {
-                    if (i === index) return { ...invItem, equipped: true, slot: slot }; // Assign inferred slot
-                    // If same slot, unequip
-                    // Check explicit slot OR inferred slot of the other item
-                    let otherSlot = invItem.slot;
-                    if (!otherSlot && invItem.type) {
-                        const ot = invItem.type.toLowerCase();
-                        if (ot.includes('amulette') || ot.includes('collier')) otherSlot = 'neck';
-                        else if (ot.includes('anneau') || ot.includes('bague')) otherSlot = 'finger';
-                        else if (ot.includes('cape') || ot.includes('manteau')) otherSlot = 'back';
-                        else if (ot.includes('botte') || ot.includes('chaussure')) otherSlot = 'feet';
-                        else if (ot.includes('gant')) otherSlot = 'hands';
-                        else if (ot.includes('casque') || ot.includes('coiffe') || ot.includes('chapeau')) otherSlot = 'head';
-                        else if (ot.includes('ceinture')) otherSlot = 'waist';
-                        else if (ot.includes('armure') || ot.includes('plastron') || ot.includes('robe')) otherSlot = 'body';
-                        else if (ot.includes('bouclier')) otherSlot = 'offhand';
-                    }
-
-                    if (invItem.equipped && otherSlot === slot) {
-                        return { ...invItem, equipped: false };
-                    }
-                    return invItem;
-                });
-                handleUpdateInventory(newInventory);
-            } else {
-                // No slot defined/inferred (e.g. general item), allow simple toggle
-                const newInventory = character.inventory.map((invItem, i) => i === index ? { ...invItem, equipped: true } : invItem);
-                handleUpdateInventory(newInventory);
-            }
-        } else {
-            // Unequipping is always allowed
-            const newInventory = character.inventory.map((invItem, i) => i === index ? { ...invItem, equipped: false } : invItem);
-            handleUpdateInventory(newInventory);
+        // Proficiency gate (only when equipping)
+        if (!item.equipped) {
+            const { canEquip, reason } = checkProficiency(character.class, item);
+            if (!canEquip) { gameAlert(reason, 'Information'); return; }
         }
+
+        const newInventory = toggleEquipItem(character.inventory, index);
+        handleUpdateInventory(newInventory);
     };
 
     const handleExperienceGain = async (amount, reason) => {
         if (!character?.id || !amount) return;
-        const newXp = (character.xp || 0) + amount;
-        let newLevel = character.level || 1;
-        let leveledUp = false;
-        let currentMaxHp = character.max_hp;
-        let currentHp = character.hp;
-        let currentSpells = [...(character.spells || [])];
+        const result = computeExperienceGain(character, amount, reason);
 
-        while (newLevel < 10 && newXp >= LEVEL_THRESHOLDS[newLevel + 1]) {
-            newLevel++;
-            leveledUp = true;
+        // System messages
+        result.systemMessages.forEach(content => {
+            setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'system', content }]);
+        });
 
-            // Level Up logic
-            const charClassKey = character.class.split(' ')[0];
-            const classData = CLASSES[charClassKey];
-            if (classData) {
-                // HP
-                const conMod = Math.floor(((character.stats.con || 10) - 10) / 2);
-                const hpGain = Math.max(1, Math.floor(classData.hitDie / 2) + 1 + conMod); // Fixed HP gain rule (Avg rounded up)
-                currentMaxHp += hpGain;
-                currentHp += hpGain;
-
-                // Unlock
-                const unlocked = classData.unlockables.find(u => u.level === newLevel);
-                let msgContent = `🎉 **NIVEAU SUPÉRIEUR !**\nVous passez **Niveau ${newLevel}** !\n\n💪 **PV Max +${hpGain}**\n✨ **+2 POINTS D'ATTRIBUTS**`;
-
-                if (unlocked) {
-                    currentSpells.push(unlocked.name);
-                    msgContent += `\n **Débloqué : ${unlocked.name}**\n*${unlocked.desc}*`;
-                }
-
-                setMessages(prev => [...prev, {
-                    id: crypto.randomUUID(),
-                    role: 'system',
-                    content: msgContent
-                }]);
-            }
-        }
-
-        if (leveledUp) {
+        if (result.leveledUp) {
             await supabase.from('players').update({
-                xp: newXp,
-                level: newLevel,
-                max_hp: currentMaxHp,
-                hp: currentHp,
-                spells: currentSpells,
-                attribute_points: (character.attribute_points || 0) + 2
+                xp: result.newXp,
+                level: result.newLevel,
+                max_hp: result.newMaxHp,
+                hp: result.newHp,
+                spells: result.newSpells,
+                attribute_points: result.attributePoints
             }).eq('id', character.id);
-
-            // We need to re-fetch or calc resource after state update, 
-            // but we can do it optimistically here if we assume stats haven't changed YET (user spends points later).
-            // However, level changed, so Max Resource increases.
-            const statsNow = calculateTotalStats(character);
-            const newMaxRes = calculateMaxResource(character.class, newLevel, statsNow);
-
-            // Trigger Level Up Modal
             setShowLevelUp(true);
         } else {
-            await supabase.from('players').update({ xp: newXp }).eq('id', character.id);
-            setCharacter(prev => ({ ...prev, xp: newXp }));
-            setMessages(prev => [...prev, {
-                id: crypto.randomUUID(),
-                role: 'system',
-                content: `✨ Gain d'XP : +${amount} ${reason ? `(${reason})` : ''} [Total: ${newXp}/${LEVEL_THRESHOLDS[newLevel + 1] || 'MAX'}]`
-            }]);
+            await supabase.from('players').update({ xp: result.newXp }).eq('id', character.id);
+            setCharacter(prev => ({ ...prev, xp: result.newXp }));
         }
     };
 
@@ -2027,39 +1219,21 @@ export default function App() {
             });
 
             if (aiResponse) {
-                // Handle world updates (weather, time)
-                if (aiResponse.worldUpdate) {
-                    if (aiResponse.worldUpdate.weather) {
-                        console.log('[Proactive GM] Weather update:', aiResponse.worldUpdate.weather);
-                        setWeather(aiResponse.worldUpdate.weather);
-                        // Sync to world_state
-                        if (session?.host_id === profile?.id) {
-                            await supabase.from('world_state').upsert({
-                                key: 'weather',
-                                value: aiResponse.worldUpdate.weather
-                            });
-                        }
-                    }
-                }
-
-                if (aiResponse.world_event) {
-                    addToChronicle(aiResponse.world_event);
-                    setMessages(prev => [...prev, {
-                        id: crypto.randomUUID(),
-                        role: 'system',
-                        content: `📜 **Chronique :** ${aiResponse.world_event.description}`,
-                        created_at: new Date().toISOString()
-                    }]);
-                }
-                // Similar logic to handleSubmit for processing GM response
-                if (aiResponse.reward?.xp) handleExperienceGain(aiResponse.reward.xp, aiResponse.reward.reason);
-                if (aiResponse.combat?.trigger) {
-                    initializeHostCombat(aiResponse.combat.enemies || []);
-                }
-                if (aiResponse.weather) setWeather(aiResponse.weather);
+                // Process all side-effects (weather, events, rewards, combat, etc.)
+                processAIResponse(aiResponse, {
+                    setWeather,
+                    addToChronicle,
+                    addSystemMessage: (text) => setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'system', content: text, created_at: new Date().toISOString() }]),
+                    handleExperienceGain,
+                    initializeHostCombat,
+                    isHost: session?.host_id === profile?.id,
+                    syncWeather: async (w) => { await supabase.from('world_state').upsert({ key: 'weather', value: w }); },
+                });
 
                 // Add the narrative to the chat
                 const narrative = aiResponse.narrative || formatAIContent(aiResponse);
+                if (isDuplicateNarrative(messages, narrative, { count: 3, threshold: 0.7 })) return;
+                
                 const gmMsg = {
                     id: crypto.randomUUID(),
                     session_id: session.id,
@@ -2072,6 +1246,16 @@ export default function App() {
             }
         } catch (e) { console.error("GM Initiative failed", e); }
         finally { setLoading(false); }
+    };
+
+    const handleTestCombat = () => {
+        // Test combat function for DebugPanel
+        console.log('[Test Combat] Initializing test combat...');
+        const testEnemies = [
+            { name: 'Gobelin Test', hp: 30, maxHp: 30, level: 1, stats: { str: 10, dex: 12, con: 10 } }
+        ];
+        setCombatEnemies(testEnemies);
+        setCombatMode(true);
     };
 
     const handleChallengeResult = async (result) => {
@@ -2187,16 +1371,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
 
             if (aiResponse) {
                 const narrative = aiResponse.narrative || formatAIContent(aiResponse);
-                
-                // Deduplication: Skip if narrative is too similar to last message
-                const lastMsg = messages[messages.length - 1];
-                if (lastMsg?.role === 'assistant' && lastMsg?.content) {
-                    const similarity = calculateSimilarity(lastMsg.content, narrative);
-                    if (similarity > 0.7) {
-                        console.log('[DEDUP] Skipping similar narrative from MJ');
-                        return;
-                    }
-                }
+                if (isDuplicateNarrative(messages, narrative)) return;
                 
                 const gmMsg = {
                     id: crypto.randomUUID(),
@@ -2218,23 +1393,26 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                     });
                 }
 
-                if (aiResponse.reward?.xp) {
-                    handleExperienceGain(aiResponse.reward.xp, aiResponse.reward.reason);
-                }
-
-                if (aiResponse.combat?.trigger) {
-                    initializeHostCombat(aiResponse.combat.enemies || []);
-                }
+                // Process side-effects (rewards, combat, etc.)
+                processAIResponse(aiResponse, {
+                    setWeather,
+                    addToChronicle,
+                    addSystemMessage: (text) => setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'system', content: text, created_at: new Date().toISOString() }]),
+                    handleExperienceGain,
+                    initializeHostCombat,
+                    isHost: session?.host_id === profile?.id,
+                    syncWeather: async (w) => { await supabase.from('world_state').upsert({ key: 'weather', value: w }); },
+                });
 
                 if (aiResponse.challenge) {
                     // Vérifier que ce n'est pas le même challenge qui revient (doublon)
                     const newChallenge = aiResponse.challenge;
-                    const isDuplicate = challengeToRef && 
+                    const isDup = challengeToRef && 
                         newChallenge.label === challengeToRef.label && 
                         newChallenge.stat === challengeToRef.stat &&
                         newChallenge.dc === challengeToRef.dc;
                     
-                    if (!isDuplicate) {
+                    if (!isDup) {
                         setActiveChallenge(newChallenge);
                     } else {
                         console.log('[Challenge] Doublon détecté, ignoré:', newChallenge.label);
@@ -2247,64 +1425,37 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
     };
 
     const handleUnlockAbility = async (abilities) => {
-        if (!character || !abilities || !abilities.length) return;
-        const currentSpells = [...(character.spells || [])];
-        const newAbilities = abilities.filter(a => !currentSpells.includes(a));
+        if (!character || !abilities?.length) return;
+        const { updatedSpells, newAbilities } = deduplicateAbilities(character.spells, abilities);
+        if (newAbilities.length === 0) return;
 
-        if (newAbilities.length > 0) {
-            const updatedSpells = [...currentSpells, ...newAbilities];
-            const { data } = await supabase.from('players').update({ spells: updatedSpells }).eq('id', character.id).select().single();
-            if (data) setCharacter(data);
+        const { data } = await supabase.from('players').update({ spells: updatedSpells }).eq('id', character.id).select().single();
+        if (data) setCharacter(data);
 
-            newAbilities.forEach(name => {
-                setMessages(prev => [...prev, {
-                    id: crypto.randomUUID(),
-                    role: 'system',
-                    content: `🔓 **NOUVELLE APTITUDE !**\nVous avez appris : **${name}**\n*Retrouvez-la dans votre onglet Aptitudes.*`
-                }]);
-            });
-        }
+        newAbilities.forEach(name => {
+            setMessages(prev => [...prev, {
+                id: crypto.randomUUID(), role: 'system',
+                content: `🔓 **NOUVELLE APTITUDE !**\nVous avez appris : **${name}**\n*Retrouvez-la dans votre onglet Aptitudes.*`
+            }]);
+        });
     };
 
     const handleUpdateStats = async (statBoosts) => {
         if (!character || !statBoosts) return;
-        const currentStats = { ...character.stats };
-        let changed = false;
+        const { changed, newStats, message } = applyStatBoosts(character.stats, statBoosts);
+        if (!changed) return;
 
-        Object.entries(statBoosts).forEach(([stat, boost]) => {
-            if (currentStats[stat] !== undefined && boost !== 0) {
-                currentStats[stat] += boost;
-                changed = true;
-            }
-        });
+        // Recalculate derived values
+        const tempChar = { ...character, stats: newStats };
+        const totalStats = calculateTotalStats(tempChar);
+        const newMaxRes = calculateMaxResource(character.class, character.level, totalStats);
 
-        if (changed) {
-            // Update Stats First
-            await supabase.from('players').update({ stats: currentStats }).eq('id', character.id);
+        const { data } = await supabase.from('players').update({
+            stats: newStats, max_resource: newMaxRes
+        }).eq('id', character.id).select().single();
+        if (data) setCharacter(data);
 
-            // Then Recalculate derived
-            const tempChar = { ...character, stats: currentStats };
-            const totalStats = calculateTotalStats(tempChar);
-            const newMaxRes = calculateMaxResource(character.class, character.level, totalStats);
-
-            const { data } = await supabase.from('players').update({
-                stats: currentStats,
-                max_resource: newMaxRes
-            }).eq('id', character.id).select().single();
-
-            if (data) setCharacter(data);
-
-            const boostList = Object.entries(statBoosts)
-                .filter(([, b]) => b !== 0)
-                .map(([s, b]) => `${s.toUpperCase()} ${b > 0 ? '+' : ''}${b}`)
-                .join(', ');
-
-            setMessages(prev => [...prev, {
-                id: crypto.randomUUID(),
-                role: 'system',
-                content: `📈 **AMÉLIORATION DES ATTRIBUTS !**\n${boostList}`
-            }]);
-        }
+        setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'system', content: message }]);
     };
 
     const _handleCombatDistanceCheck = async (combatData) => {
@@ -2320,14 +1471,14 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                     sessionId: session.id,
                     playerId: character.id,
                     playerProfile: { name: character.name, class: character.class },
-                    context: `Un combat a commencé (ennemis: ${JSON.stringify(combatData.enemies)}). Le joueur est-il au même endroit que le déclencheur ? Si oui, distance=IMMEDIATE. Sinon, estime la distance (CLOSE=1 tour, MEDIUM=3 tours, FAR=5 tours).`
+                    context: buildDistancePrompt(combatData.enemies)
                 }
             });
 
             const distance = aiResponse?.distance || 'medium'; // Default to medium if AI fails
             const reason = aiResponse?.reason || "Vous entendez le combat au loin.";
 
-            if (typeof distance === 'string' && (distance.toUpperCase() === 'IMMEDIATE' || distance.toUpperCase() === 'CLOSE' && aiResponse?.turns === 0)) {
+            if (isImmediateJoin(distance, aiResponse?.turns)) {
                 // Auto-join without prompt if immediate
                 handleJoinCombat('close', 0, combatData);
                 setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'system', content: `⚔️ **EMBUSCADE !** Vous êtes jeté dans le combat !` }]);
@@ -2375,12 +1526,11 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
 
         let turns = turnsOverride;
         if (turns === null) {
-            const d = distanceStr.toLowerCase();
-            turns = d === 'close' ? 1 : (d === 'medium' ? 3 : 5);
+            turns = distanceToTurns(distanceStr);
         }
 
         // If turns is 0, they are arrived immediately
-        const newStatus = turns === 0 ? 'arrived' : `traveling:${turns}`;
+        const newStatus = resolveJoinStatus(turns);
 
         // Optimistic update locally to ensure CombatManager sees it immediately
         setPlayers(prev => prev.map(p => p.id === character.id ? { ...p, status: newStatus } : p));
@@ -2409,7 +1559,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                 .from('messages')
                 .select('content')
                 .eq('session_id', session.id)
-                .ilike('content', `%(MÉMOIRE:${npcName})%`)
+                .ilike('content', `%(MÉMOIRE:${npcName.replace(/[%_]/g, '')})%`)
                 .limit(10);
 
             const memoryContext = memories?.map(m => m.content.replace(`(MÉMOIRE:${npcName})`, '')).join('\n') || "Aucun souvenir particulier.";
@@ -2477,63 +1627,42 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
             });
 
             if (aiResponse) {
-                // Handle world updates (weather, time)
-                if (aiResponse.worldUpdate) {
-                    if (aiResponse.worldUpdate.weather) {
-                        console.log('[NPC] Weather update:', aiResponse.worldUpdate.weather);
-                        setWeather(aiResponse.worldUpdate.weather);
-                        // Sync to world_state
-                        if (session?.host_id === profile?.id) {
-                            await supabase.from('world_state').upsert({
-                                key: 'weather',
-                                value: aiResponse.worldUpdate.weather
-                            });
-                        }
-                    }
-                }
-
-                // Trigger handling synced with handleSubmit
-                if (aiResponse.reward && aiResponse.reward.xp) {
-                    handleExperienceGain(aiResponse.reward.xp, aiResponse.reward.reason);
-                }
-                if (aiResponse.combat?.trigger) {
-                    initializeHostCombat(aiResponse.combat.enemies || []);
-                }
+                // NPC-specific: sync merchant to world_state if present
                 if (aiResponse.merchant) {
                     await supabase.from('world_state').upsert({
                         key: `merchant_${session.id}`,
                         value: {
                             ...aiResponse.merchant,
                             active: true,
-                            visitors: players.map(p => p.id) // Initialize with all current players
+                            visitors: players.map(p => p.id)
                         }
                     });
                 }
-                if (aiResponse.loot) setActiveLoot(aiResponse.loot);
-                if (aiResponse.transaction) {
-                    setPendingTransaction({
-                        ...aiResponse.transaction,
-                        context: "NPC",
-                        npcName: npcName
-                    });
+
+                // Process all standard side-effects
+                const { earlyReturn } = processAIResponse(aiResponse, {
+                    setWeather,
+                    setActiveLoot,
+                    setPendingTransaction,
+                    addToChronicle,
+                    addSystemMessage: (text) => setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'system', content: text, created_at: new Date().toISOString() }]),
+                    handleExperienceGain,
+                    handleUnlockAbility,
+                    handleUpdateStats,
+                    handleCodexUpdate,
+                    handleTitleUnlock,
+                    handleAffinityChange,
+                    initializeHostCombat,
+                    addItems: (items) => handleUpdateInventory([...(character.inventory || []), ...items]),
+                    isHost: session?.host_id === profile?.id,
+                    syncWeather: async (w) => { await supabase.from('world_state').upsert({ key: 'weather', value: w }); },
+                    npcName,
+                    transactionMeta: { context: "NPC", npcName },
+                });
+
+                if (earlyReturn) {
                     setLoading(false);
                     return;
-                }
-                if (aiResponse.unlock) handleUnlockAbility(aiResponse.unlock);
-                if (aiResponse.stats) handleUpdateStats(aiResponse.stats);
-                if (aiResponse.item) {
-                    const items = Array.isArray(aiResponse.item) ? aiResponse.item : [aiResponse.item];
-                    const updatedInv = [...(character.inventory || []), ...items];
-                    handleUpdateInventory(updatedInv);
-                }
-                if (aiResponse.affinity_change) {
-                    handleAffinityChange(npcName, aiResponse.affinity_change);
-                }
-                if (aiResponse.title_unlock) {
-                    handleTitleUnlock(aiResponse.title_unlock);
-                }
-                if (aiResponse.codex_update) {
-                    handleCodexUpdate(aiResponse.codex_update);
                 }
 
                 const responseText = aiResponse.narrative || formatAIContent(aiResponse);
@@ -2591,128 +1720,79 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
         lastActivityRef.current = Date.now();
 
         // Dynamic Phase Progression
-        if (gamePhase === 'INTRO' && (messages.length > 10)) {
-            setGamePhase('EXPLORATION');
-        } else if (gamePhase === 'EXPLORATION' && messages.length > 35) {
-            setGamePhase('DRAMA');
-        }
+        const nextPhase = resolveNextPhase(gamePhase, messages.length);
+        if (nextPhase) setGamePhase(nextPhase);
 
         setMessages(prev => [...prev, optimisticMsg]);
 
         try {
             await supabase.from('messages').insert({ id: tempId, session_id: session.id, role: 'user', content, player_id: character?.id });
+
+            // === GM ENGINE PRE-PROCESS (local AI enrichment) ===
+            let gmPreResult = { events: [], context: {} };
+            try {
+                gmPreResult = gmEngine.preProcess(content, {
+                    character,
+                    currentLocation: null,
+                    combatMode,
+                    gameTime,
+                    weather,
+                    activeQuests: [],
+                });
+            } catch (e) { console.warn('[GMEngine] preProcess skipped:', e); }
+
+            // Build payload with GM context hints
+            const gmContextHints = gmPreResult.context || {};
             const { data: aiResponse } = await supabase.functions.invoke('game-master', {
-                body: {
-                    action: content,
-                    history: messages
-                        .filter(m => m.id !== 'temp-intro' && m.id !== tempId && !m.content?.startsWith('(MÉMOIRE:'))
-                        .slice(-15) // Limit context to last 15 messages for better performance and consistency
-                        .map(m => ({ role: m.role, content: m.content })),
+                body: buildGameMasterPayload({
+                    content,
+                    messages,
+                    tempId,
                     sessionId: session.id,
                     playerId: character?.id,
-                    gamePhase: gamePhase,
-                    context: "WORLD_INTERACTION",
-                    gameTime: gameTime,
+                    gamePhase,
+                    gameTime,
                     timeLabel: getTimeLabel(),
-                    weather: weather,
-                    playerProfile: {
-                        name: character.name,
-                        class: character.class,
-                        level: character.level,
-                        stats: character.stats,
-                        inventory: character.inventory,
-                        backstory: character.backstory_gm_context
-                    },
-                    codex_data: {
-                        visited_npcs: character.visited_npcs || [],
-                        discovered_locations: character.discovered_locations || [],
-                        active_quests: character.active_quests || [],
-                        discovered_secrets: character.discovered_secrets || [],
-                        important_events: character.important_events || [],
-                        discovered_visuals: character.discovered_visuals || []
-                    },
-                    // Add guidance for challenge creation
-                    challenge_guidance: {
-                        require_roll_for: [
-                            "actions dangereuses (sauter un précipice, escalader, désamorcer)",
-                            "tentatives difficiles (crocheter une serrure complexe, négocier avec un PNJ hostile)",
-                            "découvertes cachées (pièges, passages secrets, objets dissimulés)",
-                            "connaissances spécifiques (histoire ancienne, magie complexe)"
-                        ],
-                        no_roll_for: [
-                            "lire un panneau, un livre, ou tout texte visible",
-                            "observer un environnement évident (portes, fenêtres, meubles)",
-                            "actions triviales (marcher, s'asseoir, ouvrir une porte non verrouillée)",
-                            "interagir avec des objets accessibles (prendre une torche, boire à une fontaine)",
-                            "parler à un PNJ amical ou neutre"
-                        ],
-                        note: "Les actions simples d'observation ne nécessitent PAS de jet de perception. Un panneau en bois est LISIBLE sans jet."
-                    },
-                    lore: { context: `${WORLD_CONTEXT}\n\n${ENVIRONMENTAL_RULES}`, bestiary: { ...BESTIARY, ...BESTIARY_EXTENDED }, classes: CLASSES, chronicle, npcs: NPC_TEMPLATES, quests: QUEST_HOOKS, locations: TAVERNS_AND_LOCATIONS, rumors: RUMORS_AND_GOSSIP, encounters: RANDOM_ENCOUNTERS, myths: WORLD_MYTHS_EXTENDED, legendaryItems: LEGENDARY_ITEMS, factions: FACTION_LORE }
-                }
+                    weather,
+                    character,
+                    chronicle,
+                    loreModules: { WORLD_CONTEXT, ENVIRONMENTAL_RULES, BESTIARY, BESTIARY_EXTENDED, CLASSES, NPC_TEMPLATES, QUEST_HOOKS, TAVERNS_AND_LOCATIONS, RUMORS_AND_GOSSIP, RANDOM_ENCOUNTERS, WORLD_MYTHS_EXTENDED, LEGENDARY_ITEMS, FACTION_LORE },
+                    // GM Engine enrichment
+                    ...(gmContextHints.difficultyModifier ? { difficultyModifier: gmContextHints.difficultyModifier } : {}),
+                    ...(gmContextHints.storyHint ? { storyHint: gmContextHints.storyHint } : {}),
+                })
             });
 
             if (aiResponse) {
-                // Handle world updates (weather, time)
-                if (aiResponse.worldUpdate) {
-                    if (aiResponse.worldUpdate.weather) {
-                        console.log('[GM] Weather update:', aiResponse.worldUpdate.weather);
-                        setWeather(aiResponse.worldUpdate.weather);
-                        // Sync to world_state
-                        if (session?.host_id === profile?.id) {
-                            await supabase.from('world_state').upsert({
-                                key: 'weather',
-                                value: aiResponse.worldUpdate.weather
-                            });
-                        }
-                    }
-                }
-
-                if (aiResponse.world_event) {
-                    addToChronicle(aiResponse.world_event);
-                    setMessages(prev => [...prev, {
-                        id: crypto.randomUUID(),
-                        role: 'system',
-                        content: `📜 **Chronique :** ${aiResponse.world_event.description}`,
-                        created_at: new Date().toISOString()
-                    }]);
-                }
-                if (aiResponse.reward && aiResponse.reward.xp) {
-                    handleExperienceGain(aiResponse.reward.xp, aiResponse.reward.reason);
-                }
-                if (aiResponse.combat?.trigger) {
-                    initializeHostCombat(aiResponse.combat.enemies || []);
-                }
+                // handleSubmit-specific: sync merchant to world_state (without visitors)
                 if (aiResponse.merchant) {
                     await supabase.from('world_state').upsert({
                         key: `merchant_${session.id}`,
                         value: { ...aiResponse.merchant, active: true }
                     });
                 }
-                if (aiResponse.loot) setActiveLoot(aiResponse.loot);
-                if (aiResponse.transaction) {
-                    setPendingTransaction({
-                        ...aiResponse.transaction,
-                        context: "WORLD",
-                        npcName: null
-                    });
+
+                // Process all standard side-effects
+                const { earlyReturn } = processAIResponse(aiResponse, {
+                    setWeather,
+                    setActiveLoot,
+                    setPendingTransaction,
+                    addToChronicle,
+                    addSystemMessage: (text) => setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'system', content: text, created_at: new Date().toISOString() }]),
+                    handleExperienceGain,
+                    handleUnlockAbility,
+                    handleUpdateStats,
+                    handleCodexUpdate,
+                    initializeHostCombat,
+                    addItems: (items) => handleUpdateInventory([...(character.inventory || []), ...items]),
+                    isHost: session?.host_id === profile?.id,
+                    syncWeather: async (w) => { await supabase.from('world_state').upsert({ key: 'weather', value: w }); },
+                    transactionMeta: { context: "WORLD", npcName: null },
+                });
+
+                if (earlyReturn) {
                     setLoading(false);
                     return;
-                }
-                if (aiResponse.unlock) handleUnlockAbility(aiResponse.unlock);
-                if (aiResponse.stats) handleUpdateStats(aiResponse.stats);
-                if (aiResponse.item) {
-                    const items = Array.isArray(aiResponse.item) ? aiResponse.item : [aiResponse.item];
-                    const updatedInv = [...(character.inventory || []), ...items];
-                    handleUpdateInventory(updatedInv);
-                }
-
-                if (aiResponse.codex_update) {
-                    handleCodexUpdate(aiResponse.codex_update);
-                }
-
-                if (aiResponse.combat) {
-                    initializeHostCombat(aiResponse.combat.enemies || []);
                 }
 
                 // Check for trivial challenges and auto-resolve them
@@ -2721,55 +1801,66 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                     const label = challenge.label?.toLowerCase() || '';
                     const stat = challenge.stat?.toLowerCase() || '';
                     
-                    // Détecter les challenges triviaux qui ne nécessitent pas de jet
-                    const trivialKeywords = [
-                        'panneau', 'lire', 'écrit', 'signe', 'affiche', 'inscription',
-                        'observer', 'regarder', 'voir', 'regarde', 'observe'
-                    ];
+                    // Validate player input - ignore challenges for gibberish/invalid text
+                    const isValidInput = isValidChallengeInput(content);
                     
-                    const isTrivial = trivialKeywords.some(keyword => 
-                        label.includes(keyword) || content.toLowerCase().includes(keyword)
-                    ) && (stat === 'perception' || stat === 'intelligence');
-                    
-                    if (isTrivial) {
-                        // Auto-résoudre le challenge trivial avec succès
-                        console.log('[Challenge] Action triviale détectée, résolution automatique:', challenge.label);
-                        
-                        // Créer un résultat de succès automatique
-                        const autoResult = {
-                            natural: 50,
-                            naturalConverted: 50,
-                            modifier: (character?.stats?.[stat] || 10) * 2,
-                            total: 50 + (character?.stats?.[stat] || 10) * 2,
-                            outcome: 'SUCCESS',
-                            dice: 'd100',
-                            dc: challenge.dc || 25,
-                            stat: challenge.stat || 'PERCEPTION'
-                        };
-                        
-                        // Appeler handleChallengeResult directement
-                        setTimeout(() => handleChallengeResult(autoResult), 100);
-                    } else {
-                        // Challenge normal - afficher le modal
-                        // Ajouter un message système pour prévenir le joueur
-                        const previewMsg = {
-                            id: crypto.randomUUID(),
-                            role: 'system',
-                            content: `🎲 **Test de ${challenge.stat?.toUpperCase() || 'compétence'}** - "${challenge.label || 'Test de compétence'}"\n\nObjectif : ${challenge.dc || 50} | Modificateur : ${(character?.stats?.[challenge.stat?.toLowerCase()] || 10) * 2 >= 0 ? '+' : ''}${(character?.stats?.[challenge.stat?.toLowerCase()] || 10) * 2}\n\n*Cliquez sur le bouton ci-dessus pour lancer les dés...*`,
-                            created_at: new Date().toISOString()
-                        };
-                        setMessages(prev => [...prev, previewMsg]);
-                        
-                        // Sauvegarder en DB
-                        if (session) {
-                            await supabase.from('messages').insert({
-                                session_id: session.id,
-                                role: 'system',
-                                content: previewMsg.content
-                            });
+                    if (!isValidInput) {
+                        console.log('[Challenge] Ignoring challenge for invalid input:', content);
+                        // Just show narrative without challenge
+                        if (aiResponse.narrative && !isDuplicateNarrative(messages, aiResponse.narrative, { count: 3 })) {
+                                const gmMsg = {
+                                    id: crypto.randomUUID(),
+                                    session_id: session?.id,
+                                    role: 'assistant',
+                                    content: aiResponse.narrative,
+                                    created_at: new Date().toISOString()
+                                };
+                                setMessages(prev => [...prev, gmMsg]);
+                                await supabase.from('messages').insert({ ...gmMsg, session_id: session.id });
                         }
+                    } else {
+                        const isTrivial = isTrivialChallenge(challenge, content);
                         
-                        setActiveChallenge(challenge);
+                        if (isTrivial) {
+                            // Auto-résoudre le challenge trivial avec succès
+                            console.log('[Challenge] Action triviale détectée, résolution automatique:', challenge.label);
+                            
+                            // Créer un résultat de succès automatique
+                            const autoResult = {
+                                natural: 50,
+                                naturalConverted: 50,
+                                modifier: (character?.stats?.[stat] || 10) * 2,
+                                total: 50 + (character?.stats?.[stat] || 10) * 2,
+                                outcome: 'SUCCESS',
+                                dice: 'd100',
+                                dc: challenge.dc || 25,
+                                stat: challenge.stat || 'PERCEPTION'
+                            };
+                            
+                            // Appeler handleChallengeResult directement
+                            setTimeout(() => handleChallengeResult(autoResult), 100);
+                        } else {
+                            // Challenge normal - afficher le modal
+                            // Ajouter un message système pour prévenir le joueur
+                            const previewMsg = {
+                                id: crypto.randomUUID(),
+                                role: 'system',
+                                content: `🎲 **Test de ${challenge.stat?.toUpperCase() || 'compétence'}** - "${challenge.label || 'Test de compétence'}"\n\nObjectif : ${challenge.dc || 50} | Modificateur : ${(character?.stats?.[challenge.stat?.toLowerCase()] || 10) * 2 >= 0 ? '+' : ''}${(character?.stats?.[challenge.stat?.toLowerCase()] || 10) * 2}\n\n*Cliquez sur le bouton ci-dessus pour lancer les dés...*`,
+                                created_at: new Date().toISOString()
+                            };
+                            setMessages(prev => [...prev, previewMsg]);
+                            
+                            // Sauvegarder en DB
+                            if (session) {
+                                await supabase.from('messages').insert({
+                                    session_id: session.id,
+                                    role: 'system',
+                                    content: previewMsg.content
+                                });
+                            }
+                            
+                            setActiveChallenge(challenge);
+                        }
                     }
                 }
 
@@ -2798,6 +1889,43 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                 }
             }
 
+            // === GM ENGINE POST-PROCESS (karma, economy, NPC personality, memory) ===
+            try {
+                const gmPostResult = gmEngine.postProcess(content, aiResponse || {}, {
+                    character,
+                    currentLocation: null,
+                    combatMode,
+                    activeQuests: [],
+                });
+                // Inject random events from pre-process as system messages
+                if (gmPreResult.events?.length > 0) {
+                    for (const evt of gmPreResult.events) {
+                        if (evt.narrative || evt.text) {
+                            const evtMsg = {
+                                id: crypto.randomUUID(),
+                                role: 'system',
+                                content: `[Monde] ${evt.narrative || evt.text}`,
+                                created_at: new Date().toISOString(),
+                            };
+                            setMessages(prev => [...prev, evtMsg]);
+                        }
+                    }
+                }
+                // Inject faction war updates
+                if (gmPostResult.narrativeAddons?.length > 0) {
+                    for (const addon of gmPostResult.narrativeAddons) {
+                        if (addon) {
+                            setMessages(prev => [...prev, {
+                                id: crypto.randomUUID(),
+                                role: 'system',
+                                content: `[Monde] ${addon}`,
+                                created_at: new Date().toISOString(),
+                            }]);
+                        }
+                    }
+                }
+            } catch (e) { console.warn('[GMEngine] postProcess skipped:', e); }
+
             // FORCED SYNC: Always reload after AI interaction to handle complex system states
             await fetchData();
         } catch (e) { console.error(e); }
@@ -2806,41 +1934,32 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
 
     const handleConsumeItem = async (item, index) => {
         if (!character || !item) return;
+        const effect = computeConsumeEffect(item, index, character);
+        if (!effect) return;
 
-        let used = false;
-        let msg = "";
-
-        // Handle Effects
-        if (item.stats) {
-            if (item.stats.heal) {
-                const healAmount = item.stats.heal;
-                const newHp = Math.min(character.max_hp, character.hp + healAmount);
-                await handleHPChange(character.id, newHp);
-                setCharacter(prev => ({ ...prev, hp: newHp }));
-                msg = `🧪 Vous buvez **${item.name}** et récupérez **${healAmount} PV** (${newHp}/${character.max_hp}).`;
-                used = true;
-            }
-            if (item.stats.resource) {
-                const resAmount = item.stats.resource;
-                const newRes = Math.min(character.max_resource, (character.resource || 0) + resAmount);
-                await handleResourceChange(character.id, newRes);
-                setCharacter(prev => ({ ...prev, resource: newRes }));
-                msg = `🧪 Vous utilisez **${item.name}** et récupérez **${resAmount}** points de ressource.`;
-                used = true;
-            }
+        if (effect.newHp !== null) {
+            await handleHPChange(character.id, effect.newHp);
+            setCharacter(prev => ({ ...prev, hp: effect.newHp }));
         }
+        if (effect.newResource !== null) {
+            await handleResourceChange(character.id, effect.newResource);
+            setCharacter(prev => ({ ...prev, resource: effect.newResource }));
+        }
+        await handleUpdateInventory(effect.newInventory);
+        setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'system', content: effect.message }]);
+    };
 
-        if (used) {
-            // Remove 1 unit from inventory
-            const newInv = [...character.inventory];
-            newInv.splice(index, 1);
-            await handleUpdateInventory(newInv);
+    const handleShareItemToChat = async (itemData) => {
+        if (!character || !itemData) return;
+        const shareMsg = buildItemSharePayload(itemData, character, session?.id);
+        setItemShares(prev => [...prev.slice(-9), shareMsg]);
 
-            setMessages(prev => [...prev, {
-                id: crypto.randomUUID(),
-                role: 'system',
-                content: msg
-            }]);
+        if (session?.id) {
+            await supabase.from('world_state').upsert({
+                key: `item_shares_${session.id}`,
+                value: [...itemShares.slice(-9), shareMsg],
+                updated_at: new Date().toISOString()
+            });
         }
     };
 
@@ -2893,27 +2012,15 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
     const handleInputTyping = (e) => {
         setUserMsg(e.target.value);
 
-        if (!window.activeChannel || !profile) return;
+        if (!session?.id || !character?.id) return;
 
-        // Set typing status
-        window.activeChannel.track({
-            user_id: profile.id,
-            name: character?.name || profile.name,
-            online_at: new Date().toISOString(),
-            is_typing: true
-        });
+        // Set typing status via DB (not WebSocket)
+        updateTypingStatus(true);
 
         // Debounce to clear
         if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
         typingTimeoutRef.current = setTimeout(() => {
-            if (window.activeChannel) {
-                window.activeChannel.track({
-                    user_id: profile.id,
-                    name: character?.name || profile.name,
-                    online_at: new Date().toISOString(),
-                    is_typing: false
-                });
-            }
+            updateTypingStatus(false);
         }, 2000);
     };
 
@@ -2924,36 +2031,15 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
         }
     }, [combatEnemies, combatMode]);
 
-    const handleTestCombat = () => {
-        if (!session || !character) return;
-
-        // Safety: ensure character is alive
-        if (character.hp <= 0) {
-            setCharacter(prev => ({ ...prev, hp: prev.max_hp }));
-            handleHPChange(character.id, character.max_hp);
-        }
-
-        const dummyEnemies = [
-            { id: 'gob1', name: 'Gobelin', hp: 20, maxHp: 20, ac: 12, x: 3, y: 3, type: 'enemy' },
-            { id: 'gob2', name: 'Chef Gobelin', hp: 45, maxHp: 45, ac: 14, x: 6, y: 4, type: 'enemy' }
-        ];
-        setSceneImage('/maps/test_map.jpg');
-        setCombatEnemies(dummyEnemies);
-        setCombatMode(true);
-        addMessage({
-            role: 'system',
-            content: "⚔️ **MODE DEBUG:** Combat de test lancé avec la carte personnalisée.",
-            id: crypto.randomUUID()
-        });
-    };
-
 
     return (
+        <GameModalProvider>
         <div className="app-container">
             <div className="vignette-overlay" />
 
             {/* MULTI-STEP FLOW: LOBBY -> HUB -> CREATION -> GAME */}
             {!session ? (
+                <Suspense fallback={LAZY_FALLBACK}>
                 <SessionLobby
                     onJoin={handleJoinSession}
                     onCreate={handleCreateSession}
@@ -2963,7 +2049,15 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                     onJoinQuickStart={handleJoinQuickStart}
                     availableSessions={availableSessions}
                     loading={loading}
+                    savedGames={savedGames}
+                    onLoadGame={handleLoadGame}
+                    onDeleteSession={handleDeleteSession}
+                    onDeleteSave={handleDeleteSave}
+                    profile={profile}
+                    onOpenDMPanel={() => setShowDMPanel(true)}
+                    onOpenCodex={() => setShowCodex(true)}
                 />
+                </Suspense>
             ) : !session.is_started ? (
                 <SessionHub
                     players={players}
@@ -2972,9 +2066,12 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                     onToggleReady={handleToggleReady}
                     onStart={handleStartAdventure}
                     onLeave={handleLeaveSession}
+                    onCreateRandomCharacter={handleCharacterCreate}
+                    onKickPlayer={handleKickPlayer}
                     loading={loading}
                 />
             ) : !character?.class ? (
+                <Suspense fallback={LAZY_FALLBACK}>
                 <CharacterCreation
                     onCreate={handleCharacterCreate}
                     onBack={handleLeaveSession}
@@ -2982,6 +2079,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                     generateImage={generateImage}
                     sessionId={session.id}
                 />
+                </Suspense>
             ) : !adventureStarted ? (
                 /* WAITING ROOM: Player has created character, waiting for all to be ready */
                 <WaitingRoom
@@ -3009,10 +2107,11 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                 />
             ) : null}
 
-            {character?.class && adventureStarted && (
+            {character?.class && (
                 <main className="hud-layout">
                     <SceneBackground currentImage={sceneImage} />
 
+                    <Suspense fallback={LAZY_FALLBACK}>
                     <CharacterSheet
                         character={character}
                         onUpdateInventory={handleUpdateInventory}
@@ -3022,14 +2121,37 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                         onConsume={handleConsumeItem}
                         onLevelUpClick={() => setShowLevelUp(true)}
                         onTradeClick={() => setShowTradeModal(true)}
+                        onShareItem={handleShareItemToChat}
                     />
+                    </Suspense>
+
+                    <PartyInfoPanel 
+                        players={players} 
+                        currentCharacter={character} 
+                        onKickPlayer={handleKickPlayer}
+                        isHost={session?.host_id === profile?.id}
+                    />
+
+                    <Suspense fallback={LAZY_FALLBACK}>
+                    <VoiceChatPanel
+                        isMuted={voiceMuted}
+                        isTalking={voiceTalking}
+                        isPushToTalk={isPushToTalk}
+                        pushToTalkKey={pushToTalkKey}
+                        speakers={speakers}
+                        toggleMute={toggleVoiceMute}
+                        togglePushToTalk={togglePushToTalk}
+                        changePushToTalkKey={changePushToTalkKey}
+                        character={character}
+                    />
+                    </Suspense>
+
+                    {showItemSharePanel && <ItemSharePanel itemShares={itemShares} onClose={handleCloseItemSharePanel} />}
 
                     <section className="hud-bottom glass-panel animate-fade-in">
                         <HUDHeader
                             gameTime={gameTime}
                             getTimeLabel={getTimeLabel}
-                            realTimeSync={realTimeSync}
-                            onToggleRealTime={() => setRealTimeSync(!realTimeSync)}
                             onInvite={() => {
                                 const url = window.location.origin + window.location.pathname + '?s=' + session.id;
                                 navigator.clipboard.writeText(url);
@@ -3046,11 +2168,13 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                             onToggleDMPanel={() => setShowDMPanel(!showDMPanel)}
                             onDebugCombat={handleTestCombat}
                             connStatus={connStatus}
-                            isGM={session && profile && session.gm_id === profile.id}
+                            isGM={session && profile && (session.gm_id === profile.id || session.host_id === profile.id)}
                             audioEnabled={audioEnabled}
                             onToggleAudio={() => setAudioEnabled(!audioEnabled)}
                             audioVolume={audioVolume}
                             onVolumeChange={setAudioVolume}
+                            onToggleItemSharePanel={() => setShowItemSharePanel(!showItemSharePanel)}
+                            itemShareCount={itemShares.length}
                         />
 
                         <NarrationPanel
@@ -3072,6 +2196,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
 
             {
                 combatMode && (
+                    <Suspense fallback={LAZY_FALLBACK}>
                     <CombatManager
                         arenaConfig={syncedCombatState?.arenaConfig || getArenaConfig()}
                         players={players}
@@ -3163,6 +2288,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                         }}
                         onVFX={triggerVFX}
                     />
+                    </Suspense>
                 )
             }
 
@@ -3173,6 +2299,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
 
             {
                 activeMerchant && (
+                    <Suspense fallback={LAZY_FALLBACK}>
                     <MerchantModal
                         merchant={activeMerchant}
                         affinity={affinities[activeMerchant?.npcName] || 0}
@@ -3203,50 +2330,12 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                         }}
                         messages={npcConversations[activeMerchant?.npcName] || []}
                         loading={loading}
-                        onClose={async () => {
-                            const merchantName = activeMerchant?.npcName || 'le marchand';
-
-                            // 1. Close locally first to prevent UI flicker
-                            setActiveMerchant(null);
-
-                            try {
-                                // 2. Fetch current state to handle synchronization
-                                const { data } = await supabase.from('world_state').select('value').eq('key', `merchant_${session.id}`).single();
-                                const currentMerchant = data?.value;
-
-                                if (currentMerchant && currentMerchant.active) {
-                                    // 3. Remove self from visitors
-                                    const currentVisitors = currentMerchant.visitors || [];
-                                    const newVisitors = currentVisitors.filter(id => id !== character.id);
-
-                                    if (newVisitors.length > 0) {
-                                        // Others remain - just update the list
-                                        await supabase.from('world_state').upsert({
-                                            key: `merchant_${session.id}`,
-                                            value: { ...currentMerchant, visitors: newVisitors }
-                                        });
-                                        // Optional: System message for leaving
-                                        addMessage({
-                                            role: 'system',
-                                            content: `🚪 **${character.name}** quitte la boutique.`,
-                                            timestamp: Date.now()
-                                        });
-                                    } else {
-                                        // Last one out - Close shop and Trigger Narrative
-                                        await supabase.from('world_state').upsert({
-                                            key: `merchant_${session.id}`,
-                                            value: { ...currentMerchant, active: false, visitors: [] }
-                                        });
-
-                                        // Trigger GM Narrative
-                                        handleSubmit(null, `[FIN DE COMMERCE] Le groupe quitte ${merchantName}. Décris notre sortie.`);
-                                    }
-                                }
-                            } catch (e) {
-                                console.error("Merchant Close Error", e);
-                            }
-                        }}
+                        onClose={buildMerchantCloseHandler({
+                            session, character, activeMerchant,
+                            setActiveMerchant, addMessage, handleSubmit,
+                        })}
                     />
+                    </Suspense>
                 )
             }
 
@@ -3301,6 +2390,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
 
             {
                 (showTradeModal || incomingTrade) && (
+                    <Suspense fallback={LAZY_FALLBACK}>
                     <TradeModal
                         isOpen={showTradeModal}
                         onClose={() => setShowTradeModal(false)}
@@ -3321,6 +2411,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                             });
                         }}
                     />
+                    </Suspense>
                 )
             }
 
@@ -3386,12 +2477,101 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                                         {audioEnabled ? 'ON' : 'OFF'}
                                     </button>
                                 </div>
+                                {/* Save Game button - only for host */}
+                                {session?.host_id === profile?.id && (
+                                    <button
+                                        className="btn-gold"
+                                        style={{ 
+                                            background: 'rgba(50, 150, 50, 0.3)', 
+                                            marginTop: '1rem', 
+                                            border: '2px solid #4dff88', 
+                                            padding: '1rem',
+                                            color: '#4dff88',
+                                            fontWeight: 'bold',
+                                            letterSpacing: '2px',
+                                            fontSize: '1rem',
+                                            boxShadow: '0 0 15px rgba(77, 255, 136, 0.3)',
+                                            transition: 'all 0.3s ease'
+                                        }}
+                                        onClick={async () => {
+                                            try {
+                                                setLoading(true);
+                                                const saveData = {
+                                                    sessionId: session.id,
+                                                    hostId: profile.id, // Store host ID to identify ownership
+                                                    timestamp: new Date().toISOString(),
+                                                    players: players,
+                                                    messages: messages,
+                                                    gameTime: gameTime,
+                                                    weather: weather,
+                                                    adventureStarted: adventureStarted
+                                                };
+                                                await supabase.from('world_state').upsert({
+                                                    key: `save_${session.id}`,
+                                                    value: saveData,
+                                                    updated_at: new Date().toISOString()
+                                                });
+                                                // Ajouter immédiatement aux savedGames pour affichage
+                                                const newSave = {
+                                                    id: `save_${session.id}`,
+                                                    sessionId: session.id,
+                                                    host_name: players?.[0]?.name || 'MJ',
+                                                    timestamp: new Date().toISOString(),
+                                                    playerCount: players?.length || 0,
+                                                    saveData: saveData
+                                                };
+                                                setSavedGames(prev => [newSave, ...prev.filter(s => s.sessionId !== session.id)]);
+                                                gameAlert('💾 Partie sauvegardée avec succès !', 'Succès');
+                                            } catch (err) {
+                                                console.error('Save error:', err);
+                                                gameAlert('❌ Erreur lors de la sauvegarde', 'Erreur');
+                                            } finally {
+                                                setLoading(false);
+                                            }
+                                        }}
+                                    >
+                                        💾 SAUVEGARDER LA PARTIE
+                                    </button>
+                                )}
                                 <button
                                     className="btn-gold"
-                                    style={{ background: 'rgba(212, 175, 55, 0.1)', marginTop: '1rem', border: '1px solid var(--gold-dim)', padding: '1rem' }}
-                                    onClick={handleLeaveSession}
+                                    style={{ 
+                                        background: 'rgba(220, 50, 50, 0.3)', 
+                                        marginTop: '1rem', 
+                                        border: '2px solid #ff4444', 
+                                        padding: '1rem',
+                                        color: '#ff6666',
+                                        fontWeight: 'bold',
+                                        letterSpacing: '2px',
+                                        fontSize: '1rem',
+                                        boxShadow: '0 0 15px rgba(255, 68, 68, 0.3)',
+                                        transition: 'all 0.3s ease'
+                                    }}
+                                    onClick={() => {
+                                        setShowSettings(false);
+                                        handleLeaveSession();
+                                    }}
                                 >
-                                    Quitter la Session
+                                    QUITTER LA SESSION
+                                </button>
+                                <button
+                                    className="btn-secondary"
+                                    onClick={async () => {
+                                        setShowSettings(false);
+                                        handleLeaveSession();
+                                        await supabase.auth.signOut();
+                                    }}
+                                    style={{
+                                        padding: '0.8rem',
+                                        marginTop: '0.5rem',
+                                        background: 'rgba(100, 100, 255, 0.1)',
+                                        border: '1px solid rgba(100, 100, 255, 0.3)',
+                                        color: '#aaaaff',
+                                        fontSize: '0.85rem',
+                                        letterSpacing: '2px'
+                                    }}
+                                >
+                                    🚪 DÉCONNEXION
                                 </button>
                                 <button
                                     className="btn-secondary"
@@ -3417,11 +2597,14 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                 )
             }
 
+            <Suspense fallback={LAZY_FALLBACK}>
             <CodexPanel
                 isOpen={showCodex}
                 onClose={() => setShowCodex(false)}
             />
+            </Suspense>
 
+            <Suspense fallback={LAZY_FALLBACK}>
             <DMPanel
                 isOpen={showDMPanel}
                 onClose={() => setShowDMPanel(false)}
@@ -3468,6 +2651,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                     });
                 }}
             />
+            </Suspense>
 
             <AudioManager
                 mood={getMood()}
@@ -3478,12 +2662,23 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
             />
 
             {/* Debug Panel for Combat Logs */}
-            <DebugPanel onTestCombat={handleTestCombat} />
+            <Suspense fallback={LAZY_FALLBACK}>
+            <DebugPanel
+                onTestCombat={handleTestCombat}
+                session={session}
+                character={character}
+                profile={profile}
+            />
+            </Suspense>
 
             {/* Aethelgard Side Flags */}
             <div className="side-flag left" style={{ backgroundImage: 'url("/aethelgard_flag_royal.png")' }}></div>
             <div className="side-flag right" style={{ backgroundImage: 'url("/aethelgard_flag_royal.png")' }}></div>
+
+            {/* PWA Update Notification */}
+            <PWAUpdateNotification />
         </div>
+        </GameModalProvider>
     );
 }
 

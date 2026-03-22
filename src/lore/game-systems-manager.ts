@@ -358,3 +358,20 @@ export class GameSystemsManager {
 
 // Instance globale (singleton)
 export const gameSystemsManager = new GameSystemsManager();
+
+// Callback pour la sauvegarde DB (sera défini dans App.jsx)
+let saveProfessionCallback: ((professionId: string) => Promise<void>) | null = null;
+
+export const setSaveProfessionCallback = (callback: (professionId: string) => Promise<void>) => {
+    saveProfessionCallback = callback;
+};
+
+// Modifier la méthode learnProfession pour inclure la persistance
+const originalLearnProfession = gameSystemsManager.learnProfession.bind(gameSystemsManager);
+gameSystemsManager.learnProfession = (professionId: string) => {
+    const result = originalLearnProfession(professionId);
+    if (result.success && saveProfessionCallback) {
+        saveProfessionCallback(professionId).catch(console.error);
+    }
+    return result;
+};

@@ -25,6 +25,7 @@ dist-ssr
 
 .vercel
 .env*.local
+dev-dist
 
 # Auto-generated entries
 # Dependencies

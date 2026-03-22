@@ -1,7 +1,7 @@
 import React from 'react';
 import { formatAIContent } from '../../utils/gameUtils';
 import { TypewriterText } from '../TypewriterText';
-import { DiceRoll3D } from '../DiceRoll3D';
+import { DiceRollScene2D } from '../Dice2D';
 
 export const NarrationPanel = ({
     messages,
@@ -113,8 +113,8 @@ export const NarrationPanel = ({
 
     return (
         <section className="narration-section">
-            <div className="messages-container" ref={chatRef}>
-                {messages.filter(m => !m.content?.startsWith?.('(MÉMOIRE:')).map((m, i) => {
+            <div className="messages-container" ref={chatRef} aria-live="polite">
+                {messages.filter(m => !m.content?.startsWith?.('(MÉMOIRE:') && !m.content?.startsWith?.('[ITEM_SHARE]')).map((m, i) => {
                     // Détecter message de lancé de dé
                     if (m.content?.startsWith('[DICE_ROLL]')) {
                         try {
@@ -122,17 +122,178 @@ export const NarrationPanel = ({
                             const diceData = JSON.parse(jsonStr);
                             return (
                                 <div key={i} className="chat-message system dice-roll-message">
-                                    <DiceRoll3D
+                                    <DiceRollScene2D
                                         diceType={diceData.diceType}
-                                        result={diceData.result}
-                                        modifier={diceData.modifier}
-                                        target={diceData.target}
-                                        action={`${diceData.action} (${diceData.stat})`}
+                                        value={diceData.result}
+                                        onComplete={() => {}}
                                     />
                                 </div>
                             );
                         } catch (e) {
                             console.error('Failed to parse dice roll:', e);
+                            return null;
+                        }
+                    }
+
+                    // Détecter message de partage d'item
+                    if (m.content?.startsWith('[ITEM_SHARE]')) {
+                        try {
+                            const jsonStr = m.content.replace('[ITEM_SHARE]', '');
+                            const shareData = JSON.parse(jsonStr);
+                            const { player, item } = shareData;
+                            
+                            return (
+                                <div key={i} className="chat-message system item-share-message" style={{
+                                    background: 'rgba(155, 89, 182, 0.15)',
+                                    border: `2px solid ${item.rarityColor}`,
+                                    borderRadius: '12px',
+                                    padding: '12px',
+                                    margin: '8px 0',
+                                    boxShadow: `0 0 15px ${item.rarityColor}44`
+                                }}>
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        marginBottom: '8px',
+                                        borderBottom: '1px solid rgba(255,255,255,0.1)',
+                                        paddingBottom: '8px'
+                                    }}>
+                                        <span style={{ fontSize: '1.2rem' }}>📤</span>
+                                        <span style={{ 
+                                            fontSize: '0.8rem', 
+                                            color: '#aaa',
+                                            fontStyle: 'italic'
+                                        }}>
+                                            {player} partage un objet :
+                                        </span>
+                                    </div>
+                                    
+                                    <div style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '6px'
+                                    }}>
+                                        {/* Item name and rarity */}
+                                        <div style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '10px',
+                                            flexWrap: 'wrap'
+                                        }}>
+                                            <span style={{
+                                                fontSize: '1.1rem',
+                                                fontWeight: 'bold',
+                                                color: item.rarityColor,
+                                                textShadow: `0 0 10px ${item.rarityColor}66`
+                                            }}>
+                                                {item.name}
+                                            </span>
+                                            <span style={{
+                                                fontSize: '0.65rem',
+                                                padding: '2px 8px',
+                                                background: `${item.rarityColor}22`,
+                                                border: `1px solid ${item.rarityColor}`,
+                                                borderRadius: '4px',
+                                                color: item.rarityColor,
+                                                textTransform: 'uppercase',
+                                                fontWeight: 'bold'
+                                            }}>
+                                                {item.rarityLabel}
+                                            </span>
+                                            {item.equipped && (
+                                                <span style={{
+                                                    fontSize: '0.65rem',
+                                                    padding: '2px 6px',
+                                                    background: 'rgba(212, 175, 55, 0.2)',
+                                                    border: '1px solid #d4af37',
+                                                    borderRadius: '4px',
+                                                    color: '#d4af37'
+                                                }}>
+                                                    ✓ Équipé
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {/* Item type */}
+                                        <span style={{
+                                            fontSize: '0.7rem',
+                                            color: '#888',
+                                            textTransform: 'uppercase'
+                                        }}>
+                                            Type: {item.type}
+                                        </span>
+
+                                        {/* Description */}
+                                        {item.description && (
+                                            <span style={{
+                                                fontSize: '0.8rem',
+                                                color: '#ccc',
+                                                fontStyle: 'italic',
+                                                marginTop: '4px'
+                                            }}>
+                                                {item.description}
+                                            </span>
+                                        )}
+
+                                        {/* Stats */}
+                                        {item.stats && (
+                                            <div style={{
+                                                display: 'flex',
+                                                flexWrap: 'wrap',
+                                                gap: '6px',
+                                                marginTop: '8px',
+                                                padding: '8px',
+                                                background: 'rgba(0,0,0,0.3)',
+                                                borderRadius: '6px'
+                                            }}>
+                                                {item.stats.split(' | ').map((stat, idx) => (
+                                                    <span key={idx} style={{
+                                                        fontSize: '0.7rem',
+                                                        padding: '2px 8px',
+                                                        background: 'rgba(72, 219, 251, 0.15)',
+                                                        border: '1px solid rgba(72, 219, 251, 0.3)',
+                                                        borderRadius: '4px',
+                                                        color: '#48dbfb'
+                                                    }}>
+                                                        {stat}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {/* Effects */}
+                                        {item.effects && (
+                                            <div style={{
+                                                marginTop: '8px',
+                                                padding: '8px',
+                                                background: 'rgba(76, 209, 55, 0.1)',
+                                                border: '1px solid rgba(76, 209, 55, 0.2)',
+                                                borderRadius: '6px'
+                                            }}>
+                                                <span style={{
+                                                    fontSize: '0.65rem',
+                                                    color: '#4cd137',
+                                                    fontWeight: 'bold',
+                                                    display: 'block',
+                                                    marginBottom: '4px'
+                                                }}>
+                                                    Effets :
+                                                </span>
+                                                <span style={{
+                                                    fontSize: '0.75rem',
+                                                    color: '#4cd137',
+                                                    whiteSpace: 'pre-wrap'
+                                                }}>
+                                                    {item.effects}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        } catch (e) {
+                            console.error('Failed to parse item share:', e);
                             return null;
                         }
                     }
@@ -144,7 +305,7 @@ export const NarrationPanel = ({
                         <div key={i} className={`chat-message ${m.role} ${m.role === 'system' ? 'system-msg' : ''}`}>
                             <span className="msg-author">
                                 {m.role === 'user' ? (players.find(p => p.id === m.player_id)?.name || 'HEROS') :
-                                    m.role === 'system' ? 'RECIT DU MJ' : 'ARCHIVES'}
+                                    (m.role === 'system' || m.role === 'assistant') ? 'RECIT DU MJ' : 'ARCHIVES'}
                             </span>
                             <div className="msg-content">
                                 {m.role === 'image' ? (
@@ -218,14 +379,26 @@ export const NarrationPanel = ({
                 {typingUsers.length > 0 && (
                     <div style={{
                         position: 'absolute',
-                        top: '-25px',
+                        top: '-35px',
                         left: '10px',
-                        fontSize: '0.7rem',
+                        fontSize: '0.8rem',
                         color: 'var(--aether-blue)',
                         fontStyle: 'italic',
-                        animation: 'pulse 1.5s infinite'
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        background: 'rgba(0,0,0,0.6)',
+                        padding: '4px 12px',
+                        borderRadius: '4px',
+                        border: '1px solid var(--aether-blue)',
+                        zIndex: 10
                     }}>
-                        {typingUsers.join(', ')} {typingUsers.length > 1 ? 'ecrivent' : 'ecrit'}...
+                        <span>{typingUsers.join(', ')} {typingUsers.length > 1 ? 'sont en train d\'écrire' : 'est en train d\'écrire'}</span>
+                        <span className="typing-animation">
+                            <span className="dot"></span>
+                            <span className="dot"></span>
+                            <span className="dot"></span>
+                        </span>
                     </div>
                 )}
                 <input

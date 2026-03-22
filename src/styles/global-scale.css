@@ -1,0 +1,231 @@
+/* ===========================================
+   GLOBAL SCALE SYSTEM - Aethelgard JDR
+   Auto-scales UI based on viewport size (REAL-TIME)
+   =========================================== */
+
+:root {
+  /* Dynamic variables set by useViewportScale hook */
+  --viewport-width: 1920px;
+  --viewport-height: 1080px;
+  --ui-scale: 1;
+  --device-pixel-ratio: 1;
+  --dynamic-font-size: 16px;
+  
+  /* Base font size that scales with viewport */
+  --base-font-size: var(--dynamic-font-size);
+  
+  /* Scale factors for different UI elements */
+  --scale-xs: 0.75;
+  --scale-sm: 0.875;
+  --scale-md: 1;
+  --scale-lg: 1.125;
+  --scale-xl: 1.25;
+  
+  /* Spacing scale - now dynamic based on ui-scale */
+  --space-unit: calc(4px * var(--ui-scale));
+  --space-xs: calc(var(--space-unit) * 1);
+  --space-sm: calc(var(--space-unit) * 2);
+  --space-md: calc(var(--space-unit) * 4);
+  --space-lg: calc(var(--space-unit) * 6);
+  --space-xl: calc(var(--space-unit) * 8);
+  
+  /* Border radius scale */
+  --radius-scale: var(--ui-scale);
+  
+  /* Panel width constraints - now dynamic */
+  --sidebar-min-width: minmax(calc(280px * var(--ui-scale)), 25vw);
+  --sidebar-max-width: minmax(calc(300px * var(--ui-scale)), 30vw);
+  --chat-min-width: minmax(calc(320px * var(--ui-scale)), 35vw);
+  --chat-max-width: minmax(calc(400px * var(--ui-scale)), 45vw);
+}
+
+/* Global font scaling - updated in real-time */
+html {
+  font-size: var(--base-font-size);
+}
+
+/* Scaled text utilities - now real-time responsive */
+.text-scale-xs { font-size: calc(0.75rem * var(--ui-scale)); }
+.text-scale-sm { font-size: calc(0.875rem * var(--ui-scale)); }
+.text-scale-md { font-size: calc(1rem * var(--ui-scale)); }
+.text-scale-lg { font-size: calc(1.125rem * var(--ui-scale)); }
+.text-scale-xl { font-size: calc(1.25rem * var(--ui-scale)); }
+.text-scale-2xl { font-size: calc(1.5rem * var(--ui-scale)); }
+
+/* Scaled spacing utilities - real-time */
+.p-scale-xs { padding: var(--space-xs); }
+.p-scale-sm { padding: var(--space-sm); }
+.p-scale-md { padding: var(--space-md); }
+.p-scale-lg { padding: var(--space-lg); }
+.p-scale-xl { padding: var(--space-xl); }
+
+.m-scale-xs { margin: var(--space-xs); }
+.m-scale-sm { margin: var(--space-sm); }
+.m-scale-md { margin: var(--space-md); }
+.m-scale-lg { margin: var(--space-lg); }
+.m-scale-xl { margin: var(--space-xl); }
+
+.gap-scale-xs { gap: var(--space-xs); }
+.gap-scale-sm { gap: var(--space-sm); }
+.gap-scale-md { gap: var(--space-md); }
+.gap-scale-lg { gap: var(--space-lg); }
+.gap-scale-xl { gap: var(--space-xl); }
+
+/* Scaled component sizes - real-time */
+.btn-scale {
+  padding: var(--space-sm) var(--space-md);
+  font-size: calc(1rem * var(--ui-scale));
+  min-height: calc(2.5rem * var(--ui-scale));
+}
+
+.icon-scale-sm { 
+  width: calc(1rem * var(--ui-scale)); 
+  height: calc(1rem * var(--ui-scale)); 
+}
+.icon-scale-md { 
+  width: calc(1.5rem * var(--ui-scale)); 
+  height: calc(1.5rem * var(--ui-scale)); 
+}
+.icon-scale-lg { 
+  width: calc(2rem * var(--ui-scale)); 
+  height: calc(2rem * var(--ui-scale)); 
+}
+.icon-scale-xl { 
+  width: calc(3rem * var(--ui-scale)); 
+  height: calc(3rem * var(--ui-scale)); 
+}
+
+/* Responsive grid layouts - auto-adjusting */
+.responsive-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(200px * var(--ui-scale))), 1fr));
+  gap: var(--space-md);
+}
+
+.responsive-grid-sm {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(120px * var(--ui-scale))), 1fr));
+  gap: var(--space-sm);
+}
+
+.responsive-grid-lg {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(280px * var(--ui-scale))), 1fr));
+  gap: var(--space-lg);
+}
+
+/* Flexible panel system - dynamic sizing */
+.flex-panel {
+  flex: 1;
+  min-width: calc(280px * var(--ui-scale));
+  max-width: calc(400px * var(--ui-scale));
+}
+
+.flex-chat {
+  flex: 1;
+  min-width: calc(320px * var(--ui-scale));
+  max-width: calc(800px * var(--ui-scale));
+}
+
+/* HUD layout - real-time responsive */
+.hud-layout {
+  display: grid;
+  grid-template-columns: calc(320px * var(--ui-scale)) 1fr calc(280px * var(--ui-scale));
+  grid-template-rows: calc(60px * var(--ui-scale)) 1fr auto;
+  gap: calc(1rem * var(--ui-scale));
+  padding: calc(1rem * var(--ui-scale));
+}
+
+/* Compact HUD for small screens - auto-applied by JS */
+.hud-compact {
+  --ui-scale: 0.8;
+}
+
+.hud-compact .hud-sidebar {
+  padding: var(--space-sm);
+}
+
+.hud-compact .messages-container {
+  max-height: calc(400px * var(--ui-scale));
+}
+
+.hud-compact .char-summary {
+  padding: var(--space-sm);
+}
+
+.hud-compact .char-avatar {
+  width: calc(48px * var(--ui-scale));
+  height: calc(48px * var(--ui-scale));
+}
+
+/* Ultra-wide screen support - auto-applied by JS */
+.ultrawide-layout {
+  grid-template-columns: 1fr 2fr 1fr;
+}
+
+.ultrawide-layout .hud-sidebar {
+  max-width: calc(450px * var(--ui-scale));
+}
+
+/* High DPI / Retina display optimizations */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .retina-optimize {
+    image-rendering: -webkit-optimize-contrast;
+  }
+}
+
+/* Safe area insets for mobile */
+@supports (padding: max(0px)) {
+  .safe-area-top {
+    padding-top: max(var(--space-md), env(safe-area-inset-top));
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: max(var(--space-md), env(safe-area-inset-bottom));
+  }
+  
+  .safe-area-left {
+    padding-left: max(var(--space-md), env(safe-area-inset-left));
+  }
+  
+  .safe-area-right {
+    padding-right: max(var(--space-md), env(safe-area-inset-right));
+  }
+}
+
+/* Font smoothing */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Prevent text overflow */
+.truncate-scale {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* Responsive scrollbars - scaled */
+::-webkit-scrollbar {
+  width: calc(8px * var(--ui-scale));
+  height: calc(8px * var(--ui-scale));
+}
+
+/* Small screens (JS will add class) */
+@media (max-width: 1024px) {
+  .hud-layout {
+    grid-template-columns: calc(250px * var(--ui-scale)) 1fr;
+    grid-template-rows: calc(50px * var(--ui-scale)) 1fr auto auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .hud-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+    padding: var(--space-sm);
+  }
+}

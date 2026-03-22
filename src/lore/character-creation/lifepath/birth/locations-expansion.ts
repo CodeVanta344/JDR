@@ -25,10 +25,7 @@ export const BIRTH_LOCATIONS_EXPANSION: LifeChoice[] = [
       ],
       reputation: [{ factionId: 'tribus_nomades', delta: 6, reason: 'Né à l\'Oasis Sacrée' }],
       items: [{ itemId: 'desert_cloak', quantity: 1, reason: 'Manteau anti-sable' }],
-      skills: [
-        { skillId: 'survival', bonus: 2, reason: 'Survie désertique enseignée' },
-        { skillId: 'navigation', bonus: 1, reason: 'Orientation aux étoiles' }
-      ],
+      skills: [{ skillId: 'survival', bonus: 2, reason: 'Survie désertique enseignée' }],
       languages: ['Commun', 'Langue Nomade'],
       tags: ['desert', 'nomadic', 'resilient', 'spiritual']
     },
@@ -58,10 +55,7 @@ export const BIRTH_LOCATIONS_EXPANSION: LifeChoice[] = [
       ],
       reputation: [{ factionId: 'archeologues', delta: 5, reason: 'Connaissance cité perdue' }],
       items: [{ itemId: 'ancient_scroll', quantity: 1, reason: 'Fragment hiéroglyphes' }],
-      skills: [
-        { skillId: 'investigation', bonus: 2, reason: 'Fouilles archéologiques' },
-        { skillId: 'arcana', bonus: 1, reason: 'Artefacts magiques anciens' }
-      ],
+      skills: [{ skillId: 'investigation', bonus: 2, reason: 'Fouilles archéologiques' }],
       languages: ['Commun', 'Langue Ancienne'],
       tags: ['ruins', 'scholarly', 'mysterious', 'arcane']
     },
@@ -91,10 +85,7 @@ export const BIRTH_LOCATIONS_EXPANSION: LifeChoice[] = [
       ],
       reputation: [{ factionId: 'tribus_nomades', delta: 7, reason: 'Membre de naissance' }],
       items: [{ itemId: 'nomad_tent', quantity: 1, reason: 'Tente familiale' }],
-      skills: [
-        { skillId: 'animal_handling', bonus: 2, reason: 'Élevage dromadaires' },
-        { skillId: 'survival', bonus: 1, reason: 'Vie nomade' }
-      ],
+      skills: [{ skillId: 'animal_handling', bonus: 2, reason: 'Élevage dromadaires' }],
       languages: ['Commun', 'Langue Nomade'],
       tags: ['nomadic', 'freedom', 'tribal', 'mobile']
     },
@@ -128,10 +119,7 @@ export const BIRTH_LOCATIONS_EXPANSION: LifeChoice[] = [
         { factionId: 'druides', delta: 3, reason: 'Respect nature' }
       ],
       items: [{ itemId: 'tribal_spear', quantity: 1, reason: 'Lance rituelle' }],
-      skills: [
-        { skillId: 'survival', bonus: 2, reason: 'Chasseur-cueilleur' },
-        { skillId: 'stealth', bonus: 1, reason: 'Chasse silencieuse' }
-      ],
+      skills: [{ skillId: 'survival', bonus: 2, reason: 'Chasseur-cueilleur' }],
       languages: ['Commun', 'Langue Tribale'],
       tags: ['tribal', 'primal', 'spiritual', 'jungle']
     },

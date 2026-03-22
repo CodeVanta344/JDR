@@ -12,8 +12,8 @@ Ce dossier contient tous les composants React du projet Aethelgard RPG.
 
 ### 🎲 Système de Dés
 - **`DiceChallengeModal.jsx`** : Interface jets de dés (DC challenges)
-- **`Dice3D.jsx`** : Rendu 3D des dés avec Three.js
-- **`DiceRoll3D.css`** : Styles animations dés 3D
+- **`Dice2D.jsx`** : Rendu 2D des dés avec SVG et CSS (sans WebGL)
+- **`Dice2D.css`** : Styles animations dés 2D avec effets premium
 
 ### ⚔️ Combat
 - **`CombatManager.jsx`** : Système combat tactique complet
@@ -152,7 +152,7 @@ if (choice === "Guerrier") {
 **Fichiers CSS :**
 - `CharacterCreation.css` : Écran création, phases, choix
 - `CombatManager.css` : Grille combat, unités, UI combat
-- `DiceRoll3D.css` : Animations 3D dés, faces, rotations
+- `Dice2D.css` : Animations 2D dés SVG avec effets premium (glow, particules)
 - `SessionHub.css` : Lobby, liste sessions
 - `index.css` : Styles globaux, variables CSS
 
@@ -202,10 +202,10 @@ supabase
 **Cause :** Format JSON manquait champ `challenge`.
 **Fix :** Ajouté format dans prompt MJ (ligne 448-463).
 
-### 3. Three.js Context Lost
+### 3. Three.js Context Lost → Résolu
 **Symptôme :** Warnings "WebGLRenderer: Context Lost".
 **Cause :** Trop d'instances Three.js simultanées.
-**Fix :** Cleanup proper dans Dice3D.jsx (dispose renderer).
+**Fix :** Remplacement par Dice2D (CSS/SVG sans WebGL).
 
 ---
 

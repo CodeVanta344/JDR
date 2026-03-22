@@ -76,6 +76,10 @@ export interface PlotTwistParams {
   partyLevel: number;
 }
 
+// SECURITY TODO: Move this to a Supabase Edge Function.
+// The VITE_ANTHROPIC_API_KEY is exposed in the client bundle.
+// Create supabase/functions/dm-assistant/index.ts to proxy these calls.
+
 // Configuration
 const ANTHROPIC_API_KEY = (import.meta as any).env.VITE_ANTHROPIC_API_KEY;
 

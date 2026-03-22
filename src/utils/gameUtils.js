@@ -370,9 +370,6 @@ export const generateArenaDecor = (arenaConfig) => {
         { name: 'Rune Ancienne', color: 'var(--gold-dim)', size: 30 }
     ];
 
-    const maxX = Math.floor(arenaConfig.blocksX / 2);
-    const maxY = Math.floor(arenaConfig.blocksY / 2);
-
     return Array.from({ length: 5 }).map((_, i) => {
         const x = Math.floor(Math.random() * (arenaConfig.blocksX - 2)) - Math.floor(arenaConfig.blocksX / 2) + 1;
         const y = Math.floor(Math.random() * (arenaConfig.blocksY - 2)) - Math.floor(arenaConfig.blocksY / 2) + 1;

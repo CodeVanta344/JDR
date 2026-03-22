@@ -234,7 +234,7 @@ export const formatCombatLogD100 = (attacker, target, rollData, damageData) => {
   let msg = `⚔️ **${attacker.name}** attaque **${target.name}**\n`;
   msg += `📈 Palier: **${tierLabel}** | Style: **${priorityLabel}**\n`;
   if (attackDice) {
-    msg += `🎯 Dé attaque: **${attackDice}**\n`;
+    msg += `� Dé attaque: **${attackDice}**\n`;
   }
   if (breakdown?.selectedDice) {
     msg += `🗡️ Dé dégâts: **${breakdown.selectedDice}**\n`;
@@ -242,7 +242,7 @@ export const formatCombatLogD100 = (attacker, target, rollData, damageData) => {
   msg += `🎲 Jet : **${roll}** + ${modifier} = **${total}** vs CA ${target.ac}`;
   
   if (isCritical) {
-    msg += ` 💥 **CRITIQUE !**\n`;
+    msg += ` � **CRITIQUE !**\n`;
     msg += `💀 Dégâts : ${breakdown.weaponDice}×2 + ${breakdown.statMod} + ${breakdown.traitBonus} = **${damage}**`;
   } else if (success) {
     msg += ` ✅\n`;

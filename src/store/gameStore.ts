@@ -45,6 +45,13 @@ interface GameState {
   showLevelUp: boolean;
   showSettings: boolean;
   showHelper: boolean;
+  showCodex: boolean;
+  showDMPanel: boolean;
+  showTradeModal: boolean;
+  showItemSharePanel: boolean;
+  incomingTrade: any;
+  pendingTradeResponse: any;
+  itemShares: any[];
   
   // NPC & Helper
   npcConversations: Record<string, Message[]>;
@@ -71,12 +78,12 @@ interface GameState {
   
   // Actions
   setProfile: (profile: Profile | null) => void;
-  setSession: (session: Session | null) => void;
-  setCharacter: (character: Character | null) => void;
-  setPlayers: (players: Character[]) => void;
+  setSession: (session: Session | null | ((prev: Session | null) => Session | null)) => void;
+  setCharacter: (character: Character | null | ((prev: Character | null) => Character | null)) => void;
+  setPlayers: (players: Character[] | ((prev: Character[]) => Character[])) => void;
   updatePlayer: (playerId: string, updates: Partial<Character>) => void;
   addMessage: (message: Message) => void;
-  setMessages: (messages: Message[]) => void;
+  setMessages: (messages: Message[] | ((prev: Message[]) => Message[])) => void;
   setGameTime: (time: GameTime) => void;
   setWeather: (weather: Weather) => void;
   addToChronicle: (event: WorldEvent) => void;
@@ -99,9 +106,17 @@ interface GameState {
   setShowLevelUp: (show: boolean) => void;
   setShowSettings: (show: boolean) => void;
   setShowHelper: (show: boolean) => void;
-  setNpcConversations: (conversations: Record<string, Message[]>) => void;
+  setShowCodex: (show: boolean) => void;
+  setShowDMPanel: (show: boolean) => void;
+  setShowTradeModal: (show: boolean) => void;
+  setShowItemSharePanel: (show: boolean) => void;
+  setIncomingTrade: (trade: any) => void;
+  setPendingTradeResponse: (response: any) => void;
+  setItemShares: (shares: any[] | ((prev: any[]) => any[])) => void;
+  addItemShare: (share: any) => void;
+  setNpcConversations: (conversations: Record<string, Message[]> | ((prev: Record<string, Message[]>) => Record<string, Message[]>)) => void;
   addNpcMessage: (npcName: string, message: Message) => void;
-  setHelperMessages: (messages: Message[]) => void;
+  setHelperMessages: (messages: Message[] | ((prev: Message[]) => Message[])) => void;
   addHelperMessage: (message: Message) => void;
   setAffinities: (affinities: Record<string, number>) => void;
   updateAffinity: (npcName: string, change: number) => void;
@@ -151,6 +166,13 @@ const initialState = {
   showLevelUp: false,
   showSettings: false,
   showHelper: false,
+  showCodex: false,
+  showDMPanel: false,
+  showTradeModal: false,
+  showItemSharePanel: true,
+  incomingTrade: null,
+  pendingTradeResponse: null,
+  itemShares: [],
   npcConversations: {},
   helperMessages: [],
   affinities: {},
@@ -172,9 +194,15 @@ export const useGameStore = create<GameState>()(
       ...initialState,
       
       setProfile: (profile) => set({ profile }),
-      setSession: (session) => set({ session }),
-      setCharacter: (character) => set({ character }),
-      setPlayers: (players) => set({ players }),
+      setSession: (session) => set((state) => ({
+        session: typeof session === 'function' ? session(state.session) : session
+      })),
+      setCharacter: (character) => set((state) => ({
+        character: typeof character === 'function' ? character(state.character) : character
+      })),
+      setPlayers: (players) => set((state) => ({
+        players: typeof players === 'function' ? players(state.players) : players
+      })),
       updatePlayer: (playerId, updates) => set((state) => ({
         players: state.players.map(p => p.id === playerId ? { ...p, ...updates } : p),
         character: state.character?.id === playerId ? { ...state.character, ...updates } : state.character,
@@ -184,7 +212,9 @@ export const useGameStore = create<GameState>()(
           ? state.messages 
           : [...state.messages, message]
       })),
-      setMessages: (messages) => set({ messages }),
+      setMessages: (messages) => set((state) => ({
+        messages: typeof messages === 'function' ? messages(state.messages) : messages
+      })),
       setGameTime: (gameTime) => set({ gameTime }),
       setWeather: (weather) => set({ weather }),
       addToChronicle: (event) => set((state) => ({
@@ -209,14 +239,28 @@ export const useGameStore = create<GameState>()(
       setShowLevelUp: (showLevelUp) => set({ showLevelUp }),
       setShowSettings: (showSettings) => set({ showSettings }),
       setShowHelper: (showHelper) => set({ showHelper }),
-      setNpcConversations: (npcConversations) => set({ npcConversations }),
+      setShowCodex: (showCodex) => set({ showCodex }),
+      setShowDMPanel: (showDMPanel) => set({ showDMPanel }),
+      setShowTradeModal: (showTradeModal) => set({ showTradeModal }),
+      setShowItemSharePanel: (showItemSharePanel) => set({ showItemSharePanel }),
+      setIncomingTrade: (incomingTrade) => set({ incomingTrade }),
+      setPendingTradeResponse: (pendingTradeResponse) => set({ pendingTradeResponse }),
+      setItemShares: (itemShares) => set((state) => ({
+        itemShares: typeof itemShares === 'function' ? itemShares(state.itemShares) : itemShares
+      })),
+      addItemShare: (share) => set((state) => ({ itemShares: [...state.itemShares, share] })),
+      setNpcConversations: (npcConversations) => set((state) => ({
+        npcConversations: typeof npcConversations === 'function' ? npcConversations(state.npcConversations) : npcConversations
+      })),
       addNpcMessage: (npcName, message) => set((state) => ({
         npcConversations: {
           ...state.npcConversations,
           [npcName]: [...(state.npcConversations[npcName] || []), message]
         }
       })),
-      setHelperMessages: (helperMessages) => set({ helperMessages }),
+      setHelperMessages: (helperMessages) => set((state) => ({
+        helperMessages: typeof helperMessages === 'function' ? helperMessages(state.helperMessages) : helperMessages
+      })),
       addHelperMessage: (message) => set((state) => ({
         helperMessages: [...state.helperMessages, message]
       })),

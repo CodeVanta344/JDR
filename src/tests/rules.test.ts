@@ -38,16 +38,18 @@ describe('rollDice', () => {
 });
 
 describe('getModifier', () => {
-  it('should calculate correct modifiers', () => {
-    expect(getModifier(10)).toBe(0);
-    expect(getModifier(11)).toBe(0);
-    expect(getModifier(12)).toBe(1);
-    expect(getModifier(14)).toBe(2);
-    expect(getModifier(18)).toBe(4);
-    expect(getModifier(20)).toBe(5);
-    expect(getModifier(8)).toBe(-1);
-    expect(getModifier(6)).toBe(-2);
-    expect(getModifier(1)).toBe(-5);
+  // d100 formula: Math.round((stat - 10) * 1.25)
+  // Note: JS Math.round rounds .5 toward +∞ (e.g. -2.5 → -2, 2.5 → 3)
+  it('should calculate correct d100 modifiers', () => {
+    expect(getModifier(10)).toBe(0);     // (10-10)*1.25 = 0
+    expect(getModifier(11)).toBe(1);     // (11-10)*1.25 = 1.25  → 1
+    expect(getModifier(12)).toBe(3);     // (12-10)*1.25 = 2.5   → 3
+    expect(getModifier(14)).toBe(5);     // (14-10)*1.25 = 5
+    expect(getModifier(18)).toBe(10);    // (18-10)*1.25 = 10
+    expect(getModifier(20)).toBe(13);    // (20-10)*1.25 = 12.5  → 13
+    expect(getModifier(8)).toBe(-2);     // (8-10)*1.25  = -2.5  → -2 (JS rounds .5 up)
+    expect(getModifier(6)).toBe(-5);     // (6-10)*1.25  = -5
+    expect(getModifier(1)).toBe(-11);    // (1-10)*1.25  = -11.25 → -11
   });
 });
 
@@ -84,23 +86,33 @@ describe('getXPForNextLevel', () => {
 });
 
 describe('calculateAC', () => {
-  it('should add full DEX bonus for light armor', () => {
-    expect(calculateAC(10, 3, 'light', false)).toBe(13);
-    expect(calculateAC(10, 5, 'light', false)).toBe(15);
+  // d100 formula: 20 + baseAC*3 + dex_adjust + shield*6
+  // light: full dex * 1.5, medium: min(dex*1.5, 5), heavy: 0, shield: +6
+
+  it('should add full DEX bonus (×1.5) for light armor', () => {
+    // 20 + 10*3 + round(3*1.5) = 20+30+5 = 55
+    expect(calculateAC(10, 3, 'light', false)).toBe(55);
+    // 20 + 10*3 + round(5*1.5) = 20+30+8 = 58
+    expect(calculateAC(10, 5, 'light', false)).toBe(58);
   });
 
-  it('should cap DEX bonus at +2 for medium armor', () => {
-    expect(calculateAC(14, 3, 'medium', false)).toBe(16);
-    expect(calculateAC(14, 5, 'medium', false)).toBe(16);
+  it('should cap DEX bonus at +5 for medium armor', () => {
+    // 20 + 14*3 + min(round(3*1.5),5) = 20+42+5 = 67
+    expect(calculateAC(14, 3, 'medium', false)).toBe(67);
+    // 20 + 14*3 + min(round(5*1.5),5) = 20+42+5 = 67  (capped)
+    expect(calculateAC(14, 5, 'medium', false)).toBe(67);
   });
 
   it('should not add DEX bonus for heavy armor', () => {
-    expect(calculateAC(18, 3, 'heavy', false)).toBe(18);
-    expect(calculateAC(18, 5, 'heavy', false)).toBe(18);
+    // 20 + 18*3 + 0 = 74
+    expect(calculateAC(18, 3, 'heavy', false)).toBe(74);
+    expect(calculateAC(18, 5, 'heavy', false)).toBe(74);
   });
 
-  it('should add +2 for shield', () => {
-    expect(calculateAC(10, 2, 'light', true)).toBe(14);
-    expect(calculateAC(16, 0, 'heavy', true)).toBe(18);
+  it('should add +6 for shield (d100)', () => {
+    // 20 + 10*3 + round(2*1.5) + 6 = 20+30+3+6 = 59
+    expect(calculateAC(10, 2, 'light', true)).toBe(59);
+    // 20 + 16*3 + 0 + 6 = 20+48+6 = 74
+    expect(calculateAC(16, 0, 'heavy', true)).toBe(74);
   });
 });

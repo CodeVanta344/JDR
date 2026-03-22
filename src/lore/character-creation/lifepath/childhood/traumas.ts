@@ -30,10 +30,7 @@ export const TRAUMAS: LifeChoice[] = [
       ],
       reputation: [],
       items: [],
-      skills: [
-        { skillId: 'intimidation', bonus: 2, reason: 'Regard qui a vu la mort' },
-        { skillId: 'perception', bonus: 1, reason: 'Hyper-vigilance développée' }
-      ],
+      skills: [{ skillId: 'intimidation', bonus: 2, reason: 'Regard qui a vu la mort' }],
       languages: [],
       tags: ['traumatized', 'haunted', 'vigilant', 'scarred']
     },
@@ -72,10 +69,7 @@ export const TRAUMAS: LifeChoice[] = [
       ],
       reputation: [],
       items: [],
-      skills: [
-        { skillId: 'insight', bonus: 3, reason: 'Scrute chaque intention' },
-        { skillId: 'deception', bonus: 1, reason: 'Cache ses émotions' }
-      ],
+      skills: [{ skillId: 'insight', bonus: 3, reason: 'Scrute chaque intention' }],
       languages: [],
       tags: ['distrustful', 'paranoid', 'isolated', 'hurt']
     },
@@ -161,10 +155,7 @@ export const TRAUMAS: LifeChoice[] = [
       items: [
         { itemId: 'mentors_gift', quantity: 1, reason: 'Cadeau d\'adieu précieux' }
       ],
-      skills: [
-        { skillId: 'chosen_skill', bonus: 2, reason: 'Enseignement dédié' },
-        { skillId: 'insight', bonus: 1, reason: 'Sagesse transmise' }
-      ],
+      skills: [{ skillId: 'chosen_skill', bonus: 2, reason: 'Enseignement dédié' }],
       languages: [],
       tags: ['mentored', 'inspired', 'legacy', 'hopeful']
     },
@@ -206,10 +197,7 @@ export const TRAUMAS: LifeChoice[] = [
       items: [
         { itemId: 'heroism_medal', quantity: 1, reason: 'Médaille du courage' }
       ],
-      skills: [
-        { skillId: 'persuasion', bonus: 2, reason: 'Charisme héroïque' },
-        { skillId: 'athletics', bonus: 1, reason: 'Exploit physique mémorable' }
-      ],
+      skills: [{ skillId: 'persuasion', bonus: 2, reason: 'Charisme héroïque' }],
       languages: [],
       tags: ['heroic', 'brave', 'celebrated', 'inspiring']
     },
@@ -249,10 +237,7 @@ export const TRAUMAS: LifeChoice[] = [
       items: [
         { itemId: 'friendship_token', quantity: 1, reason: 'Gage d\'amitié partagé' }
       ],
-      skills: [
-        { skillId: 'persuasion', bonus: 1, reason: 'Empathie développée' },
-        { skillId: 'insight', bonus: 1, reason: 'Compréhension mutuelle profonde' }
-      ],
+      skills: [{ skillId: 'persuasion', bonus: 1, reason: 'Empathie développée' }],
       languages: [],
       tags: ['bonded', 'loyal', 'supported', 'hopeful']
     },
@@ -347,10 +332,7 @@ export const TRAUMAS: LifeChoice[] = [
         { factionId: 'pauvres', delta: 5, reason: 'Un des leurs' }
       ],
       items: [],
-      skills: [
-        { skillId: 'survival', bonus: 2, reason: 'Survie quotidienne' },
-        { skillId: 'sleight_of_hand', bonus: 1, reason: 'Vol nécessaire' }
-      ],
+      skills: [{ skillId: 'survival', bonus: 2, reason: 'Survie quotidienne' }],
       languages: [],
       tags: ['impoverished', 'resilient', 'scarred', 'empathetic']
     },
@@ -390,10 +372,7 @@ export const TRAUMAS: LifeChoice[] = [
       items: [
         { itemId: 'animal_companion', quantity: 1, reason: 'Compagnon fidèle' }
       ],
-      skills: [
-        { skillId: 'animal_handling', bonus: 2, reason: 'Lien naturel fort' },
-        { skillId: 'survival', bonus: 1, reason: 'Chasse en duo' }
-      ],
+      skills: [{ skillId: 'animal_handling', bonus: 2, reason: 'Lien naturel fort' }],
       languages: [],
       tags: ['bonded', 'nature', 'protected', 'ranger']
     },

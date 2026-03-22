@@ -1,10 +1,9 @@
 import React from 'react';
 
-const WaitingRoom = ({ players, character, onToggleReady, onStart, loading, sessionId, profile, onInvite }) => {
+const WaitingRoom = ({ players, character, onToggleReady, onStart, loading, sessionId, profile, onInvite, sessionHostId }) => {
 
-    // Check if current player is host (simple check based on profile id matching session host)
-    // Note: sessionHostId is passed as prop now
-    // const isHost = ... 
+    // Check if current player is host
+    const isHost = profile?.id && sessionHostId && profile.id === sessionHostId; 
 
     return (
         <div className="creation-overlay" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -63,7 +62,7 @@ const WaitingRoom = ({ players, character, onToggleReady, onStart, loading, sess
                             }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                     {p.portrait_url ? (
-                                        <img src={p.portrait_url} alt="" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--gold-dim)' }} />
+                                        <img src={p.portrait_url} alt={p.name} style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--gold-dim)' }} />
                                     ) : (
                                         <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--void-panel)', border: '1px solid var(--gold-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>?</div>
                                     )}
@@ -120,16 +119,26 @@ const WaitingRoom = ({ players, character, onToggleReady, onStart, loading, sess
                         </button>
                     )}
 
-                    {/* Force Start for Host */}
-                    {/* Note: Logic handled by parent passing onStart if allowed */}
-                    {players.length >= 1 && character?.class && !loading && onStart && (
+                    {/* Start Button - only when all players are ready AND only for host */}
+                    {isHost && players.length >= 1 && character?.class && !loading && onStart && 
+                     players.filter(p => p.class && p.is_ready).length === players.length && 
+                     players.filter(p => p.class).length === players.length && 
+                     players.length > 0 && (
                         <div style={{ marginTop: '1rem' }}>
                             <button
                                 onClick={onStart}
-                                className="btn-secondary"
-                                title="Lancer la partie même si tous les joueurs ne sont pas prêts"
+                                className="btn-gold"
+                                style={{
+                                    padding: '1rem 2rem',
+                                    background: 'rgba(77, 255, 136, 0.2)',
+                                    border: '2px solid #4dff88',
+                                    color: '#4dff88',
+                                    fontWeight: 'bold',
+                                    letterSpacing: '2px',
+                                    boxShadow: '0 0 15px rgba(77, 255, 136, 0.3)'
+                                }}
                             >
-                                ⚠️ Forcer le Lancement
+                                🚀 Lancer l'Aventure
                             </button>
                         </div>
                     )}

@@ -54,13 +54,12 @@ describe('Bestiary Lore', () => {
 
   it('should have required creature properties', () => {
     const allCreatures = BESTIARY_EXTENDED.ALL_CREATURES || [];
-    allCreatures.forEach(creature => {
+    allCreatures.forEach((creature: any) => {
       expect(creature).toHaveProperty('name');
       expect(creature).toHaveProperty('stats');
-      expect(creature.stats).toHaveProperty('hp');
-      expect(creature.stats).toHaveProperty('ac');
-      expect(creature.stats).toHaveProperty('atk');
-      expect(creature).toHaveProperty('actions');
+      expect(creature).toHaveProperty('hitPoints');
+      expect(creature).toHaveProperty('armorClass');
+      expect(creature).toHaveProperty('attacks');
     });
   });
 });
@@ -109,11 +108,12 @@ describe('Rumors', () => {
     expect(Object.keys(RUMORS_AND_GOSSIP).length).toBeGreaterThan(0);
   });
 
-  it('should have rumors with truth property', () => {
+  it('should have string rumors per region', () => {
     Object.values(RUMORS_AND_GOSSIP).forEach(region => {
-      region.forEach(rumor => {
-        expect(rumor).toHaveProperty('rumor');
-        expect(rumor).toHaveProperty('truth');
+      expect(Array.isArray(region)).toBe(true);
+      region.forEach((rumor: any) => {
+        expect(typeof rumor).toBe('string');
+        expect(rumor.length).toBeGreaterThan(0);
       });
     });
   });

@@ -18,7 +18,7 @@ export function GameHelperModal({ messages, onSendMessage, onClose, loading }) {
     };
 
     return (
-        <div className="helper-overlay animate-fade-in" style={{
+        <div className="helper-overlay animate-fade-in" role="dialog" aria-modal="true" style={{
             position: 'fixed',
             right: 0,
             top: 0,

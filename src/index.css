@@ -22,7 +22,7 @@
     /* Text */
     --text-primary: #f0f0f5;
     --text-secondary: #a0a0b0;
-    --text-muted: #606070;
+    --text-muted: #8a8a9a;
 
     /* Gradients */
     --gradient-gold: linear-gradient(135deg, rgba(212, 175, 55, 0.8) 0%, rgba(251, 238, 168, 0.8) 50%, rgba(138, 109, 59, 0.8) 100%);
@@ -60,8 +60,8 @@ body {
     font-family: var(--font-body);
     font-size: 16px;
     line-height: 1.5;
-    overflow: hidden;
-    height: 100vh;
+    overflow-x: hidden;
+    min-height: 100vh;
 }
 
 h1,
@@ -85,6 +85,11 @@ button {
     cursor: pointer;
     border: none;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+:focus-visible {
+    outline: 2px solid var(--gold-primary, #d4af37);
+    outline-offset: 2px;
 }
 
 /* --- UTILITIES: GLASS PANELS --- */
@@ -268,7 +273,8 @@ button {
 
 /* --- APP LAYOUT --- */
 #root {
-    height: 100vh;
+    min-height: 100vh;
+    min-height: 100dvh;
     width: 100vw;
 }
 
@@ -705,7 +711,7 @@ button {
     color: white;
     padding: 0.8rem 1.5rem;
     font-size: 1rem;
-    outline: none;
+    outline: 2px solid transparent;
 }
 
 .btn-action {
@@ -726,16 +732,19 @@ button {
 
 /* --- CREATION SCREEN --- */
 .creation-overlay {
-    position: fixed;
-    inset: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    min-height: 100vh;
     z-index: 1000;
     background: #000;
+    overflow-y: auto;
+    padding: 2rem 0 8rem 0;
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
-    overflow-x: hidden;
-    overflow-y: auto;
 }
 
 .lobby-content {
@@ -745,6 +754,7 @@ button {
     flex-direction: column;
     align-items: center;
     width: 100%;
+    min-height: 100%;
     padding: 2rem;
 }
 
@@ -1717,7 +1727,9 @@ button {
     background: var(--void-bg);
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    align-items: center;
+    overflow-y: scroll;
+    padding: 2rem 0;
 }
 
 .creation-bg {
@@ -2142,7 +2154,7 @@ button {
     font-family: var(--font-display);
     color: white;
     padding: 1rem 0;
-    outline: none;
+    outline: 2px solid transparent;
 }
 
 .summary-scroll {
@@ -2476,4 +2488,441 @@ button {
 .dice-roll-message .msg-content {
     padding: 0 !important;
     background: transparent !important;
+}
+
+/* ===== PARTY INFO PANEL (RIGHT SIDE) ===== */
+.party-info-panel {
+    position: fixed;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 280px;
+    background: rgba(10, 11, 14, 0.92);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 12px;
+    padding: 1.2rem;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.6), 0 0 10px rgba(212, 175, 55, 0.1);
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.party-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.party-title {
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    color: var(--gold-primary);
+    font-weight: bold;
+}
+
+.party-count {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background: rgba(212, 175, 55, 0.15);
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.party-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.party-member {
+    display: flex;
+    gap: 0.8rem;
+    padding: 0.8rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.party-member:hover {
+    background: rgba(212, 175, 55, 0.08);
+    border-color: rgba(212, 175, 55, 0.2);
+}
+
+.party-member.self {
+    border-color: rgba(77, 255, 136, 0.3);
+    background: rgba(77, 255, 136, 0.05);
+}
+
+.member-icon {
+    font-size: 1.5rem;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.member-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.member-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.member-class {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.member-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.3rem;
+    font-size: 0.75rem;
+}
+
+.member-level {
+    color: var(--gold-primary);
+    font-weight: 500;
+}
+
+.member-hp {
+    font-weight: 600;
+}
+
+/* Scrollbar styling for party panel */
+.party-info-panel::-webkit-scrollbar {
+    width: 4px;
+}
+
+.party-info-panel::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.party-info-panel::-webkit-scrollbar-thumb {
+    background: rgba(212, 175, 55, 0.3);
+    border-radius: 2px;
+}
+
+.party-info-panel::-webkit-scrollbar-thumb:hover {
+    background: rgba(212, 175, 55, 0.5);
+}
+
+/* ============================================================
+   COMPREHENSIVE RESPONSIVE DESIGN - BASE STYLES
+   ============================================================ */
+
+/* CSS Variables for responsive scaling */
+:root {
+    /* Dynamic viewport variables - updated by useViewportScale hook */
+    --viewport-width: 1920px;
+    --viewport-height: 1080px;
+    --ui-scale: 1;
+    --device-pixel-ratio: 1;
+    --dynamic-font-size: 16px;
+    
+    /* Breakpoints */
+    --mobile-xs: 480px;
+    --mobile: 768px;
+    --tablet: 1024px;
+    --desktop: 1440px;
+    --wide: 1920px;
+}
+
+/* Responsive base font size */
+html {
+    font-size: var(--dynamic-font-size);
+}
+
+/* Viewport scaling utilities */
+.scale-container {
+    transform-origin: top left;
+    transform: scale(var(--ui-scale));
+    width: calc(100% / var(--ui-scale));
+}
+
+/* Fluid typography */
+.fluid-h1 { font-size: clamp(1.5rem, 4vw, 3rem); }
+.fluid-h2 { font-size: clamp(1.3rem, 3vw, 2.5rem); }
+.fluid-h3 { font-size: clamp(1.1rem, 2.5vw, 2rem); }
+.fluid-body { font-size: clamp(0.875rem, 1.5vw, 1rem); }
+.fluid-small { font-size: clamp(0.75rem, 1vw, 0.875rem); }
+
+/* Responsive grid layouts */
+.responsive-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    gap: clamp(0.5rem, 2vw, 1.5rem);
+}
+
+.responsive-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+    gap: clamp(0.5rem, 2vw, 1.5rem);
+}
+
+.responsive-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+    gap: clamp(0.5rem, 2vw, 1.5rem);
+}
+
+/* Fluid spacing utilities */
+.fluid-p-1 { padding: clamp(0.25rem, 1vw, 0.5rem); }
+.fluid-p-2 { padding: clamp(0.5rem, 2vw, 1rem); }
+.fluid-p-3 { padding: clamp(0.75rem, 3vw, 1.5rem); }
+.fluid-p-4 { padding: clamp(1rem, 4vw, 2rem); }
+
+.fluid-m-1 { margin: clamp(0.25rem, 1vw, 0.5rem); }
+.fluid-m-2 { margin: clamp(0.5rem, 2vw, 1rem); }
+.fluid-m-3 { margin: clamp(0.75rem, 3vw, 1.5rem); }
+.fluid-m-4 { margin: clamp(1rem, 4vw, 2rem); }
+
+.fluid-gap-1 { gap: clamp(0.25rem, 1vw, 0.5rem); }
+.fluid-gap-2 { gap: clamp(0.5rem, 2vw, 1rem); }
+.fluid-gap-3 { gap: clamp(0.75rem, 3vw, 1.5rem); }
+.fluid-gap-4 { gap: clamp(1rem, 4vw, 2rem); }
+
+/* Responsive containers */
+.container-fluid {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0 clamp(0.5rem, 3vw, 2rem);
+}
+
+.container-narrow {
+    width: 100%;
+    max-width: min(1200px, 95vw);
+    margin: 0 auto;
+    padding: 0 clamp(0.5rem, 3vw, 2rem);
+}
+
+.container-wide {
+    width: 100%;
+    max-width: min(1600px, 95vw);
+    margin: 0 auto;
+    padding: 0 clamp(0.5rem, 3vw, 2rem);
+}
+
+/* Hide/show based on screen size */
+.hide-mobile { display: block; }
+.hide-tablet { display: block; }
+.hide-desktop { display: block; }
+
+.show-mobile { display: none; }
+.show-tablet { display: none; }
+.show-desktop { display: none; }
+
+/* Mobile (480px and down) */
+@media (max-width: 480px) {
+    html { font-size: 14px; }
+    
+    .hide-mobile { display: none !important; }
+    .show-mobile { display: block !important; }
+    
+    body {
+        font-size: 14px;
+        line-height: 1.4;
+    }
+    
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.3rem; }
+    h3 { font-size: 1.1rem; }
+    h4 { font-size: 1rem; }
+    
+    .responsive-grid-2,
+    .responsive-grid-3,
+    .responsive-grid-4 {
+        grid-template-columns: 1fr;
+    }
+    
+    /* Touch-friendly buttons */
+    button, .btn-medieval, .btn-gold {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Scrollable containers */
+    .scroll-mobile {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Full width on mobile */
+    .full-width-mobile {
+        width: 100vw;
+        margin-left: calc(-50vw + 50%);
+        margin-right: calc(-50vw + 50%);
+    }
+}
+
+/* Tablets (481px to 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+    html { font-size: 15px; }
+    
+    .hide-tablet { display: none !important; }
+    .show-tablet { display: block !important; }
+    
+    .responsive-grid-3,
+    .responsive-grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Large tablets/Small laptops (769px to 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .responsive-grid-4 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Desktop (1025px to 1440px) */
+@media (min-width: 1025px) and (max-width: 1440px) {
+    .hide-desktop { display: none !important; }
+    .show-desktop { display: block !important; }
+}
+
+/* Large screens (1440px and up) */
+@media (min-width: 1440px) {
+    html { font-size: 17px; }
+    
+    body {
+        font-size: 17px;
+    }
+}
+
+/* Ultra-wide screens (1920px and up) */
+@media (min-width: 1920px) {
+    html { font-size: 18px; }
+    
+    body {
+        font-size: 18px;
+    }
+    
+    .responsive-grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .responsive-grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .responsive-grid-4 { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* Landscape mode on phones */
+@media (max-height: 500px) and (orientation: landscape) {
+    html { font-size: 13px; }
+    
+    .hide-landscape { display: none !important; }
+    
+    .responsive-grid-2,
+    .responsive-grid-3,
+    .responsive-grid-4 {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+}
+
+/* Portrait mode */
+@media (orientation: portrait) {
+    .hide-portrait { display: none !important; }
+}
+
+/* High DPI / Retina displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    /* Sharper text rendering */
+    body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+    
+    /* Adjust shadows for high DPI */
+    .stone-panel,
+    .parchment-panel {
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+    }
+}
+
+/* Touch devices */
+@media (pointer: coarse) {
+    /* Larger touch targets */
+    button, .btn-medieval, .btn-gold, .btn-secondary {
+        min-height: 44px;
+        min-width: 44px;
+        padding: 12px 20px;
+    }
+    
+    /* Remove hover effects that don't work on touch */
+    .btn-medieval:hover,
+    .btn-gold:hover,
+    .btn-secondary:hover {
+        transform: none;
+    }
+    
+    /* Add active states for touch feedback */
+    .btn-medieval:active,
+    .btn-gold:active,
+    .btn-secondary:active {
+        transform: scale(0.98);
+        opacity: 0.9;
+    }
+    
+    /* Larger form elements */
+    input, select, textarea {
+        min-height: 44px;
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+    
+    /* Larger checkboxes and radios */
+    input[type="checkbox"],
+    input[type="radio"] {
+        width: 22px;
+        height: 22px;
+    }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Print styles */
+@media print {
+    body {
+        background: white;
+        color: black;
+    }
+    
+    .stone-panel,
+    .parchment-panel,
+    .ornate-border {
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+    
+    button {
+        display: none;
+    }
 }

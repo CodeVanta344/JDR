@@ -43,7 +43,7 @@ export const LevelUpModal = ({
     };
 
     return (
-        <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.85)', zIndex: 10000 }}>
+        <div className="modal-overlay" role="dialog" aria-modal="true" style={{ background: 'rgba(0,0,0,0.85)', zIndex: 10000 }}>
             <div className="glass-panel" style={{ maxWidth: '500px', width: '90%', padding: '2rem', border: '1px solid var(--gold-primary)' }}>
                 <h2 style={{ color: 'var(--gold-primary)', fontFamily: 'var(--font-display)', textAlign: 'center', marginBottom: '0.5rem' }}>
                     NIVEAU SUPÉRIEUR !

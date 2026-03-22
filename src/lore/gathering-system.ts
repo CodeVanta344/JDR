@@ -60,7 +60,7 @@ class GatheringSystem {
     location: string,
     biome: BiomeType,
     playerLevel: number,
-    spotCount: number = 3
+    spotCount: number = 2 // Réduit de 3 à 2 (plus rare)
   ): GatheringSpot[] {
     const availableResources = getResourcesForBiome(biome, playerLevel);
     const newSpots: GatheringSpot[] = [];
@@ -74,8 +74,8 @@ class GatheringSystem {
         resourceId: randomResource.id,
         location,
         biome,
-        quantity: Math.floor(Math.random() * 3) + 1, // 1-3 unités disponibles
-        difficulty: Math.max(5, Math.min(25, randomResource.levelRequired / 4 + 5)),
+        quantity: Math.random() > 0.7 ? 2 : 1, // 70% = 1 unité, 30% = 2 unités (plus rare)
+        difficulty: Math.max(12, Math.min(30, randomResource.levelRequired / 2 + 12)), // Difficulté augmentée +4
         respawnTime: randomResource.respawnTime,
         visible: this.determineVisibility(randomResource.rarity),
         discovered: false,
@@ -95,15 +95,16 @@ class GatheringSystem {
   private determineVisibility(rarity: string): 'obvious' | 'hidden' | 'perception_required' {
     switch (rarity) {
       case 'common':
+        return Math.random() > 0.6 ? 'obvious' : 'perception_required'; // 40% nécessite perception
       case 'uncommon':
-        return 'obvious';
+        return Math.random() > 0.3 ? 'perception_required' : 'obvious'; // 70% nécessite perception
       case 'rare':
-        return Math.random() > 0.5 ? 'obvious' : 'perception_required';
+        return Math.random() > 0.7 ? 'perception_required' : 'hidden'; // 30% caché, 70% perception
       case 'epic':
       case 'legendary':
-        return 'hidden';
+        return 'hidden'; // Toujours caché
       default:
-        return 'obvious';
+        return 'perception_required';
     }
   }
 
@@ -173,8 +174,8 @@ class GatheringSystem {
     const spotsFound: GatheringSpot[] = [];
 
     hiddenSpots.forEach(spot => {
-      // DD 15 pour spot caché, 12 pour perception_required
-      const dc = spot.visible === 'hidden' ? 15 : 12;
+      // DD 18 pour spot caché, 15 pour perception_required (augmenté)
+      const dc = spot.visible === 'hidden' ? 18 : 15;
       if (total >= dc) {
         spot.discovered = true;
         spotsFound.push(spot);
@@ -279,8 +280,8 @@ class GatheringSystem {
           : `Vous récoltez ${quantityGathered}x ${resource.name}.`
       };
     } else {
-      // Échec partiel - peut-être 1 unité si proche
-      const nearSuccess = total >= spot.difficulty - 3;
+      // Échec partiel - uniquement si très proche (marge réduite de 3 à 1)
+      const nearSuccess = total >= spot.difficulty - 1;
       if (nearSuccess) {
         spot.quantity -= 1;
         return {
@@ -450,6 +451,40 @@ export function generateNarrativeDescription(
 
   return `Dans cette zone, vous remarquez ${spot.description} (${resource.name}). ` +
          `C'est ${visibility} et semble ${estimateDifficulty(spot, resource.levelRequired)} à récolter.`;
+}
+
+export function addMaterialToInventory(
+  currentInventory: Record<string, number> = {},
+  resourceId: string,
+  quantity: number
+): Record<string, number> {
+  return {
+    ...currentInventory,
+    [resourceId]: (currentInventory[resourceId] || 0) + quantity
+  };
+}
+
+export function removeMaterialFromInventory(
+  currentInventory: Record<string, number> = {},
+  resourceId: string,
+  quantity: number
+): Record<string, number> | null {
+  const currentQty = currentInventory[resourceId] || 0;
+  if (currentQty < quantity) return null; // Pas assez de matériaux
+  
+  const newInventory = { ...currentInventory };
+  newInventory[resourceId] = currentQty - quantity;
+  
+  // Supprimer l'entrée si quantité = 0
+  if (newInventory[resourceId] === 0) {
+    delete newInventory[resourceId];
+  }
+  
+  return newInventory;
+}
+
+export function getMaterialInventoryTotal(inventory: Record<string, number> = {}): number {
+  return Object.values(inventory).reduce((sum, qty) => sum + qty, 0);
 }
 
 export default gatheringSystem;

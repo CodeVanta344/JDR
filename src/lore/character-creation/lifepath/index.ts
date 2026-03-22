@@ -57,9 +57,13 @@ export function accumulateEffects(selection: LifepathSelection): AccumulatedEffe
       }
     }
 
-    // Traits mécaniques
-    if (effects.mechanical_traits) {
-      all_traits.push(...effects.mechanical_traits);
+    // Traits mécaniques - LIMITE À 1 PAR PHASE pour avoir 4 traits max
+    if (effects.mechanical_traits && effects.mechanical_traits.length > 0) {
+      // Prendre seulement le premier trait de chaque choix
+      const primaryTrait = effects.mechanical_traits[0];
+      if (primaryTrait && !all_traits.some(t => t.name === primaryTrait.name)) {
+        all_traits.push(primaryTrait);
+      }
     }
 
     // Réputation
@@ -75,9 +79,16 @@ export function accumulateEffects(selection: LifepathSelection): AccumulatedEffe
       items.push(...effects.items);
     }
 
-    // Skills
-    if (effects.skills) {
-      skills.push(...effects.skills);
+    // Skills - Limiter à 2 maximum par phase pour un total raisonnable
+    if (effects.skills && effects.skills.length > 0) {
+      // Prendre les 2 premiers skills de chaque choix
+      const primarySkills = effects.skills.slice(0, 2);
+      for (const skill of primarySkills) {
+        // Éviter les doublons par skillId
+        if (!skills.some(s => s.skillId === skill.skillId)) {
+          skills.push(skill);
+        }
+      }
     }
 
     // Languages

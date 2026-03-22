@@ -12,6 +12,26 @@ import {
 } from '../utils/combat-d100';
 import { getModifier, getProficiencyBonus } from '../lore/rules';
 import { getPartyAverageLevel, scaleEnemyForPartyLevel } from '../utils/combat-progression';
+// === COMBAT ENGINE (Next-Gen) ===
+import {
+    validateAction as engineValidateAction,
+    resolveAttack as engineResolveAttack,
+    resolveDamage as engineResolveDamage,
+    applyDamage as engineApplyDamage,
+    processStatusEffects,
+    consumeResource,
+    regenerateResource,
+    decrementCooldowns,
+    checkMorale,
+    formatCombatLog as engineFormatLog,
+    resolveInitiative as engineResolveInitiative,
+    checkWeaponProficiency,
+    checkArmorProficiency,
+    getLeadershipBonus,
+    createStatusEffect,
+    rollSave,
+    decideEnemyTurn,
+} from '../engine';
 import TurnTracker from './TurnTracker';
 import { resolveCharacterAbilities } from '../utils/characterUtils';
 import './CombatManager.css';
@@ -199,6 +219,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
     const [isPathPlanning, setIsPathPlanning] = useState(false);
     const [plannedPath, setPlannedPath] = useState([]); // Array of [x, y] coordinates
     const [hoveredTile, setHoveredTile] = useState(null);
+    const pathCacheRef = useRef({ key: '', result: null }); // Cache last pathfinding result to avoid redundant calls
     const [characterMenuOpen, setCharacterMenuOpen] = useState(false); // Toggle diegetic UI on character click
     const [hoveredAbility, setHoveredAbility] = useState(null); // Track hovered ability for tooltip
     const logEndRef = useRef(null);
@@ -490,7 +511,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
 
                     // Also trigger SFX/VFX
                     if (action.success) {
-                        if (onSFX) setTimeout(() => onSFX('damage'), 800);
+                        if (onSFX) addTimeout(setTimeout(() => onSFX('damage'), 800));
                         if (onVFX) onVFX('blood',
                             window.innerWidth / 2,
                             window.innerHeight / 2,
@@ -550,7 +571,8 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
 
     // SYNC: Only initialize locally if NO synced state is provided (Fallback/SinglePlayer)
     useEffect(() => {
-        if (syncedCombatState) return; // Skip local init if synced
+        // CRITICAL FIX: Only skip local init if synced state has actual combatants
+        if (syncedCombatState?.combatants?.length > 0) return; // Skip only if synced has combatants
 
         if (combatState === 'initiative') {
             // ... (Original Local Initialization Logic) ...
@@ -963,7 +985,9 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
     const actorAbilities = useMemo(() => {
         if (!currentActor) return [];
         return [
-            { name: 'Attaque', desc: 'Attaque de base rapide', range: 2 },
+            // Base attack with optional stun chance (e.g., 15% chance to stun for 1 turn)
+            { name: 'Attaque', desc: 'Attaque de base rapide', range: 2, stunChance: 0 },
+            // Example ability with stun: { name: 'Coup étourdissant', desc: '25% chance d\'étourdir', range: 1, stunChance: 25 },
             { name: 'Se déplacer', desc: `Se déplacer de ${currentActor.currentPM} cases maximum`, range: currentActor.currentPM, isMovement: true },
             ...resolveCharacterAbilities(currentActor)
         ];
@@ -1013,7 +1037,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                 setMovingUnit(null);
                 // CRITICAL FIX: Delay callback to ensure state update completes
                 if (onComplete) {
-                    setTimeout(onComplete, 50);
+                    addTimeout(setTimeout(onComplete, 50));
                 }
             }
         };
@@ -1258,40 +1282,21 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
             return;
         }
 
-        // SÉCURITÉ : Empêcher de s'attaquer soi-même avec des attaques offensives
+        // ========== COMBAT ENGINE VALIDATION ==========
+        const validation = engineValidateAction(freshActor, action, target);
+        if (!validation.valid) {
+            addLog({ role: 'system', content: `❌ ${validation.reason}` });
+            if (freshActor.isEnemy) addTimeout(setTimeout(finishTurn, 1000));
+            return;
+        }
+
+        // Fallback legacy checks for friendly targeting
         if (!action.friendly && target.id === freshActor.id) {
             addLog({ role: 'system', content: `❌ **${freshActor.name}** ne peut pas s'attaquer soi-même !` });
             return;
         }
 
-        // SÉCURITÉ : Les attaques offensives ciblent uniquement les ennemis
-        if (!action.friendly && (target.isEnemy === freshActor.isEnemy)) {
-            addLog({ role: 'system', content: `❌ **${freshActor.name}** ne peut pas attaquer un allié !` });
-            return;
-        }
-
-        // SÉCURITÉ : Les sorts friendly ciblent uniquement les alliés
-        if (action.friendly && (target.isEnemy !== freshActor.isEnemy)) {
-            addLog({ role: 'system', content: `❌ **${action.name}** ne peut cibler que des alliés !` });
-            return;
-        }
-
-        const dx = freshActor.posX - target.posX;
-        const dy = freshActor.posY - target.posY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        const range = action.range || 2;
-        if (distance > range) {
-            addLog({ role: 'system', content: `❌ **${target.name}** est trop loin (${distance.toFixed(1)}m) pour **${action.name}** (Portée: ${range}m) !` });
-            if (freshActor.isEnemy) setTimeout(finishTurn, 1000);
-            return;
-        }
-
         const cost = action.cost !== undefined ? action.cost : (action.name === 'Attaque' ? 0 : 20);
-        if (freshActor.resource < cost) {
-            addLog({ role: 'system', content: `❌ **${freshActor.name}** n'a pas assez de ressources !` });
-            if (freshActor.isEnemy) setTimeout(finishTurn, 1000);
-            return;
-        }
 
         const newResource = Math.max(0, freshActor.resource - cost);
         setCombatants(prev => prev.map(u => u.id === freshActor.id ? { ...u, resource: newResource, hasActed: true } : u));
@@ -1393,11 +1398,11 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         if (onSFX) onSFX('magic');
 
         // CRITICAL FIX: Finish turn after using item
-        setTimeout(() => finishTurn(), 800);
+        addTimeout(setTimeout(() => finishTurn(), 800));
     };
 
     // NEW: Execute self-buff spells (like Disparition/Invisibility)
-    const executeSelfBuff = (action) => {
+    const executeSelfBuff = async (action) => {
         const freshActor = combatantsRef.current.find(u => u.id === currentActor.id);
         // CRITICAL FIX: Check fresh state directly instead of stale canAct memo
         const canActFresh = isLocalPlayerTurn && freshActor && !freshActor.hasActed && freshActor.resource > 0 && combatState === 'active';
@@ -1526,7 +1531,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         broadcastAction('sfx', { sfxType: skillSfxType });
 
         // Finish turn
-        setTimeout(() => finishTurn(), 600);
+        addTimeout(setTimeout(() => finishTurn(), 600));
     };
 
     const handleRollComplete = (rollData) => {
@@ -1546,24 +1551,33 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         const cx = rect.x + rect.width / 2;
         const cy = rect.y + rect.height / 2;
 
-        setTimeout(() => {
+        addTimeout(setTimeout(() => {
             setRollOverlay(null);
             if (success && target) {
-                // ========== SYSTÈME D100 - CALCUL DÉGÂTS ==========
+                // ========== COMBAT ENGINE - CALCUL DÉGÂTS (Next-Gen) ==========
                 const damageData = calculateDamageD100(liveActor, action, rollData.isCritical);
                 const damage = damageData.damage;
 
+                // Engine damage result for resistance/vulnerability info
+                let resistanceMsg = '';
+                try {
+                    const engineDmg = engineResolveDamage(liveActor, target, action, rollData);
+                    if (engineDmg.resistanceApplied === 'immune') resistanceMsg = ' 🚫 **IMMUNITÉ !**';
+                    else if (engineDmg.resistanceApplied === 'resistant') resistanceMsg = ' 🛡️ **Résistance !**';
+                    else if (engineDmg.resistanceApplied === 'vulnerable') resistanceMsg = ' ⚡ **Vulnérable !**';
+                } catch(e) { /* fallback gracefully */ }
+
                 // Log formaté d100
-                const combatLog = formatCombatLogD100(liveActor, target, rollData, damageData);
+                const combatLog = formatCombatLogD100(liveActor, target, rollData, damageData) + resistanceMsg;
                 addLog({ role: 'system', content: combatLog });
 
                 setAnimatingId(liveActor.id);
                 if (onVFX) onVFX(action.name === 'Attaque' ? 'blood' : 'magic', cx, cy, action.name === 'Attaque' ? '#ff0000' : 'var(--aether-blue)');
 
-                setTimeout(() => {
+                addTimeout(setTimeout(() => {
                     setShake(true); setFlash(true);
                     if (onSFX) onSFX('damage');
-                    setTimeout(() => { setShake(false); setFlash(false); }, 500);
+                    addTimeout(setTimeout(() => { setShake(false); setFlash(false); }, 500));
                     setShakingId(target.id);
                     setDamagePopups(prev => [...prev, { id: Math.random(), amount: damage, targetId: target.id }]);
 
@@ -1573,7 +1587,75 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
 
                     const freshCombatants = combatantsRef.current;
                     const newCombatants = freshCombatants.map(u => u.id === target.id ? { ...u, hp: newHp } : u);
-                    setCombatants(newCombatants);
+
+                    // ========== SYSTÈME D'EFFETS DE STATUT (Next-Gen) ==========
+                    let statusApplied = false;
+                    let finalCombatants = newCombatants;
+
+                    // Apply status effect from ability (statusEffect field)
+                    if (action.statusEffect && action.statusEffect.type && newHp > 0) {
+                        let applyStatus = true;
+                        if (action.statusEffect.saveStat && action.statusEffect.saveDC) {
+                            const save = rollSave(target, action.statusEffect.saveDC, action.statusEffect.saveStat);
+                            if (save.success) {
+                                applyStatus = false;
+                                addLog({ role: 'system', content: `🎲 **${target.name}** résiste à l'effet ! (Jet: ${save.total} vs DC ${save.dc})` });
+                            }
+                        }
+                        if (applyStatus) {
+                            const newEffect = createStatusEffect(action.statusEffect.type, action.statusEffect.duration || 1, liveActor.id);
+                            finalCombatants = newCombatants.map(u =>
+                                u.id === target.id ? { ...u, statusEffects: [...(u.statusEffects || []), newEffect] } : u
+                            );
+                            statusApplied = true;
+                            const effectName = newEffect.name || action.statusEffect.type;
+                            addLog({ role: 'system', content: `💫 **${target.name}** subit l'effet: **${effectName}** ! (${action.statusEffect.duration || 1} tour(s))` });
+                            if (onVFX) onVFX('stun', cx, cy, '#ffff00');
+                        }
+                    }
+                    // Legacy stun support
+                    else if (action.stunChance && action.stunChance > 0 && newHp > 0) {
+                        const stunRoll = Math.floor(Math.random() * 100) + 1;
+                        if (stunRoll <= action.stunChance) {
+                            const newEffect = createStatusEffect('stunned', 1, liveActor.id);
+                            finalCombatants = newCombatants.map(u =>
+                                u.id === target.id ? { ...u, statusEffects: [...(u.statusEffects || []), newEffect] } : u
+                            );
+                            statusApplied = true;
+                            addLog({ role: 'system', content: `💫 **${target.name}** est étourdi(e) ! (1 tour)` });
+                            if (onVFX) onVFX('stun', cx, cy, '#ffff00');
+                        }
+                    }
+
+                    if (!statusApplied) finalCombatants = newCombatants;
+                    setCombatants(finalCombatants);
+
+                    // Concentration check on damaged target
+                    const damagedTarget = finalCombatants.find(u => u.id === target.id);
+                    if (damagedTarget?.concentratingOn && damage > 0) {
+                        const dc = Math.max(10, Math.floor(damage / 2));
+                        const save = rollSave(damagedTarget, dc, 'con');
+                        if (!save.success) {
+                            finalCombatants = finalCombatants.map(u =>
+                                u.id === target.id ? { ...u, concentratingOn: undefined } : u
+                            );
+                            setCombatants(finalCombatants);
+                            addLog({ role: 'system', content: `🔮 **${target.name}** perd sa concentration ! (Jet: ${save.total} vs DC ${dc})` });
+                        }
+                    }
+
+                    // Morale check for enemies
+                    if (target.isEnemy && newHp > 0 && !target.isBoss) {
+                        const morale = checkMorale(damagedTarget || target);
+                        if (morale.flees) {
+                            addLog({ role: 'system', content: `🏃 **${target.name}** panique et tente de fuir !` });
+                            const fleeEffect = createStatusEffect('feared', 2, liveActor.id);
+                            finalCombatants = finalCombatants.map(u =>
+                                u.id === target.id ? { ...u, statusEffects: [...(u.statusEffects || []), fleeEffect] } : u
+                            );
+                            setCombatants(finalCombatants);
+                        }
+                    }
 
                     // PREPARE SYNCED ACTION
                     const actionEvent = {
@@ -1592,7 +1674,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
 
                     lastSyncRef.current = Date.now();
                     if (onUpdateCombatState) onUpdateCombatState({
-                        combatants: newCombatants,
+                        combatants: finalCombatants,
                         turnIndex: currentTurnIndex,
                         round,
                         active: true,
@@ -1632,7 +1714,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                         finishTurn();
                     }, 600);
                     addTimeout(timeoutId);
-                }, 250);
+                }, 250));
             } else {
                 if (onVFX) onVFX('spark', cx, cy, '#ffff00');
 
@@ -1687,9 +1769,9 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                 });
 
                 // CRITICAL FIX: Finish turn for ALL actors after attack, not just enemies
-                setTimeout(() => { finishTurn(); }, 1000);
+                addTimeout(setTimeout(() => { finishTurn(); }, 1000));
             }
-        }, 1000);
+        }, 1000));
     };
 
     const finishTurn = () => {
@@ -1717,7 +1799,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         }
 
         // Slight delay before next turn to ensure state propagation
-        setTimeout(nextTurn, 100);
+        addTimeout(setTimeout(nextTurn, 100));
     };
 
     const nextTurn = () => {
@@ -1764,11 +1846,11 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                     // If traveling, we set state and skip to next
                     setCombatants(newCombatants);
                     if (onUpdateCombatState) onUpdateCombatState({ combatants: newCombatants, turnIndex: nextIndex, round: newRound, active: true, logs, updatedAt: Date.now() });
-                    setTimeout(nextTurn, 1000);
+                    addTimeout(setTimeout(nextTurn, 1000));
                     return;
                 }
             }
-            
+
             // If exhausted (0 resources), skip turn but recover 25% of max resource
             if (isExhausted) {
                 const recoveryAmount = Math.floor(nextActor.maxResource * 0.25); // 25% recovery
@@ -1790,23 +1872,75 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                 });
                 
                 // Auto-skip to next after delay
-                setTimeout(nextTurn, 1500);
+                addTimeout(setTimeout(nextTurn, 1500));
                 return;
             }
-            
+
+            // ========== COMBAT ENGINE - PROCESS STATUS EFFECTS (Next-Gen) ==========
+            const freshActorData = newCombatants.find(u => u.id === nextActor.id) || nextActor;
+            const statusResult = processStatusEffects(freshActorData);
+
+            // Log expired effects
+            for (const expired of statusResult.expiredEffects) {
+                addLog({ role: 'system', content: `✨ **${nextActor.name}** : effet **${expired.name || expired.type}** terminé.` });
+            }
+
+            // Log tick damage
+            if (statusResult.tickDamage > 0) {
+                addLog({ role: 'system', content: `🩸 **${nextActor.name}** subit **${statusResult.tickDamage}** dégâts d'effet de statut !` });
+                if (onVFX) onVFX('blood', 0, 0, '#ff4444');
+            }
+
+            // Log tick healing
+            if (statusResult.tickHealing > 0) {
+                addLog({ role: 'system', content: `💚 **${nextActor.name}** régénère **${statusResult.tickHealing}** PV !` });
+            }
+
+            // Update combatant with processed status effects
+            newCombatants = newCombatants.map(u => u.id === nextActor.id ? {
+                ...statusResult.updatedCombatant,
+                hasActed: statusResult.skipTurn ? true : false,
+                currentPM: statusResult.skipTurn ? 0 : (u.maxPM || 5),
+            } : u);
+
+            // Check if actor must skip turn (stunned, etc.)
+            if (statusResult.skipTurn) {
+                setCombatants(newCombatants);
+                addLog({ role: 'system', content: `💫 **${nextActor.name}** est incapacité(e) et passe son tour !` });
+
+                if (onUpdateCombatState) onUpdateCombatState({
+                    combatants: newCombatants, turnIndex: nextIndex, round: newRound, active: true, logs, updatedAt: Date.now()
+                });
+                addTimeout(setTimeout(nextTurn, 1500));
+                return;
+            }
+
+            // Check if actor died from status effects
+            if (!statusResult.updatedCombatant.isAlive) {
+                setCombatants(newCombatants);
+                addLog({ role: 'system', content: `💀 **${nextActor.name}** succombe à ses blessures !` });
+                if (onUpdateCombatState) onUpdateCombatState({
+                    combatants: newCombatants, turnIndex: nextIndex, round: newRound, active: true, logs, updatedAt: Date.now()
+                });
+                addTimeout(setTimeout(nextTurn, 1500));
+                return;
+            }
+
+            // Must flee (feared)
+            if (statusResult.mustFlee) {
+                addLog({ role: 'system', content: `🏃 **${nextActor.name}** tente de fuir, terrifié(e) !` });
+            }
+
             addLog({ role: 'system', content: `${nextActor.isEnemy ? "👹" : "👤"} C'est au tour de **${nextActor.name}** !` });
-            setCooldowns(prev => {
-                const actorCooldowns = prev[nextActor.id];
-                if (!actorCooldowns) return prev;
-                const newActorCooldowns = {};
-                let changed = false;
-                for (const [ability, cd] of Object.entries(actorCooldowns)) {
-                    if (cd > 0) { newActorCooldowns[ability] = cd - 1; changed = true; }
-                }
-                return changed ? { ...prev, [nextActor.id]: newActorCooldowns } : prev;
-            });
+
+            // Decrement cooldowns via engine
+            const withCooldowns = decrementCooldowns(newCombatants.find(u => u.id === nextActor.id) || nextActor);
+            setCooldowns(prev => ({ ...prev, [nextActor.id]: withCooldowns.cooldowns || {} }));
+
+            // Resource regeneration via engine
             const regenAmount = 10;
-            const newResource = Math.min(nextActor.maxResource, nextActor.resource + regenAmount);
+            const regenned = regenerateResource(newCombatants.find(u => u.id === nextActor.id) || nextActor, regenAmount);
+            const newResource = regenned.resource;
             if (!nextActor.isEnemy && onResourceChange) onResourceChange(nextActor.id, newResource);
 
             newCombatants = newCombatants.map(u => u.id === nextActor.id ? { ...u, resource: newResource } : u);
@@ -1850,93 +1984,68 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                     return;
                 }
 
-                // --- STRATEGY: MOVEMENT ---
-                // Both ranged and melee close distance until at least one action is in range.
-                if (freshActor.currentPM > 0) {
-                    const baseActions = freshActor.actions || [{ name: 'Attaque', range: 1.5, cost: 0 }];
-                    const affordableActions = baseActions.filter(a => (a.cost || 0) <= freshActor.resource);
-                    const maxAttackRange = (affordableActions.length > 0
-                        ? Math.max(...affordableActions.map(a => a.range || 1.5))
-                        : 1.5);
+                // === TACTICAL AI ENGINE ===
+                try {
+                    const allCombatants = currentCombatants.filter(u => u.hp > 0);
+                    const decision = decideEnemyTurn(freshActor, allCombatants, { gridWidth, gridHeight });
+                    debugLog('[AI Engine]', freshActor.name, '→', decision.reasoning);
 
-                    let stepsLeft = freshActor.currentPM;
-                    while (stepsLeft > 0) {
-                        const actorNow = combatantsRef.current.find(u => u.id === freshActor.id);
-                        if (!actorNow) break;
+                    // --- EXECUTE MOVES ---
+                    if (decision.moves && decision.moves.length > 0 && freshActor.currentPM > 0) {
+                        for (const move of decision.moves) {
+                            const actorNow = combatantsRef.current.find(u => u.id === freshActor.id);
+                            if (!actorNow || actorNow.currentPM <= 0) break;
 
-                        const targetsNow = combatantsRef.current
-                            .filter(u => !u.isEnemy && u.hp > 0)
-                            .map(p => ({
-                                unit: p,
-                                dist: Math.max(Math.abs(actorNow.posX - p.posX), Math.abs(actorNow.posY - p.posY))
-                            }))
-                            .sort((a, b) => a.dist - b.dist);
+                            const dx = move.x - actorNow.posX;
+                            const dy = move.y - actorNow.posY;
+                            if (dx === 0 && dy === 0) continue;
 
-                        if (targetsNow.length === 0) break;
+                            // Validate tile before moving
+                            if (!isTileValid(move.x, move.y) || isTileOccupied(move.x, move.y, actorNow.id)) continue;
 
-                        const nearest = targetsNow[0];
-                        if (nearest.dist <= maxAttackRange) break; // Already in range to attack
-
-                        const targetX = nearest.unit.posX;
-                        const targetY = nearest.unit.posY;
-                        const dx = Math.sign(targetX - actorNow.posX);
-                        const dy = Math.sign(targetY - actorNow.posY);
-
-                        let moveX = 0;
-                        let moveY = 0;
-
-                        if (Math.abs(targetX - actorNow.posX) >= Math.abs(targetY - actorNow.posY)) {
-                            if (dx !== 0 && isTileValid(actorNow.posX + dx, actorNow.posY) && !isTileOccupied(actorNow.posX + dx, actorNow.posY, actorNow.id)) {
-                                moveX = dx;
-                            } else if (dy !== 0 && isTileValid(actorNow.posX, actorNow.posY + dy) && !isTileOccupied(actorNow.posX, actorNow.posY + dy, actorNow.id)) {
-                                moveY = dy;
-                            }
-                        } else {
-                            if (dy !== 0 && isTileValid(actorNow.posX, actorNow.posY + dy) && !isTileOccupied(actorNow.posX, actorNow.posY + dy, actorNow.id)) {
-                                moveY = dy;
-                            } else if (dx !== 0 && isTileValid(actorNow.posX + dx, actorNow.posY) && !isTileOccupied(actorNow.posX + dx, actorNow.posY, actorNow.id)) {
-                                moveX = dx;
-                            }
+                            const direction = Math.abs(dx) >= Math.abs(dy)
+                                ? (dx > 0 ? 'right' : 'left')
+                                : (dy > 0 ? 'down' : 'up');
+                            const moved = executeMove(direction, actorNow);
+                            if (!moved) break;
+                            await new Promise(r => setTimeout(r, 420));
                         }
-
-                        if (moveX === 0 && moveY === 0) break; // Blocked
-
-                        const direction = moveX > 0 ? 'right' : moveX < 0 ? 'left' : moveY > 0 ? 'down' : 'up';
-                        const moved = executeMove(direction, actorNow);
-                        if (!moved) break;
-
-                        stepsLeft -= 1;
-                        await new Promise(r => setTimeout(r, 420));
                     }
-                }
 
-                // --- STRATEGY: ACTION ---
-                // Re-evaluate targets after move - using FRESH STATE
-                const postMoveActor = combatantsRef.current.find(u => u.id === currentActor.id) || freshActor;
-                const updatedTargets = combatantsRef.current.filter(u => !u.isEnemy && u.hp > 0).map(p => ({
-                    unit: p,
-                    dist: Math.max(Math.abs(postMoveActor.posX - p.posX), Math.abs(postMoveActor.posY - p.posY))
-                })).sort((a, b) => a.dist - b.dist);
-
-                if (updatedTargets.length > 0) {
-                    const bestTarget = updatedTargets[0];
-                    // Pick best action
-                    const actions = postMoveActor.actions || [{ name: 'Attaque', range: 1.5, cost: 0 }];
-                    const availableActions = actions.filter(a => (a.cost || 0) <= postMoveActor.resource);
-
-                    // Simple AI: use longest range if ranged, or highest damage if melee
-                    let chosenAction = availableActions.find(a => bestTarget.dist <= (a.range || 1.5));
-
-                    if (chosenAction) {
-                        executeAttack(bestTarget.unit, chosenAction);
-                        // Ne pas forcer finishTurn ici : executeAttack -> résolution du jet gère déjà la fin de tour.
+                    // --- EXECUTE ACTION ---
+                    if (decision.action && decision.target) {
+                        const postMoveActor = combatantsRef.current.find(u => u.id === currentActor.id) || freshActor;
+                        const freshTarget = combatantsRef.current.find(u => u.id === decision.target.id);
+                        if (freshTarget && freshTarget.hp > 0) {
+                            executeAttack(freshTarget, decision.action);
+                        } else {
+                            setMovingUnit(null);
+                            addTimeout(setTimeout(() => finishTurn(), 100));
+                        }
                     } else {
-                        // Could not attack, ensure movingUnit cleared before finish
                         setMovingUnit(null);
-                        setTimeout(() => finishTurn(), 100);
+                        addTimeout(setTimeout(() => finishTurn(), 100));
                     }
-                } else {
-                    finishTurn();
+                } catch (aiError) {
+                    // Fallback: simple AI if engine fails
+                    debugLog('[AI Engine] Error, falling back:', aiError);
+                    const postMoveActor = combatantsRef.current.find(u => u.id === currentActor.id) || freshActor;
+                    const nearestTarget = playerTargets
+                        .map(p => ({ unit: p, dist: Math.max(Math.abs(postMoveActor.posX - p.posX), Math.abs(postMoveActor.posY - p.posY)) }))
+                        .sort((a, b) => a.dist - b.dist)[0];
+
+                    if (nearestTarget) {
+                        const actions = postMoveActor.actions || [{ name: 'Attaque', range: 1.5, cost: 0 }];
+                        const chosenAction = actions.find(a => nearestTarget.dist <= (a.range || 1.5) && (a.cost || 0) <= postMoveActor.resource);
+                        if (chosenAction) {
+                            executeAttack(nearestTarget.unit, chosenAction);
+                        } else {
+                            setMovingUnit(null);
+                            addTimeout(setTimeout(() => finishTurn(), 100));
+                        }
+                    } else {
+                        finishTurn();
+                    }
                 }
             }, 1000);
             return () => clearTimeout(timer);
@@ -2130,6 +2239,64 @@ const RollOverlay = ({ rollId, roll, modifier, tacticalReason, threshold, succes
     );
 };
 
+    // === MEMOIZED GRID LINES (avoid re-creating 3200+ divs every render) ===
+    const gridLinesMemo = useMemo(() => {
+        const verticals = Array.from({ length: arenaConfig.blocksX + 1 }).map((_, i) => {
+            const tiles = i - Math.floor(arenaConfig.blocksX / 2);
+            const isMajor = tiles % 5 === 0;
+            const isCenter = tiles === 0;
+            const edgePercent = (i / arenaConfig.blocksX) * 100;
+            return (
+                <div key={`v-${i}`} className={`grid-line-y ${isCenter ? 'center' : (isMajor ? 'major' : '')}`} style={{ left: `${edgePercent}%` }}>
+                    {isMajor && (
+                        <div className="grid-coord-label x-axis">
+                            {tiles}
+                        </div>
+                    )}
+                </div>
+            );
+        });
+        const horizontals = Array.from({ length: arenaConfig.blocksY + 1 }).map((_, i) => {
+            const tiles = i - Math.floor(arenaConfig.blocksY / 2);
+            const isMajor = tiles % 5 === 0;
+            const isCenter = tiles === 0;
+            const edgePercent = (i / arenaConfig.blocksY) * 100;
+            return (
+                <div key={`h-${i}`} className={`grid-line-x ${isCenter ? 'center' : (isMajor ? 'major' : '')}`} style={{ top: `${edgePercent}%` }}>
+                    {isMajor && tiles !== 0 && (
+                        <div className="grid-coord-label y-axis">
+                            {tiles}
+                        </div>
+                    )}
+                </div>
+            );
+        });
+        return <>{verticals}{horizontals}</>;
+    }, [arenaConfig.blocksX, arenaConfig.blocksY]);
+
+    // === MEMOIZED ARENA DECOR (only changes when decor array changes) ===
+    const arenaDecorMemo = useMemo(() => {
+        return decor.map(d => (
+            <div key={d.id} style={{
+                position: 'absolute',
+                left: `${getPosPercent(d.posX)}%`,
+                top: `${getPosPercent(d.posY, true)}%`,
+                width: `${d.size}px`,
+                height: `${d.size}px`,
+                background: d.color,
+                boxShadow: `0 0 30px ${d.color}`,
+                opacity: 0.5,
+                borderRadius: d.name === 'Éclat de Vide' ? '20% 80%' : '8px',
+                transform: 'translate(-50%, -50%) rotate(45deg)',
+                pointerEvents: 'none',
+                border: '2px solid rgba(255,255,255,0.15)',
+                zIndex: 4
+            }}>
+                <div style={{ position: 'absolute', bottom: '-20px', width: '100%', textAlign: 'center', fontSize: '0.55rem', color: 'rgba(255,255,255,0.5)', fontWeight: 'bold', transform: 'rotate(-45deg)' }}>{d.name}</div>
+            </div>
+        ));
+    }, [decor, arenaConfig.blocksX, arenaConfig.blocksY]);
+
     const GameOverScreen = () => (
         <div style={{ position: 'absolute', inset: 0, zIndex: 3000, background: 'radial-gradient(circle at center, #2a0505 0%, #000 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             <h1 style={{ fontSize: '3rem', color: '#ff1111', fontFamily: 'var(--font-display)' }}>MORT DÉFINITIVE</h1>
@@ -2160,39 +2327,7 @@ const RollOverlay = ({ rollId, roll, modifier, tacticalReason, threshold, succes
                     <div className="arena-background-plane" />
 
                     <div className="arena-grid-container">
-                        {/* Vertical Lines */}
-                        {Array.from({ length: arenaConfig.blocksX + 1 }).map((_, i) => {
-                            const tiles = i - Math.floor(arenaConfig.blocksX / 2);
-                            const isMajor = tiles % 5 === 0;
-                            const isCenter = tiles === 0;
-                            const edgePercent = (i / arenaConfig.blocksX) * 100;
-                            return (
-                                <div key={`v-${i}`} className={`grid-line-y ${isCenter ? 'center' : (isMajor ? 'major' : '')}`} style={{ left: `${edgePercent}%` }}>
-                                    {isMajor && (
-                                        <div className="grid-coord-label x-axis">
-                                            {tiles}
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-
-                        {/* Horizontal Lines */}
-                        {Array.from({ length: arenaConfig.blocksY + 1 }).map((_, i) => {
-                            const tiles = i - Math.floor(arenaConfig.blocksY / 2);
-                            const isMajor = tiles % 5 === 0;
-                            const isCenter = tiles === 0;
-                            const edgePercent = (i / arenaConfig.blocksY) * 100;
-                            return (
-                                <div key={`h-${i}`} className={`grid-line-x ${isCenter ? 'center' : (isMajor ? 'major' : '')}`} style={{ top: `${edgePercent}%` }}>
-                                    {isMajor && tiles !== 0 && (
-                                        <div className="grid-coord-label y-axis">
-                                            {tiles}
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
+                        {gridLinesMemo}
                     </div>
 
                     {/* Range Illumination (Tactical Squares) - Only show for selected actions, NOT for default movement */}
@@ -2340,7 +2475,16 @@ const RollOverlay = ({ rollId, roll, modifier, tacticalReason, threshold, succes
                                             const startPoint = plannedPath.length > 0 ? { x: plannedPath[plannedPath.length - 1][0], y: plannedPath[plannedPath.length - 1][1] } : { x: currentActor.posX, y: currentActor.posY };
                                             const segmentPmLeft = currentActor.currentPM - plannedPath.length;
 
-                                            const segmentPath = isHovered && segmentPmLeft > 0 ? findPath(startPoint.x, startPoint.y, x, y, segmentPmLeft) : null;
+                                            let segmentPath = null;
+                                            if (isHovered && segmentPmLeft > 0) {
+                                                const cacheKey = `${startPoint.x},${startPoint.y}-${x},${y}-${segmentPmLeft}`;
+                                                if (pathCacheRef.current.key === cacheKey) {
+                                                    segmentPath = pathCacheRef.current.result;
+                                                } else {
+                                                    segmentPath = findPath(startPoint.x, startPoint.y, x, y, segmentPmLeft);
+                                                    pathCacheRef.current = { key: cacheKey, result: segmentPath };
+                                                }
+                                            }
 
                                             return (
                                                 <div
@@ -2376,26 +2520,8 @@ const RollOverlay = ({ rollId, roll, modifier, tacticalReason, threshold, succes
                         </>
                     )}
 
-                    {/* Arena Decor */}
-                    {decor.map(d => (
-                        <div key={d.id} style={{
-                            position: 'absolute',
-                            left: `${getPosPercent(d.posX)}%`,
-                            top: `${getPosPercent(d.posY, true)}%`,
-                            width: `${d.size}px`,
-                            height: `${d.size}px`,
-                            background: d.color,
-                            boxShadow: `0 0 30px ${d.color}`,
-                            opacity: 0.5,
-                            borderRadius: d.name === 'Éclat de Vide' ? '20% 80%' : '8px',
-                            transform: 'translate(-50%, -50%) rotate(45deg)',
-                            pointerEvents: 'none',
-                            border: '2px solid rgba(255,255,255,0.15)',
-                            zIndex: 4
-                        }}>
-                            <div style={{ position: 'absolute', bottom: '-20px', width: '100%', textAlign: 'center', fontSize: '0.55rem', color: 'rgba(255,255,255,0.5)', fontWeight: 'bold', transform: 'rotate(-45deg)' }}>{d.name}</div>
-                        </div>
-                    ))}
+                    {/* Arena Decor (memoized) */}
+                    {arenaDecorMemo}
 
                     {/* Arena Units (2D Positioning with smooth animation) */}
                     <div style={{ position: 'absolute', inset: 0, zIndex: 10 }}>
@@ -2404,16 +2530,33 @@ const RollOverlay = ({ rollId, roll, modifier, tacticalReason, threshold, succes
                             const isAnimating = movingUnit && movingUnit.id === u.id;
                             const displayX = isAnimating ? movingUnit.animX : u.posX;
                             const displayY = isAnimating ? movingUnit.animY : u.posY;
+                            // Check if stunned
+                            const isStunned = u.statusEffects?.some(e => e.type === 'stunned' && e.duration > 0);
 
                             const x = getPosPercent(displayX);
                             const y = getPosPercent(displayY, true);
-                            return <UnitCard key={u.id} unit={u} style={{
-                                left: `${x}%`,
-                                top: `${y}%`,
-                                width: `${100 / arenaConfig.blocksX}%`,
-                                height: `${100 / arenaConfig.blocksY}%`,
-                                transition: isAnimating ? 'none' : 'left 0.8s cubic-bezier(0.4, 0, 0.2, 1), top 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
-                            }} />;
+                            return (
+                                <div key={u.id} style={{ position: 'absolute', left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)' }}>
+                                    <UnitCard unit={u} style={{
+                                        width: `${100 / arenaConfig.blocksX}%`,
+                                        height: `${100 / arenaConfig.blocksY}%`,
+                                        transition: isAnimating ? 'none' : 'left 0.8s cubic-bezier(0.4, 0, 0.2, 1), top 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                                    }} />
+                                    {/* Stun indicator */}
+                                    {isStunned && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: '-25%',
+                                            left: '50%',
+                                            transform: 'translateX(-50%)',
+                                            fontSize: '1.5rem',
+                                            zIndex: 20,
+                                            animation: 'pulse 1s infinite',
+                                            textShadow: '0 0 10px #ffff00'
+                                        }}>💫</div>
+                                    )}
+                                </div>
+                            );
                         })}
                     </div>
 
@@ -2510,12 +2653,12 @@ const RollOverlay = ({ rollId, roll, modifier, tacticalReason, threshold, succes
                                                         // Auto-cast pour les sorts sur soi-même
                                                         if (ability.target === 'self') {
                                                             // Utiliser executeSelfBuff pour les sorts sur soi
-                                                            setTimeout(() => executeSelfBuff(ability), 100);
+                                                            addTimeout(setTimeout(() => executeSelfBuff(ability), 100));
                                                         } else if (ability.target === 'ally' && ability.canTargetSelf === false) {
                                                             // Cibler automatiquement soi-même pour les sorts ally exclusifs
                                                             const selfTarget = combatants.find(c => c.id === currentActor?.id);
                                                             if (selfTarget) {
-                                                                setTimeout(() => executeAttack(selfTarget, ability), 100);
+                                                                addTimeout(setTimeout(() => executeAttack(selfTarget, ability), 100));
                                                             }
                                                         }
                                                         
@@ -2638,9 +2781,16 @@ const RollOverlay = ({ rollId, roll, modifier, tacticalReason, threshold, succes
                             : { x: currentActor.posX, y: currentActor.posY };
 
                         const pmLeft = currentActor.currentPM - plannedPath.length;
-                        const segmentPath = hoveredTile && pmLeft > 0
-                            ? findPath(startPoint.x, startPoint.y, hoveredTile.x, hoveredTile.y, pmLeft)
-                            : null;
+                        let segmentPath = null;
+                        if (hoveredTile && pmLeft > 0) {
+                            const cacheKey = `${startPoint.x},${startPoint.y}-${hoveredTile.x},${hoveredTile.y}-${pmLeft}`;
+                            if (pathCacheRef.current.key === cacheKey) {
+                                segmentPath = pathCacheRef.current.result;
+                            } else {
+                                segmentPath = findPath(startPoint.x, startPoint.y, hoveredTile.x, hoveredTile.y, pmLeft);
+                                pathCacheRef.current = { key: cacheKey, result: segmentPath };
+                            }
+                        }
 
                         const fullPreviewPath = [...plannedPath, ...(segmentPath || [])];
 
@@ -2683,7 +2833,7 @@ const RollOverlay = ({ rollId, roll, modifier, tacticalReason, threshold, succes
                                             pointerEvents: 'none'
                                         }}>
                                             <div className="unit-portrait-wrapper" style={{ opacity: 0.5, filter: 'grayscale(0.5) brightness(1.5)' }}>
-                                                <img src={currentActor.portrait_url} className="unit-portrait" alt="" />
+                                                <img src={currentActor.portrait_url} className="unit-portrait" alt={currentActor.name} />
                                             </div>
                                         </div>
                                     )}

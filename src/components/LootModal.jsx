@@ -7,7 +7,7 @@ export const LootModal = ({ loot, onCollect, onClose }) => {
     if (!loot || (items.length === 0 && gold === 0)) return null;
 
     return (
-        <div className="modal-overlay animate-fade-in" style={{
+        <div className="modal-overlay animate-fade-in" role="dialog" aria-modal="true" style={{
             position: 'fixed',
             top: 0, left: 0, right: 0, bottom: 0,
             background: 'rgba(0,0,0,0.85)',

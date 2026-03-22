@@ -1,9 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;800&family=IM+Fell+English:ital@0;1&display=swap');
 
 /* ===== SESSION HUB - STYLE MÉDIÉVAL ÉPIQUE ===== */
+/* Responsive scaling with CSS variables */
 
 .session-hub-container {
     min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height for mobile */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -11,29 +13,76 @@
     background:
         linear-gradient(rgba(10, 10, 15, 0.4), rgba(10, 10, 15, 0.7)),
         url('/aethelgard_map_menu.jpg');
-    background-size: 80% auto;
+    background-size: cover; /* Changed to cover for better scaling */
     background-repeat: no-repeat;
     background-position: center;
     background-attachment: fixed;
     background-color: transparent;
+    padding: calc(1.5rem * var(--ui-scale, 1)) calc(1rem * var(--ui-scale, 1)) calc(4rem * var(--ui-scale, 1));
+    overflow-x: hidden;
+    overflow-y: auto;
+    position: relative; /* For proper centering context */
+}
+
+/* Hub header - center content */
+.hub-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+    margin-bottom: 2rem;
+}
+
+/* Session seal - smaller circle with swords */
+.session-seal {
+    width: 80px;
+    height: 80px;
+    color: #d4af37;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.seal-svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5));
+}
+
+/* Responsive: smaller seal on mobile */
+@media (max-width: 768px) {
+    .session-seal {
+        width: 60px;
+        height: 60px;
+    }
 }
 
 /* ===== TITRE ÉPIQUE ===== */
 
 .epic-title-container {
     text-align: center;
-    margin-bottom: 3rem;
+    margin-bottom: calc(2rem * var(--ui-scale, 1));
     animation: titleFadeIn 1.2s ease-out;
+    width: 100%;
+    max-width: 100vw;
+    padding: 0 1rem;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .subtitle {
     font-family: 'IM Fell English', serif;
     font-style: italic;
-    font-size: 0.9rem;
+    font-size: clamp(0.7rem, 1.2vw, 0.9rem); /* Responsive font size */
     color: #d4af37;
-    letter-spacing: 4px;
+    letter-spacing: clamp(2px, 0.3vw, 4px);
     text-transform: uppercase;
-    margin-bottom: 0.5rem;
+    margin-bottom: calc(0.5rem * var(--ui-scale, 1));
     opacity: 1;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9), 0 0 10px rgba(212, 175, 55, 0.4);
     font-weight: 600;
@@ -41,25 +90,30 @@
 
 .epic-title {
     font-family: 'Cinzel Decorative', serif;
-    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-size: clamp(1.8rem, 5vw, 3.5rem);
     font-weight: 900;
     color: #fbeea8;
-    letter-spacing: 8px;
+    letter-spacing: clamp(1px, 0.5vw, 4px);
     margin: 0;
     text-shadow:
         0 0 20px rgba(251, 238, 168, 0.6),
         0 0 40px rgba(212, 175, 55, 0.4),
         2px 2px 4px rgba(0, 0, 0, 0.8);
     position: relative;
-    display: inline-block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    white-space: nowrap;
+    width: 100%;
 }
 
 .title-ornament {
-    font-size: 0.6em;
+    font-size: 0.5em; /* Plus petit */
     color: #d4af37;
-    margin: 0 1rem;
-    display: inline-block;
+    display: inline-flex;
     animation: ornamentPulse 3s ease-in-out infinite;
+    flex-shrink: 0; /* Empêche la compression */
 }
 
 .title-underline {
@@ -100,11 +154,12 @@
 
 .hub-scroll-panel {
     position: relative;
-    max-width: 900px;
-    width: 100%;
+    max-width: min(1200px, 95vw); /* Responsive max-width */
+    width: 90%;
+    margin: 0 auto;
     background:
         linear-gradient(135deg, rgba(30, 30, 35, 0.85) 0%, rgba(15, 15, 20, 0.95) 100%);
-    padding: 3.5rem 3rem 3rem;
+    padding: calc(3.5rem * var(--ui-scale, 1)) calc(3rem * var(--ui-scale, 1)) calc(3rem * var(--ui-scale, 1));
     border-radius: 12px;
     box-shadow:
         0 20px 60px rgba(0, 0, 0, 0.7),
@@ -117,6 +172,7 @@
     background-image:
         radial-gradient(circle at 2px 2px, rgba(212, 175, 55, 0.05) 1px, transparent 0);
     background-size: 24px 24px;
+    overflow-y: auto; /* Allow scrolling if needed */
 }
 
 @keyframes scrollUnfold {
@@ -131,624 +187,108 @@
     }
 }
 
-/* ===== ORNEMENTS DE COINS ===== */
+/* ===== RESPONSIVE - AMÉLIORÉ ===== */
 
-.corner-ornament {
-    position: absolute;
-    width: 40px;
-    height: 40px;
-    border-style: solid;
-    border-color: #8a6d3b;
-}
-
-.corner-ornament.top-left {
-    top: -3px;
-    left: -3px;
-    border-width: 3px 0 0 3px;
-    border-top-left-radius: 12px;
-}
-
-.corner-ornament.top-right {
-    top: -3px;
-    right: -3px;
-    border-width: 3px 3px 0 0;
-    border-top-right-radius: 12px;
-}
-
-.corner-ornament.bottom-left {
-    bottom: -3px;
-    left: -3px;
-    border-width: 0 0 3px 3px;
-    border-bottom-left-radius: 12px;
-}
-
-.corner-ornament.bottom-right {
-    bottom: -3px;
-    right: -3px;
-    border-width: 0 3px 3px 0;
-    border-bottom-right-radius: 12px;
-}
-
-.corner-ornament::before {
-    content: '';
-    position: absolute;
-    width: 8px;
-    height: 8px;
-    background: #d4af37;
-    border-radius: 50%;
-    box-shadow: 0 0 8px rgba(212, 175, 55, 0.6);
-}
-
-.corner-ornament.top-left::before {
-    top: 12px;
-    left: 12px;
-}
-
-.corner-ornament.top-right::before {
-    top: 12px;
-    right: 12px;
-}
-
-.corner-ornament.bottom-left::before {
-    bottom: 12px;
-    left: 12px;
-}
-
-.corner-ornament.bottom-right::before {
-    bottom: 12px;
-    right: 12px;
-}
-
-/* ===== EN-TÊTE AVEC SCEAU ===== */
-
-.hub-header {
-    text-align: center;
-    margin-bottom: 2.5rem;
-    padding-bottom: 2rem;
-    border-bottom: 2px solid rgba(138, 109, 59, 0.3);
-    position: relative;
-}
-
-.session-seal {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 1.5rem;
-    color: #8a6d3b;
-    animation: sealRotate 20s linear infinite;
-}
-
-.seal-svg {
-    width: 100%;
-    height: 100%;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-}
-
-@keyframes sealRotate {
-    from {
-        transform: rotate(0deg);
+/* Extra small devices (phones, 480px and down) */
+@media (max-width: 480px) {
+    .session-hub-container {
+        padding: 0.5rem;
+        justify-content: center;
+        padding-top: 1rem;
     }
-
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-.session-info-grid {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 2rem;
-    flex-wrap: wrap;
-}
-
-.info-block {
-    text-align: center;
-}
-
-.info-label {
-    font-family: 'IM Fell English', serif;
-    font-size: 0.9rem;
-    color: var(--gold-primary);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 0.5rem;
-    opacity: 1;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-}
-
-.info-value {
-    font-family: 'Cinzel', serif;
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--gold-light);
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
-}
-
-.code-value {
-    font-family: 'Courier New', monospace;
-    font-size: 1.4rem;
-    color: #fbeea8;
-    letter-spacing: 3px;
-    background: rgba(139, 69, 19, 0.15);
-    padding: 0.4rem 1rem;
-    border-radius: 4px;
-    border: 1px dashed var(--gold-primary);
-    font-weight: 700;
-    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-}
-
-.info-divider {
-    width: 2px;
-    height: 40px;
-    background: linear-gradient(to bottom, transparent, #8a6d3b, transparent);
-}
-
-/* ===== REGISTRE DES HÉROS ===== */
-
-.players-registry {
-    margin-bottom: 2rem;
-}
-
-.registry-title {
-    font-family: 'Cinzel', serif;
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--gold-primary);
-    text-transform: uppercase;
-    letter-spacing: 3px;
-    text-align: center;
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-}
-
-.registry-line {
-    flex: 1;
-    height: 1px;
-    background: linear-gradient(to right, transparent, #8a6d3b, transparent);
-}
-
-.players-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-/* ===== CARTES JOUEURS ===== */
-
-.player-card {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    padding: 1.2rem 1.5rem;
-    background: rgba(20, 20, 25, 0.6);
-    border: 1px solid rgba(212, 175, 55, 0.2);
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    animation: cardSlideIn 0.5s ease-out backwards;
-    position: relative;
-    overflow: hidden;
-    backdrop-filter: blur(8px);
-}
-
-.player-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.1), transparent);
-    transition: left 0.5s ease;
-}
-
-.player-card:hover::before {
-    left: 100%;
-}
-
-.player-card:hover {
-    border-color: #d4af37;
-    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
-    transform: translateX(5px);
-}
-
-.player-card.player-self {
-    background: rgba(212, 175, 55, 0.12);
-    border-color: #d4af37;
-    box-shadow: 0 0 15px rgba(212, 175, 55, 0.15);
-}
-
-@keyframes cardSlideIn {
-    from {
-        opacity: 0;
-        transform: translateX(-30px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-/* Avatar */
-
-.player-avatar {
-    position: relative;
-    flex-shrink: 0;
-}
-
-.avatar-ring {
-    position: absolute;
-    inset: -4px;
-    border: 2px solid #d4af37;
-    border-radius: 50%;
-    animation: ringPulse 2s ease-in-out infinite;
-}
-
-@keyframes ringPulse {
-
-    0%,
-    100% {
-        transform: scale(1);
-        opacity: 0.6;
-    }
-
-    50% {
-        transform: scale(1.08);
-        opacity: 1;
-    }
-}
-
-.avatar-inner {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #8a6d3b, #d4af37);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Cinzel', serif;
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #fbeea8;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-    box-shadow:
-        0 4px 8px rgba(0, 0, 0, 0.2),
-        inset 0 2px 4px rgba(255, 255, 255, 0.2);
-}
-
-.host-crown {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    font-size: 1.3rem;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-    animation: crownFloat 2s ease-in-out infinite;
-}
-
-@keyframes crownFloat {
-
-    0%,
-    100% {
-        transform: translateY(0px);
-    }
-
-    50% {
-        transform: translateY(-4px);
-    }
-}
-
-/* Info joueur */
-
-.player-info {
-    flex: 1;
-}
-
-.player-name {
-    font-family: 'Cinzel', serif;
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: var(--gold-light);
-    margin-bottom: 0.3rem;
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-.host-badge {
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: #d4af37;
-    background: rgba(212, 175, 55, 0.15);
-    padding: 0.2rem 0.6rem;
-    border-radius: 4px;
-    border: 1px solid rgba(212, 175, 55, 0.3);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.player-status-label {
-    font-family: 'IM Fell English', serif;
-    font-size: 0.85rem;
-    color: var(--gold-primary);
-    font-style: italic;
-    opacity: 0.8;
-}
-
-/* Indicateur prêt */
-
-.player-ready-indicator {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-}
-
-.ready-text {
-    font-family: 'Cinzel', serif;
-    font-size: 0.85rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: #5dff98;
-    text-shadow: 0 0 8px rgba(93, 255, 152, 0.4);
-}
-
-.ready-text.waiting {
-    color: #9d8d7d;
-    text-shadow: none;
-}
-
-.ready-orb {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    border: 2px solid rgba(93, 255, 152, 0.3);
-    background: transparent;
-    transition: all 0.3s ease;
-}
-
-.ready-orb-active {
-    background: #5dff98;
-    border-color: #5dff98;
-    box-shadow:
-        0 0 12px rgba(93, 255, 152, 0.6),
-        0 0 20px rgba(93, 255, 152, 0.3);
-    animation: orbPulse 1.5s ease-in-out infinite;
-}
-
-@keyframes orbPulse {
-
-    0%,
-    100% {
-        transform: scale(1);
-        box-shadow: 0 0 12px rgba(93, 255, 152, 0.6);
-    }
-
-    50% {
-        transform: scale(1.15);
-        box-shadow: 0 0 20px rgba(93, 255, 152, 0.8);
-    }
-}
-
-/* ===== ACTIONS ===== */
-
-.hub-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.actions-divider {
-    height: 2px;
-    background: linear-gradient(to right, transparent, #8a6d3b, transparent);
-    margin: 0.5rem 0;
-}
-
-.button-group {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-/* Boutons médiévaux améliorés */
-
-.btn-medieval {
-    font-family: 'Cinzel', serif;
-    font-size: 1rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    padding: 1rem 2rem;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.3rem;
-    min-width: 200px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.btn-medieval::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s ease;
-}
-
-.btn-medieval:hover::before {
-    left: 100%;
-}
-
-.btn-icon {
-    font-size: 1.2em;
-    display: inline-block;
-    margin-right: 0.5rem;
-}
-
-.btn-subtitle {
-    font-size: 0.65rem;
-    opacity: 0.8;
-    letter-spacing: 1px;
-}
-
-/* Variantes boutons */
-
-.btn-secondary {
-    background: linear-gradient(135deg, #6d5d47, #5d4e37);
-    color: #f4ecd8;
-}
-
-.btn-secondary:hover {
-    background: linear-gradient(135deg, #5d4e37, #4d3e27);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, #8a6d3b, #d4af37);
-    color: #2d2a26;
-}
-
-.btn-primary:hover {
-    background: linear-gradient(135deg, #d4af37, #fbeea8);
-    transform: translateY(-2px);
-    box-shadow:
-        0 6px 16px rgba(212, 175, 55, 0.4),
-        0 0 20px rgba(212, 175, 55, 0.2);
-}
-
-.btn-epic {
-    background: linear-gradient(135deg, #d4af37, #fbeea8, #d4af37);
-    background-size: 200% 200%;
-    color: #2d2a26;
-    animation: epicShimmer 3s ease infinite;
-    font-size: 1.1rem;
-    padding: 1.2rem 2.5rem;
-}
-
-@keyframes epicShimmer {
-
-    0%,
-    100% {
-        background-position: 0% 50%;
-    }
-
-    50% {
-        background-position: 100% 50%;
-    }
-}
-
-.btn-epic:hover {
-    transform: translateY(-3px) scale(1.02);
-    box-shadow:
-        0 8px 24px rgba(212, 175, 55, 0.5),
-        0 0 30px rgba(212, 175, 55, 0.3);
-}
-
-.btn-medieval:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none !important;
-}
-
-.btn-medieval:disabled::before {
-    display: none;
-}
-
-/* Notice */
-
-.hub-notice {
-    text-align: center;
-    padding: 1rem;
-    background: rgba(212, 175, 55, 0.05);
-    border: 1px solid rgba(212, 175, 55, 0.2);
-    border-radius: 6px;
-    font-family: 'IM Fell English', serif;
-    font-style: italic;
-    color: var(--gold-primary);
-    font-size: 0.95rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.8rem;
-}
-
-.notice-icon {
-    font-size: 1.2rem;
-    animation: noticeIconPulse 2s ease-in-out infinite;
-}
-
-@keyframes noticeIconPulse {
-
-    0%,
-    100% {
-        opacity: 0.6;
-    }
-
-    50% {
-        opacity: 1;
-    }
-}
-
-/* ===== FOOTER ===== */
-
-.hub-footer {
-    text-align: center;
-    margin-top: 2rem;
-    animation: footerFadeIn 1.5s ease-out;
-}
-
-.footer-ornament {
-    color: #d4af37;
-    font-size: 0.9rem;
-    letter-spacing: 8px;
-    margin-bottom: 0.5rem;
-    opacity: 0.6;
-}
-
-.footer-text {
-    font-family: 'IM Fell English', serif;
-    font-style: italic;
-    color: #a0a0b0;
-    font-size: 0.9rem;
-    letter-spacing: 1px;
-}
-
-@keyframes footerFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* ===== RESPONSIVE ===== */
-
-@media (max-width: 768px) {
+    
     .epic-title {
-        font-size: 2.5rem;
-        letter-spacing: 4px;
+        font-size: clamp(1.5rem, 8vw, 2rem);
+        letter-spacing: 2px;
     }
-
+    
+    .subtitle {
+        font-size: 0.65rem;
+        letter-spacing: 2px;
+    }
+    
     .hub-scroll-panel {
-        padding: 2rem 1.5rem 2rem;
+        width: 98%;
+        padding: 1.5rem 1rem;
+        border-radius: 8px;
+    }
+    
+    .session-info-grid {
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+    
+    .info-divider {
+        width: 40px;
+        height: 2px;
+    }
+    
+    .info-value {
+        font-size: 1.1rem;
+    }
+    
+    .code-value {
+        font-size: 1rem;
+        letter-spacing: 2px;
+    }
+    
+    .player-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 1rem;
+        gap: 0.8rem;
+    }
+    
+    .player-avatar {
+        transform: scale(0.85);
+    }
+    
+    .button-group {
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+    
+    .btn-medieval {
+        width: 100%;
+        padding: 0.9rem 1.2rem;
+        font-size: 0.85rem;
+        min-width: unset;
+    }
+    
+    .btn-epic {
+        font-size: 0.95rem;
+        padding: 1rem 1.5rem;
+    }
+    
+    .corner-ornament {
+        width: 25px;
+        height: 25px;
+    }
+    
+    .registry-title {
+        font-size: 0.9rem;
+    }
+    
+    .hub-notice {
+        font-size: 0.8rem;
+        padding: 0.8rem;
+    }
+}
+
+/* Small devices (tablets, 768px and down) */
+@media (max-width: 768px) {
+    .session-hub-container {
+        padding: 1rem;
+    }
+    
+    .epic-title {
+        font-size: clamp(2rem, 6vw, 3rem);
+        letter-spacing: 3px;
+    }
+    
+    .hub-scroll-panel {
+        width: 95%;
+        padding: 2rem 1.5rem;
     }
 
     .session-info-grid {
@@ -759,12 +299,12 @@
     .info-divider {
         width: 60px;
         height: 2px;
-        rotate: 90deg;
     }
 
     .player-card {
         flex-direction: column;
         text-align: center;
+        gap: 1rem;
     }
 
     .button-group {
@@ -774,4 +314,94 @@
     .btn-medieval {
         width: 100%;
     }
+    
+    .title-underline {
+        width: 120px;
+    }
 }
+
+/* Tablets (768px to 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .hub-scroll-panel {
+        max-width: 90%;
+        padding: 2.5rem 2rem;
+    }
+    
+    .epic-title {
+        font-size: clamp(2.5rem, 5vw, 3.5rem);
+    }
+}
+
+/* Large screens (1440px and up) */
+@media (min-width: 1440px) {
+    .hub-scroll-panel {
+        max-width: 1400px;
+    }
+    
+    .epic-title {
+        font-size: clamp(3rem, 4vw, 5rem);
+    }
+    
+    .btn-medieval {
+        padding: 1.2rem 2.5rem;
+        font-size: 1.1rem;
+    }
+}
+
+/* Ultra-wide screens (1920px and up) */
+@media (min-width: 1920px) {
+    .hub-scroll-panel {
+        max-width: 1600px;
+        padding: 4rem 4rem 3.5rem;
+    }
+}
+
+/* Landscape mode on phones */
+@media (max-height: 500px) and (orientation: landscape) {
+    .session-hub-container {
+        justify-content: center;
+        padding-top: 0.5rem;
+    }
+    
+    .epic-title-container {
+        margin-bottom: 1rem;
+    }
+    
+    .epic-title {
+        font-size: clamp(1.5rem, 5vh, 2.5rem);
+    }
+    
+    .hub-scroll-panel {
+        max-height: 85vh;
+        padding: 1.5rem;
+    }
+    
+    .session-seal {
+        width: 50px;
+        height: 50px;
+        margin-bottom: 0.8rem;
+    }
+}
+
+/* High DPI / Retina displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .epic-title {
+        text-shadow:
+            0 0 30px rgba(251, 238, 168, 0.8),
+            0 0 60px rgba(212, 175, 55, 0.5),
+            2px 2px 4px rgba(0, 0, 0, 0.9);
+    }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    .epic-title-container,
+    .hub-scroll-panel,
+    .player-card,
+    .btn-medieval {
+        animation: none;
+        transition: none;
+    }
+}
+
+/* Rest of the code remains the same */

@@ -1,12 +1,82 @@
 import React, { useState } from 'react';
+import { useAppVersion } from '../hooks/useAppVersion';
+import { DeveloperPanel } from './DeveloperPanel';
+import { confirmDelete } from './GameModals';
 
-export function SessionLobby({ onJoin, onCreate, onQuickStart, onSoloAdventure, onSoloCustom, onJoinQuickStart, availableSessions = [], loading }) {
+export function SessionLobby({ onJoin, onCreate, onQuickStart, onSoloAdventure, onSoloCustom, onJoinQuickStart, availableSessions = [], loading, savedGames = [], onLoadGame, onDeleteSession, onDeleteSave, profile, onOpenDMPanel, onOpenCodex }) {
     const [sessionId, setSessionId] = useState('');
     const [showSoloChoice, setShowSoloChoice] = useState(false);
+    const [showDeveloperPanel, setShowDeveloperPanel] = useState(false);
+    const { version } = useAppVersion();
 
     return (
         <div className="creation-overlay">
-            <div className="lobby-content" style={{ maxWidth: '1200px', width: '90%', textAlign: 'center', zIndex: 10, animation: 'fadeIn 1s ease' }}>
+            {/* BACKGROUND EFFECTS TEMPORARILY REMOVED FOR SCROLL DEBUG */}
+            {/*
+            <div className="bg-animation" style={{
+                position: 'fixed',
+                inset: 0,
+                backgroundImage: 'url("/aethelgard_map_menu.jpg")',
+                backgroundSize: '80% auto',
+                backgroundPosition: 'center',
+                opacity: 0.5,
+                filter: 'brightness(0.6) saturate(1.2)',
+                pointerEvents: 'none',
+                zIndex: 1
+            }}></div>
+            <div style={{ position: 'fixed', inset: 0, background: 'radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%)', zIndex: 2, pointerEvents: 'none' }}></div>
+            <div className="fog-overlay" style={{ position: 'fixed', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)', zIndex: 3, pointerEvents: 'none' }}></div>
+            */}
+
+            {/* Developer Access Button - Hidden in corner */}
+            <button
+                onClick={() => setShowDeveloperPanel(true)}
+                style={{
+                    position: 'fixed',
+                    bottom: '10px',
+                    left: '10px',
+                    zIndex: 99,
+                    padding: '8px 12px',
+                    background: 'rgba(0,0,0,0.4)',
+                    border: '1px solid rgba(212,175,55,0.3)',
+                    borderRadius: '4px',
+                    color: 'rgba(212,175,55,0.6)',
+                    fontSize: '0.7rem',
+                    fontFamily: 'monospace',
+                    cursor: 'pointer',
+                    opacity: 0.5,
+                    transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => e.target.style.opacity = '1'}
+                onMouseLeave={(e) => e.target.style.opacity = '0.5'}
+            >
+                🛠️ Dev
+            </button>
+
+            {/* Developer Panel Modal */}
+            {showDeveloperPanel && (
+                <DeveloperPanel onClose={() => setShowDeveloperPanel(false)} />
+            )}
+
+            {/* Version Badge - Top Right */}
+            <div style={{
+                position: 'fixed',
+                top: '10px',
+                right: '10px',
+                zIndex: 100,
+                background: 'rgba(0, 0, 0, 0.6)',
+                border: '1px solid var(--gold-dim)',
+                borderRadius: '4px',
+                padding: '4px 10px',
+                fontSize: '0.7rem',
+                color: 'var(--gold-primary)',
+                fontFamily: 'monospace',
+                letterSpacing: '1px'
+            }}>
+                v{version}
+            </div>
+
+            <div className="lobby-content" style={{ maxWidth: '1200px', width: '90%', textAlign: 'center', zIndex: 10, animation: 'fadeIn 1s ease', position: 'relative', height: 'auto', padding: '2rem 0 10rem 0' }}>
                 <header style={{ marginBottom: '4rem' }}>
                     <div className="brand-badge" style={{ fontSize: '0.8rem', color: 'var(--gold-primary)', letterSpacing: '4px', marginBottom: '1rem', opacity: 0.6 }}>TALES FROM THE VOID</div>
                     <h1 style={{
@@ -39,7 +109,7 @@ export function SessionLobby({ onJoin, onCreate, onQuickStart, onSoloAdventure, 
                     <p style={{ fontStyle: 'italic', color: 'var(--text-secondary)', letterSpacing: '4px', fontSize: '1rem', opacity: 0.8 }}>Le Serment de l'Aube Éclatée</p>
                 </header>
 
-                <main style={{ display: 'flex', flexDirection: 'column', gap: '3rem', alignItems: 'center' }}>
+                <main style={{ display: 'flex', flexDirection: 'column', gap: '3rem', alignItems: 'center', paddingBottom: '8rem', width: '100%' }}>
                     <div style={{ display: 'flex', gap: '2rem', justifyContent: 'center', alignItems: 'stretch', flexWrap: 'wrap', width: '100%' }}>
                         <div className="glass-panel hover-glow" style={{
                             flex: '1 1 350px',
@@ -108,6 +178,48 @@ export function SessionLobby({ onJoin, onCreate, onQuickStart, onSoloAdventure, 
                             >
                                 ⚡ {loading ? '...' : 'DEBUG: QUICK START'}
                             </button>
+
+                            {onOpenDMPanel && (
+                                <button
+                                    className="btn-medieval"
+                                    style={{
+                                        width: '100%',
+                                        padding: '0.8rem',
+                                        marginTop: '1rem',
+                                        background: 'rgba(212, 175, 55, 0.1)',
+                                        border: '1px solid rgba(212, 175, 55, 0.4)',
+                                        color: '#d4af37',
+                                        fontSize: '0.85rem',
+                                        fontWeight: 'bold',
+                                        letterSpacing: '2px',
+                                        boxShadow: '0 0 15px rgba(212, 175, 55, 0.15)'
+                                    }}
+                                    onClick={onOpenDMPanel}
+                                >
+                                    🎭 INTERFACE MJ (CLAUDE OPUS)
+                                </button>
+                            )}
+
+                            {onOpenCodex && (
+                                <button
+                                    className="btn-medieval"
+                                    style={{
+                                        width: '100%',
+                                        padding: '0.8rem',
+                                        marginTop: '0.5rem',
+                                        background: 'rgba(147, 112, 219, 0.1)',
+                                        border: '1px solid rgba(147, 112, 219, 0.4)',
+                                        color: '#9370db',
+                                        fontSize: '0.85rem',
+                                        fontWeight: 'bold',
+                                        letterSpacing: '2px',
+                                        boxShadow: '0 0 15px rgba(147, 112, 219, 0.15)'
+                                    }}
+                                    onClick={onOpenCodex}
+                                >
+                                    📖 CODEX D'AETHELGARD
+                                </button>
+                            )}
                         </div>
 
                         <div className="glass-panel" style={{
@@ -235,6 +347,122 @@ export function SessionLobby({ onJoin, onCreate, onQuickStart, onSoloAdventure, 
                                                 >
                                                     REJOINDRE
                                                 </button>
+                                                {onDeleteSession && sess.host_id === profile?.id && (
+                                                    <button
+                                                        className="btn-medieval"
+                                                        onClick={() => {
+                                                            confirmDelete(
+                                                                'Supprimer cette session ? Cette action est irréversible.',
+                                                                () => onDeleteSession(sess.id)
+                                                            );
+                                                        }}
+                                                        style={{
+                                                            padding: '0.7rem',
+                                                            fontSize: '0.7rem',
+                                                            background: 'rgba(255, 68, 68, 0.2)',
+                                                            border: '1px solid #ff4444',
+                                                            color: '#ff6666'
+                                                        }}
+                                                        title="Supprimer la session"
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Saved Games Section */}
+                    {savedGames.length > 0 && (
+                        <div className="discovery-section animate-slide-up" style={{ width: '100%', maxWidth: '1000px', marginBottom: '4rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
+                                <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, transparent, rgba(77, 255, 136, 0.3))' }}></div>
+                                <h3 className="text-gold" style={{ fontSize: '1rem', letterSpacing: '4px', textTransform: 'uppercase', opacity: 0.8, color: '#4dff88' }}>💾 PARTIES SAUVEGARDÉES</h3>
+                                <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(77, 255, 136, 0.3), transparent)' }}></div>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '2rem', padding: '1rem' }}>
+                                {savedGames.map(save => (
+                                    <div key={save.id} className="stone-panel hover-glow" style={{
+                                        padding: '1.5rem',
+                                        textAlign: 'left',
+                                        background: 'rgba(77, 255, 136, 0.02)',
+                                        border: '1px solid rgba(77, 255, 136, 0.2)',
+                                        position: 'relative',
+                                        borderRadius: '8px',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        minHeight: '220px',
+                                        height: 'auto'
+                                    }}>
+                                        <div style={{ position: 'absolute', top: 0, right: 0, padding: '0.4rem 0.8rem', background: 'rgba(77, 255, 136, 0.15)', fontSize: '0.6rem', color: '#4dff88', letterSpacing: '1px', borderBottomLeftRadius: '8px', fontWeight: 'bold' }}>
+                                            SAUVEGARDE
+                                        </div>
+                                        <div style={{ marginBottom: '1.5rem', marginTop: '0.5rem', overflow: 'hidden' }}>
+                                            <span style={{ display: 'block', fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '2px', marginBottom: '0.4rem' }}>MAÎTRE DE JEU</span>
+                                            <span style={{ fontSize: '1.4rem', color: '#fff', fontWeight: '600', textShadow: '0 2px 10px rgba(0,0,0,0.5)', wordBreak: 'break-word', lineHeight: '1.2', display: 'block', maxHeight: '3.4rem', overflow: 'hidden' }}>{save.host_name}</span>
+                                        </div>
+
+                                        <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <div style={{ marginBottom: '1rem' }}>
+                                                <span style={{ display: 'block', fontSize: '0.6rem', color: 'var(--text-muted)', letterSpacing: '1px' }}>DATE</span>
+                                                <span style={{ fontSize: '0.9rem', color: '#4dff88' }}>
+                                                    {new Date(save.timestamp).toLocaleString('fr-FR', { 
+                                                        day: '2-digit', 
+                                                        month: '2-digit', 
+                                                        year: '2-digit',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit'
+                                                    })}
+                                                </span>
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap' }}>
+                                                <button
+                                                    className="btn-medieval"
+                                                    onClick={() => onLoadGame(save.sessionId)}
+                                                    disabled={loading}
+                                                    style={{
+                                                        flex: 1,
+                                                        padding: '0.7rem',
+                                                        fontSize: '0.8rem',
+                                                        background: 'rgba(77, 255, 136, 0.2)',
+                                                        border: '1px solid #4dff88',
+                                                        color: '#4dff88',
+                                                        fontWeight: 'bold'
+                                                    }}
+                                                >
+                                                    {loading ? '...' : 'CHARGER'}
+                                                </button>
+                                                {onDeleteSave && (
+                                                    // Check hostId (newer saves) or fall back to first player user_id (older saves)
+                                                    save.saveData?.hostId === profile?.id || 
+                                                    save.saveData?.players?.[0]?.user_id === profile?.id
+                                                ) && (
+                                                    <button
+                                                        className="btn-medieval"
+                                                        onClick={() => {
+                                                            confirmDelete(
+                                                                'Supprimer cette sauvegarde ? Cette action est irréversible.',
+                                                                () => onDeleteSave(save.id)
+                                                            );
+                                                        }}
+                                                        disabled={loading}
+                                                        style={{
+                                                            padding: '0.7rem',
+                                                            fontSize: '0.8rem',
+                                                            background: 'rgba(255, 68, 68, 0.2)',
+                                                            border: '1px solid #ff4444',
+                                                            color: '#ff4444',
+                                                            fontWeight: 'bold'
+                                                        }}
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -255,7 +483,7 @@ export function SessionLobby({ onJoin, onCreate, onQuickStart, onSoloAdventure, 
                     &copy; 2026 AETHELGARD ENGINE • VERSION 0.2.0-ALPHA
                 </footer>
             </div>
-            {/* Immersive effects */}
+            {/* BACKGROUND EFFECTS REMOVED FOR SCROLL DEBUG 
             <div className="bg-animation" style={{
                 position: 'absolute',
                 inset: 0,
@@ -263,10 +491,12 @@ export function SessionLobby({ onJoin, onCreate, onQuickStart, onSoloAdventure, 
                 backgroundSize: '80% auto',
                 backgroundPosition: 'center',
                 opacity: 0.5,
-                filter: 'brightness(0.6) saturate(1.2)'
+                filter: 'brightness(0.6) saturate(1.2)',
+                pointerEvents: 'none'
             }}></div>
-            <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%)', zIndex: 1 }}></div>
-            <div className="fog-overlay" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)', zIndex: 2 }}></div>
+            <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%)', zIndex: 1, pointerEvents: 'none' }}></div>
+            <div className="fog-overlay" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)', zIndex: 2, pointerEvents: 'none' }}></div>
+            */}
 
             {/* Solo Choice Modal */}
             {showSoloChoice && (

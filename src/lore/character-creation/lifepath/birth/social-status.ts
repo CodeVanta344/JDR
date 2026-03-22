@@ -19,23 +19,11 @@ export const SOCIAL_STATUSES: LifeChoice[] = [
     },
     effects: {
       stats: { charisma: 4, intelligence: 2 },
-      mechanical_traits: [
-        {
+      mechanical_traits: [{
           name: 'Privilège Aristocratique',
           desc: '+5 Persuasion avec nobles/autorités, avantage jets sociaux cour royale',
           game_effect: 'Avantage social politique, accès privilégié décisions royales'
-        },
-        {
-          name: 'Héritage Prestigieux',
-          desc: 'Commence avec 1000 PO supplémentaires + obligations familiales (quêtes dynastiques)',
-          game_effect: 'Richesse substantielle mais attentes familiales élevées'
-        },
-        {
-          name: 'Éducation Supérieure',
-          desc: '+1d20 aux jets Connaissance (Histoire/Noblesse/Étiquette)',
-          game_effect: 'Bonus d100 culture aristocratique et protocole'
-        }
-      ],
+        }],
       reputation: [
         { factionId: 'noblesse', delta: 8, reason: 'Membre de l\'aristocratie' },
         { factionId: 'peuple', delta: -3, reason: 'Perçu comme privilégié' }
@@ -44,10 +32,7 @@ export const SOCIAL_STATUSES: LifeChoice[] = [
         { itemId: 'signet_ring', quantity: 1, reason: 'Sceau familial' },
         { itemId: 'fine_clothes', quantity: 3, reason: 'Garde-robe noble' }
       ],
-      skills: [
-        { skillId: 'persuasion', bonus: 5, reason: 'Éducation courtisane' },
-        { skillId: 'knowledge_nobility', bonus: 5, reason: 'Héraldique et protocole' }
-      ],
+      skills: [{ skillId: 'persuasion', bonus: 5, reason: 'Éducation courtisane' }],
       languages: ['Commun', 'Langue Noble'],
       gold: 1000,
       tags: ['noble', 'wealthy', 'privileged', 'respected', 'political', 'leadership']

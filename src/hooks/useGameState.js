@@ -1,19 +1,32 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
+import { useGameStore } from '../store/gameStore';
 
 export const useGameState = (profile) => {
-    const [session, setSession] = useState(null);
-    const [character, setCharacter] = useState(null);
-    const [players, setPlayers] = useState([]);
-    const [onlineUsers, setOnlineUsers] = useState([]);
-    const [connStatus, setConnStatus] = useState('connecting');
-    const [affinities, setAffinities] = useState({});
-    const [titles, setTitles] = useState([]);
-    const [gameTime, setGameTime] = useState({ hour: 12, minute: 0, day: 1 });
-    const [realTimeSync, setRealTimeSync] = useState(false);
-    const [weather, setWeather] = useState('clear');
-    const [chronicle, setChronicle] = useState([]); // World Events
-    const [syncedCombatState, setSyncedCombatState] = useState(null);
+    // All state now comes from the Zustand store
+    const session = useGameStore(state => state.session);
+    const setSession = useGameStore(state => state.setSession);
+    const character = useGameStore(state => state.character);
+    const setCharacter = useGameStore(state => state.setCharacter);
+    const players = useGameStore(state => state.players);
+    const setPlayers = useGameStore(state => state.setPlayers);
+    const setOnlineUsers = useGameStore(state => state.setOnlineUsers);
+    const connStatus = useGameStore(state => state.connStatus);
+    const setConnStatus = useGameStore(state => state.setConnStatus);
+    const affinities = useGameStore(state => state.affinities);
+    const setAffinities = useGameStore(state => state.setAffinities);
+    const titles = useGameStore(state => state.titles);
+    const setTitles = useGameStore(state => state.setTitles);
+    const gameTime = useGameStore(state => state.gameTime);
+    const setGameTime = useGameStore(state => state.setGameTime);
+    const realTimeSync = useGameStore(state => state.realTimeSync);
+    const setRealTimeSync = useGameStore(state => state.setRealTimeSync);
+    const weather = useGameStore(state => state.weather);
+    const setWeather = useGameStore(state => state.setWeather);
+    const chronicle = useGameStore(state => state.chronicle);
+    const setChronicle = useGameStore(state => state.setChronicle);
+    const syncedCombatState = useGameStore(state => state.syncedCombatState);
+    const setSyncedCombatState = useGameStore(state => state.setSyncedCombatState);
 
     // Memoized Fetchers
     const fetchWorldState = useCallback(async () => {
@@ -43,8 +56,8 @@ export const useGameState = (profile) => {
     const fetchSession = useCallback(async (id) => {
         const sid = id || session?.id;
         if (!sid) return null;
-        const { data, error } = await supabase.from('sessions').select('*').eq('id', sid).maybeSingle();
-        if (error) return null;
+        const { data, error: _error } = await supabase.from('sessions').select('*').eq('id', sid).maybeSingle();
+        if (_error) return null;
         setSession(data);
         return data;
     }, [session?.id]);
@@ -61,40 +74,19 @@ export const useGameState = (profile) => {
         }
     }, []);
 
-    // Real-time world state sync (Game Time & Combat)
+    // World state sync disabled - using polling only to prevent WebSocket errors
     useEffect(() => {
         if (!session) return;
-        const channel = supabase
-            .channel('world_state_sync')
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'world_state' }, payload => {
-                if (payload.new.key === 'game_time') {
-                    setGameTime(payload.new.value);
-                }
-                if (payload.new.key === `combat_${session.id}`) {
-                    const sharedState = payload.new.value;
-                    setSyncedCombatState(sharedState);
-                    window.latestCombatState = sharedState;
-                }
-            })
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'world_state' }, payload => {
-                if (payload.new.key === `combat_${session.id}`) {
-                    const sharedState = payload.new.value;
-                    setSyncedCombatState(sharedState);
-                    window.latestCombatState = sharedState;
-                }
-            })
-            .subscribe();
 
-        // Initial fetch of combat state
+        // Initial fetch only
         supabase.from('world_state').select('value').eq('key', `combat_${session.id}`).limit(1)
             .then(({ data }) => {
                 const combatData = data?.[0];
                 if (combatData?.value?.active) {
                     setSyncedCombatState(combatData.value);
+                    window.latestCombatState = combatData.value;
                 }
             });
-
-        return () => supabase.removeChannel(channel);
     }, [session]);
 
     // Progression Logic (Simulation or Real-Life Sync)
@@ -118,24 +110,24 @@ export const useGameState = (profile) => {
                     supabase.from('world_state').upsert({ key: 'game_time', value: nextTime });
                 }
             } else {
-                setGameTime(prev => {
-                    const nextMinute = (prev.minute || 0) + 1;
-                    let h = prev.hour;
-                    let d = prev.day;
-                    let m = nextMinute;
+                // For non-realtime, read current state from store and compute next
+                const currentTime = useGameStore.getState().gameTime;
+                const nextMinute = (currentTime.minute || 0) + 1;
+                let h = currentTime.hour;
+                let d = currentTime.day;
+                let m = nextMinute;
 
-                    if (m >= 60) {
-                        m = 0;
-                        h = (h + 1) % 24;
-                        if (h === 0) d += 1;
-                    }
+                if (m >= 60) {
+                    m = 0;
+                    h = (h + 1) % 24;
+                    if (h === 0) d += 1;
+                }
 
-                    const nextTime = { hour: h, minute: m, day: d };
-                    if (session.host_id === profile.id) {
-                        supabase.from('world_state').upsert({ key: 'game_time', value: nextTime });
-                    }
-                    return nextTime;
-                });
+                const nextTime = { hour: h, minute: m, day: d };
+                setGameTime(nextTime);
+                if (session.host_id === profile.id) {
+                    supabase.from('world_state').upsert({ key: 'game_time', value: nextTime });
+                }
             }
         }, realTimeSync ? 5000 : 12000);
 
@@ -144,34 +136,40 @@ export const useGameState = (profile) => {
 
     // HP / Resource change handlers
     const handleHPChange = async (playerId, newHp) => {
-        setPlayers(prev => prev.map(p => p.id === playerId ? { ...p, hp: newHp } : p));
-        if (character && playerId === character.id) {
-            setCharacter(prev => ({ ...prev, hp: newHp }));
+        const currentPlayers = useGameStore.getState().players;
+        const currentCharacter = useGameStore.getState().character;
+        setPlayers(currentPlayers.map(p => p.id === playerId ? { ...p, hp: newHp } : p));
+        if (currentCharacter && playerId === currentCharacter.id) {
+            setCharacter({ ...currentCharacter, hp: newHp });
             await supabase.from('players').update({ hp: newHp }).eq('id', playerId);
         }
     };
 
     const handleResourceChange = async (playerId, newResource) => {
-        setPlayers(prev => prev.map(p => p.id === playerId ? { ...p, resource: newResource } : p));
-        if (character && playerId === character.id) {
-            setCharacter(prev => ({ ...prev, resource: newResource }));
+        const currentPlayers = useGameStore.getState().players;
+        const currentCharacter = useGameStore.getState().character;
+        setPlayers(currentPlayers.map(p => p.id === playerId ? { ...p, resource: newResource } : p));
+        if (currentCharacter && playerId === currentCharacter.id) {
+            setCharacter({ ...currentCharacter, resource: newResource });
             await supabase.from('players').update({ resource: newResource }).eq('id', playerId);
         }
     };
 
     const handleConsumeItem = async (item) => {
-        if (!character) return;
+        const currentCharacter = useGameStore.getState().character;
+        if (!currentCharacter) return;
         // Identify item by name and description if ID is missing
-        const itemIndex = character.inventory.findIndex(i =>
+        const itemIndex = currentCharacter.inventory.findIndex(i =>
             (item.id && i.id === item.id) || (i.name === item.name && i.desc === item.desc)
         );
 
         if (itemIndex > -1) {
-            const updatedInventory = [...character.inventory];
+            const updatedInventory = [...currentCharacter.inventory];
             updatedInventory.splice(itemIndex, 1);
-            setCharacter(prev => ({ ...prev, inventory: updatedInventory }));
-            setPlayers(prev => prev.map(p => p.id === character.id ? { ...p, inventory: updatedInventory } : p));
-            await supabase.from('players').update({ inventory: updatedInventory }).eq('id', character.id);
+            setCharacter({ ...currentCharacter, inventory: updatedInventory });
+            const currentPlayers = useGameStore.getState().players;
+            setPlayers(currentPlayers.map(p => p.id === currentCharacter.id ? { ...p, inventory: updatedInventory } : p));
+            await supabase.from('players').update({ inventory: updatedInventory }).eq('id', currentCharacter.id);
         }
     };
 
@@ -194,7 +192,7 @@ export const useGameState = (profile) => {
         session, setSession,
         character, setCharacter,
         players, setPlayers,
-        onlineUsers, setOnlineUsers,
+        setOnlineUsers,
         connStatus, setConnStatus,
         affinities, setAffinities,
         titles, setTitles,
@@ -213,9 +211,12 @@ export const useGameState = (profile) => {
         resetGameTime,
         chronicle,
         addToChronicle: async (event) => {
-            const newChronicle = [...chronicle, { ...event, date: gameTime, id: crypto.randomUUID() }];
+            const currentChronicle = useGameStore.getState().chronicle;
+            const currentGameTime = useGameStore.getState().gameTime;
+            const currentSession = useGameStore.getState().session;
+            const newChronicle = [...currentChronicle, { ...event, date: currentGameTime, id: crypto.randomUUID() }];
             setChronicle(newChronicle);
-            if (session?.host_id === profile?.id) {
+            if (currentSession?.host_id === profile?.id) {
                 await supabase.from('world_state').upsert({ key: 'chronicle', value: newChronicle });
             }
         },
@@ -223,10 +224,10 @@ export const useGameState = (profile) => {
             const { data, error } = await supabase
                 .from('sessions')
                 .select(`
-                    id, 
-                    created_at, 
+                    id,
+                    created_at,
                     host_id,
-                    players!inner(name, user_id)
+                    players!inner(id, name, user_id, is_host)
                 `)
                 .eq('active', true)
                 .eq('is_started', false)
@@ -236,10 +237,16 @@ export const useGameState = (profile) => {
                 console.error("Discovery error:", error);
                 return [];
             }
-            return data.map(s => ({
+
+            // Filtrer pour ne garder que les sessions avec au moins un joueur (le host)
+            const validSessions = data?.filter(s =>
+                s.players && s.players.length > 0 && s.players.some(p => p.is_host)
+            ) || [];
+
+            return validSessions.map(s => ({
                 id: s.id,
                 created_at: s.created_at,
-                host_name: s.players[0]?.name || "Inconnu",
+                host_name: s.players.find(p => p.is_host)?.name || "Inconnu",
                 host_id: s.host_id
             }));
         }

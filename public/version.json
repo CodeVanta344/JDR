@@ -1,0 +1,9 @@
+{
+  "version": "1.0.6",
+  "buildDate": "2026-02-17",
+  "changelog": [
+    "Ajout interface Level Designer pour upload de maps",
+    "Authentification sécurisée ID/mot de passe",
+    "Upload de maps PNG par point d'intérêt"
+  ]
+}

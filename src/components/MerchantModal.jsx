@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
 
-export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, onSell, onClose, onChat, affinity = 0, messages = [], loading = false }) => {
+export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, onSell, onClose, onChat, affinity = 0, messages = [], loading = false, playerCha = 10 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [activeTab, setActiveTab] = useState('buy');
     const [generating, setGenerating] = useState({});
@@ -15,8 +15,12 @@ export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, on
         }
     }, [messages, activeTab, loading]);
 
-    const priceMultiplier = Math.max(0.5, Math.min(1.5, 1 - (affinity * 0.005)));
-    const sellMultiplier = Math.max(0.1, Math.min(0.8, 0.5 + (affinity * 0.002)));
+    // CHA impact: -3% per CHA modifier point (modifier = (CHA - 10) * 1.25)
+    const chaMod = Math.floor((playerCha - 10) * 1.25);
+    const chaDiscount = chaMod * 0.03; // Ex: CHA 16 → mod 7.5 → -22.5% sur les prix
+
+    const priceMultiplier = Math.max(0.3, Math.min(1.5, (1 - (affinity * 0.005)) * (1 - chaDiscount)));
+    const sellMultiplier = Math.max(0.1, Math.min(0.9, (0.5 + (affinity * 0.002)) * (1 + chaDiscount * 0.5)));
 
     if (!merchant) return null;
 
@@ -120,6 +124,8 @@ export const MerchantPanel = ({ merchant, playerGold, playerInventory, onBuy, on
 
             <div
                 className="merchant-panel"
+                role="dialog"
+                aria-modal="true"
                 style={{
                     position: 'fixed',
                     right: isExpanded ? '0' : '-450px',

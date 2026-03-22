@@ -111,7 +111,7 @@ export const TradeModal = ({
 
     if (incomingTrade) {
         return (
-            <div className="modal-overlay animate-fade-in" style={{
+            <div className="modal-overlay animate-fade-in" role="dialog" aria-modal="true" style={{
                 position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
                 background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(10px)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000
@@ -187,7 +187,7 @@ export const TradeModal = ({
 
     if (pendingTrade) {
         return (
-            <div className="modal-overlay animate-fade-in" style={{
+            <div className="modal-overlay animate-fade-in" role="dialog" aria-modal="true" style={{
                 position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
                 background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(10px)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000
@@ -219,7 +219,7 @@ export const TradeModal = ({
     }
 
     return (
-        <div className="modal-overlay animate-fade-in" style={{
+        <div className="modal-overlay animate-fade-in" role="dialog" aria-modal="true" style={{
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
             background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(10px)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000
