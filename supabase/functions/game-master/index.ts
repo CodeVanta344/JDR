@@ -467,12 +467,19 @@ const RESPONSE_FORMAT = `REPONDS TOUJOURS EN JSON VALIDE :
     "onSuccess": "Ce qui se passe si réussi",
     "onFailure": "Ce qui se passe si échoué"
   },
-  "combat": { "trigger": bool, "enemies": [] },
+  "combat": { "trigger": true, "enemies": [{"name": "Nom", "hp": 30, "max_hp": 30, "atk": 8, "ac": 12, "id": "e1", "cr": 2, "abilities": ["Capacité"]}] },
   "codex_update": {}
 }
 
 ⚠️ Le champ "challenge" est OBLIGATOIRE quand tu demandes un jet de dés.
-Si tu écris "Lance un jet de X", tu DOIS inclure l'objet challenge.`;
+Si tu écris "Lance un jet de X", tu DOIS inclure l'objet challenge.
+
+⚔️ DÉCLENCHEMENT DE COMBAT AUTOMATIQUE :
+- Quand la narration mène logiquement à un combat (embuscade, monstre qui surgit, ennemi hostile), tu DOIS déclencher le combat avec "combat": { "trigger": true, "enemies": [...] }
+- Génère des ennemis appropriés au contexte et au niveau du joueur
+- Ne laisse JAMAIS le joueur "tuer" un ennemi dans la narration sans combat — déclenche toujours le mode combat
+- Les ennemis doivent avoir des stats cohérentes : hp = 10 + CR×8, atk = 2 + CR×2, ac = 8 + CR
+- 1-2 ennemis pour les niveaux 1-3, 2-3 pour les niveaux 4-6, 2-4 pour les niveaux 7+`;
 
 function isNpcGuidanceQuestion(action: string): boolean {
     const text = (action || '').toLowerCase();
@@ -537,6 +544,106 @@ function getLocationDetails(locationName: string, loreStr: string): any {
         // Fallback silencieux
     }
     return null;
+}
+
+// Generate contextual enemies based on location, player level, and narrative
+function getContextualEnemies(location: string, playerLevel: number, narrative: string): any[] {
+    const lvl = playerLevel;
+    const baseHp = (cr: number) => 10 + cr * 8;
+    const baseAtk = (cr: number) => 2 + cr * 2;
+    const baseAc = (cr: number) => 8 + cr;
+
+    // Enemy pools by environment
+    const ENEMY_POOLS: Record<string, Array<{ name: string; cr: number; abilities: string[] }>> = {
+        forest: [
+            { name: 'Loup Sauvage', cr: 1, abilities: ['Morsure', 'Hurlement de meute'] },
+            { name: 'Araignée Géante', cr: 2, abilities: ['Toile', 'Morsure venimeuse'] },
+            { name: 'Treant Corrompu', cr: 4, abilities: ['Fouet de racines', 'Régénération'] },
+            { name: 'Ours-Esprit', cr: 3, abilities: ['Charge sauvage', 'Rugissement terrifiant'] },
+            { name: 'Bandit Sylvestre', cr: 2, abilities: ['Embuscade', 'Tir à l\'arc'] },
+        ],
+        city: [
+            { name: 'Voleur de Rue', cr: 1, abilities: ['Attaque sournoise', 'Fuite'] },
+            { name: 'Garde Corrompu', cr: 2, abilities: ['Coup de bouclier', 'Appel à l\'aide'] },
+            { name: 'Assassin du Cercle', cr: 4, abilities: ['Lame empoisonnée', 'Disparition'] },
+            { name: 'Brute du Syndicat', cr: 3, abilities: ['Coup de poing', 'Intimidation'] },
+            { name: 'Rat Géant', cr: 1, abilities: ['Morsure', 'Nuée'] },
+        ],
+        mountain: [
+            { name: 'Golem de Pierre', cr: 4, abilities: ['Coup dévastateur', 'Peau de roc'] },
+            { name: 'Wyverne', cr: 5, abilities: ['Attaque en piqué', 'Queue venimeuse'] },
+            { name: 'Troll des Cavernes', cr: 3, abilities: ['Régénération', 'Lancer de rocher'] },
+            { name: 'Kobold Mineur', cr: 1, abilities: ['Piège', 'Attaque de meute'] },
+            { name: 'Élémentaire de Terre', cr: 4, abilities: ['Séisme', 'Absorption'] },
+        ],
+        sea: [
+            { name: 'Pirate Maraudeur', cr: 2, abilities: ['Sabre d\'abordage', 'Grappin'] },
+            { name: 'Sirène Sombre', cr: 3, abilities: ['Chant envoûtant', 'Griffes'] },
+            { name: 'Noyé', cr: 2, abilities: ['Étreinte noyante', 'Cri d\'agonie'] },
+            { name: 'Crabe Géant', cr: 2, abilities: ['Pince broyeuse', 'Carapace'] },
+            { name: 'Serpent de Mer', cr: 4, abilities: ['Constriction', 'Morsure venimeuse'] },
+        ],
+        undead: [
+            { name: 'Squelette Guerrier', cr: 1, abilities: ['Frappe d\'os', 'Résistance aux flèches'] },
+            { name: 'Zombie', cr: 1, abilities: ['Morsure infectée', 'Ténacité'] },
+            { name: 'Spectre', cr: 3, abilities: ['Drain de vie', 'Intangibilité'] },
+            { name: 'Chevalier de Cendres', cr: 5, abilities: ['Flamme noire', 'Armure maudite'] },
+            { name: 'Revenant', cr: 4, abilities: ['Vengeance éternelle', 'Force surnaturelle'] },
+        ],
+        shadow: [
+            { name: 'Ombre Rampante', cr: 2, abilities: ['Drain de force', 'Fusion dans l\'ombre'] },
+            { name: 'Éclat du Vide', cr: 3, abilities: ['Explosion d\'ombre', 'Téléportation'] },
+            { name: 'Sentinelle de Cendre', cr: 4, abilities: ['Lame de cendres', 'Bouclier d\'ombre'] },
+            { name: 'Cultiste du Cercle', cr: 2, abilities: ['Sort de douleur', 'Sacrifice de sang'] },
+            { name: 'Marcheur du Néant', cr: 5, abilities: ['Souffle du néant', 'Distorsion'] },
+        ],
+        generic: [
+            { name: 'Bandit', cr: 1, abilities: ['Coup de dague'] },
+            { name: 'Loup', cr: 1, abilities: ['Morsure'] },
+            { name: 'Mercenaire', cr: 2, abilities: ['Frappe puissante', 'Parade'] },
+            { name: 'Créature des Ombres', cr: 3, abilities: ['Griffes d\'ombre', 'Terreur'] },
+        ],
+    };
+
+    // Determine environment from location/narrative
+    let env = 'generic';
+    if (/forêt|foret|sylve|bois|arbre|bosquet/i.test(location + ' ' + narrative)) env = 'forest';
+    else if (/ville|cité|cite|sol-aureus|port|marché|taverne|auberge|rue|quartier/i.test(location + ' ' + narrative)) env = 'city';
+    else if (/mont|mine|caverne|grotte|souterrain|forge|nain/i.test(location + ' ' + narrative)) env = 'mountain';
+    else if (/mer|océan|ocean|côte|cote|port-tempête|bateau|navire|plage/i.test(location + ' ' + narrative)) env = 'sea';
+    else if (/mort|zombie|squelette|cimetière|cimetiere|tombe|crypte|nécro/i.test(location + ' ' + narrative)) env = 'undead';
+    else if (/ombre|cendre|cercle|void|néant|corruption|sceau/i.test(location + ' ' + narrative)) env = 'shadow';
+
+    const pool = ENEMY_POOLS[env] || ENEMY_POOLS.generic;
+
+    // Filter by level-appropriate CR
+    const maxCR = lvl + 2;
+    const validEnemies = pool.filter(e => e.cr <= maxCR);
+    if (validEnemies.length === 0) validEnemies.push(...pool.slice(0, 2));
+
+    // Pick 1-4 enemies based on level
+    const numEnemies = lvl <= 2 ? 1 + Math.floor(Math.random() * 2) : // 1-2
+                       lvl <= 5 ? 2 + Math.floor(Math.random() * 2) : // 2-3
+                       2 + Math.floor(Math.random() * 3); // 2-4
+
+    const selected: any[] = [];
+    for (let i = 0; i < numEnemies; i++) {
+        const template = validEnemies[Math.floor(Math.random() * validEnemies.length)];
+        // Scale to player level
+        const cr = Math.max(1, Math.min(template.cr, maxCR));
+        selected.push({
+            name: template.name,
+            hp: baseHp(cr),
+            max_hp: baseHp(cr),
+            atk: baseAtk(cr),
+            ac: baseAc(cr),
+            id: `e${i + 1}-${Date.now()}`,
+            cr,
+            abilities: template.abilities,
+        });
+    }
+
+    return selected;
 }
 
 function buildSystemPrompt(opts: any): string {
@@ -1065,10 +1172,43 @@ Deno.serve(async (req: Request) => {
             }
         }
 
-        // Failsafe combat detection
-        const combatKeywords = ['attaque', 'frappe', 'combat', 'charge'];
-        if (combatKeywords.some(kw => action.toLowerCase().includes(kw)) && !result.combat?.trigger) {
-            result.combat = { trigger: true, enemies: [{ name: "Ennemi", hp: 20, max_hp: 20, atk: 5, ac: 10, id: "e1" }] };
+        // Smart combat detection & auto-trigger
+        if (!result.combat?.trigger) {
+            const actionLower = action.toLowerCase();
+            const narrativeLower = (result.narrative || '').toLowerCase();
+
+            // Direct combat actions from player
+            const playerCombatKeywords = ['attaque', 'frappe', 'combat', 'charge', 'tire sur', 'lance un sort', 'dégaine', 'agresse'];
+            const playerWantsCombat = playerCombatKeywords.some(kw => actionLower.includes(kw));
+
+            // AI narrative indicates combat (monsters appear, ambush, etc.)
+            const narrativeCombatKeywords = ['surgit', 'surgissent', 'attaquent', 'embuscade', 'vous assaillent', 'bondit sur', 'se jette sur', 'créature apparaît', 'ennemis', 'combat commence', 'vous êtes attaqué', 'grognement menaçant', 'rugissement'];
+            const narrativeIndicatesCombat = narrativeCombatKeywords.some(kw => narrativeLower.includes(kw));
+
+            if (playerWantsCombat || narrativeIndicatesCombat) {
+                // Generate level-appropriate enemies based on context
+                const playerLevel = activePlayer?.level || 1;
+                const location = currentLocation || 'unknown';
+                const locationLower = location.toLowerCase();
+
+                // Enemy templates by location/context
+                const enemyTemplates = getContextualEnemies(locationLower, playerLevel, narrativeLower);
+                result.combat = { trigger: true, enemies: enemyTemplates };
+            }
+        }
+
+        // Validate combat enemies have all required fields
+        if (result.combat?.trigger && result.combat.enemies) {
+            result.combat.enemies = result.combat.enemies.map((e: any, i: number) => ({
+                name: e.name || `Ennemi ${i + 1}`,
+                hp: e.hp || Math.max(10, 15 + (activePlayer?.level || 1) * 5),
+                max_hp: e.max_hp || e.hp || Math.max(10, 15 + (activePlayer?.level || 1) * 5),
+                atk: e.atk || Math.max(3, (activePlayer?.level || 1) * 2),
+                ac: e.ac || Math.max(8, 8 + (activePlayer?.level || 1)),
+                id: e.id || `e${i + 1}-${Date.now()}`,
+                cr: e.cr || activePlayer?.level || 1,
+                abilities: e.abilities || [],
+            }));
         }
 
         // Save to DB only if NOT a narrative response (frontend handles narrative messages)
