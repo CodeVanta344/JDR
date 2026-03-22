@@ -928,7 +928,7 @@ Deno.serve(async (req: Request) => {
 
         const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
         const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-        const openaiKey = Deno.env.get('OPENAI_API_KEY') || '';
+        const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY') || '';
 
         const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -975,24 +975,25 @@ Deno.serve(async (req: Request) => {
             ? `${action}\n\n[INSTRUCTION MJ OBLIGATOIRE]\nRéponds SANS jet de dés. Donne une direction CONCRÈTE vers ${guidanceDestination} (itinéraire avec repères, au moins 2 indications spatiales). Si le PNJ ne sait pas, il l'avoue et indique précisément à qui demander.`
             : action;
 
-        const aiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+        const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${openaiKey}`,
+                'x-api-key': anthropicKey,
+                'anthropic-version': '2023-06-01',
             },
             body: JSON.stringify({
-                model: 'gpt-4o-mini',
+                model: 'claude-sonnet-4-20250514',
+                max_tokens: 2048,
+                system: prompt,
                 messages: [
-                    { role: 'system', content: prompt },
                     { role: 'user', content: guidanceAction },
                 ],
-                temperature: 0.7,
             }),
         });
 
         const aiData = await aiRes.json();
-        const raw = aiData.choices?.[0]?.message?.content || "";
+        const raw = aiData.content?.[0]?.text || "";
 
         let result;
         try {

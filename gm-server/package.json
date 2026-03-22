@@ -1,0 +1,13 @@
+{
+  "name": "aethelgard-gm-server",
+  "version": "1.0.0",
+  "description": "Local GM server - bridges player AI requests to Claude Code CLI",
+  "type": "module",
+  "scripts": {
+    "start": "node index.mjs",
+    "dev": "node --watch index.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.95.3"
+  }
+}

@@ -1,19 +1,15 @@
 /**
- * DM Assistant Service - Claude Opus Integration
- * Remplace GPT-4o-mini pour une narration de qualité supérieure
+ * DM Assistant Service — Claude Code CLI via Supabase Broker
+ *
+ * Architecture sécurisée :
+ * 1. Le client envoie une requête dans la table ai_requests (Supabase)
+ * 2. Le serveur local du MJ (gm-server/) écoute et traite via Claude Code CLI
+ * 3. La réponse est écrite dans ai_requests, le client la reçoit via Realtime
+ *
+ * → Aucune clé API exposée, tout passe par le forfait Claude Code du MJ
  */
 
-import Anthropic from '@anthropic-ai/sdk';
-import type { Message } from '@anthropic-ai/sdk/resources/messages';
-
-// Types pour Vite environment
-interface ImportMetaEnv {
-  VITE_ANTHROPIC_API_KEY?: string;
-}
-
-interface ImportMeta {
-  env: ImportMetaEnv;
-}
+import { createClient } from '@supabase/supabase-js';
 
 // Types
 export interface NPCParams {
@@ -32,11 +28,7 @@ export interface NPC {
   secrets: string[];
   dialogue_samples: string[];
   quest_hooks: string[];
-  stats?: {
-    hp: number;
-    atk: number;
-    ac: number;
-  };
+  stats?: { hp: number; atk: number; ac: number };
 }
 
 export interface CombatParams {
@@ -48,26 +40,12 @@ export interface CombatParams {
 
 export interface Encounter {
   enemies: Array<{
-    name: string;
-    hp: number;
-    max_hp: number;
-    atk: number;
-    ac: number;
-    id: string;
-    cr: number;
-    abilities?: string[];
+    name: string; hp: number; max_hp: number; atk: number;
+    ac: number; id: string; cr: number; abilities?: string[];
   }>;
-  terrain: {
-    features: string[];
-    ambient: string;
-  };
+  terrain: { features: string[]; ambient: string };
   plot_twist?: string;
-  loot: Array<{
-    item: string;
-    value?: number;
-    use?: string;
-    crafting?: string;
-  }>;
+  loot: Array<{ item: string; value?: number; use?: string; crafting?: string }>;
 }
 
 export interface PlotTwistParams {
@@ -76,308 +54,179 @@ export interface PlotTwistParams {
   partyLevel: number;
 }
 
-// SECURITY TODO: Move this to a Supabase Edge Function.
-// The VITE_ANTHROPIC_API_KEY is exposed in the client bundle.
-// Create supabase/functions/dm-assistant/index.ts to proxy these calls.
+// ============================================================================
+// SERVICE — envoie les requêtes via Supabase, le GM Server répond via Claude CLI
+// ============================================================================
 
-// Configuration
-const ANTHROPIC_API_KEY = (import.meta as any).env.VITE_ANTHROPIC_API_KEY;
-
-if (!ANTHROPIC_API_KEY) {
-  console.warn('⚠️ VITE_ANTHROPIC_API_KEY non configurée - Les fonctionnalités IA du DMPanel sont désactivées.');
-  console.info('💡 Pour activer Claude Opus, ajoutez VITE_ANTHROPIC_API_KEY dans votre fichier .env.local');
-}
+const SUPABASE_URL = (import.meta as any).env?.VITE_SUPABASE_URL || '';
+const SUPABASE_KEY = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || '';
+const REQUEST_TIMEOUT = 60000; // 60s max pour une réponse
 
 class DMAssistant {
-  private client: Anthropic | null = null;
+  private supabase: ReturnType<typeof createClient> | null = null;
   private loreContext: string = '';
+  private available: boolean = false;
 
   constructor() {
-    if (ANTHROPIC_API_KEY) {
-      this.client = new Anthropic({
-        apiKey: ANTHROPIC_API_KEY,
-        dangerouslyAllowBrowser: true, // ⚠️ Pour développement uniquement
-      });
+    if (SUPABASE_URL && SUPABASE_KEY) {
+      this.supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+      this.available = true;
+      console.log('🤖 DM Assistant connecté — Claude Code CLI via GM Server');
+    } else {
+      console.warn('⚠️ DM Assistant désactivé — Supabase non configuré');
     }
   }
 
   /**
-   * Charge le contexte lore en mémoire
+   * Envoie une requête AI et attend la réponse via Realtime
    */
+  private async sendRequest(type: string, payload: any): Promise<any> {
+    if (!this.supabase) throw new Error('DM Assistant non disponible');
+
+    // 1. Insérer la requête
+    const { data: request, error: insertError } = await this.supabase
+      .from('ai_requests')
+      .insert({
+        request_type: type,
+        request_payload: payload,
+        status: 'pending',
+      })
+      .select()
+      .single();
+
+    if (insertError || !request) {
+      throw new Error(`Erreur envoi requête: ${insertError?.message || 'unknown'}`);
+    }
+
+    const requestId = request.id;
+
+    // 2. Attendre la réponse via polling (+ realtime en bonus)
+    return new Promise((resolve, reject) => {
+      const startTime = Date.now();
+      let resolved = false;
+
+      // Subscribe to realtime changes for this specific request
+      const channel = this.supabase!
+        .channel(`ai-response-${requestId}`)
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'ai_requests',
+          filter: `id=eq.${requestId}`,
+        }, (payload: any) => {
+          if (resolved) return;
+          const { status, response_payload, error_message } = payload.new;
+          if (status === 'completed' && response_payload) {
+            resolved = true;
+            channel.unsubscribe();
+            resolve(response_payload);
+          } else if (status === 'error') {
+            resolved = true;
+            channel.unsubscribe();
+            reject(new Error(error_message || 'AI request failed'));
+          }
+        })
+        .subscribe();
+
+      // Fallback polling (au cas où Realtime ne marche pas)
+      const pollInterval = setInterval(async () => {
+        if (resolved) { clearInterval(pollInterval); return; }
+
+        // Timeout check
+        if (Date.now() - startTime > REQUEST_TIMEOUT) {
+          resolved = true;
+          clearInterval(pollInterval);
+          channel.unsubscribe();
+          reject(new Error('Timeout: le GM Server ne répond pas. Vérifiez qu\'il est lancé (cd gm-server && npm start)'));
+          return;
+        }
+
+        const { data } = await this.supabase!
+          .from('ai_requests')
+          .select('status, response_payload, error_message')
+          .eq('id', requestId)
+          .single();
+
+        if (!data || resolved) return;
+
+        if (data.status === 'completed' && data.response_payload) {
+          resolved = true;
+          clearInterval(pollInterval);
+          channel.unsubscribe();
+          resolve(data.response_payload);
+        } else if (data.status === 'error') {
+          resolved = true;
+          clearInterval(pollInterval);
+          channel.unsubscribe();
+          reject(new Error(data.error_message || 'AI request failed'));
+        }
+      }, 2000);
+    });
+  }
+
   async loadLoreContext(lore: any): Promise<void> {
     try {
-      this.loreContext = `
-MONDE AETHELGARD - LORE COMPLET
-
-## LOCATIONS (40 Birth Locations)
-${JSON.stringify(lore.locations || {}, null, 2).slice(0, 15000)}
-
-## CLASSES & COMPÉTENCES
-${JSON.stringify(lore.classes || {}, null, 2).slice(0, 5000)}
-
-## BESTIAIRE
-${JSON.stringify(lore.bestiary || {}, null, 2).slice(0, 10000)}
-
-## FACTIONS
-${JSON.stringify(lore.factions || {}, null, 2).slice(0, 5000)}
-
-## RÈGLES D100
-- Stats: ×2 (max 20)
-- Skills: ×2.5 (max 100)
-- Critique: 95-100 (succès), 1-5 (échec)
-- Combat: d100 vs AC/DC
-      `.trim();
+      this.loreContext = JSON.stringify({
+        locations: lore.locations,
+        classes: lore.classes,
+        factions: lore.factions,
+      }).slice(0, 10000);
     } catch (err) {
       console.error('Erreur chargement lore:', err);
     }
   }
 
-  /**
-   * Génère un NPC contextuel
-   */
   async generateNPC(params: NPCParams): Promise<NPC> {
-    if (!this.client) {
-      throw new Error('Claude API non initialisée - Vérifiez VITE_ANTHROPIC_API_KEY');
-    }
-
-    const prompt = `
-Tu es un expert Game Master pour le système JDR d100 Aethelgard (High Fantasy épique).
-
-**CONTEXTE LORE** :
-${this.loreContext.slice(0, 20000)}
-
-**TÂCHE** : Génère un PNJ pour la location "${params.location}" avec le rôle "${params.role}".
-
-**CONTRAINTES** :
-- Cohérent avec le lore Aethelgard (40 birth locations, factions établies)
-- Personnalité distincte (pas de cliché fade)
-- 2 secrets minimum (1 personnel, 1 lié à une faction/quête)
-- 3 exemples de dialogues (ton, accent, vocabulaire spécifique)
-- 2 quest hooks concrets (pas vagues)
-- Niveau ${params.level || 1} (stats si combattant : HP = niveau×5, ATK = niveau×2.5, AC = 10+niveau)
-
-**FORMAT JSON STRICT** (pas de markdown, juste le JSON) :
-{
-  "name": "Nom Prénom",
-  "age": 35,
-  "appearance": "Description physique 2 phrases (cicatrices, vêtements, posture)",
-  "backstory": "Paragraphe 100-150 mots (origine, motivation, secret majeur implicite)",
-  "secrets": [
-    "Secret personnel exploitable MJ",
-    "Secret lié faction/complot"
-  ],
-  "dialogue_samples": [
-    "« Phrase typique accent local »",
-    "« Réaction stress/menace »",
-    "« Indice subtil secret »"
-  ],
-  "quest_hooks": [
-    "Hook 1: Objectif concret + récompense",
-    "Hook 2: Dilemme moral + conséquence"
-  ],
-  "stats": {
-    "hp": 25,
-    "atk": 6,
-    "ac": 13
-  }
-}
-    `.trim();
-
-    try {
-      const message = await this.client.messages.create({
-        model: 'claude-3-opus-20240229',
-        max_tokens: 2000,
-        temperature: 0.8,
-        messages: [
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-      });
-
-      const content = message.content[0];
-      if (content.type !== 'text') {
-        throw new Error('Réponse Claude invalide');
-      }
-
-      // Extraire JSON (parfois Claude entoure de ```json```)
-      let jsonStr = content.text.trim();
-      if (jsonStr.startsWith('```json')) {
-        jsonStr = jsonStr.replace(/```json\n?/g, '').replace(/```\n?$/g, '');
-      } else if (jsonStr.startsWith('```')) {
-        jsonStr = jsonStr.replace(/```\n?/g, '').replace(/```\n?$/g, '');
-      }
-
-      const npc = JSON.parse(jsonStr);
-      console.log('✅ NPC généré:', npc.name);
-      return npc;
-    } catch (err: any) {
-      console.error('❌ Erreur génération NPC:', err);
-      throw new Error(`Échec génération NPC: ${err.message}`);
-    }
+    const result = await this.sendRequest('npc-gen', {
+      message: `Génère un PNJ pour "${params.location}", rôle "${params.role}", niveau ${params.level || 1}. Lore: ${this.loreContext.slice(0, 5000)}`,
+      ...params,
+    });
+    console.log('✅ NPC généré:', result.name);
+    return result;
   }
 
-  /**
-   * Génère un combat improvisé contextuel
-   */
   async improveCombat(params: CombatParams): Promise<Encounter> {
-    if (!this.client) {
-      throw new Error('Claude API non initialisée');
-    }
-
-    const avgLevel = Math.round(
-      params.party.reduce((sum, p) => sum + p.level, 0) / params.party.length
-    );
-
-    const difficultyMultipliers = {
-      easy: 0.5,
-      medium: 1.0,
-      hard: 1.5,
-      deadly: 2.0,
-    };
-
-    const multiplier = difficultyMultipliers[params.difficulty];
-
-    const prompt = `
-Tu es Game Master expert système d100 Aethelgard.
-
-**GROUPE** :
-${params.party.map((p) => `- ${p.name} (${p.class} Niv.${p.level})`).join('\n')}
-Niveau moyen: ${avgLevel}
-
-**LOCATION** : ${params.location}
-**DIFFICULTÉ** : ${params.difficulty}
-**CONTEXTE** : ${params.narrative_context || 'Combat standard'}
-
-**LORE BESTIAIRE** :
-${this.loreContext.slice(15000, 25000)}
-
-**TÂCHE** : Crée une rencontre de combat équilibrée d100.
-
-**FORMULE ÉQUILIBRAGE** :
-- HP ennemi = (avgLevel × 5) × ${multiplier}
-- ATK ennemi = (avgLevel × 2.5) × ${multiplier}
-- AC ennemi = 10 + avgLevel + Math.floor(${multiplier})
-- Nombre ennemis : ${params.difficulty === 'easy' ? '1-2' : params.difficulty === 'medium' ? '2-3' : params.difficulty === 'hard' ? '3-4' : '4-6'}
-
-**TERRAIN** : 3-5 éléments tactiques (cover, hazard, avantage)
-
-**PLOT TWIST** : 30% chance (si contexte narratif riche)
-
-**FORMAT JSON STRICT** :
-{
-  "enemies": [
-    {
-      "name": "Nom Créature",
-      "hp": 50,
-      "max_hp": 50,
-      "atk": 12,
-      "ac": 15,
-      "id": "e1",
-      "cr": 3,
-      "abilities": ["Capacité spéciale 1", "Capacité 2"]
-    }
-  ],
-  "terrain": {
-    "features": ["Élément 1 (mécanique)", "Élément 2", "Élément 3"],
-    "ambient": "Description ambiance 1 phrase (lumière, sons, odeurs)"
-  },
-  "plot_twist": "Twist narratif optionnel ou null",
-  "loot": [
-    { "item": "Objet 1", "value": 100, "use": "Usage pratique" },
-    { "item": "Objet 2", "crafting": "Craft composant X" }
-  ]
-}
-    `.trim();
-
-    try {
-      const message = await this.client.messages.create({
-        model: 'claude-3-opus-20240229',
-        max_tokens: 1500,
-        temperature: 0.7,
-        messages: [{ role: 'user', content: prompt }],
-      });
-
-      const content = message.content[0];
-      if (content.type !== 'text') throw new Error('Réponse invalide');
-
-      let jsonStr = content.text.trim();
-      if (jsonStr.startsWith('```json')) {
-        jsonStr = jsonStr.replace(/```json\n?/g, '').replace(/```\n?$/g, '');
-      } else if (jsonStr.startsWith('```')) {
-        jsonStr = jsonStr.replace(/```\n?/g, '').replace(/```\n?$/g, '');
-      }
-
-      const encounter = JSON.parse(jsonStr);
-      console.log('✅ Combat généré:', encounter.enemies.length, 'ennemis');
-      return encounter;
-    } catch (err: any) {
-      console.error('❌ Erreur génération combat:', err);
-      throw new Error(`Échec génération combat: ${err.message}`);
-    }
+    const result = await this.sendRequest('combat-gen', {
+      message: `Crée un combat ${params.difficulty} à ${params.location} pour: ${params.party.map(p => `${p.name} (${p.class} Niv.${p.level})`).join(', ')}. Contexte: ${params.narrative_context || 'standard'}`,
+      ...params,
+    });
+    console.log('✅ Combat généré:', result.enemies?.length, 'ennemis');
+    return result;
   }
 
-  /**
-   * Suggère un plot twist dramatique
-   */
   async suggestPlotTwist(params: PlotTwistParams): Promise<string> {
-    if (!this.client) {
-      throw new Error('Claude API non initialisée');
-    }
+    const result = await this.sendRequest('plot-twist', {
+      message: `Contexte: ${params.context}. Événements: ${params.recentEvents.join(', ')}. Niveau: ${params.partyLevel}`,
+      ...params,
+    });
+    return result.narrative || result;
+  }
 
-    const prompt = `
-Tu es Game Master créatif système d100 Aethelgard.
-
-**CONTEXTE ACTUEL** :
-${params.context}
-
-**ÉVÉNEMENTS RÉCENTS** :
-${params.recentEvents.join('\n')}
-
-**NIVEAU GROUPE** : ${params.partyLevel}
-
-**LORE FACTIONS** :
-${this.loreContext.slice(25000, 30000)}
-
-**TÂCHE** : Suggère 1 PLOT TWIST impactant qui :
-- Révèle un secret caché
-- Change la perception d'un PNJ/faction
-- Crée un dilemme moral difficile
-- Connecte à un élément lore Aethelgard
-
-**FORMAT** : 2-3 phrases concises, pas de markdown.
-
-EXEMPLE : "Le marchand que vous venez de sauver retire discrètement son déguisement—c'est en réalité l'assassin recherché par la Guilde. Il vous supplie : « Ils ont enlevé ma fille... J'ai dû obéir. » Que faites-vous ?"
-    `.trim();
-
-    try {
-      const message = await this.client.messages.create({
-        model: 'claude-3-opus-20240229',
-        max_tokens: 300,
-        temperature: 0.9,
-        messages: [{ role: 'user', content: prompt }],
-      });
-
-      const content = message.content[0];
-      if (content.type !== 'text') throw new Error('Réponse invalide');
-
-      const twist = content.text.trim();
-      console.log('✅ Plot twist généré');
-      return twist;
-    } catch (err: any) {
-      console.error('❌ Erreur génération plot twist:', err);
-      throw new Error(`Échec génération twist: ${err.message}`);
-    }
+  async chat(userMessage: string): Promise<string> {
+    const result = await this.sendRequest('chat', {
+      message: userMessage,
+      loreContext: this.loreContext.slice(0, 5000),
+    });
+    return result.narrative || (typeof result === 'string' ? result : JSON.stringify(result));
   }
 
   /**
-   * Vérifie si l'API est disponible
+   * Envoie une action joueur au Game Master AI
    */
+  async processPlayerAction(sessionId: string, playerId: string, action: string, history: any[] = [], lore: any = {}): Promise<any> {
+    const result = await this.sendRequest('game-master', {
+      message: action,
+      sessionId,
+      playerId,
+      history: history.slice(-10), // Derniers 10 messages
+      lore: typeof lore === 'string' ? lore : JSON.stringify(lore).slice(0, 8000),
+    });
+    return result;
+  }
+
   isAvailable(): boolean {
-    return this.client !== null;
+    return this.available;
   }
 }
 
-// Instance singleton
 export const dmAssistant = new DMAssistant();
