@@ -38,7 +38,7 @@ export class MerchantHandler {
 
   handleBuy(entities, context, merchant) {
     const item = entities.items[0] || entities.targets[0];
-    
+
     if (!item) {
       return {
         text: "Que veux-tu acheter ? Utilise `/achat` pour voir le catalogue.",
@@ -47,8 +47,11 @@ export class MerchantHandler {
       };
     }
 
-    // Simuler un prix
-    const price = this.getItemPrice(item);
+    // Dynamic pricing: rarity + level scaling + CHA discount
+    const itemRarity = entities.rarity || this.detectRarity(item);
+    const playerLevel = context.player?.level || 1;
+    const playerCha = context.player?.stats?.cha || 10;
+    const price = this.getDynamicPrice(item, itemRarity, playerLevel, playerCha);
     const playerGold = context.player?.gold || 0;
 
     if (playerGold < price) {
@@ -71,7 +74,7 @@ export class MerchantHandler {
 
   handleSell(entities, context, merchant) {
     const item = entities.items[0] || entities.targets[0];
-    
+
     if (!item) {
       return {
         text: "Que veux-tu vendre ?",
@@ -80,7 +83,11 @@ export class MerchantHandler {
       };
     }
 
-    const price = Math.floor(this.getItemPrice(item) * 0.5); // 50% du prix d'achat
+    const itemRarity = entities.rarity || this.detectRarity(item);
+    const playerLevel = context.player?.level || 1;
+    const playerCha = context.player?.stats?.cha || 10;
+    const buyPrice = this.getDynamicPrice(item, itemRarity, playerLevel, playerCha);
+    const price = Math.floor(buyPrice * 0.5); // 50% du prix d'achat
 
     return {
       text: `${merchant.name} : "Je peux t'en donner ${price} po."\n\n💰 +${price} po\n📦 -1 ${item}`,
@@ -92,18 +99,43 @@ export class MerchantHandler {
     };
   }
 
-  getItemPrice(item) {
-    const prices = {
-      'potion': 10,
-      'épée': 50,
-      'armure': 100,
-      'bouclier': 40,
-      'arc': 30,
-      'flèche': 1,
-      'pain': 2,
-      'viande': 5
-    };
-    return prices[item] || 20;
+  // ─── Dynamic Pricing by Rarity + Level Scaling + CHA Discount ─────────
+
+  static RARITY_PRICE_RANGES = {
+    common:    { min: 5,   max: 20 },
+    uncommon:  { min: 20,  max: 50 },
+    rare:      { min: 50,  max: 150 },
+    epic:      { min: 150, max: 400 },
+    legendary: { min: 400, max: 1000 },
+  };
+
+  getDynamicPrice(item, rarity, playerLevel, playerCha) {
+    const range = MerchantHandler.RARITY_PRICE_RANGES[rarity] || MerchantHandler.RARITY_PRICE_RANGES.common;
+
+    // Base price: midpoint of rarity range
+    let basePrice = Math.floor((range.min + range.max) / 2);
+
+    // Level scaling: multiply by (1 + playerLevel * 0.1)
+    basePrice = Math.floor(basePrice * (1 + playerLevel * 0.1));
+
+    // CHA discount: -1% per CHA point above 10, +1% per point below 10
+    const chaModifier = playerCha - 10;
+    const chaDiscount = 1 - (chaModifier * 0.01);
+    basePrice = Math.max(1, Math.floor(basePrice * chaDiscount));
+
+    // Clamp within scaled range
+    const scaledMin = Math.floor(range.min * (1 + playerLevel * 0.1));
+    const scaledMax = Math.floor(range.max * (1 + playerLevel * 0.1));
+    return Math.max(scaledMin, Math.min(scaledMax, basePrice));
+  }
+
+  detectRarity(itemName) {
+    const name = (itemName || '').toLowerCase();
+    if (name.includes('légendaire') || name.includes('legendary') || name.includes('scellé') || name.includes('divin')) return 'legendary';
+    if (name.includes('épique') || name.includes('epic') || name.includes('céleste') || name.includes('mithril')) return 'epic';
+    if (name.includes('rare') || name.includes('enchanté') || name.includes('acier') || name.includes('adamantine')) return 'rare';
+    if (name.includes('uncommon') || name.includes('fer') || name.includes('cuir') || name.includes('épée') || name.includes('armure') || name.includes('bouclier') || name.includes('arc')) return 'uncommon';
+    return 'common';
   }
 }
 

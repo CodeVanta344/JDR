@@ -48,6 +48,7 @@ import { computeExperienceGain, applyStatBoosts, deduplicateAbilities } from './
 import { processAIResponse } from './managers/aiResponseProcessor';
 import { isDuplicateNarrative } from './managers/narrativeDedup';
 import { buildCombatEndHandler, buildMerchantCloseHandler, buildSaveGameHandler } from './managers/gameCallbacks';
+import { generateLoot, calculateCombatXP } from './lore/loot-tables';
 import { PWAUpdateNotification } from './components/PWAUpdateNotification';
 import { useGMEngine } from './hooks/useGMEngine';
 
@@ -1153,6 +1154,38 @@ export default function App({ user }) {
             setCharacter(prev => ({ ...prev, xp: result.newXp }));
         }
     };
+
+    // ─── Combat Rewards (loot tables + XP) ────────────────────────────────
+    const handleCombatRewards = useCallback(async (defeatedEnemies) => {
+        if (!character?.id || !defeatedEnemies?.length) return;
+
+        // Generate loot from deterministic tables
+        const enemies = defeatedEnemies.map(e => ({
+            cr: e.cr || e.challenge_rating || 1,
+            name: e.name || 'Ennemi'
+        }));
+        const loot = generateLoot(enemies);
+
+        // Add gold via Supabase
+        const newGold = (character.gold || 0) + loot.gold;
+        await supabase.from('players').update({ gold: newGold }).eq('id', character.id);
+        setCharacter(prev => ({ ...prev, gold: newGold }));
+
+        // Calculate and award XP (CR x 50 per enemy)
+        const xpGained = calculateCombatXP(enemies);
+        if (xpGained > 0) {
+            await handleExperienceGain(xpGained, `Victoire contre ${enemies.map(e => e.name).join(', ')}`);
+        }
+
+        // Show loot modal if there are items or gold
+        if (loot.gold > 0 || loot.items.length > 0) {
+            setActiveLoot({
+                gold: loot.gold,
+                items: loot.items,
+                source: enemies.map(e => e.name).join(', ')
+            });
+        }
+    }, [character, handleExperienceGain, setActiveLoot]);
 
     const handleConfirmTransaction = async (approved) => {
         if (!pendingTransaction || !character) return;
