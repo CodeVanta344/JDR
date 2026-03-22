@@ -732,18 +732,17 @@ button {
 
 /* --- CREATION SCREEN --- */
 .creation-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    position: fixed;
+    inset: 0;
     min-height: 100vh;
-    z-index: 1000;
+    z-index: 10000;
     background: #000;
     overflow-y: auto;
     padding: 2rem 0 8rem 0;
     display: flex;
     flex-direction: column;
+    align-items: center;
+    justify-content: center;
     align-items: center;
 }
 
