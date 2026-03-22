@@ -2310,7 +2310,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
 
             {character?.class && (
                 <main className="hud-layout">
-                    <SceneBackground currentImage={sceneImage} />
+                    {!combatMode && <SceneBackground currentImage={sceneImage} />}
 
                     <Suspense fallback={LAZY_FALLBACK}>
                     <CharacterSheet
