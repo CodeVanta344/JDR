@@ -4,8 +4,9 @@
 /* Responsive scaling with CSS variables */
 
 .session-hub-container {
-    min-height: 100vh;
-    min-height: 100dvh; /* Dynamic viewport height for mobile */
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -13,15 +14,13 @@
     background:
         linear-gradient(rgba(10, 10, 15, 0.4), rgba(10, 10, 15, 0.7)),
         url('/aethelgard_map_menu.jpg');
-    background-size: cover; /* Changed to cover for better scaling */
+    background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
     background-attachment: fixed;
     background-color: transparent;
-    padding: calc(1.5rem * var(--ui-scale, 1)) calc(1rem * var(--ui-scale, 1)) calc(4rem * var(--ui-scale, 1));
-    overflow-x: hidden;
+    padding: 2rem;
     overflow-y: auto;
-    position: relative; /* For proper centering context */
 }
 
 /* Hub header - center content */
