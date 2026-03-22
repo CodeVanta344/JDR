@@ -17,6 +17,10 @@ export function usePWAUpdate() {
             swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
             setUpdatePending(true);
         }
+        // Fallback: force reload after a short delay if SW doesn't respond
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
     }, []);
 
     useEffect(() => {
