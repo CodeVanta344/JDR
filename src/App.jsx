@@ -2076,7 +2076,6 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                     onCreate={handleCharacterCreate}
                     onBack={handleLeaveSession}
                     onQuickStart={handleCharacterQuickStart}
-                    generateImage={generateImage}
                     sessionId={session.id}
                 />
                 </Suspense>

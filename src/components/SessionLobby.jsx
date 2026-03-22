@@ -179,47 +179,6 @@ export function SessionLobby({ onJoin, onCreate, onQuickStart, onSoloAdventure, 
                                 ⚡ {loading ? '...' : 'DEBUG: QUICK START'}
                             </button>
 
-                            {onOpenDMPanel && (
-                                <button
-                                    className="btn-medieval"
-                                    style={{
-                                        width: '100%',
-                                        padding: '0.8rem',
-                                        marginTop: '1rem',
-                                        background: 'rgba(212, 175, 55, 0.1)',
-                                        border: '1px solid rgba(212, 175, 55, 0.4)',
-                                        color: '#d4af37',
-                                        fontSize: '0.85rem',
-                                        fontWeight: 'bold',
-                                        letterSpacing: '2px',
-                                        boxShadow: '0 0 15px rgba(212, 175, 55, 0.15)'
-                                    }}
-                                    onClick={onOpenDMPanel}
-                                >
-                                    🎭 INTERFACE MJ (CLAUDE OPUS)
-                                </button>
-                            )}
-
-                            {onOpenCodex && (
-                                <button
-                                    className="btn-medieval"
-                                    style={{
-                                        width: '100%',
-                                        padding: '0.8rem',
-                                        marginTop: '0.5rem',
-                                        background: 'rgba(147, 112, 219, 0.1)',
-                                        border: '1px solid rgba(147, 112, 219, 0.4)',
-                                        color: '#9370db',
-                                        fontSize: '0.85rem',
-                                        fontWeight: 'bold',
-                                        letterSpacing: '2px',
-                                        boxShadow: '0 0 15px rgba(147, 112, 219, 0.15)'
-                                    }}
-                                    onClick={onOpenCodex}
-                                >
-                                    📖 CODEX D'AETHELGARD
-                                </button>
-                            )}
                         </div>
 
                         <div className="glass-panel" style={{
@@ -471,6 +430,71 @@ export function SessionLobby({ onJoin, onCreate, onQuickStart, onSoloAdventure, 
                         </div>
                     )}
                 </main>
+
+                {/* Section JDR Papier / Outils MJ */}
+                {(onOpenDMPanel || onOpenCodex) && (
+                    <section style={{
+                        marginTop: '3rem',
+                        width: '100%',
+                        maxWidth: '900px',
+                        textAlign: 'center'
+                    }}>
+                        <div style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            gap: '1rem', marginBottom: '1.5rem'
+                        }}>
+                            <div style={{ flex: 1, maxWidth: '120px', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(147, 112, 219, 0.3))' }} />
+                            <span style={{ fontSize: '0.7rem', letterSpacing: '3px', color: 'rgba(147, 112, 219, 0.6)', fontWeight: 'bold' }}>
+                                VERSION PAPIER & OUTILS MJ
+                            </span>
+                            <div style={{ flex: 1, maxWidth: '120px', height: '1px', background: 'linear-gradient(90deg, rgba(147, 112, 219, 0.3), transparent)' }} />
+                        </div>
+
+                        <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)', marginBottom: '1.5rem', maxWidth: '500px', margin: '0 auto 1.5rem' }}>
+                            Outils pour jouer Aethelgard autour d'une table avec des dés et du papier.
+                        </p>
+
+                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                            {onOpenDMPanel && (
+                                <button
+                                    className="btn-medieval"
+                                    style={{
+                                        padding: '0.8rem 2rem',
+                                        background: 'rgba(212, 175, 55, 0.08)',
+                                        border: '1px solid rgba(212, 175, 55, 0.3)',
+                                        color: '#d4af37',
+                                        fontSize: '0.8rem',
+                                        fontWeight: 'bold',
+                                        letterSpacing: '2px',
+                                        borderRadius: '6px'
+                                    }}
+                                    onClick={onOpenDMPanel}
+                                >
+                                    🎭 LIVRE DU MJ
+                                </button>
+                            )}
+
+                            {onOpenCodex && (
+                                <button
+                                    className="btn-medieval"
+                                    style={{
+                                        padding: '0.8rem 2rem',
+                                        background: 'rgba(147, 112, 219, 0.08)',
+                                        border: '1px solid rgba(147, 112, 219, 0.3)',
+                                        color: '#9370db',
+                                        fontSize: '0.8rem',
+                                        fontWeight: 'bold',
+                                        letterSpacing: '2px',
+                                        borderRadius: '6px'
+                                    }}
+                                    onClick={onOpenCodex}
+                                >
+                                    📖 CODEX D'AETHELGARD
+                                </button>
+                            )}
+                        </div>
+                    </section>
+                )}
 
                 <footer style={{
                     marginTop: '5rem',
