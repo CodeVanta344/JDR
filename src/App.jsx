@@ -795,8 +795,32 @@ export default function App({ user }) {
         // Initial fetch to populate state
         fetchData();
 
+        // Fallback polling: if Realtime fails, poll players every 3s
+        const pollInterval = setInterval(async () => {
+            if (!session?.id) return;
+            const { data: freshPlayers } = await supabase
+                .from('players')
+                .select('*')
+                .eq('session_id', session.id);
+            if (freshPlayers && freshPlayers.length > 0) {
+                setPlayers(prev => {
+                    if (JSON.stringify(prev) === JSON.stringify(freshPlayers)) return prev;
+                    return freshPlayers;
+                });
+                // Update own character
+                const me = freshPlayers.find(p => p.user_id === profile?.id);
+                if (me) {
+                    setCharacter(prev => {
+                        if (JSON.stringify(prev) === JSON.stringify(me)) return prev;
+                        return me;
+                    });
+                }
+            }
+        }, 3000);
+
         return () => {
             supabase.removeChannel(channel);
+            clearInterval(pollInterval);
         };
     }, [session?.id, profile?.id, fetchData, setSession, setAdventureStarted]);
 
