@@ -58,6 +58,33 @@ const STARTING_LOCKS = new Set();
 
 // Route AI calls via Supabase ai_requests broker (VPS with Claude CLI)
 // Falls back to edge function if broker fails
+// Parse GM response — handles raw JSON strings, ```json blocks, nested objects
+function parseGMResponse(raw) {
+    if (!raw) return raw;
+    // Already a proper object with narrative
+    if (typeof raw === 'object' && raw.narrative) return raw;
+    // String that needs parsing
+    if (typeof raw === 'string') {
+        // Strip ```json ... ``` blocks
+        let cleaned = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+        try {
+            const parsed = JSON.parse(cleaned);
+            return parsed;
+        } catch {
+            // Not valid JSON — treat as plain narrative text
+            return { narrative: cleaned };
+        }
+    }
+    // Object without narrative — try to extract it
+    if (typeof raw === 'object') {
+        if (raw.text) return { ...raw, narrative: raw.text };
+        if (raw.content) return { ...raw, narrative: raw.content };
+        if (raw.message) return { ...raw, narrative: raw.message };
+        if (raw.response) return { ...raw, narrative: typeof raw.response === 'string' ? raw.response : JSON.stringify(raw.response) };
+    }
+    return raw;
+}
+
 async function invokeGM(supabaseClient, body) {
     try {
         // 1. Insert request into ai_requests table
@@ -84,7 +111,7 @@ async function invokeGM(supabaseClient, body) {
                 .single();
 
             if (updated?.status === 'completed' && updated.response_payload) {
-                return { data: updated.response_payload };
+                return { data: parseGMResponse(updated.response_payload) };
             }
             if (updated?.status === 'error') {
                 throw new Error(updated.error_message || 'AI error');

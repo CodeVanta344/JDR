@@ -57,6 +57,14 @@ export const NarrationPanel = ({
             return null;
         }
 
+        // Strip "RÉCIT DU MJ" prefix if present
+        raw = raw.replace(/^RÉCIT\s*DU\s*MJ\s*/i, '').replace(/^RECIT\s*DU\s*MJ\s*/i, '').trim();
+
+        // Strip ```json blocks at the start
+        if (raw.startsWith('```')) {
+            raw = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+        }
+
         // Not JSON? Return as-is
         if (!raw.trim().startsWith('{') && !raw.trim().startsWith('[')) {
             return raw;
