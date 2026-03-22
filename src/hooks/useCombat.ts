@@ -52,7 +52,7 @@ export const useCombat = ({
     enemies: Array<{ type: string; count?: number }>,
     arenaConfig: ArenaConfig = { blocksX: 10, blocksY: 10, shapeType: 'STANDARD' }
   ) => {
-    const allCreatures = { ...BESTIARY, ...BESTIARY_EXTENDED };
+    const allCreatures: Record<string, any> = { ...BESTIARY, ...BESTIARY_EXTENDED };
     const occupiedPositions = new Set<string>();
     
     const getUniquePosition = (isEnemy: boolean): { x: number; y: number } => {
@@ -106,8 +106,8 @@ export const useCombat = ({
 
     const enemyCombatants: Combatant[] = [];
     enemies.forEach(enemy => {
-      const creatureData = allCreatures[enemy.type];
-      if (!creatureData) return;
+      const creatureData = allCreatures[enemy.type] as Record<string, any> | undefined;
+      if (!creatureData?.stats) return;
 
       const count = enemy.count || 1;
       for (let i = 0; i < count; i++) {
@@ -271,16 +271,16 @@ export const useCombat = ({
       const totalGold = Math.floor(Math.random() * 50) + 20;
       
       // Générer le butin des ennemis vaincus
-      const allCreatures = { ...BESTIARY, ...BESTIARY_EXTENDED };
+      const allCreaturesLoot: Record<string, any> = { ...BESTIARY, ...BESTIARY_EXTENDED };
       const allLoot: any[] = [];
-      
+
       defeatedEnemies.forEach(enemy => {
         // Extraire le type de créature de l'ID (enemy_type_index_timestamp)
         const typeMatch = enemy.id.match(/enemy_(.+?)_\d+_\d+/);
         if (typeMatch) {
           const creatureType = typeMatch[1];
-          const creatureData = allCreatures[creatureType as keyof typeof allCreatures];
-          if (creatureData && creatureData.loot) {
+          const creatureData = allCreaturesLoot[creatureType];
+          if (creatureData?.loot) {
             const loot = gatheringSystem.generateCreatureLoot(
               creatureData.name,
               creatureData.loot,

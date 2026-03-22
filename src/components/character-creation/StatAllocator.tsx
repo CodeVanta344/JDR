@@ -6,9 +6,9 @@ type StatKey = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha';
 type Mode = 'standard' | 'pointbuy' | 'roll';
 
 interface StatAllocatorProps {
-  lifepathBonuses: Record<string, number>;
-  onStatsChange: (stats: Record<string, number>) => void;
-  classRecommendation?: { major: string[]; minor: string[] };
+  lifepathBonuses: Partial<Record<StatKey, number>>;
+  onStatsChange: (stats: Record<StatKey, number>) => void;
+  classRecommendation?: { major: StatKey[]; minor: StatKey[] };
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────────

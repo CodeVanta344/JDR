@@ -3413,4 +3413,4 @@ export const NPC_DIALOGUES_ACT1_2: NPCDialogueTree[] = [
   PROSPERO_DIALOGUES
 ];
 
-export type { DialogueEntry, DialogueTone, DialogueCondition, PlayerResponseOption, NPCDialogueTree };
+export type { DialogueTone, DialogueCondition, PlayerResponseOption, NPCDialogueTree };

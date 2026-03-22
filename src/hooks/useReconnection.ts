@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { supabase } from '../supabase';
+import { supabase } from '../supabaseClient';
 import { useGameStore } from '../store/gameStore';
 
 interface UseReconnectionOptions {

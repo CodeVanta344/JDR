@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
-import { supabase } from '../supabase';
+import { supabase } from '../supabaseClient';
 import { useGameStore } from '../store/gameStore';
 import type { Message } from '../types';
 
