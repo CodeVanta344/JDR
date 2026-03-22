@@ -9,7 +9,8 @@ export const SceneBackground = ({ currentImage }) => {
     const fallbackImage = null; // No external fallback — use CSS gradient
 
     useEffect(() => {
-        let rawImage = currentImage || fallbackImage;
+        let rawImage = currentImage;
+        if (!rawImage) return; // No image to show
 
         // Robust URL Processing
         let nextImage;
