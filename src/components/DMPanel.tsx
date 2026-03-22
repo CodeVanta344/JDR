@@ -893,6 +893,37 @@ export function DMPanel({ isOpen, onClose, gameState, onSpawnNPC, onTriggerComba
                     <div ref={chatEndRef} />
                   </div>
                 </div>
+
+                {/* Reset Book */}
+                <div className="tool-panel" style={{ borderColor: 'rgba(220, 50, 50, 0.3)' }}>
+                  <h3 style={{ color: '#dc3232' }}>Reinitialiser le Livre</h3>
+                  <p style={{ color: '#999', fontSize: '0.8rem', margin: '0.5rem 0' }}>
+                    Remet a zero tous les choix, la reputation des factions, les notes de session, et le journal. Le livre revient a son etat initial.
+                  </p>
+                  <button
+                    className="dm-action-btn"
+                    style={{ background: 'rgba(220,50,50,0.15)', border: '1px solid rgba(220,50,50,0.4)', color: '#ff6b6b', width: '100%' }}
+                    onClick={() => {
+                      if (confirm('Reinitialiser TOUT le Livre du MJ ?\n\nCela effacera :\n- Tous les choix appliques\n- La reputation des factions\n- Les notes de session\n- Le journal de session\n- Le tutoriel (il se relancera)\n\nCette action est irreversible.')) {
+                        setChoiceHistory([]);
+                        setFactionReputation({});
+                        setSessionNotes([]);
+                        setChatMessages([]);
+                        setCurrentSceneIndex(0);
+                        setCurrentChapterIndex(0);
+                        setCurrentActIndex(0);
+                        setVisitedScenes(new Set());
+                        localStorage.removeItem('dm-choice-history');
+                        localStorage.removeItem('dm-faction-rep');
+                        localStorage.removeItem('dm-session-notes');
+                        localStorage.removeItem('aethelgard-gm-tutorial-seen');
+                        alert('Livre reinitialise avec succes !');
+                      }
+                    }}
+                  >
+                    Tout reinitialiser
+                  </button>
+                </div>
               </div>
             </div>
           )}
