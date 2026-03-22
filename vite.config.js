@@ -69,6 +69,9 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 15 * 1024 * 1024, // 15 MB
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
         globIgnores: ['**/maps/*_combat_map.png'], // Exclude large combat maps from precaching
+        navigateFallback: null, // Don't cache navigation requests
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/[^.]+\.supabase\.co/,
