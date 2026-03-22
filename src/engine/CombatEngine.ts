@@ -9,6 +9,7 @@
 
 import { getModifier, rollDice, calculateAC, getProficiencyBonus } from '../lore/rules';
 import { resolveAttackDice, resolveDamageDice, resolveDamageCap, getDiceTierForLevel } from '../utils/combat-progression';
+import { getSneakAttackDice, getIntimidationBonus } from './SkillResolver';
 import type {
   Combatant, CombatAbility, CombatContext, CombatModifier,
   AttackResult, DamageResult, DamageBreakdown, ValidationResult,
@@ -217,9 +218,22 @@ export function resolveAttack(
   target: Combatant,
   action: CombatAbility,
   context?: CombatContext
-): AttackResult {
+): AttackResult & { perceptionLog?: string } {
+  const log: string[] = [];
   const level = attacker.level || 1;
   const modifiers: CombatModifier[] = [];
+
+  // 0. WIS Perception check: defender tries to detect hidden/stealthed attacker
+  if (attacker.isHidden || action.isFromStealth) {
+    const wisMod = getModifier(target.wis || 10);
+    const detectDC = 50 - wisMod;
+    const detectRoll = Math.floor(Math.random() * 100) + 1;
+    if (detectRoll <= detectDC) {
+      // Detected! No surprise bonus
+      attacker.isHidden = false;
+      log.push(`${target.name} détecte ${attacker.name} ! (Perception WIS: ${detectRoll}/${detectDC})`);
+    }
+  }
 
   // 1. Dé d'attaque de base (progression par niveau)
   const { dice: attackDice, tier, prioritized } = resolveAttackDice({ level, action, attacker });
@@ -280,8 +294,10 @@ export function resolveAttack(
     modifiers.push({ source: 'status:feared', type: 'attack', value: -5 });
   }
 
-  // 10. CHA leadership bonus (adjacent ally bonus)
-  // Checked in a separate function when processing ally turns
+  // 10. CHA leadership bonus (tempAttackBonus applied via applyLeadershipBonus at round start)
+  if (attacker.tempAttackBonus && attacker.tempAttackBonus > 0) {
+    modifiers.push({ source: 'leadership:cha', type: 'attack', value: attacker.tempAttackBonus });
+  }
 
   // 11. Terrain bonus (elevated = +2 ranged)
   if (context?.terrain && isRangedAction(action)) {
@@ -330,6 +346,7 @@ export function resolveAttack(
     isPrioritized: prioritized,
     modifierBreakdown: modifiers,
     dodged,
+    perceptionLog: log.length > 0 ? log.join('\n') : undefined,
   };
 }
 
@@ -365,6 +382,15 @@ export function resolveDamage(
   let bonusDiceTotal = 0;
   if (attacker.bonus_dice_damage) {
     bonusDiceTotal = rollDice(attacker.bonus_dice_damage).total;
+  }
+
+  // 4b. Sneak attack dice from Stealth skill (SkillResolver)
+  let sneakDamage = 0;
+  const sneakDice = getSneakAttackDice(attacker);
+  if (sneakDice && (attacker.isHidden || action.isFromStealth)) {
+    sneakDamage = rollDice(sneakDice).total;
+    bonusDiceTotal += sneakDamage;
+    // Log handled by caller: `Attaque sournoise ! +${sneakDamage} dégâts (${sneakDice})`
   }
 
   // 5. Action bonus
@@ -452,6 +478,7 @@ export function resolveDamage(
     isCritical: attackResult.isCritical,
     resistanceApplied,
     breakdown,
+    sneakAttackLog: sneakDamage > 0 ? `Attaque sournoise ! +${sneakDamage} dégâts (${sneakDice})` : undefined,
   };
 }
 
@@ -472,20 +499,32 @@ export function applyDamage(
   concentrationBroken: boolean;
   statusApplied: StatusEffect | null;
   isDead: boolean;
+  combatLog: string[];
 } {
   const updatedTarget = { ...target };
   updatedTarget.hp = Math.max(0, updatedTarget.hp - damageResult.damage);
   const isDead = updatedTarget.hp <= 0;
   if (isDead) updatedTarget.isAlive = false;
 
-  // Concentration check (CON save, DC = max(10, damage/2))
+  // Concentration check (CON save, DC adjusted by CON modifier)
   let concentrationBroken = false;
+  let concentrationLog: string | undefined;
   if (updatedTarget.concentratingOn && damageResult.damage > 0) {
-    const dc = Math.max(10, Math.floor(damageResult.damage / 2));
-    const save = rollSave(updatedTarget, dc, 'con');
-    if (!save.success) {
+    const conMod = getModifier(updatedTarget.con || 10);
+    const concentrationDC = Math.max(30, Math.floor(damageResult.damage / 2));
+    const saveRoll = Math.floor(Math.random() * 100) + 1;
+    const adjustedDC = concentrationDC - (conMod * 5);
+    if (saveRoll > adjustedDC) {
+      // Lost concentration
       concentrationBroken = true;
       updatedTarget.concentratingOn = undefined;
+      // Also remove concentration-tagged active effects
+      if (updatedTarget.statusEffects) {
+        updatedTarget.statusEffects = updatedTarget.statusEffects.filter(e => !e.type.includes('shielded') && !e.type.includes('regenerating'));
+      }
+      concentrationLog = `${updatedTarget.name} perd sa concentration ! (CON: ${saveRoll}/${adjustedDC})`;
+    } else {
+      concentrationLog = `${updatedTarget.name} maintient sa concentration (CON: ${saveRoll}/${adjustedDC})`;
     }
   }
 
@@ -497,6 +536,19 @@ export function applyDamage(
     if (action.statusEffect.saveStat && action.statusEffect.saveDC) {
       const save = rollSave(updatedTarget, action.statusEffect.saveDC, action.statusEffect.saveStat);
       if (save.success) applyStatus = false;
+    }
+    // WIS willpower save vs mental effects (fear/charm/confusion/domination)
+    if (applyStatus && ['feared', 'charmed', 'confused', 'dominated'].includes(action.statusEffect.type)) {
+      const saveDC = action.statusEffect.saveDC || 50;
+      const wisMod = getModifier(updatedTarget.wis || 10);
+      const saveRoll = Math.floor(Math.random() * 100) + 1;
+      const adjustedDC = saveDC - (wisMod * 5); // WIS reduces DC
+      if (saveRoll <= adjustedDC) {
+        applyStatus = false;
+        // Log stored in wisResistLog for caller
+        (updatedTarget as Record<string, unknown>)._wisResistLog =
+          `${updatedTarget.name} résiste à ${action.statusEffect.type} ! (Volonté WIS: ${saveRoll}/${adjustedDC})`;
+      }
     }
     if (applyStatus) {
       statusApplied = createStatusEffect(
@@ -522,7 +574,45 @@ export function applyDamage(
     }
   }
 
-  return { updatedTarget, concentrationBroken, statusApplied, isDead };
+  // CON Poison resistance: reduce poison damage
+  const combatLog: string[] = [];
+  if (damageResult.damageType === 'poison') {
+    const conMod = getModifier(updatedTarget.con || 10);
+    const reduction = Math.max(0, conMod * 2);
+    if (reduction > 0) {
+      // Retroactively heal some of the poison damage (already applied above)
+      const restored = Math.min(reduction, damageResult.damage);
+      updatedTarget.hp = Math.min(updatedTarget.maxHp, updatedTarget.hp + restored);
+      if (updatedTarget.hp > 0 && !updatedTarget.isAlive) updatedTarget.isAlive = true;
+      combatLog.push(`${updatedTarget.name} résiste au poison (-${restored} dégâts, CON)`);
+    }
+  }
+
+  // Concentration log
+  if (concentrationLog) {
+    combatLog.push(concentrationLog);
+  }
+
+  // WIS resist log
+  const wisLog = (updatedTarget as Record<string, unknown>)._wisResistLog as string | undefined;
+  if (wisLog) {
+    combatLog.push(wisLog);
+    delete (updatedTarget as Record<string, unknown>)._wisResistLog;
+  }
+
+  // CHA Surrender check: when enemy drops below 25% HP
+  if (updatedTarget.hp > 0 && updatedTarget.hp <= updatedTarget.maxHp * 0.25 && !updatedTarget.isPlayer && !updatedTarget.surrendered && attacker) {
+    const chaMod = getModifier(attacker.cha || 10);
+    const intimidBonus = getIntimidationBonus(attacker);
+    const surrenderDC = 70 - (chaMod * 5) - intimidBonus;
+    const roll = Math.floor(Math.random() * 100) + 1;
+    if (roll <= surrenderDC) {
+      updatedTarget.surrendered = true;
+      combatLog.push(`${updatedTarget.name} supplie pour sa vie ! (Intimidation CHA: ${roll}/${surrenderDC})`);
+    }
+  }
+
+  return { updatedTarget, concentrationBroken, statusApplied, isDead, combatLog };
 }
 
 // ============================================================
@@ -640,6 +730,8 @@ const STATUS_EFFECT_DEFAULTS: Record<string, Partial<StatusEffect>> = {
   invisible:     { name: 'Invisible' },
   prone:         { name: 'À terre', attackPenalty: -5, acPenalty: -5 },
   grappled:      { name: 'Agrippé', speedPenalty: 99 },
+  confused:      { name: 'Confus', skipTurn: true, saveStat: 'wis', saveDC: 40 },
+  dominated:     { name: 'Dominé', preventAttackSource: true, saveStat: 'wis', saveDC: 50 },
 };
 
 // ============================================================
@@ -746,6 +838,25 @@ export function getLeadershipBonus(leader: Combatant, ally: Combatant): number {
   const chaMod = getModifier(leader.cha || 10);
   if (chaMod <= 0) return 0;
   return LEADERSHIP_BONUS;
+}
+
+/**
+ * Appliquer le bonus de leadership CHA au début d'un round
+ * Un allié avec CHA >= 14 inspire les autres (+ATK)
+ */
+export function applyLeadershipBonus(allies: Combatant[]): string[] {
+  const log: string[] = [];
+  const charismaLeader = allies.find(a => a.isAlive && (a.cha || 10) >= 14);
+  if (charismaLeader) {
+    const leadershipBonus = Math.max(1, Math.floor(getModifier(charismaLeader.cha || 10) / 2));
+    allies.forEach(a => {
+      if (a.id !== charismaLeader.id && a.isAlive) {
+        a.tempAttackBonus = (a.tempAttackBonus || 0) + leadershipBonus;
+      }
+    });
+    log.push(`${charismaLeader.name} inspire ses alliés ! (+${leadershipBonus} ATK, Leadership CHA)`);
+  }
+  return log;
 }
 
 // ============================================================

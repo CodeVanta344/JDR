@@ -1,8 +1,26 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
-export const LootModal = ({ loot, onCollect, onClose }) => {
+// INT-based item identification: higher INT reveals more details about rare+ items
+function canIdentifyItem(item, intScore) {
+    const intMod = Math.floor((intScore - 10) / 2);
+    const identifyDC = item.rarity === 'legendary' ? 80 : item.rarity === 'epic' ? 60 : item.rarity === 'rare' ? 40 : 20;
+    // Auto-identify common/uncommon. For rare+, roll against DC with INT bonus
+    if (!item.rarity || item.rarity === 'common' || item.rarity === 'uncommon') return true;
+    const identifyChance = identifyDC - (intMod * 5);
+    // Deterministic per item name + rarity so it doesn't flicker on re-render
+    const hash = (item.name || '').split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 100;
+    return hash >= identifyChance;
+}
+
+export const LootModal = ({ loot, playerInt = 10, onCollect, onClose }) => {
     const items = Array.isArray(loot) ? loot : (loot?.items || []);
     const gold = Array.isArray(loot) ? 0 : (loot?.gold || 0);
+
+    // Pre-compute identification for each item
+    const identifiedItems = useMemo(() => items.map(item => ({
+        ...item,
+        identified: canIdentifyItem(item, playerInt)
+    })), [items, playerInt]);
 
     if (!loot || (items.length === 0 && gold === 0)) return null;
 
@@ -45,19 +63,28 @@ export const LootModal = ({ loot, onCollect, onClose }) => {
                             </div>
                         </div>
                     )}
-                    {items.map((item, i) => (
+                    {identifiedItems.map((item, i) => (
                         <div key={i} style={{
                             padding: '1rem',
-                            background: 'rgba(255,255,255,0.05)',
-                            border: '1px solid var(--glass-border)',
+                            background: item.identified ? 'rgba(255,255,255,0.05)' : 'rgba(100,100,150,0.1)',
+                            border: `1px solid ${item.identified ? 'var(--glass-border)' : 'rgba(100,100,150,0.3)'}`,
                             borderRadius: '4px',
                             textAlign: 'left'
                         }}>
-                            <div style={{ fontWeight: 'bold', color: '#fff' }}>{item.name}</div>
-                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{item.desc}</div>
-                            {item.stats && (
+                            <div style={{ fontWeight: 'bold', color: item.identified ? '#fff' : '#888' }}>
+                                {item.identified ? item.name : `??? (Objet ${item.rarity || 'inconnu'})`}
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                {item.identified ? item.desc : 'Votre intelligence ne suffit pas pour identifier cet objet.'}
+                            </div>
+                            {item.identified && item.stats && (
                                 <div style={{ fontSize: '0.7rem', color: 'var(--gold-primary)', marginTop: '0.3rem' }}>
                                     {Object.entries(item.stats).map(([k, v]) => `${k.toUpperCase()} +${v}`).join(' ')}
+                                </div>
+                            )}
+                            {!item.identified && (
+                                <div style={{ fontSize: '0.65rem', color: '#9b59b6', marginTop: '0.3rem', fontStyle: 'italic' }}>
+                                    INT plus haute requise pour identifier
                                 </div>
                             )}
                         </div>

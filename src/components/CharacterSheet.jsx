@@ -1021,8 +1021,9 @@ export const CharacterSheet = ({ character, onUpdateInventory, onUpdateMaterialI
 
                 {activeTab === 'equip' && (
                     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                        <InventoryPanel 
+                        <InventoryPanel
                             inventory={character.inventory}
+                            strScore={character?.stats?.str || 10}
                             onEquipItem={onEquipItem}
                             onConsume={onConsume}
                             onUpdateInventory={onUpdateInventory}

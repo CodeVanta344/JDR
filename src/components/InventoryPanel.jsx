@@ -11,10 +11,22 @@ const CATEGORIES = {
   other: { id: 'other', label: 'Autres', icon: HelpCircle, color: '#888' }
 };
 
-export const InventoryPanel = ({ inventory, onEquipItem, onConsume, onUpdateInventory, onDestroyItem, onShareItem, onTradeClick }) => {
+export const InventoryPanel = ({ inventory, strScore = 10, onEquipItem, onConsume, onUpdateInventory, onDestroyItem, onShareItem, onTradeClick }) => {
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedItem, setSelectedItem] = useState(null);
   const [confirmDestroy, setConfirmDestroy] = useState(false);
+
+  // STR carrying capacity: 5 weight units per STR point
+  const maxCarryWeight = strScore * 5;
+  const currentWeight = useMemo(() => {
+    if (!inventory) return 0;
+    return inventory.reduce((sum, item) => {
+      if (!item) return sum;
+      return sum + (item.weight || 1) * (item.quantity || 1);
+    }, 0);
+  }, [inventory]);
+  const isOverencumbered = currentWeight > maxCarryWeight;
+  const weightPercent = Math.min(100, Math.round((currentWeight / maxCarryWeight) * 100));
 
   // Filtrer les items par catégorie
   const filteredItems = useMemo(() => {
@@ -260,6 +272,33 @@ export const InventoryPanel = ({ inventory, onEquipItem, onConsume, onUpdateInve
             </button>
           );
         })}
+      </div>
+
+      {/* STR Carrying Capacity Bar */}
+      <div style={{
+        padding: '0.4rem 0.6rem',
+        background: isOverencumbered ? 'rgba(231,76,60,0.15)' : 'rgba(0,0,0,0.2)',
+        borderRadius: '6px',
+        border: `1px solid ${isOverencumbered ? 'rgba(231,76,60,0.4)' : 'rgba(255,255,255,0.08)'}`,
+        transition: 'all 0.3s'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+          <span style={{ fontSize: '0.65rem', color: isOverencumbered ? '#e74c3c' : '#888', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            {isOverencumbered ? 'Surcharge !' : 'Capacité'}
+          </span>
+          <span style={{ fontSize: '0.65rem', color: isOverencumbered ? '#e74c3c' : '#aaa', fontWeight: 'bold' }}>
+            {currentWeight}/{maxCarryWeight} (FOR {strScore})
+          </span>
+        </div>
+        <div style={{ height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden' }}>
+          <div style={{
+            height: '100%',
+            width: `${weightPercent}%`,
+            background: isOverencumbered ? '#e74c3c' : weightPercent > 80 ? '#f39c12' : '#4cd137',
+            borderRadius: '2px',
+            transition: 'width 0.3s, background 0.3s'
+          }} />
+        </div>
       </div>
 
       {/* Affichage des items */}

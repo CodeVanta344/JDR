@@ -6,6 +6,9 @@
 import { getModifier } from '../lore/rules';
 import type { Combatant } from './types';
 
+// Re-export getModifier for convenience (used by other engine modules)
+export { getModifier };
+
 // ============================================================
 // STAT IMPACTS
 // ============================================================

@@ -2304,6 +2304,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                         affinity={affinities[activeMerchant?.npcName] || 0}
                         playerGold={character?.gold || 0}
                         playerInventory={character?.inventory || []}
+                        playerCha={character?.stats?.cha || 10}
                         onBuy={(item) => {
                             triggerSFX('gold');
                             const newInventory = [...(character.inventory || []), { ...item, equipped: false }];
@@ -2316,7 +2317,12 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                         }}
                         onSell={(item, idx) => {
                             triggerSFX('gold');
-                            const sellPrice = Math.floor((item.price || 50) * 0.5);
+                            // CHA discount: better sell prices with high Charisma
+                            const chaMod = Math.floor(((character?.stats?.cha || 10) - 10) * 1.25);
+                            const chaDiscount = chaMod * 0.03;
+                            const aff = affinities[activeMerchant?.npcName] || 0;
+                            const sellMult = Math.max(0.1, Math.min(0.9, (0.5 + (aff * 0.002)) * (1 + chaDiscount * 0.5)));
+                            const sellPrice = Math.floor((item.price || 50) * sellMult);
                             handleUpdateInventory(character.inventory.filter((_, i) => i !== idx), (character.gold || 0) + sellPrice);
                             addMessage({
                                 role: 'system',
@@ -2342,6 +2348,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                 activeLoot && (
                     <LootModal
                         loot={activeLoot}
+                        playerInt={character?.stats?.int || 10}
                         onCollect={(items, goldAmount) => {
                             triggerSFX('gold');
                             const newInventory = [...(character.inventory || []), ...items.map(i => ({ ...i, equipped: false }))];

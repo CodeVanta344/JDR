@@ -42,9 +42,32 @@ export class CraftingHandler {
       };
     }
 
+    // INT crafting bonus: +3% success chance per INT modifier
+    const intScore = context.player?.stats?.int || 10;
+    const intModifier = Math.floor((intScore - 10) / 2);
+    const craftingBonus = intModifier * 3; // % bonus
+    const baseCraftChance = 70; // Base 70% success
+    const successChance = Math.min(99, Math.max(5, baseCraftChance + craftingBonus));
+    const roll = Math.floor(Math.random() * 100) + 1;
+    const craftSuccess = roll <= successChance;
+
+    if (!craftSuccess) {
+      // Failed craft - lose some materials
+      const intNote = intModifier !== 0 ? ` (INT ${intModifier >= 0 ? '+' : ''}${craftingBonus}%)` : '';
+      return {
+        text: `🔨 Échec de fabrication de ${item}...${intNote}\n\n⚠️ Certains matériaux ont été perdus.\n🎲 Jet: ${roll}/${successChance}`,
+        confidence: 0.9,
+        effects: {
+          craftFailed: true,
+          materials: materials // Materials consumed on failure
+        }
+      };
+    }
+
     // Fabrication réussie
+    const intNote = intModifier !== 0 ? ` (INT ${intModifier >= 0 ? '+' : ''}${craftingBonus}%)` : '';
     return {
-      text: `🔨 Tu fabriques ${item} avec succès !\n\n📦 +1 ${item}\n✨ +20 XP (${profession})`,
+      text: `🔨 Tu fabriques ${item} avec succès !${intNote}\n\n📦 +1 ${item}\n✨ +20 XP (${profession})\n🎲 Jet: ${roll}/${successChance}`,
       confidence: 0.9,
       effects: {
         itemCrafted: item,

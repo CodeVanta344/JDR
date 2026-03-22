@@ -23,7 +23,8 @@ export type StatusEffectType =
   | 'stunned' | 'poisoned' | 'burning' | 'frozen'
   | 'bleeding' | 'charmed' | 'feared' | 'blinded'
   | 'silenced' | 'slowed' | 'strengthened' | 'shielded'
-  | 'regenerating' | 'invisible' | 'prone' | 'grappled';
+  | 'regenerating' | 'invisible' | 'prone' | 'grappled'
+  | 'confused' | 'dominated';
 
 export type EnemyAIProfile = 'brute' | 'ranged' | 'caster' | 'support' | 'boss' | 'minion';
 
@@ -163,6 +164,11 @@ export interface Combatant {
   bossPhase?: number;
   bossPhases?: BossPhase[];
 
+  // Stealth/visibility
+  isHidden?: boolean;
+  surrendered?: boolean;
+  tempAttackBonus?: number;
+
   // Traits
   bonus_damage?: number;
   bonus_dice_damage?: string;
@@ -226,6 +232,7 @@ export interface CombatAbility {
   // Advanced
   concentration?: boolean;
   isReaction?: boolean;
+  isFromStealth?: boolean;
   aoe?: { shape: AoEShape; radius?: number; length?: number; width?: number };
   statusEffect?: { type: StatusEffectType; duration: number; saveStat?: string; saveDC?: number };
   heal?: string;           // Heal dice
@@ -261,6 +268,7 @@ export interface AttackResult {
   isPrioritized: boolean;
   modifierBreakdown: CombatModifier[];  // Détail de chaque bonus
   dodged?: boolean;         // Si esquivé par DEX
+  perceptionLog?: string;   // Log si détection d'ennemi caché (WIS)
 }
 
 export interface DamageResult {
@@ -270,6 +278,7 @@ export interface DamageResult {
   isCritical: boolean;
   resistanceApplied?: 'resistant' | 'immune' | 'vulnerable' | null;
   breakdown: DamageBreakdown;
+  sneakAttackLog?: string;  // Log message if sneak attack applied
 }
 
 export interface DamageBreakdown {
