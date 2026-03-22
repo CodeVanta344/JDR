@@ -82,7 +82,7 @@ const SKILL_COMBAT_MODIFIERS: Record<string, Partial<Record<string, number>>> = 
 
 /**
  * Résoudre l'initiative pour tous les combattants
- * DEX + WIS/2 + d100 + skill bonuses
+ * DEX + PER/2 (ambush awareness) + d100 + skill bonuses
  */
 export function resolveInitiative(combatants: Combatant[]): InitiativeResult[] {
   return combatants
@@ -90,11 +90,11 @@ export function resolveInitiative(combatants: Combatant[]): InitiativeResult[] {
     .map(c => {
       const { total: roll } = rollDice('1d100');
       const dexMod = getModifier(c.dex || 10);
-      const wisMod = Math.floor(getModifier(c.wis || 10) / 2); // WIS contribue à l'initiative
+      const perMod = Math.floor(getModifier(c.per || 10) / 2); // PER contribue à l'initiative (ambush awareness)
       const skillBonus = getSkillModifier(c, 'tactics', 'initiativeBonus')
                        + getSkillModifier(c, 'perception', 'initiativeBonus');
-      const total = roll + dexMod + wisMod + skillBonus;
-      return { combatantId: c.id, roll, dexMod, wisMod, total };
+      const total = roll + dexMod + perMod + skillBonus;
+      return { combatantId: c.id, roll, dexMod, perMod, total };
     })
     .sort((a, b) => b.total - a.total);
 }
@@ -223,15 +223,15 @@ export function resolveAttack(
   const level = attacker.level || 1;
   const modifiers: CombatModifier[] = [];
 
-  // 0. WIS Perception check: defender tries to detect hidden/stealthed attacker
+  // 0. PER Perception check: defender tries to detect hidden/stealthed attacker
   if (attacker.isHidden || action.isFromStealth) {
-    const wisMod = getModifier(target.wis || 10);
-    const detectDC = 50 - wisMod;
+    const perMod = getModifier(target.per || 10);
+    const detectDC = 50 - perMod;
     const detectRoll = Math.floor(Math.random() * 100) + 1;
     if (detectRoll <= detectDC) {
       // Detected! No surprise bonus
       attacker.isHidden = false;
-      log.push(`${target.name} détecte ${attacker.name} ! (Perception WIS: ${detectRoll}/${detectDC})`);
+      log.push(`${target.name} détecte ${attacker.name} ! (Perception PER: ${detectRoll}/${detectDC})`);
     }
   }
 
@@ -241,8 +241,9 @@ export function resolveAttack(
   const roll = rollResult.total;
   const rawRoll = rollResult.rolls?.[0] ?? roll;
 
-  // 2. Custom crit threshold from weapon
-  const critThreshold = attacker.equipped_weapon?.critChance || CRITICAL_THRESHOLD;
+  // 2. Custom crit threshold from weapon + PER bonus (-1% threshold per PER modifier)
+  const perCritBonus = Math.max(0, getModifier(attacker.per || 10)); // PER lowers crit threshold
+  const critThreshold = (attacker.equipped_weapon?.critChance || CRITICAL_THRESHOLD) - perCritBonus;
   const isCritical = rawRoll >= critThreshold;
   const isFumble = rawRoll <= FUMBLE_THRESHOLD;
 
@@ -506,14 +507,14 @@ export function applyDamage(
   const isDead = updatedTarget.hp <= 0;
   if (isDead) updatedTarget.isAlive = false;
 
-  // Concentration check (CON save, DC adjusted by CON modifier)
+  // Concentration check (WIL save, DC adjusted by WIL modifier)
   let concentrationBroken = false;
   let concentrationLog: string | undefined;
   if (updatedTarget.concentratingOn && damageResult.damage > 0) {
-    const conMod = getModifier(updatedTarget.con || 10);
+    const wilMod = getModifier(updatedTarget.wil || 10);
     const concentrationDC = Math.max(30, Math.floor(damageResult.damage / 2));
     const saveRoll = Math.floor(Math.random() * 100) + 1;
-    const adjustedDC = concentrationDC - (conMod * 5);
+    const adjustedDC = concentrationDC - (wilMod * 5);
     if (saveRoll > adjustedDC) {
       // Lost concentration
       concentrationBroken = true;
@@ -522,9 +523,9 @@ export function applyDamage(
       if (updatedTarget.statusEffects) {
         updatedTarget.statusEffects = updatedTarget.statusEffects.filter(e => !e.type.includes('shielded') && !e.type.includes('regenerating'));
       }
-      concentrationLog = `${updatedTarget.name} perd sa concentration ! (CON: ${saveRoll}/${adjustedDC})`;
+      concentrationLog = `${updatedTarget.name} perd sa concentration ! (WIL: ${saveRoll}/${adjustedDC})`;
     } else {
-      concentrationLog = `${updatedTarget.name} maintient sa concentration (CON: ${saveRoll}/${adjustedDC})`;
+      concentrationLog = `${updatedTarget.name} maintient sa concentration (WIL: ${saveRoll}/${adjustedDC})`;
     }
   }
 
@@ -537,17 +538,17 @@ export function applyDamage(
       const save = rollSave(updatedTarget, action.statusEffect.saveDC, action.statusEffect.saveStat);
       if (save.success) applyStatus = false;
     }
-    // WIS willpower save vs mental effects (fear/charm/confusion/domination)
+    // WIL willpower save vs mental effects (fear/charm/confusion/domination)
     if (applyStatus && ['feared', 'charmed', 'confused', 'dominated'].includes(action.statusEffect.type)) {
       const saveDC = action.statusEffect.saveDC || 50;
-      const wisMod = getModifier(updatedTarget.wis || 10);
+      const wilMod = getModifier(updatedTarget.wil || 10);
       const saveRoll = Math.floor(Math.random() * 100) + 1;
-      const adjustedDC = saveDC - (wisMod * 5); // WIS reduces DC
+      const adjustedDC = saveDC - (wilMod * 5); // WIL reduces DC
       if (saveRoll <= adjustedDC) {
         applyStatus = false;
-        // Log stored in wisResistLog for caller
-        (updatedTarget as Record<string, unknown>)._wisResistLog =
-          `${updatedTarget.name} résiste à ${action.statusEffect.type} ! (Volonté WIS: ${saveRoll}/${adjustedDC})`;
+        // Log stored in wilResistLog for caller
+        (updatedTarget as Record<string, unknown>)._wilResistLog =
+          `${updatedTarget.name} résiste à ${action.statusEffect.type} ! (Volonté WIL: ${saveRoll}/${adjustedDC})`;
       }
     }
     if (applyStatus) {
@@ -588,16 +589,28 @@ export function applyDamage(
     }
   }
 
+  // WIL Mental damage reduction: reduce psychic damage
+  if (damageResult.damageType === 'psychic') {
+    const wilMod = getModifier(updatedTarget.wil || 10);
+    const reduction = Math.max(0, wilMod * 2);
+    if (reduction > 0) {
+      const restored = Math.min(reduction, damageResult.damage);
+      updatedTarget.hp = Math.min(updatedTarget.maxHp, updatedTarget.hp + restored);
+      if (updatedTarget.hp > 0 && !updatedTarget.isAlive) updatedTarget.isAlive = true;
+      combatLog.push(`${updatedTarget.name} résiste aux dégâts psychiques (-${restored} dégâts, WIL)`);
+    }
+  }
+
   // Concentration log
   if (concentrationLog) {
     combatLog.push(concentrationLog);
   }
 
-  // WIS resist log
-  const wisLog = (updatedTarget as Record<string, unknown>)._wisResistLog as string | undefined;
-  if (wisLog) {
-    combatLog.push(wisLog);
-    delete (updatedTarget as Record<string, unknown>)._wisResistLog;
+  // WIL resist log
+  const wilLog = (updatedTarget as Record<string, unknown>)._wilResistLog as string | undefined;
+  if (wilLog) {
+    combatLog.push(wilLog);
+    delete (updatedTarget as Record<string, unknown>)._wilResistLog;
   }
 
   // CHA Surrender check: when enemy drops below 25% HP
@@ -719,8 +732,8 @@ const STATUS_EFFECT_DEFAULTS: Record<string, Partial<StatusEffect>> = {
   burning:       { name: 'En feu', tickDice: '1d20', tickDamageType: 'fire', saveStat: 'con', saveDC: 40 },
   frozen:        { name: 'Gelé', speedPenalty: 99, acPenalty: -10, saveStat: 'con', saveDC: 35 },
   bleeding:      { name: 'Saignement', tickDamage: 5, saveStat: 'con', saveDC: 30 },
-  charmed:       { name: 'Charmé', preventAttackSource: true, saveStat: 'wis', saveDC: 40 },
-  feared:        { name: 'Apeuré', mustFlee: true, attackPenalty: -5, saveStat: 'wis', saveDC: 40 },
+  charmed:       { name: 'Charmé', preventAttackSource: true, saveStat: 'wil', saveDC: 40 },
+  feared:        { name: 'Apeuré', mustFlee: true, attackPenalty: -5, saveStat: 'wil', saveDC: 40 },
   blinded:       { name: 'Aveuglé', attackPenalty: -20 },
   silenced:      { name: 'Réduit au silence', preventSpells: true },
   slowed:        { name: 'Ralenti', speedPenalty: 3 },
@@ -730,8 +743,8 @@ const STATUS_EFFECT_DEFAULTS: Record<string, Partial<StatusEffect>> = {
   invisible:     { name: 'Invisible' },
   prone:         { name: 'À terre', attackPenalty: -5, acPenalty: -5 },
   grappled:      { name: 'Agrippé', speedPenalty: 99 },
-  confused:      { name: 'Confus', skipTurn: true, saveStat: 'wis', saveDC: 40 },
-  dominated:     { name: 'Dominé', preventAttackSource: true, saveStat: 'wis', saveDC: 50 },
+  confused:      { name: 'Confus', skipTurn: true, saveStat: 'wil', saveDC: 40 },
+  dominated:     { name: 'Dominé', preventAttackSource: true, saveStat: 'wil', saveDC: 50 },
 };
 
 // ============================================================
@@ -887,9 +900,9 @@ export function checkMorale(enemy: Combatant, intimidationBonus: number = 0): { 
 
   if (hpPercent > threshold) return { flees: false, save: null };
 
-  // Morale save (WIS-based, DC 50 + intimidation bonus)
+  // Morale save (WIL-based, DC 50 + intimidation bonus)
   const dc = 50 + intimidationBonus;
-  const save = rollSave(enemy, dc, 'wis');
+  const save = rollSave(enemy, dc, 'wil');
   return { flees: !save.success, save };
 }
 

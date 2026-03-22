@@ -58,7 +58,6 @@ export function getConstitutionImpact(combatant: Combatant) {
   const mod = getModifier(combatant.con || 10);
   return {
     hpBonus: mod * 2, // Per level
-    concentrationBonus: mod,
     poisonResistBonus: mod,
     staminaBonus: Math.max(0, Math.floor(mod / 3)), // Extra PM
   };
@@ -82,22 +81,58 @@ export function getIntelligenceImpact(combatant: Combatant) {
 }
 
 /**
- * WIS - Sagesse (NOUVEAU - avait ZERO impact avant)
- * - Perception: détecter ennemis cachés/invisibles, pièges
- * - Initiative bonus partiel (WIS/2)
- * - WIS saves vs fear/charm/psychic
- * - Clerc/Druide resource stat
+ * WIS - Sagesse
+ * - Healing bonus (divine/natural healing)
  * - Insight: voir à travers la déception
+ * - Clerc/Druide resource stat
+ * - Divine magic scaling
  */
 export function getWisdomImpact(combatant: Combatant) {
   const mod = getModifier(combatant.wis || 10);
   return {
-    perceptionBonus: mod,
-    initiativeBonus: Math.floor(mod / 2),
-    willpowerSaveBonus: mod,
+    healingBonus: mod,
     faithScaling: mod * 3, // Clerc/Druide resource
     insightBonus: mod,
-    detectHiddenDC: 50 - mod, // Plus facile de détecter avec haut WIS
+    divineMagicBonus: mod,
+  };
+}
+
+/**
+ * PER - Perception
+ * - Trap detection bonus
+ * - Treasure finding bonus
+ * - Ambush awareness (initiative bonus from PER)
+ * - Critical hit chance bonus (+1% per PER modifier)
+ * - Detect hidden/invisible enemies
+ */
+export function getPerceptionImpact(combatant: Combatant) {
+  const mod = getModifier(combatant.per || 10);
+  return {
+    trapDetectionBonus: mod * 5, // % bonus to detect traps
+    treasureFindingBonus: mod * 3, // % bonus to find hidden treasure
+    initiativeBonus: Math.floor(mod / 2), // Ambush awareness
+    critChanceBonus: mod, // +1% crit chance per PER modifier
+    detectHiddenDC: 50 - mod, // Lower DC = easier detection
+    perceptionBonus: mod,
+  };
+}
+
+/**
+ * WIL - Volonté (Willpower)
+ * - ALL mental saves (fear/charm/confusion/domination)
+ * - Concentration saves (replaces CON for concentration)
+ * - Resistance to fear/charm/domination effects
+ * - Mental damage reduction (psychic)
+ */
+export function getWillpowerImpact(combatant: Combatant) {
+  const mod = getModifier(combatant.wil || 10);
+  return {
+    mentalSaveBonus: mod,
+    concentrationBonus: mod, // Replaces CON for concentration
+    fearResistBonus: mod * 5, // % DC reduction vs fear
+    charmResistBonus: mod * 5, // % DC reduction vs charm
+    dominationResistBonus: mod * 5, // % DC reduction vs domination
+    mentalDamageReduction: Math.max(0, mod * 2), // Flat reduction to psychic damage
   };
 }
 
@@ -160,5 +195,7 @@ export function getAllStatBonuses(combatant: Combatant) {
     int: getIntelligenceImpact(combatant),
     wis: getWisdomImpact(combatant),
     cha: getCharismaImpact(combatant),
+    per: getPerceptionImpact(combatant),
+    wil: getWillpowerImpact(combatant),
   };
 }

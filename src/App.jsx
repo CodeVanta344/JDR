@@ -391,33 +391,43 @@ export default function App({ user }) {
             // Trigger GM intro if host
             if (currentSession.host_id === profile?.id || !customSession) {
                 try {
+                    const playerNames = currentPlayers.map(p => `${p.name} (${p.class || 'Aventurier'})`).join(', ');
+                    const introPrompt = `(SYSTEM) La partie commence. Présente-toi en tant que Maître du Jeu des Chroniques d'Aethelgard. Décris l'ambiance de la scène d'ouverture au Sanglier Doré, une taverne chaleureuse de Sol-Aureus. Le personnage du joueur (${playerNames}) vient d'arriver en ville. Sois immersif, atmosphérique, et termine par une question ou une situation qui invite le joueur à agir. Maximum 3 paragraphes.`;
                     const { data: aiResponse } = await supabase.functions.invoke('game-master', {
                         body: {
-                            action: "COMMENCER_L_AVENTURE",
+                            action: introPrompt,
                             history: [],
                             sessionId: currentSession.id,
                             playerId: character?.id,
                             context: "GAME_START",
+                            gamePhase: "INTRO",
                             playerProfile: character ? {
                                 name: character.name,
                                 class: character.class,
                                 level: character.level,
-                                stats: character.stats
+                                stats: character.stats,
+                                backstory: character.backstory_gm_context
                             } : null,
                             playerGroup: currentPlayers.map(p => ({
                                 name: p.name,
                                 class: p.class || 'Aventurier'
                             })),
-                            lore: { context: WORLD_CONTEXT }
+                            lore: {
+                                context: `${WORLD_CONTEXT}\n\n${ENVIRONMENTAL_RULES}`,
+                                locations: TAVERNS_AND_LOCATIONS,
+                                npcs: NPC_TEMPLATES,
+                                rumors: RUMORS_AND_GOSSIP
+                            }
                         }
                     });
-                    
-                    if (aiResponse?.narrative) {
+
+                    const narrativeText = aiResponse?.narrative || formatAIContent(aiResponse);
+                    if (narrativeText && typeof narrativeText === 'string' && narrativeText.trim()) {
                         const gmMsg = {
                             id: crypto.randomUUID(),
                             session_id: currentSession.id,
                             role: 'assistant',
-                            content: aiResponse.narrative,
+                            content: narrativeText,
                             created_at: new Date().toISOString()
                         };
                         await supabase.from('messages').insert(gmMsg);

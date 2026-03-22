@@ -27,7 +27,9 @@ export const CharacterSheet = ({ character, onUpdateInventory, onUpdateMaterialI
         con: { full: "Constitution", desc: "Santé et résistance" },
         int: { full: "Intelligence", desc: "Savoir et arcanes" },
         wis: { full: "Sagesse", desc: "Instinct et foi" },
-        cha: { full: "Charisme", desc: "Aura et volonté" },
+        cha: { full: "Charisme", desc: "Aura et influence" },
+        per: { full: "Perception", desc: "Vigilance et détection" },
+        wil: { full: "Volonté", desc: "Résistance mentale" },
         level: { full: "Niveau", desc: "Puissance acquise" }
     };
 

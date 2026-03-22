@@ -136,14 +136,16 @@ export const generateRandomCharacter = (sessionId, userId) => {
     lifepathEffects.all_traits = filteredTraits;
     lifepathEffects.skills = filteredSkills;
 
-    // 5. Roll Base Attributes
+    // 5. Roll Base Attributes (all 8 stats get 4d6 drop lowest)
     const baseStats = {
         str: roll4d6(),
         dex: roll4d6(),
         con: roll4d6(),
         int: roll4d6(),
         wis: roll4d6(),
-        cha: roll4d6()
+        cha: roll4d6(),
+        per: roll4d6(),
+        wil: roll4d6()
     };
 
     // 6. Apply Lifepath Bonuses (Mapping long keys to short keys)
@@ -154,8 +156,8 @@ export const generateRandomCharacter = (sessionId, userId) => {
         int: baseStats.int + (lifepathEffects.final_stats.intelligence || 0),
         wis: baseStats.wis + (lifepathEffects.final_stats.wisdom || 0),
         cha: baseStats.cha + (lifepathEffects.final_stats.charisma || 0),
-        per: lifepathEffects.final_stats.perception || 0,
-        wil: lifepathEffects.final_stats.willpower || 0
+        per: baseStats.per + (lifepathEffects.final_stats.perception || 0),
+        wil: baseStats.wil + (lifepathEffects.final_stats.willpower || 0)
     };
 
     // 7. Random Abilities (3 from class)

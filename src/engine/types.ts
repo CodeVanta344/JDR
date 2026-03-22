@@ -110,6 +110,8 @@ export interface Combatant {
   int: number;
   wis: number;
   cha: number;
+  per: number;
+  wil: number;
 
   // Combat stats
   level: number;
@@ -246,7 +248,7 @@ export interface BossPhase {
   hpThreshold: number;     // % HP pour déclencher (ex: 75, 50, 25)
   name: string;
   abilities: CombatAbility[];
-  statModifiers: Partial<Pick<Combatant, 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha' | 'ac'>>;
+  statModifiers: Partial<Pick<Combatant, 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha' | 'per' | 'wil' | 'ac'>>;
   aiProfile: EnemyAIProfile;
   description: string;
 }
@@ -317,7 +319,7 @@ export interface InitiativeResult {
   combatantId: string;
   roll: number;
   dexMod: number;
-  wisMod: number;
+  perMod: number;
   total: number;
 }
 
