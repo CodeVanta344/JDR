@@ -236,6 +236,7 @@ export const generateRandomCharacter = (sessionId, userId) => {
 
 // Helper to convert structured data/JSON into immersive narrative text
 export const formatAIContent = (data) => {
+    if (data == null) return '';
     if (typeof data === 'string') return data;
     if (Array.isArray(data)) {
         return data.map(item => formatAIContent(item)).join('\n\n');
@@ -269,7 +270,7 @@ export const formatAIContent = (data) => {
         }
 
         return Object.entries(data)
-            .filter(([key]) => !['id', 'created_at', 'session_id', 'role', 'interactive_points', 'image_prompt', 'atmosphere', 'combat', 'challenge'].includes(key))
+            .filter(([key, val]) => val != null && val !== '' && !['id', 'created_at', 'session_id', 'role', 'interactive_points', 'image_prompt', 'atmosphere', 'combat', 'challenge', 'narrative', 'codex_update', 'npc'].includes(key))
             .map(([key, val]) => {
                 const label = translations[key] || (key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' '));
                 if (typeof val === 'object') return `**${label}**:\n${formatAIContent(val)}`;
