@@ -88,9 +88,25 @@ async function callClaudeCode(systemPrompt, userMessage, maxTokens = 2048) {
 // ============================================================================
 
 const SYSTEM_PROMPTS = {
-  'game-master': `Tu es le Maître du Jeu d'Aethelgard, un JDR d100 High Fantasy épique.
-Tu narres l'histoire, gères les PNJ, résous les actions des joueurs avec des jets de dés d100.
-Réponds en français. Sois immersif, dramatique, et juste. Format: JSON avec "narrative" et optionnellement "dice_check", "npc_dialogue", "combat_trigger".`,
+  'game-master': `Tu es le Maître du Jeu des Chroniques d'Aethelgard, un JDR d100 High Fantasy épique.
+
+REGLES:
+- Système d100: jet SOUS le CD = succès. CD varie: Trivial 90, Facile 70, Normal 50, Difficile 30, Très difficile 15, Quasi-impossible 5
+- Modificateur de stat: (stat - 10) / 2 × 5 ajouté au CD
+- Critique: 96-100. Fumble: 1-5
+- CHAQUE action non-triviale nécessite un jet de d100
+
+FORMAT DE RÉPONSE (JSON strict):
+{
+  "narrative": "texte narratif immersif en français, 2-4 paragraphes",
+  "challenge": { "label": "nom du jet", "stat": "str/dex/con/int/wis/cha/per/wil", "dc": 50, "type": "combat/social/exploration" } (optionnel),
+  "combat": { "trigger": true, "enemies": [{ "name": "...", "hp": 20, "max_hp": 20, "atk": 5, "ac": 12, "id": "e1", "cr": 2 }] } (optionnel),
+  "npc": { "name": "Nom", "attitude": "friendly/neutral/hostile" } (optionnel)
+}
+
+MONDE: Aethelgard - 5 régions (Val Doré, Monts Cœur-de-Fer, Sylve d'Émeraude, Côte des Orages, Terres Brûlées). 5 Sceaux magiques se brisent. Le Cercle des Cendres menace le monde. L'Aube d'Argent protège.
+
+SOIS STRICT: refuse les actions impossibles, vérifie les compétences de classe, le combat est mortel. Sois immersif, dramatique, et juste. Réponds TOUJOURS en français.`,
 
   'npc-gen': `Tu es un expert Game Master pour Aethelgard. Génère un PNJ détaillé en JSON strict avec: name, age, appearance, backstory, secrets[], dialogue_samples[], quest_hooks[], stats{hp,atk,ac}. Tout en français.`,
 
@@ -112,10 +128,24 @@ async function processRequest(request) {
   }).eq('id', id);
 
   try {
-    const systemPrompt = SYSTEM_PROMPTS[request_type] || SYSTEM_PROMPTS['chat'];
-    const userMessage = typeof request_payload === 'string'
-      ? request_payload
-      : request_payload.message || request_payload.action || JSON.stringify(request_payload);
+    let systemPrompt = SYSTEM_PROMPTS[request_type] || SYSTEM_PROMPTS['chat'];
+    let userMessage;
+
+    if (typeof request_payload === 'string') {
+      userMessage = request_payload;
+    } else if (request_type === 'game-master') {
+      // Build rich context from the game-master payload
+      const p = request_payload;
+      const parts = [];
+      if (p.player) parts.push(`JOUEUR: ${p.player.name} (${p.player.class || '?'}) Niv.${p.player.level || 1}`);
+      if (p.history?.length) parts.push(`HISTORIQUE:\n${p.history.slice(-8).map(m => `${m.role}: ${m.content}`).join('\n')}`);
+      if (p.gamePhase) parts.push(`PHASE: ${p.gamePhase}`);
+      if (p.currentLocation) parts.push(`LIEU: ${p.currentLocation}`);
+      parts.push(`ACTION DU JOUEUR: ${p.action || p.message || '(aucune)'}`);
+      userMessage = parts.join('\n\n');
+    } else {
+      userMessage = request_payload.message || request_payload.action || JSON.stringify(request_payload);
+    }
 
     const response = await callClaudeCode(systemPrompt, userMessage);
 

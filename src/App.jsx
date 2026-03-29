@@ -119,9 +119,9 @@ async function invokeGM(supabaseClient, body) {
         }
         throw new Error('Timeout waiting for GM response');
     } catch (brokerError) {
-        console.warn('[invokeGM] Broker failed, trying edge function:', brokerError.message);
-        // Fallback to edge function
-        return await supabaseClient.functions.invoke('game-master', { body });
+        console.error('[invokeGM] Broker failed:', brokerError.message);
+        // Return a fallback narrative instead of crashing
+        return { data: { narrative: "Le Maître du Jeu se concentre... (Le serveur GM ne répond pas. Vérifiez que le gm-server est lancé sur le VPS.)" } };
     }
 }
 

@@ -1151,6 +1151,10 @@ Deno.serve(async (req: Request) => {
         });
 
         const aiData = await aiRes.json();
+        if (aiData.error) {
+            console.error('[GM] Anthropic API error:', JSON.stringify(aiData.error));
+            return jsonResponse({ narrative: `Erreur MJ: ${aiData.error?.message || 'API indisponible'}`, _debug: aiData.error });
+        }
         const raw = aiData.content?.[0]?.text || "";
 
         let result;
