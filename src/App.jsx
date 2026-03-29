@@ -2079,7 +2079,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                 } else {
                     // Default: display GM narrative in chat
                     const narrative = aiResponse.narrative || formatAIContent(aiResponse);
-                    if (narrative && typeof narrative === 'string' && narrative.length > 0) {
+                    if (narrative && typeof narrative === 'string' && narrative.length > 0 && narrative !== 'null' && narrative !== '{}') {
                         const gmMsg = {
                             id: crypto.randomUUID(),
                             session_id: session.id,

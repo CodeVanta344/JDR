@@ -52,6 +52,9 @@ export const NarrationPanel = ({
 
         let raw = typeof rawContent === 'string' ? rawContent : JSON.stringify(rawContent);
 
+        // Filter out literal "null" or empty JSON
+        if (raw === 'null' || raw === '{}' || raw === '""' || raw === 'undefined') return '';
+
         // Skip memory markers
         if (raw.startsWith('(MEMOIRE:') || raw.startsWith('(MÉMOIRE:')) {
             return null;
