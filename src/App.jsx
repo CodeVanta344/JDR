@@ -2404,7 +2404,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                         currentUserId={character?.user_id || profile?.id}
                         initialEnemies={combatEnemies}
                         syncedCombatState={syncedCombatState}
-                        onUpdateCombatState={updateSyncedCombat}
+                        onUpdateCombatState={setSyncedCombatState}
                         sessionId={session?.id}
                         onHPChange={handleHPChange}
                         onResourceChange={handleResourceChange}
