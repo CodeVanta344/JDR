@@ -462,7 +462,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                         maxPM: myPlayer.maxPM ?? myPlayer.pm ?? 5,
                         hasMoved: myPlayer.hasMoved ?? false,
                         hasActed: myPlayer.hasActed ?? false,
-                        initiative: myPlayer.initiative ?? (Math.floor(Math.random() * 20) + (myPlayer.stats?.dexterity || 10))
+                        initiative: myPlayer.initiative ?? (Math.floor(Math.random() * 100) + 1 + (Math.floor(((myPlayer.stats?.dex || myPlayer.stats?.dexterity || 10) - 10) / 2) * 5) + (Math.floor(((myPlayer.stats?.per || myPlayer.stats?.perception || 10) - 10) / 2) * 3))
                     };
                 }
 
@@ -609,6 +609,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                 debugLog(`[Combat Init] Loading player for combat: ${p.name}, user_id: ${p.user_id}, id: ${p.id}`);
                 const stats = p.stats || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 };
                 const dexMod = Math.floor((stats.dex - 10) / 2);
+                const perMod = Math.floor(((stats.per || 10) - 10) / 2);
                 const charClass = p.class?.split(' ')[0] || "Guerrier";
                 const classData = CLASSES[charClass];
                 const baseAbilities = classData?.initial_ability_options || classData?.abilities || [];
@@ -729,7 +730,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                     resource: p.resource ?? 100,
                     maxResource: p.max_resource ?? 100,
                     resourceName: "Energie",
-                    initiative: Math.floor(Math.random() * 20) + 1 + dexMod, // TODO: Initiative d100 (d100 + DEX)
+                    initiative: Math.floor(Math.random() * 100) + 1 + (dexMod * 5) + (perMod * 3), // Initiative d100 + DEX×5 + PER×3
                     isEnemy: false,
                     portrait_url: p.portrait_url,
                     spells: combinedAbilities,
@@ -776,7 +777,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                     resource: 50,
                     maxResource: 50,
                     resourceName: "Mana",
-                    initiative: e.initiative || (Math.floor(Math.random() * 10) + 5),
+                    initiative: e.initiative || (Math.floor(Math.random() * 100) + 1 + (Math.floor(((e.dex || 10) - 10) / 2) * 5) + (Math.floor(((e.per || 10) - 10) / 2) * 3)),
                     isEnemy: true,
                     user_id: null, // CRITICAL: Enemies have no user_id
                     posX: pos.x,
@@ -807,7 +808,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                     resource: 20,
                     maxResource: 20,
                     resourceName: "Rage",
-                    initiative: 12,
+                    initiative: Math.floor(Math.random() * 100) + 1 + 5, // d100 + base bonus for dummy enemy
                     isEnemy: true,
                     posX: 5,
                     posY: 0,

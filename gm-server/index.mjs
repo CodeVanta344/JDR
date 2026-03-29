@@ -1,3 +1,5 @@
+import 'dotenv/config';
+
 /**
  * AETHELGARD GM SERVER
  * =====================
@@ -25,6 +27,7 @@ const execFileAsync = promisify(execFile);
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
+console.log(`🔑 Supabase key: ${SUPABASE_KEY ? SUPABASE_KEY.slice(0, 20) + '...' : '❌ MISSING'}`);
 const MAX_CONCURRENT = 2; // Max 2 requêtes Claude en parallèle
 const POLL_INTERVAL = 2000; // Poll toutes les 2s si realtime échoue
 
@@ -156,6 +159,99 @@ async function processRequest(request) {
       responsePayload = JSON.parse(clean);
     } catch {
       responsePayload = { narrative: response };
+    }
+
+    // === AUTO-DETECT COMBAT ===
+    if (request_type === 'game-master' && !responsePayload.combat?.trigger) {
+      const narrative = (responsePayload.narrative || '').toLowerCase();
+      const action = (request_payload?.action || '').toLowerCase();
+
+      // Player wants combat
+      const playerCombatWords = ['attaque', 'frappe', 'combat', 'charge', 'tire sur', 'dégaine', 'agresse', 'lance un sort sur', 'se bat'];
+      const playerWantsCombat = playerCombatWords.some(w => action.includes(w));
+
+      // Narrative describes combat
+      const narrativeCombatWords = ['surgit', 'surgissent', 'attaquent', 'embuscade', 'vous assaillent', 'bondit sur', 'se jette sur', 'combat', 'dégainent', 'épée', 'lame', 'frappez', 'votre cible', 'les dés décident', 'tentez votre attaque', 'vous êtes attaqué'];
+      const narrativeIndicatesCombat = narrativeCombatWords.some(w => narrative.includes(w));
+
+      if (playerWantsCombat || narrativeIndicatesCombat) {
+        const playerLevel = request_payload?.player?.level || 1;
+        const location = (request_payload?.currentLocation || '').toLowerCase();
+
+        // Generate level-appropriate enemies based on context
+        const enemyTemplates = {
+          tavern: [
+            { name: 'Voyou de Taverne', hp: 15, max_hp: 15, atk: 4, ac: 10, cr: 1 },
+            { name: 'Brute Ivre', hp: 20, max_hp: 20, atk: 5, ac: 11, cr: 1 },
+            { name: 'Videur', hp: 25, max_hp: 25, atk: 6, ac: 12, cr: 2 },
+          ],
+          city: [
+            { name: 'Soldat de la Garde', hp: 22, max_hp: 22, atk: 6, ac: 14, cr: 2 },
+            { name: 'Mercenaire', hp: 28, max_hp: 28, atk: 7, ac: 13, cr: 3 },
+          ],
+          forest: [
+            { name: 'Loup Sauvage', hp: 12, max_hp: 12, atk: 5, ac: 11, cr: 1 },
+            { name: 'Gobelin Éclaireur', hp: 10, max_hp: 10, atk: 4, ac: 12, cr: 1 },
+            { name: 'Treant Corrompu', hp: 45, max_hp: 45, atk: 8, ac: 14, cr: 4 },
+          ],
+          mountain: [
+            { name: 'Golem de Pierre', hp: 40, max_hp: 40, atk: 8, ac: 16, cr: 4 },
+            { name: 'Troll des Montagnes', hp: 50, max_hp: 50, atk: 9, ac: 13, cr: 5 },
+          ],
+          sewer: [
+            { name: 'Rat Géant', hp: 8, max_hp: 8, atk: 3, ac: 10, cr: 0.5 },
+            { name: 'Ombre Mineure', hp: 18, max_hp: 18, atk: 5, ac: 12, cr: 2 },
+          ],
+          default: [
+            { name: 'Bandit', hp: 15, max_hp: 15, atk: 5, ac: 12, cr: 1 },
+            { name: 'Éclaireur Ennemi', hp: 20, max_hp: 20, atk: 6, ac: 13, cr: 2 },
+            { name: 'Guerrier du Cercle', hp: 30, max_hp: 30, atk: 7, ac: 14, cr: 3 },
+          ],
+        };
+
+        // Pick template based on location/narrative context
+        let templateKey = 'default';
+        if (narrative.includes('taverne') || narrative.includes('auberge') || narrative.includes('sanglier')) templateKey = 'tavern';
+        else if (narrative.includes('forêt') || narrative.includes('sylve') || narrative.includes('bois')) templateKey = 'forest';
+        else if (narrative.includes('mont') || narrative.includes('mine') || narrative.includes('forge')) templateKey = 'mountain';
+        else if (narrative.includes('égout') || narrative.includes('souterrain')) templateKey = 'sewer';
+        else if (narrative.includes('ville') || narrative.includes('garde') || narrative.includes('soldat') || narrative.includes('garnison')) templateKey = 'city';
+        else if (location.includes('sol-aureus') || location.includes('val')) templateKey = 'city';
+        else if (location.includes('sylve') || location.includes('forêt')) templateKey = 'forest';
+        else if (location.includes('mont') || location.includes('karak')) templateKey = 'mountain';
+
+        const templates = enemyTemplates[templateKey];
+
+        // Scale enemies to player level
+        const numEnemies = Math.min(1 + Math.floor(playerLevel / 3), 4);
+        const enemies = [];
+        for (let i = 0; i < numEnemies; i++) {
+          const template = templates[Math.min(i, templates.length - 1)];
+          const levelScale = 1 + (playerLevel - 1) * 0.15;
+          enemies.push({
+            ...template,
+            id: `e${i + 1}`,
+            hp: Math.round(template.hp * levelScale),
+            max_hp: Math.round(template.max_hp * levelScale),
+            atk: Math.round(template.atk * levelScale),
+            cr: Math.max(1, Math.round(template.cr * levelScale)),
+          });
+        }
+
+        // Also try to extract enemy names from the narrative
+        const nameMatches = narrative.match(/\*\*([^*]+)\*\*/g);
+        if (nameMatches) {
+          nameMatches.forEach((match, i) => {
+            const name = match.replace(/\*\*/g, '').trim();
+            if (i < enemies.length && name.length > 2 && name.length < 40) {
+              enemies[i].name = name;
+            }
+          });
+        }
+
+        responsePayload.combat = { trigger: true, enemies };
+        console.log(`⚔️  Combat auto-détecté! ${enemies.length} ennemis (${templateKey})`);
+      }
     }
 
     // Sauvegarder la réponse

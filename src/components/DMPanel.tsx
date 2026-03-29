@@ -16,7 +16,14 @@ import { GM_BOOK, MAP_LOCATIONS, findScene, findChapter, getAllScenes } from '..
 import type { BookScene, BookChapter, BookAct, GMNote } from '../lore/gm-book-data';
 import AethelgardMap from './AethelgardMap';
 import { DMPanelTutorial } from './DMPanelTutorial';
+import { NPC_DIALOGUES_ACT1_2 } from '../lore/dialogues-act1-2';
+import { NPC_DIALOGUES_ACT3 } from '../lore/dialogues-act3';
+import { NPC_DIALOGUES_ACT4 } from '../lore/dialogues-act4';
+import { NPC_DIALOGUES_ACT5 } from '../lore/dialogues-act5';
 import './DMPanel.css';
+
+// Combined dialogue lookup from all acts
+const ALL_NPC_DIALOGUES = [...NPC_DIALOGUES_ACT1_2, ...NPC_DIALOGUES_ACT3, ...NPC_DIALOGUES_ACT4, ...NPC_DIALOGUES_ACT5];
 
 // ============================================================================
 // LOCAL TYPES (not exported from gm-book-data)
@@ -564,6 +571,69 @@ export function DMPanel({ isOpen, onClose, gameState, onSpawnNPC, onTriggerComba
                               {npc.stats && (
                                 <div className="scene-npc-stats">HP: {npc.stats.hp} | ATK: {npc.stats.atk} | AC: {npc.stats.ac}</div>
                               )}
+                              {/* Deep dialogue trees from lore files */}
+                              {(() => {
+                                const npcDialogues = ALL_NPC_DIALOGUES.filter(d =>
+                                  d.npcId === npc.id ||
+                                  d.npcId === npc.name?.toLowerCase().replace(/\s/g, '-') ||
+                                  ('npcName' in d && (d as any).npcName?.toLowerCase() === npc.name?.toLowerCase())
+                                );
+                                if (npcDialogues.length === 0) return null;
+                                return (
+                                  <details className="scene-npc-dialogues" style={{ marginTop: '0.5rem' }}>
+                                    <summary>📖 Arbres de Dialogues ({npcDialogues.length})</summary>
+                                    <div className="dialogue-list">
+                                      {npcDialogues.map((dlg: any, di: number) => (
+                                        <details key={di} style={{ marginBottom: '0.5rem', paddingLeft: '0.5rem' }}>
+                                          <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>
+                                            {dlg.trigger || dlg.npcName || `Dialogue ${di + 1}`}
+                                            {dlg.tone && <span style={{ marginLeft: '0.5rem', fontSize: '0.8em', opacity: 0.7 }}>({dlg.tone})</span>}
+                                          </summary>
+                                          <div style={{ paddingLeft: '0.5rem', marginTop: '0.3rem' }}>
+                                            {dlg.lines && (Array.isArray(dlg.lines) ? dlg.lines : []).map((line: any, li: number) => (
+                                              <p key={li} style={{ margin: '0.2rem 0', fontStyle: 'italic', color: 'var(--text-muted)' }}>
+                                                {typeof line === 'string' ? line : line.text || JSON.stringify(line)}
+                                              </p>
+                                            ))}
+                                            {dlg.playerResponses && dlg.playerResponses.length > 0 && (
+                                              <div style={{ marginTop: '0.3rem' }}>
+                                                <strong style={{ fontSize: '0.85em' }}>Réponses possibles:</strong>
+                                                {dlg.playerResponses.map((resp: any, ri: number) => (
+                                                  <div key={ri} style={{ paddingLeft: '0.5rem', margin: '0.2rem 0', fontSize: '0.85em' }}>
+                                                    ➤ {resp.text}
+                                                    {resp.consequence && <span style={{ opacity: 0.6 }}> → {resp.consequence}</span>}
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            )}
+                                            {'dialogues' in dlg && Array.isArray((dlg as any).dialogues) && (dlg as any).dialogues.map((subDlg: any, si: number) => (
+                                              <details key={si} style={{ marginTop: '0.3rem', paddingLeft: '0.5rem' }}>
+                                                <summary style={{ cursor: 'pointer' }}>
+                                                  {subDlg.trigger || `Échange ${si + 1}`}
+                                                  {subDlg.tone && <span style={{ marginLeft: '0.3rem', fontSize: '0.8em', opacity: 0.7 }}>({subDlg.tone})</span>}
+                                                </summary>
+                                                <div style={{ paddingLeft: '0.5rem' }}>
+                                                  {subDlg.lines?.map((line: any, li: number) => (
+                                                    <p key={li} style={{ margin: '0.2rem 0', fontStyle: 'italic', color: 'var(--text-muted)' }}>
+                                                      {typeof line === 'string' ? line : line.text || ''}
+                                                    </p>
+                                                  ))}
+                                                  {subDlg.playerResponses?.map((resp: any, ri: number) => (
+                                                    <div key={ri} style={{ paddingLeft: '0.5rem', margin: '0.2rem 0', fontSize: '0.85em' }}>
+                                                      ➤ {resp.text}
+                                                      {resp.consequence && <span style={{ opacity: 0.6 }}> → {resp.consequence}</span>}
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              </details>
+                                            ))}
+                                          </div>
+                                        </details>
+                                      ))}
+                                    </div>
+                                  </details>
+                                );
+                              })()}
                             </div>
                           ))}
                         </div>

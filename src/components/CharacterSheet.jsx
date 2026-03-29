@@ -377,7 +377,7 @@ export const CharacterSheet = ({ character, onUpdateInventory, onUpdateMaterialI
                 console.log('[Gathering] Calling onUpdateMaterialInventory');
                 onUpdateMaterialInventory(newMaterialInventory);
             } else {
-                console.error('[Gathering] onUpdateMaterialInventory is not defined!');
+                console.warn('[Gathering] onUpdateMaterialInventory not passed as prop — skipping save');
             }
 
             // Gain d'XP dans le métier
