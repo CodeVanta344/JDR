@@ -1,11 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { DieVisual } from './DieVisual';
-import { DiceOverlay2D } from './Dice2D';
-import './Dice2D.css';
+import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
+import './DiceChallengeModal.css';
 
 /**
- * DiceChallengeModal
- * An immersive modal for resolving AI challenges with complex dice (e.g., 1d6 + 1d20).
+ * DiceChallengeModal — Dynamic d100 dice rolling interface
+ * Features: animated rolling numbers, shake effect, particle burst on result,
+ * progressive die scaling by level, stat modifier calculation
  */
 export const DiceChallengeModal = ({
     challenge,
@@ -14,27 +13,21 @@ export const DiceChallengeModal = ({
     onClose,
     onRollStart
 }) => {
-    const [rolled, setRolled] = useState(false);
-    const [isRolling, setIsRolling] = useState(false);
-    const [rolls, setRolls] = useState([]); // Array of { type, value, completed }
+    const [phase, setPhase] = useState('ready'); // ready | rolling | result
+    const [rollValue, setRollValue] = useState(0);
+    const [displayValue, setDisplayValue] = useState('?');
     const [totalNatural, setTotalNatural] = useState(0);
     const [modifier, setModifier] = useState(0);
-    const [showOutcome, setShowOutcome] = useState(false);
+    const rollIntervalRef = useRef(null);
+    const rollCountRef = useRef(0);
 
     // Progressive Dice Logic based on character level
     const charLevel = playerStats?.level || 1;
-    const {
-        dieType,
-        multiplier,
-        critSuccessThreshold,
-        critFailThreshold
-    } = useMemo(() => {
-        // Niveau 1-5 : d20 uniquement (pas de d100)
-        if (charLevel <= 5) return { dieType: 'd20', multiplier: 5, critSuccessThreshold: 20, critFailThreshold: 1 };
-        if (charLevel <= 10) return { dieType: 'd50', multiplier: 2, critSuccessThreshold: 48, critFailThreshold: 3 };
-        if (charLevel <= 15) return { dieType: 'd75', multiplier: 1.33, critSuccessThreshold: 73, critFailThreshold: 3 };
-        // Niveau 16+ seulement : d100
-        return { dieType: 'd100', multiplier: 1, critSuccessThreshold: 95, critFailThreshold: 5 };
+    const { dieType, dieMax, multiplier, critSuccessThreshold, critFailThreshold } = useMemo(() => {
+        if (charLevel <= 5) return { dieType: 'd20', dieMax: 20, multiplier: 5, critSuccessThreshold: 20, critFailThreshold: 1 };
+        if (charLevel <= 10) return { dieType: 'd50', dieMax: 50, multiplier: 2, critSuccessThreshold: 48, critFailThreshold: 3 };
+        if (charLevel <= 15) return { dieType: 'd75', dieMax: 75, multiplier: 1.33, critSuccessThreshold: 73, critFailThreshold: 3 };
+        return { dieType: 'd100', dieMax: 100, multiplier: 1, critSuccessThreshold: 95, critFailThreshold: 5 };
     }, [charLevel]);
 
     const { stat, label, dc = 50 } = challenge;
@@ -42,229 +35,192 @@ export const DiceChallengeModal = ({
     // Calculate modifier from player stats
     useEffect(() => {
         if (playerStats && stat) {
-            const val = playerStats[stat.toLowerCase()] || 10;
-            // D100 Scaling: Stat value directly (no multiplier)
-            setModifier(val);
+            setModifier(playerStats[stat.toLowerCase()] || 10);
         }
     }, [playerStats, stat]);
 
-    const handleRoll = () => {
-        if (rolled || isRolling) return;
+    // Cleanup interval on unmount
+    useEffect(() => {
+        return () => { if (rollIntervalRef.current) clearInterval(rollIntervalRef.current); };
+    }, []);
 
-        setIsRolling(true);
+    const getOutcome = useCallback((natValue, total) => {
+        if (natValue >= critSuccessThreshold) return { status: 'CRITICAL_SUCCESS', label: 'REUSSITE CRITIQUE !', color: '#ffd700', cssClass: 'dcm-crit-success' };
+        if (natValue <= critFailThreshold) return { status: 'CRITICAL_FAILURE', label: 'ECHEC CRITIQUE...', color: '#ff4444', cssClass: 'dcm-crit-failure' };
+        if (total >= dc) return { status: 'SUCCESS', label: 'SUCCES !', color: '#4caf50', cssClass: 'dcm-success' };
+        return { status: 'FAILURE', label: 'ECHEC', color: '#ff8800', cssClass: 'dcm-failure' };
+    }, [critSuccessThreshold, critFailThreshold, dc]);
+
+    const handleRoll = () => {
+        if (phase !== 'ready') return;
+        setPhase('rolling');
         if (onRollStart) onRollStart();
 
-        const rollValue = Math.floor(Math.random() * parseInt(dieType.substring(1))) + 1;
-        setRolls([{
-            type: dieType,
-            value: rollValue,
-            completed: false
-        }]);
+        // Determine final value
+        const finalValue = Math.floor(Math.random() * dieMax) + 1;
+        rollCountRef.current = 0;
 
-        // Auto-finalize after animation delay
-        setTimeout(() => {
-            setTotalNatural(rollValue * multiplier);
-            setIsRolling(false);
-            setRolled(true);
-            setShowOutcome(true);
-        }, 1500);
-    };
+        // Animate: rapidly cycle random numbers, slowing down over ~2s
+        const totalFrames = 30;
+        let frame = 0;
 
-    const finalizeRoll = () => {
-        const natRoll = rolls[0]?.value || 0;
-        const finalNatural = natRoll * multiplier;
+        const animate = () => {
+            frame++;
+            rollCountRef.current = frame;
 
-        setTotalNatural(finalNatural);
-        setIsRolling(false);
-        setRolled(true);
-        setShowOutcome(true);
-    };
+            if (frame < totalFrames) {
+                // Show random numbers, slowing down
+                const randomVal = Math.floor(Math.random() * dieMax) + 1;
+                setDisplayValue(randomVal);
 
-    const handleDieComplete = (index) => {
-        setRolls(prev => {
-            const updated = [...prev];
-            updated[index].completed = true;
+                // Speed decreases: starts at 40ms, ends at 200ms
+                const delay = 40 + (frame / totalFrames) * 160;
+                rollIntervalRef.current = setTimeout(animate, delay);
+            } else {
+                // Final value — reveal
+                setDisplayValue(finalValue);
+                setRollValue(finalValue);
+                const natConverted = Math.round(finalValue * multiplier);
+                setTotalNatural(natConverted);
 
-            const allDone = updated.every(d => d.completed);
-            if (allDone) {
-                const natRoll = updated[0].value;
-                const finalNatural = natRoll * multiplier;
-
-                setTimeout(() => {
-                    setTotalNatural(finalNatural);
-                    setIsRolling(false);
-                    setRolled(true);
-                    setShowOutcome(true);
-                }, 400);
+                // Short pause then show outcome
+                setTimeout(() => setPhase('result'), 600);
             }
-            return updated;
-        });
-    };
+        };
 
-    const getOutcome = () => {
-        if (rolls.length === 0) return { status: 'UNKNOWN', label: '', color: '#fff' };
-
-        const natValue = rolls[0].value; // The raw roll before multiplier
-        const total = totalNatural + modifier;
-
-        // Progressive Crit Logic
-        if (natValue >= critSuccessThreshold) return { status: 'CRITICAL_SUCCESS', label: 'RÉUSSITE CRITIQUE !', color: '#ffd700' };
-        if (natValue <= critFailThreshold) return { status: 'CRITICAL_FAILURE', label: 'ÉCHEC CRITIQUE...', color: '#ff4444' };
-
-        if (total >= dc) return { status: 'SUCCESS', label: 'SUCCÈS !', color: '#4caf50' };
-        return { status: 'FAILURE', label: 'ÉCHEC', color: '#ff8800' };
+        animate();
     };
 
     const confirmResult = () => {
-        const outcome = getOutcome();
+        const natConverted = Math.round(rollValue * multiplier);
+        const total = natConverted + modifier;
+        const outcome = getOutcome(rollValue, total);
+
         onResult({
-            natural: rolls[0]?.value || 0,
-            naturalConverted: totalNatural,
+            natural: rollValue,
+            naturalConverted: natConverted,
             modifier,
-            total: totalNatural + modifier,
+            total,
             outcome: outcome.status,
             dice: dieType,
             dc,
             stat,
-            rolls: rolls.map(r => ({ type: r.type, value: r.value }))
+            rolls: [{ type: dieType, value: rollValue }]
         });
     };
 
+    const total = totalNatural + modifier;
+    const outcome = phase === 'result' ? getOutcome(rollValue, total) : null;
+    const fillPercent = phase === 'result' ? Math.min((total / dc) * 100, 100) : 0;
+
     return (
-        <div className="modal-overlay" role="dialog" aria-modal="true" style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.92)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 10000,
-            animation: 'fadeIn 0.3s ease'
-        }}>
-            {/* Dice overlay removed - using inline dice display only */}
+        <div className="dice-challenge-overlay" role="dialog" aria-modal="true">
+            {/* Floating particles */}
+            <div className="dcm-particles">
+                {[...Array(15)].map((_, i) => (
+                    <div key={i} className="dcm-particle" style={{
+                        left: `${Math.random() * 100}%`,
+                        top: `${Math.random() * 100}%`,
+                        animationDelay: `${Math.random() * 4}s`,
+                        animationDuration: `${4 + Math.random() * 6}s`
+                    }} />
+                ))}
+            </div>
 
-            <div className="dice-interface-overlay" style={{
-                position: 'relative',
-                width: 'min(90vw, 600px)',
-                textAlign: 'center',
-                zIndex: 10001,
-                pointerEvents: 'none'
-            }}>
-                <div style={{ pointerEvents: 'auto' }}>
-                    <h2 style={{
-                        color: 'var(--gold-primary)',
-                        marginBottom: '0.5rem',
-                        fontFamily: 'var(--font-display)',
-                        letterSpacing: '3px',
-                        textShadow: '0 0 20px rgba(0,0,0,0.8)'
-                    }}>
-                        DÉFI DE {stat?.toUpperCase() || 'COMPÉTENCE'}
-                    </h2>
-                    <p style={{ color: 'var(--aether-blue)', fontStyle: 'italic', marginBottom: '2rem', textShadow: '0 0 10px #000' }}>
-                        "{label}"
-                    </p>
+            <div className="dcm-container">
+                {/* Header */}
+                <div className="dcm-header">
+                    <div className="dcm-stat-label">Test de {stat?.toUpperCase() || 'competence'}</div>
+                    <h2 className="dcm-title">{label || 'Jet de competence'}</h2>
+                    {challenge.description && (
+                        <div className="dcm-label">{challenge.description}</div>
+                    )}
+                </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '3rem', marginBottom: '2rem', fontSize: '1rem', textShadow: '0 2px 4px #000' }}>
-                        <div style={{ color: 'var(--gold-light)' }}>
-                            Cible : <span style={{ color: '#fff', fontWeight: 'bold' }}>{dc}</span>
-                        </div>
-                        <div style={{ color: 'var(--gold-light)' }}>
-                            Formule : <span style={{ color: 'var(--gold-primary)', fontWeight: 'bold' }}>{dieType.toUpperCase()}</span>
-                        </div>
-                        <div style={{ color: 'var(--gold-light)' }}>
-                            Modificateur : <span style={{ color: '#fff', fontWeight: 'bold' }}>{modifier >= 0 ? '+' : ''}{modifier}</span>
-                        </div>
+                {/* Info bar */}
+                <div className="dcm-info-bar">
+                    <div className="dcm-info-item">
+                        <span className="dcm-info-label">Objectif</span>
+                        <span className="dcm-info-value dcm-dc">{dc}</span>
+                    </div>
+                    <div className="dcm-info-item">
+                        <span className="dcm-info-label">De</span>
+                        <span className="dcm-info-value">{dieType.toUpperCase()}</span>
+                    </div>
+                    <div className="dcm-info-item">
+                        <span className="dcm-info-label">Modificateur</span>
+                        <span className="dcm-info-value dcm-mod">{modifier >= 0 ? '+' : ''}{modifier}</span>
+                    </div>
+                    <div className="dcm-info-item">
+                        <span className="dcm-info-label">Total vise</span>
+                        <span className="dcm-info-value" style={{ color: '#fff' }}>{dc}</span>
                     </div>
                 </div>
 
-                <div style={{ minHeight: '30vh', pointerEvents: 'none' }} />
-
-                <div style={{ pointerEvents: 'auto' }}>
-                    {!isRolling && !rolled && (
-                        <button
-                            onClick={handleRoll}
-                            className="btn-action"
-                            style={{ 
-                                padding: '1.2rem 4rem', 
-                                fontSize: '1.4rem', 
-                                boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-                                background: 'linear-gradient(135deg, #D4AF37 0%, #FFD700 100%)',
-                                color: '#1a1a1a',
-                                border: 'none',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                fontWeight: 'bold',
-                                display: 'inline-block',
-                                opacity: 1,
-                                visibility: 'visible'
-                            }}
-                        >
-                            LANCER LES DÉS
-                        </button>
-                    )}
-
-                    {isRolling && !showOutcome && rolls.length > 0 && (
-                        <div style={{ 
-                            display: 'flex', 
-                            justifyContent: 'center', 
-                            alignItems: 'center',
-                            padding: '2rem'
-                        }}>
-                            <div className="dice-simple-container crit">
-                                <div className="dice-simple" style={{ width: '100px', height: '100px' }}>
-                                    <span className="dice-simple-value" style={{ fontSize: '3rem' }}>
-                                        {rolls[0]?.value || '?'}
-                                    </span>
-                                </div>
-                                <div className="dice-simple-shadow"></div>
-                            </div>
+                {/* Dice area */}
+                <div className="dcm-dice-area">
+                    <div className={`dcm-die ${phase === 'rolling' ? 'dcm-die-rolling' : ''} ${phase === 'result' ? `dcm-die-done ${outcome?.cssClass}` : ''}`}
+                         onClick={phase === 'ready' ? handleRoll : undefined}>
+                        <div className="dcm-die-face">
+                            {phase === 'ready' ? '?' : displayValue}
                         </div>
-                    )}
-
-                    {showOutcome && (
-                        <div style={{
-                            animation: 'fadeInUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                            paddingTop: '1.5rem'
-                        }}>
-                            <h1 style={{
-                                color: getOutcome().color,
-                                fontFamily: 'var(--font-display)',
-                                fontSize: '3.5rem',
-                                textShadow: `0 0 30px ${getOutcome().color}, 0 0 10px #000`,
-                                margin: '0.5rem 0'
-                            }}>
-                                {getOutcome().label}
-                            </h1>
-                            <p style={{ color: '#fff', textShadow: '0 2px 10px #000', fontSize: '1.4rem', marginBottom: '1.5rem' }}>
-                                Résultat ({dieType === 'd100' ? 'd100' : `${dieType.toUpperCase()} → équivalent d100`}) : <strong>{totalNatural + modifier}</strong>
-                            </p>
-
-                            <p style={{ color: '#ccc', textShadow: '0 2px 8px #000', fontSize: '0.95rem', marginBottom: '1.5rem' }}>
-                                Calcul : {rolls[0]?.value || 0}{multiplier !== 1 ? ` × ${multiplier}` : ''} + {modifier} = {totalNatural + modifier}
-                            </p>
-
-                            <button
-                                onClick={confirmResult}
-                                className="btn-primary"
-                                style={{ width: '100%', padding: '1.2rem', fontSize: '1.1rem' }}
-                            >
-                                CONTINUER LE RÉCIT
-                            </button>
-                        </div>
-                    )}
+                        <div className="dcm-die-type">{dieType.toUpperCase()}</div>
+                    </div>
                 </div>
-            </div>
 
-            <style>{`
-                @keyframes fadeInUp {
-                    from { opacity: 0; transform: translateY(20px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-                @keyframes fadeIn {
-                    from { opacity: 0; }
-                    to { opacity: 1; }
-                }
-            `}</style>
+                {/* Roll button */}
+                {phase === 'ready' && (
+                    <button className="dcm-roll-btn" onClick={handleRoll}>
+                        LANCER LE DE
+                    </button>
+                )}
+
+                {/* Rolling indicator */}
+                {phase === 'rolling' && (
+                    <div style={{ color: 'rgba(212,175,55,0.6)', fontSize: '0.85rem', letterSpacing: '2px', animation: 'dcm-fadeIn 0.3s' }}>
+                        Le destin decide...
+                    </div>
+                )}
+
+                {/* Outcome */}
+                {phase === 'result' && outcome && (
+                    <div className="dcm-outcome">
+                        <h1 className="dcm-outcome-title" style={{
+                            color: outcome.color,
+                            textShadow: `0 0 40px ${outcome.color}40`
+                        }}>
+                            {outcome.label}
+                        </h1>
+
+                        <div className="dcm-outcome-calc">
+                            <span style={{ color: '#d4af37' }}>{rollValue}</span>
+                            {multiplier !== 1 && <span style={{ color: '#888' }}> x {multiplier}</span>}
+                            <span style={{ color: '#888' }}> + </span>
+                            <span style={{ color: '#8ecae6' }}>{modifier}</span>
+                            <span style={{ color: '#888' }}> = </span>
+                            <span style={{ color: '#fff', fontSize: '1.4rem', fontWeight: 'bold' }}>{total}</span>
+                            <span style={{ color: '#888' }}> / {dc}</span>
+                        </div>
+
+                        {/* Progress bar */}
+                        <div className="dcm-outcome-bar">
+                            <div className="dcm-outcome-fill" style={{
+                                width: `${fillPercent}%`,
+                                background: outcome.color
+                            }} />
+                        </div>
+
+                        <div className="dcm-outcome-detail">
+                            {dieType !== 'd100' && `${dieType.toUpperCase()} (${rollValue}) converti en d100 : ${totalNatural}`}
+                            {dieType === 'd100' && `Jet naturel : ${rollValue}`}
+                        </div>
+
+                        <button className="dcm-continue-btn" onClick={confirmResult}>
+                            CONTINUER LE RECIT
+                        </button>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

@@ -1,0 +1,352 @@
+/* ===== DICE CHALLENGE MODAL ===== */
+
+.dice-challenge-overlay {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.95) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: dcm-fadeIn 0.3s ease;
+}
+
+/* Floating particles */
+.dcm-particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.dcm-particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(212, 175, 55, 0.3);
+  animation: dcm-float 6s ease-in-out infinite;
+}
+
+/* Main container */
+.dcm-container {
+  position: relative;
+  width: min(92vw, 520px);
+  text-align: center;
+  z-index: 1;
+}
+
+/* Header */
+.dcm-header {
+  margin-bottom: 1.5rem;
+  animation: dcm-slideDown 0.5s ease-out;
+}
+
+.dcm-stat-label {
+  font-size: 0.7rem;
+  letter-spacing: 4px;
+  color: rgba(212, 175, 55, 0.6);
+  text-transform: uppercase;
+  margin-bottom: 0.3rem;
+}
+
+.dcm-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(1.4rem, 4vw, 2rem);
+  color: #f4e8d0;
+  letter-spacing: 3px;
+  text-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+  margin: 0 0 0.3rem;
+}
+
+.dcm-label {
+  font-style: italic;
+  color: #8ecae6;
+  font-size: 1rem;
+}
+
+/* Info bar */
+.dcm-info-bar {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.dcm-info-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.dcm-info-label {
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+}
+
+.dcm-info-value {
+  font-family: 'Cinzel', serif;
+  font-size: 1.3rem;
+  color: #d4af37;
+  font-weight: bold;
+}
+
+.dcm-info-value.dcm-dc {
+  color: #ff8866;
+}
+
+.dcm-info-value.dcm-mod {
+  color: #8ecae6;
+}
+
+/* Dice area */
+.dcm-dice-area {
+  position: relative;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+/* The die */
+.dcm-die {
+  width: 120px;
+  height: 120px;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.dcm-die:hover:not(.dcm-die-rolling):not(.dcm-die-done) {
+  transform: scale(1.1);
+}
+
+.dcm-die-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Cinzel', serif;
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #f4e8d0;
+  border: 2px solid rgba(212, 175, 55, 0.4);
+  background: linear-gradient(135deg, #1a1525 0%, #0d0d15 100%);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 0 1px rgba(212, 175, 55, 0.2);
+}
+
+.dcm-die-type {
+  position: absolute;
+  bottom: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  color: rgba(212, 175, 55, 0.5);
+  letter-spacing: 2px;
+  font-family: 'Cinzel', serif;
+}
+
+/* Rolling animation */
+.dcm-die-rolling .dcm-die-face {
+  animation: dcm-roll 0.12s steps(1) infinite;
+  border-color: #d4af37;
+  box-shadow:
+    0 8px 32px rgba(212, 175, 55, 0.3),
+    0 0 60px rgba(212, 175, 55, 0.15);
+}
+
+.dcm-die-rolling {
+  animation: dcm-shake 0.15s ease-in-out infinite;
+}
+
+/* Result state */
+.dcm-die-done .dcm-die-face {
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  font-size: 3rem;
+}
+
+.dcm-die-done.dcm-success .dcm-die-face {
+  border-color: #4caf50;
+  box-shadow: 0 0 40px rgba(76, 175, 80, 0.4), 0 8px 32px rgba(0,0,0,0.5);
+  color: #4caf50;
+}
+
+.dcm-die-done.dcm-crit-success .dcm-die-face {
+  border-color: #ffd700;
+  box-shadow: 0 0 60px rgba(255, 215, 0, 0.5), 0 8px 32px rgba(0,0,0,0.5);
+  color: #ffd700;
+  animation: dcm-glow-gold 1s ease-in-out infinite;
+}
+
+.dcm-die-done.dcm-failure .dcm-die-face {
+  border-color: #ff8800;
+  box-shadow: 0 0 40px rgba(255, 136, 0, 0.3), 0 8px 32px rgba(0,0,0,0.5);
+  color: #ff8800;
+}
+
+.dcm-die-done.dcm-crit-failure .dcm-die-face {
+  border-color: #ff4444;
+  box-shadow: 0 0 60px rgba(255, 68, 68, 0.5), 0 8px 32px rgba(0,0,0,0.5);
+  color: #ff4444;
+  animation: dcm-glow-red 0.5s ease-in-out infinite;
+}
+
+/* Roll button */
+.dcm-roll-btn {
+  padding: 1rem 3rem;
+  font-size: 1.2rem;
+  font-family: 'Cinzel', serif;
+  font-weight: bold;
+  letter-spacing: 3px;
+  color: #1a1a1a;
+  background: linear-gradient(135deg, #d4af37 0%, #ffd700 50%, #d4af37 100%);
+  background-size: 200% 100%;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
+  animation: dcm-shimmer 3s ease-in-out infinite;
+}
+
+.dcm-roll-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(212, 175, 55, 0.5);
+}
+
+.dcm-roll-btn:active {
+  transform: translateY(0);
+}
+
+/* Outcome section */
+.dcm-outcome {
+  animation: dcm-outcomeReveal 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.dcm-outcome-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  margin: 0.5rem 0;
+  letter-spacing: 4px;
+}
+
+.dcm-outcome-calc {
+  font-size: 1.2rem;
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
+
+.dcm-outcome-detail {
+  font-size: 0.9rem;
+  color: #aaa;
+  margin-bottom: 1.5rem;
+}
+
+.dcm-outcome-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.1);
+  margin: 1rem auto 1.5rem;
+  max-width: 300px;
+  overflow: hidden;
+  position: relative;
+}
+
+.dcm-outcome-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 1s ease-out;
+}
+
+/* Continue button */
+.dcm-continue-btn {
+  width: 100%;
+  max-width: 400px;
+  padding: 1rem 2rem;
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: #f4e8d0;
+  background: rgba(212, 175, 55, 0.15);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dcm-continue-btn:hover {
+  background: rgba(212, 175, 55, 0.25);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+}
+
+/* Animations */
+@keyframes dcm-fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes dcm-slideDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dcm-shake {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(-4px, 2px) rotate(-3deg); }
+  50% { transform: translate(3px, -3px) rotate(2deg); }
+  75% { transform: translate(-2px, 4px) rotate(-1deg); }
+}
+
+@keyframes dcm-roll {
+  0% { content: ''; }
+}
+
+@keyframes dcm-glow-gold {
+  0%, 100% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.3), 0 8px 32px rgba(0,0,0,0.5); }
+  50% { box-shadow: 0 0 80px rgba(255, 215, 0, 0.6), 0 8px 32px rgba(0,0,0,0.5); }
+}
+
+@keyframes dcm-glow-red {
+  0%, 100% { box-shadow: 0 0 40px rgba(255, 68, 68, 0.3), 0 8px 32px rgba(0,0,0,0.5); }
+  50% { box-shadow: 0 0 80px rgba(255, 68, 68, 0.6), 0 8px 32px rgba(0,0,0,0.5); }
+}
+
+@keyframes dcm-outcomeReveal {
+  from { opacity: 0; transform: scale(0.8) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes dcm-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes dcm-float {
+  0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; }
+  50% { transform: translateY(-30px) translateX(10px); opacity: 0.8; }
+}
+
+/* Responsive */
+@media (max-width: 500px) {
+  .dcm-info-bar {
+    gap: 1rem;
+  }
+  .dcm-die {
+    width: 100px;
+    height: 100px;
+  }
+  .dcm-die-face {
+    font-size: 2rem;
+  }
+}
