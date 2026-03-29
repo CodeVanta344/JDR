@@ -2019,23 +2019,23 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                             const autoResult = {
                                 natural: 50,
                                 naturalConverted: 50,
-                                modifier: (character?.stats?.[stat] || 10) * 2,
-                                total: 50 + (character?.stats?.[stat] || 10) * 2,
+                                modifier: character?.stats?.[stat.toLowerCase()] || 10,
+                                total: 50 + (character?.stats?.[stat.toLowerCase()] || 10),
                                 outcome: 'SUCCESS',
                                 dice: 'd100',
                                 dc: challenge.dc || 25,
                                 stat: challenge.stat || 'PERCEPTION'
                             };
                             
-                            // Appeler handleChallengeResult directement
-                            setTimeout(() => handleChallengeResult(autoResult), 100);
+                            // Appeler handleChallengeResult directement (pas de setTimeout pour éviter race condition)
+                            handleChallengeResult(autoResult);
                         } else {
                             // Challenge normal - afficher le modal
                             // Ajouter un message système pour prévenir le joueur
                             const previewMsg = {
                                 id: crypto.randomUUID(),
                                 role: 'system',
-                                content: `🎲 **Test de ${challenge.stat?.toUpperCase() || 'compétence'}** - "${challenge.label || 'Test de compétence'}"\n\nObjectif : ${challenge.dc || 50} | Modificateur : ${(character?.stats?.[challenge.stat?.toLowerCase()] || 10) * 2 >= 0 ? '+' : ''}${(character?.stats?.[challenge.stat?.toLowerCase()] || 10) * 2}\n\n*Cliquez sur le bouton ci-dessus pour lancer les dés...*`,
+                                content: `🎲 **Test de ${challenge.stat?.toUpperCase() || 'compétence'}** - "${challenge.label || 'Test de compétence'}"\n\nObjectif : ${challenge.dc || 50} | Modificateur : ${(character?.stats?.[challenge.stat?.toLowerCase()] || 10) >= 0 ? '+' : ''}${character?.stats?.[challenge.stat?.toLowerCase()] || 10}\n\n*Cliquez sur le bouton ci-dessus pour lancer les dés...*`,
                                 created_at: new Date().toISOString()
                             };
                             setMessages(prev => [...prev, previewMsg]);
