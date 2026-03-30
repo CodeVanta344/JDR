@@ -1303,6 +1303,38 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         setCombatants(prev => prev.map(u => u.id === freshActor.id ? { ...u, resource: newResource, hasActed: true } : u));
         if (!freshActor.isEnemy && onResourceChange) onResourceChange(freshActor.id, newResource);
 
+        // ========== HEALING PATH — skip d100 roll for heal abilities ==========
+        if (action.heal) {
+            const wisBonus = freshActor.wis ? Math.floor((freshActor.wis - 10) / 2) : 0;
+            const healAmount = Math.max(1, action.heal + wisBonus);
+            const healTarget = target || freshActor;
+            const newHp = Math.min(healTarget.maxHp || 100, healTarget.hp + healAmount);
+
+            const healEl = document.getElementById(`unit-${healTarget.id}`);
+            const healRect = healEl ? healEl.getBoundingClientRect() : { x: window.innerWidth / 2, y: window.innerHeight / 2, width: 0, height: 0 };
+            const hcx = healRect.x + healRect.width / 2;
+            const hcy = healRect.y + healRect.height / 2;
+
+            addLog({ role: 'system', content: `💖 **${freshActor.name}** soigne **${healTarget.name}** de **${healAmount} PV** !` });
+            if (!healTarget.isEnemy && onHPChange) onHPChange(healTarget.id, newHp);
+
+            const healedCombatants = combatantsRef.current.map(u => u.id === healTarget.id ? { ...u, hp: newHp } : u);
+            setCombatants(healedCombatants);
+
+            if (onVFX) onVFX('magic', hcx, hcy, '#00ff88');
+            if (onSFX) onSFX('magic');
+
+            if (action.cooldown > 0) {
+                setCooldowns(prev => ({ ...prev, [currentActor.id]: { ...(prev[currentActor.id] || {}), [action.name]: action.cooldown } }));
+            }
+            lastSyncRef.current = Date.now();
+            if (onUpdateCombatState) onUpdateCombatState({
+                combatants: healedCombatants, turnIndex: currentTurnIndex, round, active: true, logs, updatedAt: lastSyncRef.current
+            });
+            addTimeout(setTimeout(() => finishTurn(), 600));
+            return;
+        }
+
         // ========== SYSTÈME D100 - JET D'ATTAQUE ==========
         const actorLevel = freshActor.level || 1;
         const { bonus: tacticalBonus, reason: tacticalReason } = getTacticalModifier(freshActor, target);
@@ -1434,32 +1466,61 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         setCombatants(prev => prev.map(u => u.id === freshActor.id ? { ...u, resource: newResource, hasActed: true } : u));
         if (!freshActor.isEnemy && onResourceChange) onResourceChange(freshActor.id, newResource);
 
-        // Apply buff effects based on action name/type
+        // Apply buff effects — property-based (reads action.statusEffect, action.heal)
         let effectMsg = '';
         let buffEffect = null;
-        
-        switch (action.name) {
-            case 'Disparition':
-            case 'Invisibilité':
-                buffEffect = { type: 'invisible', duration: action.duration || 3, name: 'Invisibilité' };
-                effectMsg = '👻 **Invisibilité** activée (3 tours)';
-                break;
-            case 'Bouclier':
-            case 'Barrière':
-                buffEffect = { type: 'shield', duration: action.duration || 2, name: 'Bouclier magique' };
-                effectMsg = '🛡️ **Bouclier** activé';
-                break;
-            case 'Hâte':
-            case 'Célérité':
-                buffEffect = { type: 'haste', duration: action.duration || 2, name: 'Hâte' };
-                effectMsg = '⚡ **Hâte** activée';
-                break;
-            case 'Régénération':
-                buffEffect = { type: 'regen', duration: action.duration || 3, name: 'Régénération' };
-                effectMsg = '💚 **Régénération** activée';
-                break;
-            default:
-                effectMsg = `✨ **${action.name}** activé`;
+
+        // Self-healing abilities bypass buff logic entirely
+        if (action.heal) {
+            const wisBonus = freshActor.wis ? Math.floor((freshActor.wis - 10) / 2) : 0;
+            const healAmount = Math.max(1, action.heal + wisBonus);
+            const newHp = Math.min(freshActor.maxHp || 100, freshActor.hp + healAmount);
+            setCombatants(prev => prev.map(u => u.id === freshActor.id ? { ...u, hp: newHp, resource: newResource, hasActed: true } : u));
+            if (!freshActor.isEnemy && onHPChange) onHPChange(freshActor.id, newHp);
+            addLog({ role: 'system', content: `💖 **${freshActor.name}** utilise **${action.name}** ! +${healAmount} PV` });
+            if (onVFX) onVFX('magic', window.innerWidth / 2, window.innerHeight / 2, '#00ff88');
+            if (onSFX) onSFX('magic');
+            if (action.cooldown > 0) setCooldowns(prev => ({ ...prev, [currentActor.id]: { ...(prev[currentActor.id] || {}), [action.name]: action.cooldown } }));
+            lastSyncRef.current = Date.now();
+            const healedCombatants = combatantsRef.current.map(u => u.id === freshActor.id ? { ...u, hp: newHp, resource: newResource, hasActed: true } : u);
+            if (onUpdateCombatState) onUpdateCombatState({ combatants: healedCombatants, turnIndex: currentTurnIndex, round, active: true, logs, updatedAt: lastSyncRef.current });
+            addTimeout(setTimeout(() => finishTurn(), 600));
+            return;
+        }
+
+        // Property-based: read action.statusEffect first, fall back to name-based legacy
+        if (action.statusEffect?.type) {
+            buffEffect = {
+                type: action.statusEffect.type,
+                duration: action.statusEffect.duration || action.duration || 2,
+                name: action.name
+            };
+            effectMsg = `✨ **${action.name}** actif (${buffEffect.duration} tour(s))`;
+        } else {
+            switch (action.name) {
+                case 'Disparition':
+                case 'Invisibilité':
+                    buffEffect = { type: 'invisible', duration: action.duration || 3, name: 'Invisibilité' };
+                    effectMsg = '👻 **Invisibilité** activée (3 tours)';
+                    break;
+                case 'Bouclier':
+                case 'Barrière':
+                    buffEffect = { type: 'shield', duration: action.duration || 2, name: 'Bouclier magique' };
+                    effectMsg = '🛡️ **Bouclier** activé';
+                    break;
+                case 'Hâte':
+                case 'Célérité':
+                    buffEffect = { type: 'haste', duration: action.duration || 2, name: 'Hâte' };
+                    effectMsg = '⚡ **Hâte** activée';
+                    break;
+                case 'Régénération':
+                    buffEffect = { type: 'regen', duration: action.duration || 3, name: 'Régénération' };
+                    effectMsg = '💚 **Régénération** activée';
+                    break;
+                default:
+                    buffEffect = { type: action.name.toLowerCase().replace(/\s+/g, '_'), duration: action.duration || 2, name: action.name };
+                    effectMsg = `✨ **${action.name}** activé`;
+            }
         }
 
         // Add buff to combatant
@@ -1642,6 +1703,36 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                             );
                             setCombatants(finalCombatants);
                             addLog({ role: 'system', content: `🔮 **${target.name}** perd sa concentration ! (Jet: ${save.total} vs DC ${dc})` });
+                        }
+                    }
+
+                    // ========== AoE SPLASH DAMAGE ==========
+                    if (action.aoe && success) {
+                        const aoeRadius = action.aoe.radius || 1.5;
+                        const aoeDamageRatio = action.aoe.damageFalloff || 0.5;
+                        const splashDamage = Math.max(1, Math.floor(damage * aoeDamageRatio));
+                        const splashTargets = finalCombatants.filter(u =>
+                            u.id !== target.id &&
+                            u.hp > 0 &&
+                            u.isEnemy === target.isEnemy // same faction as primary target
+                        );
+                        if (splashTargets.length > 0) {
+                            addLog({ role: 'system', content: `💥 **${action.name}** explose — dégâts de zone !` });
+                            splashTargets.slice(0, 3).forEach(splashTarget => {
+                                const splashHp = Math.max(0, splashTarget.hp - splashDamage);
+                                finalCombatants = finalCombatants.map(u =>
+                                    u.id === splashTarget.id ? { ...u, hp: splashHp } : u
+                                );
+                                if (!splashTarget.isEnemy && onHPChange) onHPChange(splashTarget.id, splashHp);
+                                addLog({ role: 'system', content: `  ↳ **${splashTarget.name}** prend **${splashDamage}** dégâts de zone` });
+                                if (splashHp === 0 && splashTarget.hp > 0) addLog({ role: 'system', content: `💀 **${splashTarget.name}** est terrassé par la déflagration !` });
+                                if (onVFX) {
+                                    const splashEl = document.getElementById(`unit-${splashTarget.id}`);
+                                    const splashRect = splashEl ? splashEl.getBoundingClientRect() : { x: window.innerWidth / 2, y: window.innerHeight / 2, width: 0, height: 0 };
+                                    onVFX('magic', splashRect.x + splashRect.width / 2, splashRect.y + splashRect.height / 2, '#ff8800');
+                                }
+                            });
+                            setCombatants(finalCombatants);
                         }
                     }
 

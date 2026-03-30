@@ -227,7 +227,7 @@ async function processRequest(request) {
         const enemies = [];
         for (let i = 0; i < numEnemies; i++) {
           const template = templates[Math.min(i, templates.length - 1)];
-          const levelScale = 1 + (playerLevel - 1) * 0.15;
+          const levelScale = Math.min(3, 1 + (playerLevel - 1) * 0.15); // cap at 3× (level ~21)
           enemies.push({
             ...template,
             id: `e${i + 1}`,
