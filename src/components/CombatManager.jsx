@@ -28,6 +28,7 @@ import {
     checkWeaponProficiency,
     checkArmorProficiency,
     getLeadershipBonus,
+    applyLeadershipBonus,
     createStatusEffect,
     rollSave,
     decideEnemyTurn,
@@ -1912,6 +1913,11 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         if (nextIndex < currentTurnIndex) {
             setRound(newRound);
             addLog({ role: 'system', content: `🕒 --- **DEBUT DU ROUND ${newRound}** ---` });
+            // Apply CHA leadership bonus to allies at each round start
+            const leadershipLogs = applyLeadershipBonus(combatantsRef.current.filter(u => !u.isEnemy));
+            if (leadershipLogs.length > 0) {
+                leadershipLogs.forEach(msg => addLog({ role: 'system', content: `⚔️ ${msg}` }));
+            }
         }
 
         setCurrentTurnIndex(nextIndex);
@@ -2024,6 +2030,37 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
             }
 
             addLog({ role: 'system', content: `${nextActor.isEnemy ? "👹" : "👤"} C'est au tour de **${nextActor.name}** !` });
+
+            // ========== PASSIVE ABILITIES CHECK at turn start ==========
+            if (!nextActor.isEnemy && nextActor.actions) {
+                const passives = nextActor.actions.filter(a => a.actionType === 'Passif' || a.passive === true);
+                for (const passive of passives) {
+                    // Critique Amélioré: lower crit threshold
+                    if (passive.name === 'Critique Amélioré' || passive.critBonus) {
+                        newCombatants = newCombatants.map(u =>
+                            u.id === nextActor.id ? { ...u, critThreshold: Math.max(1, (u.critThreshold || 95) - (passive.critBonus || 5)) } : u
+                        );
+                    }
+                    // Attaque Supplémentaire: grant extra action point
+                    if (passive.name === 'Attaque Supplémentaire' || passive.extraAttack) {
+                        const extraResource = passive.extraAttack || 20;
+                        newCombatants = newCombatants.map(u =>
+                            u.id === nextActor.id ? { ...u, resource: Math.min(u.maxResource || 100, u.resource + extraResource) } : u
+                        );
+                        addLog({ role: 'system', content: `⚔️ **${nextActor.name}** gagne une attaque supplémentaire !` });
+                    }
+                    // Indomptable: if HP < 25%, gain temp resistance
+                    if (passive.name === 'Indomptable' || passive.indomitable) {
+                        const actor = newCombatants.find(u => u.id === nextActor.id);
+                        if (actor && actor.hp <= (actor.maxHp || 100) * 0.25 && !actor.indomitableActive) {
+                            newCombatants = newCombatants.map(u =>
+                                u.id === nextActor.id ? { ...u, indomitableActive: true, damageResistance: (u.damageResistance || 0) + 0.25 } : u
+                            );
+                            addLog({ role: 'system', content: `💪 **${nextActor.name}** active **Indomptable** — résistance aux dégâts !` });
+                        }
+                    }
+                }
+            }
 
             // Decrement cooldowns via engine
             const withCooldowns = decrementCooldowns(newCombatants.find(u => u.id === nextActor.id) || nextActor);

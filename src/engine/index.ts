@@ -20,6 +20,7 @@ export {
   checkWeaponProficiency,
   checkArmorProficiency,
   getLeadershipBonus,
+  applyLeadershipBonus,
   getMerchantPriceModifier,
   checkMorale,
   formatCombatLog,
