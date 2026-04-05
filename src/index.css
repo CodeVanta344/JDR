@@ -1075,10 +1075,11 @@ button {
     /* Above scene (0) and time (1), below HUD (100) */
 }
 
-/* Hide base vignette during combat — the combat map has its own lighting */
-.combat-viewer-container ~ .vignette-overlay,
-body:has(.combat-viewer-container) .vignette-overlay {
-    opacity: 0.15;
+/* Hide ALL vignettes during combat — the combat map has its own lighting */
+body:has(.combat-viewer-container) .vignette-overlay,
+body:has(.combat-viewer-container) .vignette-layer {
+    opacity: 0 !important;
+    pointer-events: none;
 }
 
 .noise-overlay {
