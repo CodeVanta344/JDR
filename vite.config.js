@@ -133,7 +133,11 @@ export default defineConfig({
           if (id.includes('/lore/classes') || id.includes('/lore/skills')) return 'lore-classes';
           if (id.includes('/lore/items') || id.includes('/lore/crafting') || id.includes('/lore/professions')) return 'lore-items';
           if (id.includes('/lore/world') || id.includes('/lore/factions') || id.includes('/lore/cultural') || id.includes('/lore/npcs')) return 'lore-world';
-          if (id.includes('/lore/narrative') || id.includes('/lore/backstories') || id.includes('/lore/lifepath') || id.includes('/lore/gm-book')) return 'lore-narrative';
+          if (id.includes('/lore/gm-book-act4') || id.includes('/lore/gm-book-act5')) return 'lore-narrative-late';
+          if (id.includes('/lore/gm-book') || id.includes('/lore/narrative')) return 'lore-narrative';
+          if (id.includes('/lore/backstories') || id.includes('/lore/lifepath')) return 'lore-backstories';
+          if (id.includes('/lore/dialogues') || id.includes('/lore/events')) return 'lore-dialogues';
+          if (id.includes('/lore/economy') || id.includes('/lore/loot') || id.includes('/lore/recipes') || id.includes('/lore/rules')) return 'lore-economy';
           if (id.includes('/lore/')) return 'lore-core';
           // AI engine chunk
           if (id.includes('/ai/')) return 'ai-engine';

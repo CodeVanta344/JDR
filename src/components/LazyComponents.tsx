@@ -27,7 +27,7 @@ const LoadingFallback: React.FC<{ message?: string }> = ({ message = 'Chargement
   </div>
 );
 
-export const LazyCombatManager = lazy(() => import('./CombatManager').then(m => ({ default: (m as any).CombatManager ?? m.default })));
+// LazyCombatManager removed — replaced by CardCombat
 export const LazyCharacterSheet = lazy(() => import('./CharacterSheet').then(m => ({ default: (m as any).CharacterSheet ?? m.default })));
 export const LazyInventory = lazy(() => import('./InventoryPanel').then(m => ({ default: (m as any).InventoryPanel ?? m.default })));
 export const LazyQuestTracker = lazy(() => import('./QuestTracker'));

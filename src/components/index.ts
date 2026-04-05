@@ -6,7 +6,7 @@ export { ConnectionStatus } from './ConnectionStatus';
 export { KeyboardShortcutsHelp } from './KeyboardShortcutsHelp';
 export {
   LazyWrapper,
-  LazyCombatManager,
+  // LazyCombatManager removed
   LazyCharacterSheet,
   LazyInventory,
   LazyQuestTracker,

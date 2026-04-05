@@ -114,6 +114,8 @@ async function invokeGM(supabaseClient, body) {
                 .single();
 
             if (updated?.status === 'completed' && updated.response_payload) {
+                // Cleanup: delete processed request to avoid orphans
+                supabaseClient.from('ai_requests').delete().eq('id', request.id).then(() => {});
                 return { data: parseGMResponse(updated.response_payload) };
             }
             if (updated?.status === 'error') {
@@ -1155,7 +1157,9 @@ export default function App({ user }) {
                     }
                 }
             )
-            .subscribe();
+            .subscribe((status, err) => {
+                if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') console.warn('[Realtime] Session status error:', status);
+            });
 
         return () => {
             supabase.removeChannel(channel);
@@ -1201,7 +1205,9 @@ export default function App({ user }) {
                     window.history.pushState({}, '', window.location.pathname);
                 }
             )
-            .subscribe();
+            .subscribe((status, err) => {
+                if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') console.warn('[Realtime] Session deactivate error:', status);
+            });
 
         return () => {
             supabase.removeChannel(channel);
