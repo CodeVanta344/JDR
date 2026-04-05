@@ -98,6 +98,32 @@ function generatePattern(enemy: any): EnemyIntention[] {
 }
 
 // ============================================================
+// EQUIPMENT STAT HELPERS
+// ============================================================
+
+function computeEquipmentBonus(player: any, stat: string): number {
+  const inventory = player.inventory || [];
+  let bonus = 0;
+  for (const item of inventory) {
+    if (item.equipped && item.stats) {
+      bonus += (item.stats[stat] || 0);
+    }
+  }
+  return bonus;
+}
+
+function computeEquipmentAC(player: any): number {
+  const inventory = player.inventory || [];
+  let ac = 0;
+  for (const item of inventory) {
+    if (item.equipped && item.stats?.armor) {
+      ac += item.stats.armor;
+    }
+  }
+  return ac;
+}
+
+// ============================================================
 // INIT
 // ============================================================
 
@@ -135,12 +161,12 @@ export function initCombat(player: any, rawEnemies: any[]): CombatState {
     player: {
       hp: player.hp || player.stats?.hp || 50,
       maxHp: player.maxHp || player.max_hp || player.stats?.maxHp || 50,
-      block: 0,
+      block: computeEquipmentAC(player),
       energy: player.resource || player.max_resource || 100,
       maxEnergy: player.max_resource || 100,
       resourceName: player.resource_name || 'Mana',
-      strength: 0,
-      dexterity: 0,
+      strength: computeEquipmentBonus(player, 'strength') + computeEquipmentBonus(player, 'attackBonus'),
+      dexterity: computeEquipmentBonus(player, 'dexterity'),
       poison: 0,
       weak: 0,
       vulnerable: 0,
@@ -241,7 +267,7 @@ export function playCard(state: CombatState, cardIndex: number, targetIndex: num
     switch (effect.type) {
       case 'damage': {
         const baseDmg = diceDamage > 0 ? diceDamage : effect.value;
-        let dmg = baseDmg + player.strength;
+        let dmg = baseDmg + player.strength; // strength includes equipment attackBonus
         if (player.weak > 0) dmg = Math.floor(dmg * 0.75);
 
         if (target === 'all_enemies') {
