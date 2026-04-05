@@ -7,23 +7,72 @@ import './CardCombat.css';
 // CARD COMPONENT
 // ============================================================
 
+const CARD_THEMES = {
+  attack: { icon: '⚔️', accentColor: '#ff4444', gradTop: '#4a1515', gradBot: '#1a0808', border: '#8c3a3a', label: 'ATTAQUE' },
+  skill:  { icon: '🛡️', accentColor: '#22c55e', gradTop: '#153a15', gradBot: '#081a08', border: '#3a8c3a', label: 'COMPÉTENCE' },
+  power:  { icon: '✨', accentColor: '#60a5fa', gradTop: '#15203a', gradBot: '#08101a', border: '#3a5a8c', label: 'POUVOIR' },
+  curse:  { icon: '💀', accentColor: '#a855f7', gradTop: '#2a1530', gradBot: '#150a18', border: '#6a3a7a', label: 'MALÉDICTION' },
+};
+
 const CardView = ({ card, index, selected, canPlay, onClick }) => {
-  const typeIcons = { attack: '⚔️', skill: '🛡️', power: '✨', curse: '💀' };
-  const icon = typeIcons[card.type] || '❓';
+  const theme = CARD_THEMES[card.type] || CARD_THEMES.attack;
+
+  // Build effect summary text
+  const effectSummary = card.effects.map(e => {
+    switch (e.type) {
+      case 'damage': return `⚔️ ${e.value} ${e.target === 'all_enemies' ? '(tous)' : ''}`;
+      case 'block': return `🛡️ ${e.value}`;
+      case 'heal': return `💖 ${e.value}`;
+      case 'draw': return `🃏 +${e.value}`;
+      case 'energy': return `⚡ +${e.value}`;
+      case 'poison': return `☠️ ${e.value}`;
+      case 'weak': return `😵 ${e.value}`;
+      case 'vulnerable': return `🎯 ${e.value}`;
+      case 'strength': return `💪 +${e.value}`;
+      case 'dexterity': return `🏃 +${e.value}`;
+      default: return '';
+    }
+  }).filter(Boolean).join('  ');
 
   return (
     <div
       className={`cc-card ${selected ? 'selected' : ''} ${!canPlay ? 'unplayable' : ''}`}
-      style={{ zIndex: index + 1 }}
+      style={{ zIndex: index + 1, '--accent': theme.accentColor }}
       onClick={() => canPlay && onClick(index)}
     >
-      <div className="cc-card-cost">{card.cost >= 0 ? card.cost : '✕'}</div>
-      <div className={`cc-card-inner ${card.type}`}>
+      {/* Energy cost orb */}
+      <div className="cc-card-cost" style={{ background: `radial-gradient(circle, ${theme.accentColor}, ${theme.border})` }}>
+        {card.cost >= 0 ? card.cost : '✕'}
+      </div>
+
+      <div className="cc-card-inner" style={{
+        background: `linear-gradient(180deg, ${theme.gradTop} 0%, ${theme.gradBot} 100%)`,
+        borderColor: theme.border,
+      }}>
+        {/* Type label */}
+        <div className="cc-card-type-label" style={{ color: theme.accentColor }}>{theme.label}</div>
+
+        {/* Card name */}
         <div className="cc-card-name">{card.name}</div>
-        <div className="cc-card-art">{icon}</div>
+
+        {/* Art area with icon */}
+        <div className="cc-card-art" style={{ borderColor: `${theme.accentColor}33` }}>
+          <span className="cc-card-icon">{theme.icon}</span>
+          {card.diceRoll && <span className="cc-card-dice-badge">🎲 {card.diceRoll.die}</span>}
+        </div>
+
+        {/* Effect numbers - big visible feedback */}
+        <div className="cc-card-effects">{effectSummary}</div>
+
+        {/* Description */}
         <div className="cc-card-desc">{card.description}</div>
       </div>
+
+      {/* Rarity gem */}
       <div className={`cc-card-rarity ${card.rarity}`} />
+
+      {/* Exhaust indicator */}
+      {card.exhaust && <div className="cc-card-exhaust">ÉPUISER</div>}
     </div>
   );
 };
@@ -268,8 +317,14 @@ export const CardCombat = ({
             <div className="cc-hp-text">{player.hp} / {player.maxHp}</div>
           </div>
           <div className="cc-player-name">{myPlayer?.name?.toUpperCase() || 'JOUEUR'}</div>
-          {player.strength > 0 && <div style={{ color: '#ff6b6b', fontSize: '0.6rem' }}>💪 +{player.strength} Force</div>}
-          {player.dexterity > 0 && <div style={{ color: '#4ade80', fontSize: '0.6rem' }}>🏃 +{player.dexterity} Dextérité</div>}
+          {/* Status effects panel */}
+          <div className="cc-status-row">
+            {player.strength > 0 && <div className="cc-status-badge str">💪 {player.strength}</div>}
+            {player.dexterity > 0 && <div className="cc-status-badge dex">🏃 {player.dexterity}</div>}
+            {player.poison > 0 && <div className="cc-status-badge poison">☠️ {player.poison}</div>}
+            {player.weak > 0 && <div className="cc-status-badge weak">😵 {player.weak}</div>}
+            {player.vulnerable > 0 && <div className="cc-status-badge vuln">🎯 {player.vulnerable}</div>}
+          </div>
         </div>
 
         {/* Enemies */}

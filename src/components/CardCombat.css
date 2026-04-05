@@ -333,46 +333,39 @@
   width: 100%;
   height: 100%;
   border-radius: 10px;
-  padding: 8px;
+  padding: 6px 8px;
   display: flex;
   flex-direction: column;
   border: 2px solid;
   overflow: hidden;
-}
-
-.cc-card-inner.attack {
-  background: linear-gradient(180deg, #3a1515 0%, #1a0808 100%);
-  border-color: #8c3a3a;
-}
-.cc-card-inner.skill {
-  background: linear-gradient(180deg, #153a15 0%, #081a08 100%);
-  border-color: #3a8c3a;
-}
-.cc-card-inner.power {
-  background: linear-gradient(180deg, #15153a 0%, #08081a 100%);
-  border-color: #3a3a8c;
-}
-.cc-card-inner.curse {
-  background: linear-gradient(180deg, #2a1530 0%, #150a18 100%);
-  border-color: #6a3a7a;
+  position: relative;
 }
 
 .cc-card-cost {
   position: absolute;
-  top: -4px;
-  left: -4px;
-  width: 28px;
-  height: 28px;
+  top: -6px;
+  left: -6px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  background: radial-gradient(circle, #d4af37, #8a6d3b);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #1a0f08;
-  font-size: 0.85rem;
+  color: #fff;
+  font-size: 0.9rem;
   font-weight: 900;
-  border: 2px solid #fbeea8;
+  border: 2px solid rgba(255,255,255,0.3);
   z-index: 5;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+}
+
+.cc-card-type-label {
+  text-align: center;
+  font-size: 0.4rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+  opacity: 0.7;
 }
 
 .cc-card-name {
@@ -381,41 +374,107 @@
   font-size: 0.55rem;
   font-weight: 700;
   letter-spacing: 0.5px;
-  margin-top: 4px;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
 
 .cc-card-art {
   flex: 1;
-  border-radius: 4px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem;
-  background: rgba(0,0,0,0.3);
-  margin-bottom: 4px;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid;
+  margin-bottom: 3px;
+  position: relative;
+  min-height: 40px;
+}
+
+.cc-card-icon {
+  font-size: 1.8rem;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+
+.cc-card-dice-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 0.5rem;
+  background: rgba(212,175,55,0.3);
+  border: 1px solid rgba(212,175,55,0.5);
+  border-radius: 4px;
+  padding: 1px 4px;
+  color: #d4af37;
+}
+
+.cc-card-effects {
+  text-align: center;
+  font-size: 0.6rem;
+  font-weight: 900;
+  color: #fff;
+  padding: 2px 0;
+  letter-spacing: 1px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+  min-height: 16px;
 }
 
 .cc-card-desc {
   text-align: center;
-  color: #aaa;
-  font-size: 0.45rem;
+  color: #999;
+  font-size: 0.42rem;
   line-height: 1.3;
   font-family: sans-serif;
 }
 
 .cc-card-rarity {
   position: absolute;
-  bottom: 2px;
+  bottom: 3px;
   left: 50%;
   transform: translateX(-50%);
-  width: 10px;
-  height: 3px;
+  width: 14px;
+  height: 4px;
   border-radius: 2px;
 }
+.cc-card-rarity.starter { background: #555; }
 .cc-card-rarity.common { background: #888; }
-.cc-card-rarity.uncommon { background: #3b82f6; }
-.cc-card-rarity.rare { background: #d4af37; }
+.cc-card-rarity.uncommon { background: #3b82f6; box-shadow: 0 0 6px rgba(59,130,246,0.5); }
+.cc-card-rarity.rare { background: #d4af37; box-shadow: 0 0 6px rgba(212,175,55,0.5); }
+
+.cc-card-exhaust {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  font-size: 0.35rem;
+  background: rgba(168,85,247,0.3);
+  border: 1px solid rgba(168,85,247,0.5);
+  border-radius: 3px;
+  padding: 1px 3px;
+  color: #c084fc;
+  letter-spacing: 0.5px;
+}
+
+/* === STATUS BADGES === */
+.cc-status-row {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.cc-status-badge {
+  font-size: 0.55rem;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-weight: 700;
+  border: 1px solid;
+}
+.cc-status-badge.str { background: rgba(255,68,68,0.2); border-color: #ff4444; color: #ff8b8b; }
+.cc-status-badge.dex { background: rgba(74,222,128,0.2); border-color: #4ade80; color: #86efac; }
+.cc-status-badge.poison { background: rgba(168,85,247,0.2); border-color: #a855f7; color: #c084fc; }
+.cc-status-badge.weak { background: rgba(251,191,36,0.2); border-color: #fbbf24; color: #fcd34d; }
+.cc-status-badge.vuln { background: rgba(248,113,113,0.2); border-color: #f87171; color: #fca5a5; }
 
 /* === ENERGY === */
 .cc-energy {
