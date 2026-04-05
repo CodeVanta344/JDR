@@ -50,18 +50,19 @@ let totalProcessed = 0;
  * Appelle Claude Code CLI avec un prompt et retourne la réponse
  */
 async function callClaudeCode(systemPrompt, userMessage, maxTokens = 2048) {
-  const fullPrompt = systemPrompt
-    ? `[System: ${systemPrompt}]\n\n${userMessage}`
-    : userMessage;
-
   try {
-    // Utilise le CLI claude avec --print pour output direct (pas de session interactive)
-    const { stdout } = await execFileAsync('claude', [
-      '--print',          // Mode non-interactif, affiche la réponse et quitte
-      '--no-input',       // Pas d'input stdin
+    // Build CLI args with proper --system-prompt flag
+    const args = [
+      '--print',           // Mode non-interactif, affiche la réponse et quitte
+      '--no-input',        // Pas d'input stdin
       '--model', 'sonnet', // Utilise Claude Sonnet (le plus rapide/efficace)
-      fullPrompt
-    ], {
+    ];
+    if (systemPrompt) {
+      args.push('--system-prompt', systemPrompt);
+    }
+    args.push(userMessage);
+
+    const { stdout } = await execFileAsync('claude', args, {
       timeout: 120000, // 2 minutes max
       maxBuffer: 1024 * 1024, // 1MB
       env: { ...process.env, TERM: 'dumb' }, // Évite les codes ANSI
@@ -69,10 +70,13 @@ async function callClaudeCode(systemPrompt, userMessage, maxTokens = 2048) {
 
     return stdout.trim();
   } catch (err) {
-    // Fallback: essayer avec -p (alias court)
+    // Fallback: embed system prompt in user message
     try {
+      const fallbackPrompt = systemPrompt
+        ? `${systemPrompt}\n\n---\n\n${userMessage}`
+        : userMessage;
       const { stdout } = await execFileAsync('claude', [
-        '-p', fullPrompt
+        '-p', fallbackPrompt
       ], {
         timeout: 120000,
         maxBuffer: 1024 * 1024,
