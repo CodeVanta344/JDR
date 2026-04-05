@@ -154,7 +154,7 @@ const PlayerPortrait = ({ player, isActive, isSelf, damagePopups }) => (
 
 const CardCombat = ({
   players, currentUserId, initialEnemies,
-  classesData, sessionId, supabaseClient,
+  classesData, gameTime, sessionId, supabaseClient,
   syncedCombatState, onUpdateCombatState,
   onCombatEnd, onGameOver, onRewards,
   onHPChange, onVFX, onSFX,
@@ -201,7 +201,7 @@ const CardCombat = ({
       return { ...p, classData };
     });
 
-    const initial = initCombat(enriched, initialEnemies);
+    const initial = initCombat(enriched, initialEnemies, gameTime?.hour);
     setState(initial);
 
     // Sync initial state

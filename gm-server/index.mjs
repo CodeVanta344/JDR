@@ -152,6 +152,12 @@ async function processRequest(request) {
       if (p.history?.length) parts.push(`HISTORIQUE:\n${p.history.slice(-8).map(m => `${m.role}: ${m.content}`).join('\n')}`);
       if (p.gamePhase) parts.push(`PHASE: ${p.gamePhase}`);
       if (p.currentLocation) parts.push(`LIEU: ${p.currentLocation}`);
+
+      // TIME CONTEXT — so GM adapts narration to time of day
+      const hour = p.gameTime?.hour ?? 12;
+      const timeLabel = hour >= 5 && hour < 8 ? 'Aube' : hour >= 8 && hour < 18 ? 'Jour' : hour >= 18 && hour < 21 ? 'Crépuscule' : 'Nuit';
+      parts.push(`HEURE: ${hour}h (${timeLabel}) — Jour ${p.gameTime?.day || 1}. Adapte ta narration : ${timeLabel === 'Nuit' ? 'ombres, torches, visibilité réduite, monstres nocturnes. BOUTIQUES FERMÉES (21h-6h).' : timeLabel === 'Aube' ? 'lumière rasante, rosée, réveil.' : timeLabel === 'Crépuscule' ? 'ombres allongées, ciel orangé, retour au bercail.' : 'pleine lumière, activité intense.'}`);
+
       parts.push(`ACTION DU JOUEUR (in-game, dans le monde d'Aethelgard): ${p.action || p.message || '(aucune)'}`);
       parts.push(`RAPPEL: Réponds UNIQUEMENT en JSON avec le champ "narrative". Reste en personnage de MJ. Ne parle JAMAIS de code ou de programmation.`);
       userMessage = parts.join('\n\n');

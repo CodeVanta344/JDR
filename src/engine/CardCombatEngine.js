@@ -111,13 +111,17 @@ function executeEnemyPhase(state) {
         if (enemy.weak > 0) dmg = Math.floor(dmg * 0.75);
         if (players[tIdx].vulnerable > 0) dmg = Math.floor(dmg * 1.5);
 
-        // AUTO DEFENSE ROLL — d20 passive parry
+        // Night bonus: enemies hit harder
+        if (state.isNight) dmg += 2;
+
+        // AUTO DEFENSE ROLL — d20 passive parry (harder at night: threshold 14 instead of 12)
         const defRoll = Math.floor(Math.random() * 20) + 1;
+        const parryThreshold = state.isNight ? 14 : 12;
         let parryMsg = '';
         if (defRoll >= 18) {
           dmg = Math.floor(dmg * 0.25);
           parryMsg = ` 🎲d20=${defRoll} Parade parfaite !`;
-        } else if (defRoll >= 12) {
+        } else if (defRoll >= parryThreshold) {
           dmg = Math.floor(dmg * 0.5);
           parryMsg = ` 🎲d20=${defRoll} Parade !`;
         }
@@ -166,11 +170,21 @@ function executeEnemyPhase(state) {
 // PUBLIC API
 // ============================================================
 
-export function initCombat(rawPlayers, rawEnemies) {
+// Time-based combat modifiers
+function getTimeModifiers(hour) {
+  const h = hour ?? 12;
+  const isNight = h >= 21 || h < 5;
+  const isDawn = h >= 5 && h < 8;
+  return { isNight, isDawn, hour: h };
+}
+
+export function initCombat(rawPlayers, rawEnemies, gameTimeHour) {
+  const timeMod = getTimeModifiers(gameTimeHour);
   const playerIds = rawPlayers.map(p => p.user_id || p.id || `p_${Math.random()}`);
 
   const players = rawPlayers.map((p, i) => {
     const abilities = p.abilities || p.unlockables || p.spells || [];
+    const cls = (p.class || p.className || '').toLowerCase();
     const abilityCards = getStarterDeck(p.class || p.className || '', abilities, p.level || 1, p.classData || null, p.subclass || '');
     const itemCards = inventoryToCards(p.inventory || []);
     const fullDeck = shuffle([...abilityCards, ...itemCards]);
@@ -183,8 +197,10 @@ export function initCombat(rawPlayers, rawEnemies) {
       energy: p.resource || p.max_resource || 100,
       maxEnergy: p.max_resource || 100,
       resourceName: p.resource_name || 'Mana',
-      strength: computeEquipmentBonus(p, 'strength') + computeEquipmentBonus(p, 'attackBonus'),
-      dexterity: computeEquipmentBonus(p, 'dexterity'),
+      strength: computeEquipmentBonus(p, 'strength') + computeEquipmentBonus(p, 'attackBonus')
+        + (timeMod.isNight && (cls.includes('voleur') || cls.includes('rôdeur') || cls.includes('rodeur') || cls.includes('ranger')) ? 3 : 0),
+      dexterity: computeEquipmentBonus(p, 'dexterity')
+        + (timeMod.isDawn ? 2 : 0),
       poison: 0, weak: 0, vulnerable: 0,
       deck: fullDeck.slice(5), hand: fullDeck.slice(0, 5),
       discard: [], exhaust: [],
@@ -205,7 +221,9 @@ export function initCombat(rawPlayers, rawEnemies) {
 
   return {
     players, enemies, currentPlayerIndex: 0, turn: 1, phase: 'player',
-    log: ['⚔️ Le combat commence !'], selectedCardIndex: null, rewardCards: [], diceRoll: null,
+    isNight: timeMod.isNight, isDawn: timeMod.isDawn,
+    log: [`⚔️ Le combat commence !${timeMod.isNight ? ' 🌙 Combat nocturne — visibilité réduite !' : timeMod.isDawn ? ' 🌅 Bénédiction de l\'aube.' : ''}`],
+    selectedCardIndex: null, rewardCards: [], diceRoll: null,
   };
 }
 

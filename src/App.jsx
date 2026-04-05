@@ -2243,6 +2243,15 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
         <GameModalProvider>
         <div className="app-container">
             {!combatMode && <div className="vignette-overlay" />}
+            {!combatMode && <div className="time-overlay" style={{
+                background: (() => {
+                    const h = gameTime?.hour ?? 12;
+                    if (h >= 5 && h < 8) return 'rgba(255, 200, 100, 0.08)';   // Aube
+                    if (h >= 8 && h < 18) return 'transparent';                  // Jour
+                    if (h >= 18 && h < 21) return 'rgba(255, 120, 50, 0.12)';   // Crépuscule
+                    return 'rgba(10, 10, 40, 0.25)';                              // Nuit
+                })()
+            }} />}
 
             {/* MULTI-STEP FLOW: LOBBY -> HUB -> CREATION -> GAME */}
             {!session ? (
@@ -2381,6 +2390,20 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                             onVolumeChange={setAudioVolume}
                             onToggleItemSharePanel={() => setShowItemSharePanel(!showItemSharePanel)}
                             itemShareCount={itemShares.length}
+                            onSleep={!combatMode ? async () => {
+                                // Advance time to dawn (6:00), heal 50% HP, restore 100% resource
+                                const newTime = { hour: 6, minute: 0, day: (gameTime?.day || 1) + (gameTime?.hour >= 6 ? 1 : 0) };
+                                setGameTime(newTime);
+                                if (character) {
+                                    const newHp = Math.min(character.max_hp || 100, Math.floor((character.hp || 0) + (character.max_hp || 100) * 0.5));
+                                    const newRes = character.max_resource || 100;
+                                    handleHPChange(character.id, newHp);
+                                    handleResourceChange(character.id, newRes);
+                                    addMessage({ role: 'system', content: `💤 Vous dormez jusqu'à l'aube. Repos réparateur : +${newHp - (character.hp || 0)} PV, ressource restaurée.` });
+                                }
+                                // Tell GM about sleep
+                                handleSubmit(null, "Le joueur décide de dormir jusqu'à l'aube.");
+                            } : undefined}
                         />
 
                         <NarrationPanel
@@ -2408,6 +2431,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                         currentUserId={character?.user_id || profile?.id}
                         initialEnemies={combatEnemies}
                         classesData={CLASSES}
+                        gameTime={gameTime}
                         sessionId={session?.id}
                         supabaseClient={supabase}
                         syncedCombatState={syncedCombatState}

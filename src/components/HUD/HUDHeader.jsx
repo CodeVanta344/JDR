@@ -16,17 +16,29 @@ export const HUDHeader = ({
     onToggleCodex,
     onToggleDMPanel,
     onToggleItemSharePanel,
-    itemShareCount
+    itemShareCount,
+    onSleep
 }) => {
     return (
         <div className="hud-header">
             {/* Clock Widget */}
             <div className="clock-widget">
-                <span className="clock-icon">{gameTime.hour >= 6 && gameTime.hour < 18 ? '☀️' : '🌙'}</span>
+                <span className="clock-icon">{
+                    gameTime.hour >= 5 && gameTime.hour < 8 ? '🌅' :
+                    gameTime.hour >= 8 && gameTime.hour < 18 ? '☀️' :
+                    gameTime.hour >= 18 && gameTime.hour < 21 ? '🌇' : '🌙'
+                }</span>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <span className="clock-time">{String(gameTime.hour).padStart(2, '0')}:{String(gameTime.minute || 0).padStart(2, '0')}</span>
                     <span className="day-sync-indicator">{getTimeLabel()} (Jour {gameTime.day})</span>
                 </div>
+                {(gameTime.hour >= 21 || gameTime.hour < 5) && onSleep && (
+                    <button onClick={onSleep} style={{
+                        marginLeft: 8, background: 'rgba(59,130,246,0.2)', border: '1px solid #3b82f6',
+                        color: '#93c5fd', padding: '3px 10px', borderRadius: 6, cursor: 'pointer',
+                        fontSize: '0.65rem', fontWeight: 700, letterSpacing: 1
+                    }}>💤 Dormir</button>
+                )}
             </div>
 
             {/* Top Right Controls */}
