@@ -330,7 +330,8 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                         }
                         break;
                     case 'dice_roll':
-                        // Show dice roll for other players
+                        // Show dice roll for OTHER players only (skip own broadcast)
+                        if (action.sourceUserId === currentUserId) break;
                         setRollOverlay({
                             rollId: action.rollId,
                             roll: action.roll,
