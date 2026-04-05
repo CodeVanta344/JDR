@@ -23,7 +23,7 @@ import { LootModal } from './components/LootModal';
 import { NPCDialogueModal } from './components/NPCDialogueModal';
 import { DiceChallengeModal } from './components/DiceChallengeModal';
 import { CombatDistanceModal } from './components/CombatDistanceModal';
-const CardCombat = React.lazy(() => import('./components/CardCombat').then(m => ({ default: m.CardCombat ?? m.default })));
+const CardCombat = React.lazy(() => import('./components/CardCombat'));
 import { formatAIContent, calculateTotalStats, calculateMaxResource, resolvePlayerAbilities, generateArenaDecor, generateRandomCharacter, getArenaConfig } from './utils/gameUtils';
 import { AudioManager } from './components/AudioManager';
 import { GameHelperModal } from './components/GameHelperModal';
