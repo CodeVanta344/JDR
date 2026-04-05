@@ -80,11 +80,11 @@ const PlayerPortrait = ({ player, isActive, isSelf, damagePopups }) => (
       }
       {player.block > 0 && <div className="cc-block-badge">{player.block}</div>}
       {damagePopups.filter(p => p.targetId === player.id).map(p => (
-        <div key={p.id} className={`cc-damage-popup ${p.type}`}>{p.type === 'heal' ? '+' : '-'}{p.amount}</div>
+        <div key={p.id} className={`cc-damage-popup ${p.type} ${p.big ? 'big' : ''}`}>{p.type === 'heal' ? '+' : '-'}{p.amount}</div>
       ))}
     </div>
     <div className="cc-hp-bar">
-      <div className="cc-hp-fill player" style={{ width: `${Math.max(0, (player.hp / player.maxHp) * 100)}%` }} />
+      <div className={`cc-hp-fill player ${player.hp / player.maxHp < 0.25 ? 'critical' : ''}`} style={{ width: `${Math.max(0, (player.hp / player.maxHp) * 100)}%` }} />
       <div className="cc-hp-text">{player.hp}/{player.maxHp}</div>
     </div>
     <div className="cc-player-name" style={{ color: isSelf ? '#d4af37' : '#8bb8ff' }}>
@@ -113,9 +113,13 @@ export const CardCombat = ({
   const [state, setState] = useState(null);
   const [shakingEnemyId, setShakingEnemyId] = useState(null);
   const [damagePopups, setDamagePopups] = useState([]);
+  const [phaseBanner, setPhaseBanner] = useState(null); // { text, type }
+  const [screenFlash, setScreenFlash] = useState(null); // 'damage' | 'heal' | 'block'
+  const [actionToast, setActionToast] = useState(null); // { player, text }
   const popupIdRef = useRef(0);
   const lastSyncRef = useRef(0);
   const isHost = useRef(false);
+  const prevPhaseRef = useRef(null);
 
   // Am I the host? (first player or session host)
   useEffect(() => {
@@ -229,8 +233,47 @@ export const CardCombat = ({
 
   const addDamagePopup = useCallback((targetId, amount, type = 'damage') => {
     const id = ++popupIdRef.current;
-    setDamagePopups(prev => [...prev, { id, targetId, amount, type }]);
-    setTimeout(() => setDamagePopups(prev => prev.filter(p => p.id !== id)), 1000);
+    const big = amount >= 15;
+    setDamagePopups(prev => [...prev, { id, targetId, amount, type, big }]);
+    setTimeout(() => setDamagePopups(prev => prev.filter(p => p.id !== id)), 1200);
+
+    // Screen flash for player damage
+    if (type === 'damage') triggerFlash('damage');
+    else if (type === 'heal') triggerFlash('heal');
+    else if (type === 'block') triggerFlash('block');
+  }, [triggerFlash]);
+
+  // Phase banner trigger
+  useEffect(() => {
+    if (!state) return;
+    const { phase } = state;
+    if (phase === prevPhaseRef.current) return;
+    prevPhaseRef.current = phase;
+
+    if (phase === 'player') {
+      const cp = getCurrentPlayer(state);
+      if (cp?.id === myPlayerId) {
+        setPhaseBanner({ text: '★ VOTRE TOUR', type: 'player-turn' });
+      } else {
+        setPhaseBanner({ text: `Tour de ${cp?.name || '...'}`, type: 'other-turn' });
+      }
+      setTimeout(() => setPhaseBanner(null), 2000);
+    } else if (phase === 'enemy_animating') {
+      setPhaseBanner({ text: '⚔️ TOUR ENNEMI', type: 'enemy-turn' });
+      setTimeout(() => setPhaseBanner(null), 2000);
+    }
+  }, [state?.phase, state?.currentPlayerIndex]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Screen flash helper
+  const triggerFlash = useCallback((type) => {
+    setScreenFlash(type);
+    setTimeout(() => setScreenFlash(null), 300);
+  }, []);
+
+  // Toast helper
+  const showToast = useCallback((playerName, text) => {
+    setActionToast({ player: playerName, text });
+    setTimeout(() => setActionToast(null), 3000);
   }, []);
 
   // Is it MY turn?
@@ -267,8 +310,16 @@ export const CardCombat = ({
       }
 
       // VFX
-      if (card.effects.some(e => e.type === 'block')) { if (onVFX) onVFX('shield', window.innerWidth * 0.2, window.innerHeight * 0.4, '#3b82f6'); }
-      if (card.effects.some(e => e.type === 'heal')) { if (onVFX) onVFX('heal', window.innerWidth * 0.2, window.innerHeight * 0.4, '#22c55e'); }
+      if (card.effects.some(e => e.type === 'block')) {
+        if (onVFX) onVFX('shield', window.innerWidth * 0.2, window.innerHeight * 0.4, '#3b82f6');
+        const blkEff = card.effects.find(e => e.type === 'block');
+        if (blkEff) addDamagePopup(myPlayerId, blkEff.value + (myPlayerState?.dexterity || 0), 'block');
+      }
+      if (card.effects.some(e => e.type === 'heal')) {
+        if (onVFX) onVFX('heal', window.innerWidth * 0.2, window.innerHeight * 0.4, '#22c55e');
+        const healEff = card.effects.find(e => e.type === 'heal');
+        if (healEff) addDamagePopup(myPlayerId, healEff.value, 'heal');
+      }
       if (card.effects.some(e => e.target === 'all_enemies')) {
         newState.enemies.forEach((e, i) => {
           if (oldEnemies[i] && e.hp < oldEnemies[i].hp) addDamagePopup(e.id, oldEnemies[i].hp - e.hp);
@@ -405,7 +456,7 @@ export const CardCombat = ({
                   <div className="cc-enemy-token" style={{ display: enemy.portrait_url ? 'none' : 'flex' }}>👹</div>
                   {enemy.block > 0 && <div className="cc-block-badge">{enemy.block}</div>}
                   {damagePopups.filter(p => p.targetId === enemy.id).map(p => (
-                    <div key={p.id} className="cc-damage-popup">-{p.amount}</div>
+                    <div key={p.id} className={`cc-damage-popup ${p.type} ${p.big ? 'big' : ''}`}>{p.type === 'heal' ? '+' : '-'}{p.amount}</div>
                   ))}
                 </div>
                 <div className="cc-hp-bar" style={{ width: 100 }}>
@@ -464,6 +515,27 @@ export const CardCombat = ({
           <button className="cc-end-turn" onClick={handleEndTurn} disabled={!isMyTurn}>⚔️ FIN DE TOUR</button>
         </div>
       </div>
+
+      {/* Phase Banner */}
+      {phaseBanner && (
+        <div className={`cc-phase-banner ${phaseBanner.type}`}>{phaseBanner.text}</div>
+      )}
+
+      {/* Screen Flash */}
+      {screenFlash && <div className={`cc-screen-flash ${screenFlash}`} />}
+
+      {/* Action Toast (multi-player) */}
+      {actionToast && (
+        <div className="cc-action-toast">
+          <span className="toast-player">{actionToast.player}</span>
+          <span className="toast-text">{actionToast.text}</span>
+        </div>
+      )}
+
+      {/* Targeting Hint */}
+      {selectedCardIndex !== null && phase === 'player' && isMyTurn && (
+        <div className="cc-targeting-hint">🎯 Choisir une cible</div>
+      )}
 
       {/* Dice */}
       {diceRoll?.active && (
