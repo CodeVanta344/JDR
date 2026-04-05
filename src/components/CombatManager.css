@@ -339,6 +339,53 @@
     -webkit-mask-image: radial-gradient(circle at center, black 60%, transparent 100%);
 }
 
+/* Token fallback when no portrait */
+.unit-token-fallback {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    position: relative;
+}
+
+.unit-token-fallback.player {
+    background: radial-gradient(circle at 35% 35%, #2a3a5c, #0f1a2e);
+    border: 2px solid rgba(100, 160, 255, 0.4);
+    box-shadow: inset 0 0 15px rgba(60, 120, 220, 0.3);
+}
+
+.unit-token-fallback.enemy {
+    background: radial-gradient(circle at 35% 35%, #5c2a2a, #2e0f0f);
+    border: 2px solid rgba(255, 100, 100, 0.4);
+    box-shadow: inset 0 0 15px rgba(220, 60, 60, 0.3);
+}
+
+.token-icon {
+    font-size: 1.2rem;
+    line-height: 1;
+    filter: drop-shadow(0 1px 3px rgba(0,0,0,0.5));
+}
+
+.token-initial {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1rem;
+    font-weight: 900;
+    line-height: 1;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+}
+
+.unit-token-fallback.player .token-initial {
+    color: #8bb8ff;
+}
+
+.unit-token-fallback.enemy .token-initial {
+    color: #ff8b8b;
+}
+
 /* Premium double-ring selection indicator */
 .unit-selection-ring {
     position: absolute;

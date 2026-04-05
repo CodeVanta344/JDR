@@ -2331,11 +2331,19 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                 </div>
 
                 <div className="unit-portrait-wrapper">
-                    <img src={unit.portrait_url || 'https://placehold.co/150'}
-                        className="unit-portrait"
-                        style={{ filter: unit.hp <= (unit.maxHp * 0.3) ? 'grayscale(0.5) contrast(1.2)' : 'none' }}
-                        alt={unit.name}
-                    />
+                    {unit.portrait_url ? (
+                        <img src={unit.portrait_url}
+                            className="unit-portrait"
+                            style={{ filter: unit.hp <= (unit.maxHp * 0.3) ? 'grayscale(0.5) contrast(1.2)' : 'none' }}
+                            alt={unit.name}
+                            onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling && (e.target.nextSibling.style.display = 'flex'); }}
+                        />
+                    ) : null}
+                    <div className={`unit-token-fallback ${unit.isEnemy ? 'enemy' : 'player'}`}
+                        style={{ display: unit.portrait_url ? 'none' : 'flex' }}>
+                        <span className="token-icon">{unit.isEnemy ? '👹' : '⚔️'}</span>
+                        <span className="token-initial">{(unit.name || '?')[0].toUpperCase()}</span>
+                    </div>
 
                     {/* Orbital bars (Modernized) */}
                     <div className="orbital-bars">
