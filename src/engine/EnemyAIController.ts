@@ -106,8 +106,8 @@ export function decideEnemyTurn(
   isTileOccupiedFn?: (x: number, y: number, excludeId: string) => boolean
 ): AIDecision {
   const profile = AI_PROFILES[enemy.aiProfile || 'brute'];
-  const players = allCombatants.filter(c => c.isPlayer && c.isAlive);
-  const allies = allCombatants.filter(c => !c.isPlayer && c.isAlive && c.id !== enemy.id);
+  const players = allCombatants.filter(c => c.isPlayer && (c.isAlive !== false) && c.hp > 0);
+  const allies = allCombatants.filter(c => !c.isPlayer && (c.isAlive !== false) && c.hp > 0 && c.id !== enemy.id);
 
   if (players.length === 0) {
     return { moves: [], action: null, target: null, reasoning: 'No targets alive' };
@@ -467,7 +467,7 @@ function findHealAction(enemy: Combatant): CombatAbility | null {
 
 function findMostInjuredAlly(self: Combatant, allies: Combatant[]): Combatant | null {
   const injured = allies
-    .filter(a => a.hp < a.maxHp && a.isAlive)
+    .filter(a => a.hp < a.maxHp && (a.isAlive !== false) && a.hp > 0)
     .sort((a, b) => (a.hp / a.maxHp) - (b.hp / b.maxHp));
   return injured[0] || null;
 }

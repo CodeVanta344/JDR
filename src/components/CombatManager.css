@@ -86,9 +86,7 @@
     border-radius: 12px;
     pointer-events: none;
     z-index: -1;
-    box-shadow: 
-        0 4px 20px rgba(0, 0, 0, 0.9),
-        inset 0 0 30px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
 }
 
 .combat-arena::after {
@@ -99,7 +97,7 @@
     border-radius: 4px;
     pointer-events: none;
     z-index: 10;
-    box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.4);
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.15);
 }
 
 .arena-background-plane {
@@ -110,9 +108,7 @@
     background-repeat: no-repeat;
     background-position: center;
     border-radius: 4px;
-    box-shadow:
-        0 4px 20px rgba(0, 0, 0, 0.8),
-        inset 0 0 100px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
