@@ -2241,7 +2241,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
     return (
         <GameModalProvider>
         <div className="app-container">
-            <div className="vignette-overlay" />
+            {!combatMode && <div className="vignette-overlay" />}
 
             {/* MULTI-STEP FLOW: LOBBY -> HUB -> CREATION -> GAME */}
             {!session ? (
@@ -2497,8 +2497,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
 
             <ParticleSystem vfx={activeVFX} />
 
-            <div className={`vignette-layer vignette-combat ${combatMode && combatEnemies.length > 0 ? 'active' : ''}`} />
-            <div className={`vignette-layer vignette-danger ${!combatMode && character?.hp && character?.max_hp > 0 && (character.hp / character.max_hp) < 0.3 ? 'active' : ''}`} />
+            {!combatMode && <div className={`vignette-layer vignette-danger ${character?.hp && character?.max_hp > 0 && (character.hp / character.max_hp) < 0.3 ? 'active' : ''}`} />}
 
             {
                 activeMerchant && (
