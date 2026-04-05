@@ -329,6 +329,7 @@ const CardCombat = ({
   const isMyTurn = state?.phase === 'player' && state.players[state.currentPlayerIndex]?.id === myPlayerId;
   const currentPlayer = state ? getCurrentPlayer(state) : null;
   const myPlayerState = state ? getPlayer(state, myPlayerId) : null;
+  const myPlayer = players?.find(p => p.user_id === currentUserId) || players?.[0]; // Original player with inventory
 
   // ============================================================
   // CARD HANDLERS
