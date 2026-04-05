@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { CLASSES, BESTIARY } from '../lore';
 import { CombatLogger } from '../utils/logger';
 import { supabase } from '../supabaseClient';
-import { DieVisual } from './DieVisual';
-import { DiceOverlay2D } from './Dice2D';
+import { Dice2D } from './Dice2D';
 import {
     rollAttackD100,
     calculateDamageD100,
@@ -71,13 +70,11 @@ const DamagePopup = ({ amount, onDone }) => {
 
 
 
-const RemoteActionOverlay = ({ action, onComplete }) => {
-    const remoteDiceRolls = useMemo(() => [{ type: 'd100', value: action?.roll }], [action?.roll]);
-
+const RemoteActionOverlay = React.memo(({ action, onComplete }) => {
     useEffect(() => {
         const timer = setTimeout(onComplete, 4500);
         return () => clearTimeout(timer);
-    }, [onComplete]);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     if (!action) return null;
 
@@ -85,14 +82,10 @@ const RemoteActionOverlay = ({ action, onComplete }) => {
         <div style={{
             position: 'fixed', inset: 0, zIndex: 12000,
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            background: 'rgba(0,0,0,0.1)', // Very subtle dimming
+            background: 'rgba(0,0,0,0.1)',
             pointerEvents: 'none'
         }}>
-            {/* Multi-Dice 2D Overlay */}
-            <DiceOverlay2D
-                diceRolls={remoteDiceRolls}
-                onAllComplete={() => { }}
-            />
+            <Dice2D type="d100" value={action?.roll} onComplete={() => {}} />
 
                 <div style={{
                 position: 'relative',
@@ -146,7 +139,7 @@ const RemoteActionOverlay = ({ action, onComplete }) => {
                 </div>
             </div>
         );
-};
+});
 
 export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeType: 'STANDARD' }, players, currentUserId, initialEnemies, syncedCombatState, onUpdateCombatState, onCombatEnd, onLogAction, onHPChange, onResourceChange, onConsumeItem, onGameOver, onRewards, onVFX, onSFX, sessionId }) => {
     // ROBUST USER ID MATCHING - Try multiple methods (MEMOIZED with stable comparison)
@@ -2387,36 +2380,30 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         );
     };
 
-// --- ROLLOVERLAY COMPONENT (moved outside to prevent re-mounts) ---
-const RollOverlay = ({ rollId, roll, modifier, tacticalReason, threshold, success, action, targetId, onRollComplete }) => {
+// --- ROLLOVERLAY COMPONENT — renders a single Dice2D directly (no DiceOverlay2D) ---
+const RollOverlay = React.memo(({ rollId, roll, modifier, tacticalReason, threshold, success, action, targetId, onRollComplete }) => {
     const hasCompletedRef = useRef(false);
-    const rollDiceValues = useMemo(() => [{ type: 'd100', value: roll }], [roll]);
 
-    useEffect(() => {
-        hasCompletedRef.current = false;
-    }, [rollId]);
+    const handleDone = useCallback((val) => {
+        if (hasCompletedRef.current) return;
+        hasCompletedRef.current = true;
+        setTimeout(() => {
+            onRollComplete({ rollId, roll, modifier, threshold, success, targetId, action });
+        }, 800);
+    }, [rollId, roll, modifier, threshold, success, targetId, action, onRollComplete]);
 
     return (
         <div style={{
             position: 'fixed', inset: 0, zIndex: 12000,
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            background: 'rgba(0,0,0,0.2)',
+            background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.85) 100%)',
+            backdropFilter: 'blur(2px)',
             pointerEvents: 'none'
         }}>
-            {/* Dice 2D Overlay - gère tout l'affichage visuel */}
-            <DiceOverlay2D
-                diceRolls={rollDiceValues}
-                onAllComplete={() => {
-                    if (hasCompletedRef.current) return;
-                    hasCompletedRef.current = true;
-                    setTimeout(() => {
-                        onRollComplete({ rollId, roll, modifier, threshold, success, targetId, action });
-                    }, 1000);
-                }}
-            />
+            <Dice2D type="d100" value={roll} onComplete={handleDone} />
         </div>
     );
-};
+});
 
     // === MEMOIZED GRID LINES (avoid re-creating 3200+ divs every render) ===
     const gridLinesMemo = useMemo(() => {
