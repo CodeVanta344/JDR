@@ -279,13 +279,24 @@ const CardCombat = ({
   // HELPERS
   // ============================================================
 
+  // Screen flash helper — MUST be before addDamagePopup (TDZ fix)
+  const triggerFlash = useCallback((type) => {
+    setScreenFlash(type);
+    setTimeout(() => setScreenFlash(null), 300);
+  }, []);
+
+  // Toast helper
+  const showToast = useCallback((playerName, text) => {
+    setActionToast({ player: playerName, text });
+    setTimeout(() => setActionToast(null), 3000);
+  }, []);
+
   const addDamagePopup = useCallback((targetId, amount, type = 'damage') => {
     const id = ++popupIdRef.current;
     const big = amount >= 15;
     setDamagePopups(prev => [...prev, { id, targetId, amount, type, big }]);
     setTimeout(() => setDamagePopups(prev => prev.filter(p => p.id !== id)), 1200);
 
-    // Screen flash for player damage
     if (type === 'damage') triggerFlash('damage');
     else if (type === 'heal') triggerFlash('heal');
     else if (type === 'block') triggerFlash('block');
@@ -311,18 +322,6 @@ const CardCombat = ({
       setTimeout(() => setPhaseBanner(null), 2000);
     }
   }, [state?.phase, state?.currentPlayerIndex]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Screen flash helper
-  const triggerFlash = useCallback((type) => {
-    setScreenFlash(type);
-    setTimeout(() => setScreenFlash(null), 300);
-  }, []);
-
-  // Toast helper
-  const showToast = useCallback((playerName, text) => {
-    setActionToast({ player: playerName, text });
-    setTimeout(() => setActionToast(null), 3000);
-  }, []);
 
   // Is it MY turn?
   const isMyTurn = state?.phase === 'player' && state.players[state.currentPlayerIndex]?.id === myPlayerId;
