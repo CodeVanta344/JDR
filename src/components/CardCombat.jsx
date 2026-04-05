@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { initCombat, playCard, endPlayerTurn, startNewPlayerTurn, getEnemyIntention } from '../engine/CardCombatEngine';
+import { initCombat, playCard, endPlayerTurn, startNewPlayerTurn, restTurn, getEnemyIntention } from '../engine/CardCombatEngine';
 import { Dice2D } from './Dice2D';
 import './CardCombat.css';
 
@@ -249,13 +249,27 @@ export const CardCombat = ({
     if (!state || state.phase !== 'player') return;
     if (onSFX) onSFX('click');
 
-    // Calculate damage from enemies for popups
     const oldPlayerHp = state.player.hp;
     const newState = endPlayerTurn(state);
 
     if (newState.player.hp < oldPlayerHp) {
       addDamagePopup('player', oldPlayerHp - newState.player.hp);
       if (onVFX) onVFX('blood', window.innerWidth * 0.25, window.innerHeight * 0.4, '#ff0000');
+    }
+
+    setState(newState);
+  }, [state, onSFX, onVFX, addDamagePopup]);
+
+  const handleRest = useCallback(() => {
+    if (!state || state.phase !== 'player') return;
+    if (onSFX) onSFX('magic');
+    if (onVFX) onVFX('heal', window.innerWidth * 0.25, window.innerHeight * 0.4, '#60a5fa');
+
+    const oldPlayerHp = state.player.hp;
+    const newState = restTurn(state);
+
+    if (newState.player.hp < oldPlayerHp) {
+      addDamagePopup('player', oldPlayerHp - newState.player.hp);
     }
 
     setState(newState);
@@ -399,19 +413,35 @@ export const CardCombat = ({
           <div>DÉFAUSSE</div>
         </div>
 
-        {/* Energy Orb */}
+        {/* Resource display */}
         <div className="cc-energy">
-          <div className="cc-energy-orb">{player.energy}/{player.maxEnergy}</div>
+          <div className="cc-resource-bar-wrap">
+            <div className="cc-resource-label">{player.resourceName || 'Mana'}</div>
+            <div className="cc-resource-bar">
+              <div className="cc-resource-fill" style={{ width: `${(player.energy / player.maxEnergy) * 100}%` }} />
+              <div className="cc-resource-text">{player.energy} / {player.maxEnergy}</div>
+            </div>
+          </div>
         </div>
 
-        {/* End Turn Button */}
-        <button
-          className="cc-end-turn"
-          onClick={handleEndTurn}
-          disabled={phase !== 'player'}
-        >
-          FIN DE TOUR
-        </button>
+        {/* Action buttons */}
+        <div className="cc-action-buttons">
+          <button
+            className="cc-rest-btn"
+            onClick={handleRest}
+            disabled={phase !== 'player'}
+            title="Passe le tour, récupère 25% de ressource"
+          >
+            😴 REPOS
+          </button>
+          <button
+            className="cc-end-turn"
+            onClick={handleEndTurn}
+            disabled={phase !== 'player'}
+          >
+            ⚔️ FIN DE TOUR
+          </button>
+        </div>
       </div>
 
       {/* Dice Roll Overlay */}

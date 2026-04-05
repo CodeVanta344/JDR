@@ -31,7 +31,7 @@ export const CARD_FRAPPE: Card = {
   id: 'frappe',
   name: 'Frappe',
   type: 'attack',
-  cost: 1,
+  cost: 0, // Basic attack = free
   rarity: 'starter',
   description: 'Inflige 6 dégâts.',
   effects: [{ type: 'damage', value: 6, target: 'enemy' }],
@@ -43,7 +43,7 @@ export const CARD_DEFENSE: Card = {
   id: 'defense',
   name: 'Défense',
   type: 'skill',
-  cost: 1,
+  cost: 0, // Basic defense = free
   rarity: 'starter',
   description: 'Gagne 5 de Blocage.',
   effects: [{ type: 'block', value: 5, target: 'self' }],
@@ -354,12 +354,8 @@ export function abilityToCard(ability: any, index: number = 0): Card {
   else if (hasDamage && !isHeal) type = 'attack';
   else if (isHeal) type = 'skill';
 
-  // Determine energy cost (scale from resource cost)
-  let cost = 1;
-  if (ability.cost <= 0) cost = 0;
-  else if (ability.cost <= 15) cost = 1;
-  else if (ability.cost <= 35) cost = 2;
-  else cost = 3;
+  // Use the actual resource cost from the ability (Mana/Endurance/Arcane)
+  let cost = ability.cost || 0;
 
   // Determine rarity from level
   let rarity: Card['rarity'] = 'common';

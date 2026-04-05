@@ -476,45 +476,92 @@
 .cc-status-badge.weak { background: rgba(251,191,36,0.2); border-color: #fbbf24; color: #fcd34d; }
 .cc-status-badge.vuln { background: rgba(248,113,113,0.2); border-color: #f87171; color: #fca5a5; }
 
-/* === ENERGY === */
+/* === RESOURCE BAR === */
 .cc-energy {
   position: absolute;
-  bottom: 24px;
-  left: 100px;
+  bottom: 20px;
+  left: 24px;
   display: flex;
   align-items: center;
-  gap: 4px;
 }
 
-.cc-energy-orb {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #d4af37, #8a6d3b);
+.cc-resource-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cc-resource-label {
+  color: #60a5fa;
+  font-size: 0.5rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.cc-resource-bar {
+  width: 140px;
+  height: 16px;
+  background: #0f1020;
+  border-radius: 8px;
+  border: 1px solid #2a3050;
+  overflow: hidden;
+  position: relative;
+}
+
+.cc-resource-fill {
+  height: 100%;
+  background: linear-gradient(to right, #3b82f6, #60a5fa);
+  border-radius: 7px;
+  transition: width 0.4s ease;
+  box-shadow: 0 0 8px rgba(96,165,250,0.4);
+}
+
+.cc-resource-text {
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
+  color: #fff;
+  font-size: 0.6rem;
   font-weight: 900;
-  color: #1a0f08;
-  border: 3px solid #fbeea8;
-  box-shadow: 0 0 15px rgba(212,175,55,0.4);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
 }
 
-/* === END TURN BUTTON === */
-.cc-end-turn {
+/* === ACTION BUTTONS === */
+.cc-action-buttons {
   position: absolute;
-  bottom: 24px;
-  right: 100px;
+  bottom: 16px;
+  right: 24px;
+  display: flex;
+  gap: 8px;
+}
+
+.cc-rest-btn {
+  background: linear-gradient(135deg, #1e3a5f, #0f1a2e);
+  border: 2px solid #3b82f6;
+  color: #93c5fd;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.7rem;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+}
+.cc-rest-btn:hover { background: linear-gradient(135deg, #2a4a7f, #1a2a4e); box-shadow: 0 0 15px rgba(59,130,246,0.3); }
+.cc-rest-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.cc-end-turn {
   background: linear-gradient(135deg, #d4af37, #8a6d3b);
   border: 2px solid #fbeea8;
   color: #1a0f08;
-  padding: 10px 24px;
+  padding: 8px 20px;
   border-radius: 8px;
   font-weight: 900;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   cursor: pointer;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
   transition: all 0.2s;
   box-shadow: 0 4px 15px rgba(212,175,55,0.3);
 }

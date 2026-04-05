@@ -34,10 +34,11 @@ export interface PlayerState {
   hp: number;
   maxHp: number;
   block: number;
-  energy: number;
-  maxEnergy: number;
-  strength: number;   // bonus damage per attack
-  dexterity: number;  // bonus block per skill
+  energy: number;       // current resource (Mana/Endurance/Arcane)
+  maxEnergy: number;    // max resource
+  resourceName: string; // "Mana", "Endurance", "Arcane", etc.
+  strength: number;
+  dexterity: number;
   poison: number;
   weak: number;
   vulnerable: number;
@@ -131,8 +132,9 @@ export function initCombat(player: any, rawEnemies: any[]): CombatState {
       hp: player.hp || player.stats?.hp || 50,
       maxHp: player.maxHp || player.max_hp || player.stats?.maxHp || 50,
       block: 0,
-      energy: 3,
-      maxEnergy: 3,
+      energy: player.resource || player.max_resource || 100,
+      maxEnergy: player.max_resource || 100,
+      resourceName: player.resource_name || 'Mana',
       strength: 0,
       dexterity: 0,
       poison: 0,
@@ -347,6 +349,20 @@ export function playCard(state: CombatState, cardIndex: number, targetIndex: num
 // END PLAYER TURN → ENEMY TURN
 // ============================================================
 
+// REST: Skip turn, recover 25% max resource
+export function restTurn(state: CombatState): CombatState {
+  if (state.phase !== 'player') return state;
+
+  const player = { ...state.player };
+  const recoveryAmount = Math.floor(player.maxEnergy * 0.25);
+  player.energy = Math.min(player.maxEnergy, player.energy + recoveryAmount);
+
+  const log = [...state.log, `😴 Repos — +${recoveryAmount} ${player.resourceName}`];
+
+  // Same as endPlayerTurn but with resource recovery
+  return endPlayerTurn({ ...state, player, log });
+}
+
 export function endPlayerTurn(state: CombatState): CombatState {
   if (state.phase !== 'player') return state;
 
@@ -443,12 +459,11 @@ export function endPlayerTurn(state: CombatState): CombatState {
 export function startNewPlayerTurn(state: CombatState): CombatState {
   let newState = {
     ...state,
-    player: { ...state.player, energy: state.player.maxEnergy, block: 0 },
+    player: { ...state.player, block: 0 }, // Block resets, resource does NOT auto-refill
     phase: 'player' as const,
     log: [...state.log, `--- Tour ${state.turn} ---`],
   };
 
-  // Reset player block was already done in endPlayerTurn
   // Draw 5 cards
   newState = drawCards(newState, 5);
   return newState;
