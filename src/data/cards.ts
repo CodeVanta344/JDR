@@ -553,3 +553,88 @@ export function getRewardCards(count: number = 3): Card[] {
   const shuffled = [...ALL_REWARD_CARDS].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, count).map((c, i) => ({ ...c, id: `reward_${c.id}_${Date.now()}_${i}` }));
 }
+
+// ============================================================
+// ITEM → CARD CONVERSION (potions, scrolls, food, bombs)
+// Items consume a full turn when used in combat
+// ============================================================
+
+const ITEM_ICONS: Record<string, string> = {
+  potion: '🧪', scroll: '📜', food: '🍖', bomb: '💣',
+  consumable: '🧪', weapon: '🗡️', armor: '🛡️', default: '📦',
+};
+
+const RARITY_COLORS: Record<string, string> = {
+  common: '#888888', uncommon: '#4cd137', rare: '#54a0ff',
+  epic: '#9b59b6', legendary: '#f39c12', artifact: '#e74c3c',
+};
+
+export function itemToCard(item: any, index: number = 0): Card | null {
+  // Only convert usable/consumable items
+  const type = (item.type || '').toLowerCase();
+  const isConsumable = ['potion', 'scroll', 'food', 'bomb', 'consumable'].includes(type);
+  const hasEffect = item.stats?.heal || item.stats?.resource || item.stats?.damage ||
+    item.effects?.length > 0;
+
+  if (!isConsumable && !hasEffect) return null;
+
+  const effects: CardEffect[] = [];
+
+  // Parse item effects
+  if (item.stats?.heal) {
+    effects.push({ type: 'heal', value: item.stats.heal, target: 'self' });
+  }
+  if (item.stats?.resource) {
+    effects.push({ type: 'energy', value: item.stats.resource });
+  }
+  if (item.stats?.damage) {
+    const dmg = typeof item.stats.damage === 'string' ? parseDice(item.stats.damage) : item.stats.damage;
+    effects.push({ type: 'damage', value: dmg || 5, target: 'enemy' });
+  }
+  if (item.stats?.hp) {
+    effects.push({ type: 'heal', value: item.stats.hp, target: 'self' });
+  }
+
+  // Parse item.effects array
+  if (item.effects) {
+    for (const eff of item.effects) {
+      if (eff.type === 'heal') effects.push({ type: 'heal', value: eff.magnitude || 10, target: 'self' });
+      if (eff.type === 'damage') effects.push({ type: 'damage', value: eff.magnitude || 8, target: 'enemy' });
+      if (eff.type === 'buff') effects.push({ type: 'strength', value: eff.magnitude || 2, target: 'self' });
+    }
+  }
+
+  if (effects.length === 0) {
+    effects.push({ type: 'heal', value: 10, target: 'self' }); // fallback
+  }
+
+  const icon = ITEM_ICONS[type] || ITEM_ICONS.default;
+  const hasDamageEffect = effects.some(e => e.type === 'damage');
+
+  return {
+    id: `item_${(item.name || 'item').toLowerCase().replace(/\s+/g, '_')}_${index}`,
+    name: item.name || 'Objet',
+    type: hasDamageEffect ? 'attack' : 'skill',
+    cost: 0, // Items are free to use but consume the turn
+    rarity: (item.rarity as any) || 'common',
+    description: item.description || item.name || 'Utilise cet objet.',
+    effects,
+    needsTarget: hasDamageEffect,
+    exhaust: true, // Items are consumed after use
+    tags: ['item', type, icon],
+    isItem: true, // Flag to identify item cards
+    itemIcon: icon,
+    itemRarityColor: RARITY_COLORS[item.rarity || 'common'] || '#888',
+  } as Card & { isItem?: boolean; itemIcon?: string; itemRarityColor?: string };
+}
+
+export function inventoryToCards(inventory: any[]): Card[] {
+  if (!inventory || !Array.isArray(inventory)) return [];
+
+  const cards: Card[] = [];
+  inventory.forEach((item, i) => {
+    const card = itemToCard(item, i);
+    if (card) cards.push(card);
+  });
+  return cards;
+}

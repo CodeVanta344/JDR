@@ -3,7 +3,7 @@
  * Pure functions, no React. Immutable state transitions.
  */
 
-import { Card, getStarterDeck, getRewardCards } from '../data/cards';
+import { Card, getStarterDeck, getRewardCards, inventoryToCards } from '../data/cards';
 
 // ============================================================
 // TYPES
@@ -107,7 +107,11 @@ export function initCombat(player: any, rawEnemies: any[]): CombatState {
   const playerClass = player.class || player.className || '';
   const classData = player.classData || null;
   const playerSubclass = player.subclass || '';
-  const deck = shuffle(getStarterDeck(playerClass, abilities, playerLevel, classData, playerSubclass));
+  const abilityCards = getStarterDeck(playerClass, abilities, playerLevel, classData, playerSubclass);
+
+  // Add consumable items from inventory as playable cards
+  const itemCards = inventoryToCards(player.inventory || []);
+  const deck = shuffle([...abilityCards, ...itemCards]);
 
   const hand = deck.slice(0, 5);
   const remaining = deck.slice(5);

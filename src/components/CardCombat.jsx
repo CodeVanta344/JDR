@@ -12,10 +12,15 @@ const CARD_THEMES = {
   skill:  { icon: '🛡️', accentColor: '#22c55e', gradTop: '#153a15', gradBot: '#081a08', border: '#3a8c3a', label: 'COMPÉTENCE' },
   power:  { icon: '✨', accentColor: '#60a5fa', gradTop: '#15203a', gradBot: '#08101a', border: '#3a5a8c', label: 'POUVOIR' },
   curse:  { icon: '💀', accentColor: '#a855f7', gradTop: '#2a1530', gradBot: '#150a18', border: '#6a3a7a', label: 'MALÉDICTION' },
+  item:   { icon: '🧪', accentColor: '#f39c12', gradTop: '#3a2a10', gradBot: '#1a1508', border: '#8c6a2a', label: 'OBJET' },
 };
 
 const CardView = ({ card, index, selected, canPlay, onClick }) => {
-  const theme = CARD_THEMES[card.type] || CARD_THEMES.attack;
+  const isItem = card.isItem || card.tags?.includes('item');
+  const theme = isItem ? CARD_THEMES.item : (CARD_THEMES[card.type] || CARD_THEMES.attack);
+  const cardIcon = isItem ? (card.itemIcon || '📦') : theme.icon;
+  const cardLabel = isItem ? 'OBJET' : theme.label;
+  const accentColor = isItem ? (card.itemRarityColor || theme.accentColor) : theme.accentColor;
 
   // Build effect summary text
   const effectSummary = card.effects.map(e => {
@@ -37,27 +42,29 @@ const CardView = ({ card, index, selected, canPlay, onClick }) => {
   return (
     <div
       className={`cc-card ${selected ? 'selected' : ''} ${!canPlay ? 'unplayable' : ''}`}
-      style={{ zIndex: index + 1, '--accent': theme.accentColor }}
+      style={{ zIndex: index + 1, '--accent': accentColor }}
       onClick={() => canPlay && onClick(index)}
     >
-      {/* Energy cost orb */}
-      <div className="cc-card-cost" style={{ background: `radial-gradient(circle, ${theme.accentColor}, ${theme.border})` }}>
-        {card.cost >= 0 ? card.cost : '✕'}
+      {/* Cost orb — show resource cost or "TOUR" for items */}
+      <div className="cc-card-cost" style={{ background: `radial-gradient(circle, ${accentColor}, ${theme.border})` }}>
+        {isItem ? '⟳' : (card.cost >= 0 ? card.cost : '✕')}
       </div>
 
       <div className="cc-card-inner" style={{
-        background: `linear-gradient(180deg, ${theme.gradTop} 0%, ${theme.gradBot} 100%)`,
-        borderColor: theme.border,
+        background: isItem
+          ? `linear-gradient(180deg, ${theme.gradTop} 0%, ${theme.gradBot} 100%), repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,255,255,0.02) 8px, rgba(255,255,255,0.02) 16px)`
+          : `linear-gradient(180deg, ${theme.gradTop} 0%, ${theme.gradBot} 100%)`,
+        borderColor: isItem ? accentColor : theme.border,
       }}>
         {/* Type label */}
-        <div className="cc-card-type-label" style={{ color: theme.accentColor }}>{theme.label}</div>
+        <div className="cc-card-type-label" style={{ color: accentColor }}>{cardLabel}</div>
 
         {/* Card name */}
         <div className="cc-card-name">{card.name}</div>
 
         {/* Art area with icon */}
-        <div className="cc-card-art" style={{ borderColor: `${theme.accentColor}33` }}>
-          <span className="cc-card-icon">{theme.icon}</span>
+        <div className="cc-card-art" style={{ borderColor: `${accentColor}33` }}>
+          <span className="cc-card-icon">{cardIcon}</span>
           {card.diceRoll && <span className="cc-card-dice-badge">🎲 {card.diceRoll.die}</span>}
         </div>
 
@@ -168,7 +175,23 @@ export const CardCombat = ({
     } else {
       // Play immediately (no target needed)
       const oldEnemies = state.enemies.map(e => ({ ...e }));
-      const newState = playCard(state, cardIndex);
+      let newState = playCard(state, cardIndex);
+
+      // Items consume the full turn — auto end turn after playing
+      const isItem = card.isItem || card.tags?.includes('item');
+      if (isItem && newState.phase === 'player') {
+        // Small delay then end turn
+        setTimeout(() => {
+          const oldHp = newState.player.hp;
+          const afterTurn = endPlayerTurn(newState);
+          if (afterTurn.player.hp < oldHp) {
+            addDamagePopup('player', oldHp - afterTurn.player.hp);
+          }
+          setState(afterTurn);
+        }, 600);
+        setState(newState);
+        return;
+      }
 
       // Trigger VFX for block/heal
       if (card.effects.some(e => e.type === 'block')) {
