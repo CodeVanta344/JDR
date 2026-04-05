@@ -1342,7 +1342,8 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         const rollData = rollAttackD100(freshActor, target, actorLevel, tacticalBonus, action);
         const { roll, modifier, success, isCritical } = rollData;
 
-        // Afficher overlay avec résultat
+        // Afficher overlay avec résultat — guard against double-set
+        if (rollOverlay) return; // Already showing a roll
         const rollId = crypto.randomUUID();
         setRollOverlay({
             rollId,
@@ -2380,17 +2381,24 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         );
     };
 
-// --- ROLLOVERLAY COMPONENT — renders a single Dice2D directly (no DiceOverlay2D) ---
-const RollOverlay = React.memo(({ rollId, roll, modifier, tacticalReason, threshold, success, action, targetId, onRollComplete }) => {
+// --- ROLLOVERLAY COMPONENT — stable, never re-mounts during animation ---
+const RollOverlay = ({ rollId, roll, modifier, threshold, success, action, targetId, onRollComplete }) => {
     const hasCompletedRef = useRef(false);
+    const propsRef = useRef({ rollId, roll, modifier, threshold, success, action, targetId, onRollComplete });
 
-    const handleDone = useCallback((val) => {
+    // Capture props on first render only
+    useEffect(() => {
+        propsRef.current = { rollId, roll, modifier, threshold, success, action, targetId, onRollComplete };
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const handleDone = useCallback(() => {
         if (hasCompletedRef.current) return;
         hasCompletedRef.current = true;
+        const p = propsRef.current;
         setTimeout(() => {
-            onRollComplete({ rollId, roll, modifier, threshold, success, targetId, action });
+            p.onRollComplete({ rollId: p.rollId, roll: p.roll, modifier: p.modifier, threshold: p.threshold, success: p.success, targetId: p.targetId, action: p.action });
         }, 800);
-    }, [rollId, roll, modifier, threshold, success, targetId, action, onRollComplete]);
+    }, []);
 
     return (
         <div style={{
@@ -2403,7 +2411,7 @@ const RollOverlay = React.memo(({ rollId, roll, modifier, tacticalReason, thresh
             <Dice2D type="d100" value={roll} onComplete={handleDone} />
         </div>
     );
-});
+};
 
     // === MEMOIZED GRID LINES (avoid re-creating 3200+ divs every render) ===
     const gridLinesMemo = useMemo(() => {
