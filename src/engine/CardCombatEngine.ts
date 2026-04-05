@@ -114,16 +114,37 @@ function computeEquipmentAC(player: any): number {
 
 function generatePattern(enemy: any, playerIds: string[]): EnemyIntention[] {
   const atk = enemy.atk || enemy.stats?.str || 8;
-  const level = enemy.level || enemy.cr || 1;
-  const baseDmg = Math.max(4, Math.floor(atk * (1 + level * 0.1)));
+  const cr = enemy.level || enemy.cr || 1;
+  // Balanced: scales with ATK and CR but capped at 3× base
+  const baseDmg = Math.max(4, Math.min(Math.floor(atk * (1 + cr * 0.12)), atk * 3));
+  const baseBlock = Math.max(3, Math.floor(baseDmg * 0.5));
+  const rndTarget = () => playerIds[Math.floor(Math.random() * playerIds.length)];
 
-  // Cycle through targets
+  // More varied patterns by CR
+  if (cr >= 10) {
+    // Boss: heavy attack, defend, heavy attack, debuff, attack
+    return [
+      { type: 'attack', value: Math.floor(baseDmg * 1.2), icon: '💥', targetPlayerId: rndTarget() },
+      { type: 'block', value: baseBlock * 2, icon: '🛡️' },
+      { type: 'attack', value: baseDmg, icon: '⚔️', targetPlayerId: rndTarget() },
+      { type: 'debuff', value: 1, icon: '😵', targetPlayerId: rndTarget() },
+      { type: 'attack', value: Math.floor(baseDmg * 1.5), icon: '💥', targetPlayerId: rndTarget() },
+    ];
+  }
+  if (cr >= 5) {
+    // Mid: attack, attack, block, big attack
+    return [
+      { type: 'attack', value: baseDmg, icon: '⚔️', targetPlayerId: playerIds[0] },
+      { type: 'attack', value: Math.floor(baseDmg * 0.8), icon: '⚔️', targetPlayerId: rndTarget() },
+      { type: 'block', value: baseBlock, icon: '🛡️' },
+      { type: 'attack', value: Math.floor(baseDmg * 1.3), icon: '💥', targetPlayerId: rndTarget() },
+    ];
+  }
+  // Low CR: simple attack, block, attack
   return [
     { type: 'attack', value: baseDmg, icon: '⚔️', targetPlayerId: playerIds[0] },
-    { type: 'attack', value: Math.floor(baseDmg * 0.8), icon: '⚔️', targetPlayerId: playerIds[Math.floor(Math.random() * playerIds.length)] },
-    { type: 'block', value: Math.floor(baseDmg * 0.6), icon: '🛡️' },
-    { type: 'attack', value: Math.floor(baseDmg * 1.3), icon: '💥', targetPlayerId: playerIds[Math.floor(Math.random() * playerIds.length)] },
-    { type: 'buff', value: 1, icon: '💪' },
+    { type: 'block', value: baseBlock, icon: '🛡️' },
+    { type: 'attack', value: Math.floor(baseDmg * 0.7), icon: '⚔️', targetPlayerId: rndTarget() },
   ];
 }
 
@@ -324,7 +345,7 @@ export function restTurn(state: CombatState): CombatState {
   if (state.phase !== 'player') return state;
   const pIdx = state.currentPlayerIndex;
   let player = { ...state.players[pIdx] };
-  const recovery = Math.floor(player.maxEnergy * 0.25);
+  const recovery = Math.floor(player.maxEnergy * 0.30); // 30% recovery (balanced)
   player.energy = Math.min(player.maxEnergy, player.energy + recovery);
   const log = [...state.log, `😴 ${player.name} se repose — +${recovery} ${player.resourceName}`];
   const players = state.players.map((p, i) => i === pIdx ? player : p);
@@ -385,9 +406,10 @@ function executeEnemyPhase(state: CombatState): CombatState {
 
     // Poison
     if (enemy.poison > 0) {
-      enemy.hp -= enemy.poison;
-      log.push(`☠️ ${enemy.name}: -${enemy.poison} Poison`);
-      enemy.poison--;
+      const poisonDmg = enemy.poison * 2; // Poison does 2x stacks damage
+      enemy.hp -= poisonDmg;
+      log.push(`☠️ ${enemy.name}: -${poisonDmg} Poison (${enemy.poison} stacks)`);
+      enemy.poison = Math.max(0, enemy.poison - 1);
       if (enemy.hp <= 0) { enemy.hp = 0; enemy.dead = true; continue; }
     }
 
