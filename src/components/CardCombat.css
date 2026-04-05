@@ -319,160 +319,189 @@
   perspective: 800px;
 }
 
-/* === SINGLE CARD === */
+/* === SINGLE CARD — PREMIUM DESIGN === */
 .cc-card {
-  width: 110px;
-  height: 155px;
-  border-radius: 10px;
+  width: 130px;
+  height: 185px;
+  border-radius: 12px;
   position: relative;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   transform-origin: bottom center;
   flex-shrink: 0;
-  margin: 0 -8px;
+  margin: 0 -10px;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
 }
 
 .cc-card:hover {
-  transform: translateY(-40px) scale(1.15);
+  transform: translateY(-50px) scale(1.25);
   z-index: 100 !important;
-  box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+  filter: drop-shadow(0 20px 40px rgba(0,0,0,0.7));
 }
 
 .cc-card.selected {
-  transform: translateY(-50px) scale(1.2);
+  transform: translateY(-55px) scale(1.3);
   z-index: 101 !important;
-  box-shadow: 0 0 25px rgba(212,175,55,0.6);
+  filter: drop-shadow(0 0 20px var(--accent, #d4af37));
 }
 
 .cc-card.unplayable {
-  opacity: 0.5;
-  filter: grayscale(0.5);
+  opacity: 0.4;
+  filter: grayscale(0.7) brightness(0.7);
   cursor: not-allowed;
 }
 
+/* === CARD INNER — ORNATE FRAME === */
 .cc-card-inner {
   width: 100%;
   height: 100%;
-  border-radius: 10px;
-  padding: 6px 8px;
+  border-radius: 12px;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  border: 2px solid;
+  border: 3px solid;
   overflow: hidden;
   position: relative;
+  box-shadow: inset 0 0 15px rgba(0,0,0,0.3);
 }
 
+/* Inner ornate border */
+.cc-card-inner::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* === COST ORB === */
 .cc-card-cost {
   position: absolute;
-  top: -6px;
-  left: -6px;
-  width: 30px;
-  height: 30px;
+  top: -8px;
+  left: -8px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 900;
-  border: 2px solid rgba(255,255,255,0.3);
-  z-index: 5;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+  border: 3px solid rgba(255,255,255,0.25);
+  z-index: 10;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.5);
 }
 
+/* === HEADER — type + name === */
 .cc-card-type-label {
   text-align: center;
   font-size: 0.4rem;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   text-transform: uppercase;
-  margin-bottom: 2px;
-  opacity: 0.7;
+  padding-top: 8px;
+  opacity: 0.6;
 }
 
 .cc-card-name {
   text-align: center;
-  color: #e8dcc8;
-  font-size: 0.55rem;
-  font-weight: 700;
+  color: #f0e6d0;
+  font-size: 0.65rem;
+  font-weight: 900;
   letter-spacing: 0.5px;
-  margin-bottom: 3px;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  padding: 3px 10px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+  line-height: 1.2;
 }
 
+/* === ART PANEL === */
 .cc-card-art {
   flex: 1;
+  margin: 0 8px;
   border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0,0,0,0.25);
-  border: 1px solid;
-  margin-bottom: 3px;
   position: relative;
-  min-height: 40px;
+  min-height: 50px;
+  background:
+    radial-gradient(circle at 40% 40%, rgba(255,255,255,0.04) 0%, transparent 60%),
+    rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.06);
 }
 
 .cc-card-icon {
-  font-size: 1.8rem;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  font-size: 2.4rem;
+  filter: drop-shadow(0 3px 6px rgba(0,0,0,0.5));
 }
 
 .cc-card-dice-badge {
   position: absolute;
-  top: 2px;
-  right: 2px;
+  top: 4px;
+  right: 4px;
   font-size: 0.5rem;
-  background: rgba(212,175,55,0.3);
+  background: rgba(212,175,55,0.25);
   border: 1px solid rgba(212,175,55,0.5);
-  border-radius: 4px;
-  padding: 1px 4px;
+  border-radius: 6px;
+  padding: 2px 6px;
   color: #d4af37;
+  font-weight: 700;
 }
 
+/* === BOTTOM — effects + description === */
 .cc-card-effects {
   text-align: center;
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   font-weight: 900;
   color: #fff;
-  padding: 2px 0;
-  letter-spacing: 1px;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
-  min-height: 16px;
+  padding: 4px 6px 2px;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.7);
+  min-height: 18px;
 }
 
 .cc-card-desc {
   text-align: center;
-  color: #999;
-  font-size: 0.42rem;
+  color: #aaa;
+  font-size: 0.48rem;
   line-height: 1.3;
   font-family: sans-serif;
+  padding: 0 8px 6px;
 }
 
+/* === RARITY GEM === */
 .cc-card-rarity {
   position: absolute;
-  bottom: 3px;
+  bottom: 5px;
   left: 50%;
   transform: translateX(-50%);
-  width: 14px;
-  height: 4px;
-  border-radius: 2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.2);
 }
-.cc-card-rarity.starter { background: #555; }
-.cc-card-rarity.common { background: #888; }
-.cc-card-rarity.uncommon { background: #3b82f6; box-shadow: 0 0 6px rgba(59,130,246,0.5); }
-.cc-card-rarity.rare { background: #d4af37; box-shadow: 0 0 6px rgba(212,175,55,0.5); }
+.cc-card-rarity.starter { background: #444; }
+.cc-card-rarity.common { background: #777; box-shadow: 0 0 4px rgba(119,119,119,0.4); }
+.cc-card-rarity.uncommon { background: #3b82f6; box-shadow: 0 0 8px rgba(59,130,246,0.6); }
+.cc-card-rarity.rare { background: #d4af37; box-shadow: 0 0 8px rgba(212,175,55,0.6); }
 
+/* === EXHAUST BADGE === */
 .cc-card-exhaust {
   position: absolute;
-  top: 3px;
-  right: 3px;
-  font-size: 0.35rem;
-  background: rgba(168,85,247,0.3);
+  top: 4px;
+  right: 4px;
+  font-size: 0.38rem;
+  background: rgba(168,85,247,0.25);
   border: 1px solid rgba(168,85,247,0.5);
-  border-radius: 3px;
-  padding: 1px 3px;
+  border-radius: 4px;
+  padding: 2px 5px;
   color: #c084fc;
   letter-spacing: 0.5px;
+  font-weight: 700;
+  z-index: 5;
 }
 
 /* === STATUS BADGES === */
@@ -953,10 +982,12 @@
 
 /* === RESPONSIVE === */
 @media (max-width: 768px) {
-  .cc-card { width: 85px; height: 120px; }
-  .cc-card-name { font-size: 0.45rem; }
-  .cc-card-desc { font-size: 0.4rem; }
+  .cc-card { width: 100px; height: 145px; margin: 0 -6px; }
+  .cc-card-name { font-size: 0.5rem; }
+  .cc-card-desc { font-size: 0.38rem; }
+  .cc-card-icon { font-size: 1.8rem; }
+  .cc-card-cost { width: 28px; height: 28px; font-size: 0.8rem; }
   .cc-player-portrait { width: 80px; height: 80px; }
   .cc-enemy-portrait { width: 70px; height: 70px; }
-  .cc-hand-area { min-height: 150px; }
+  .cc-hand-area { min-height: 170px; }
 }
