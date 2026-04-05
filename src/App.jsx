@@ -2407,6 +2407,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                         players={players}
                         currentUserId={character?.user_id || profile?.id}
                         initialEnemies={combatEnemies}
+                        classesData={CLASSES}
                         onHPChange={handleHPChange}
                         onSFX={triggerSFX}
                         onVFX={triggerVFX}

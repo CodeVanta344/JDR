@@ -430,33 +430,94 @@ export function abilityToCard(ability: any, index: number = 0): Card {
   };
 }
 
-export function getStarterDeck(playerClass: string, playerAbilities?: any[], playerLevel: number = 1): Card[] {
+/**
+ * Build a deck from class data, subclass feature, and player level.
+ *
+ * @param playerClass - class name (e.g. "Guerrier")
+ * @param classData - full class object from classes.ts (initial_ability_options, unlockables, subclasses)
+ * @param playerSubclass - subclass key (e.g. "berserker")
+ * @param playerLevel - current player level
+ * @param playerAbilities - player's resolved abilities array (fallback)
+ */
+export function getStarterDeck(
+  playerClass: string,
+  playerAbilities?: any[],
+  playerLevel: number = 1,
+  classData?: any,
+  playerSubclass?: string
+): Card[] {
+  // Base cards: Frappe + Défense
   const frappes = Array(5).fill(null).map((_, i) => ({ ...CARD_FRAPPE, id: `frappe_${i}` }));
   const defenses = Array(3).fill(null).map((_, i) => ({ ...CARD_DEFENSE, id: `defense_${i}` }));
-
-  // Convert player abilities to cards — ONLY abilities unlocked at current level
   const abilityCards: Card[] = [];
-  if (playerAbilities && playerAbilities.length > 0) {
-    const unlocked = playerAbilities.filter(a =>
-      (a.level || 1) <= playerLevel &&
-      a.actionType !== 'Passif' && a.type !== 'Passif' &&
-      (a.dice || a.heal || a.statusEffect || a.damage_dice)
-    );
-    unlocked.forEach((ab, i) => {
+
+  // 1. Initial class abilities (level 1 — from initial_ability_options)
+  if (classData?.initial_ability_options) {
+    classData.initial_ability_options.forEach((ab: any, i: number) => {
       abilityCards.push(abilityToCard(ab, i));
     });
   }
 
-  // If no abilities converted, add class-specific cards
+  // 2. Subclass feature → unique card
+  if (classData?.subclasses && playerSubclass) {
+    const sub = classData.subclasses[playerSubclass];
+    if (sub?.details?.feature) {
+      const featureName = sub.label || playerSubclass;
+      const featureDesc = sub.details.feature;
+      // Create a power card from the subclass feature
+      abilityCards.push({
+        id: `subclass_${playerSubclass}`,
+        name: featureName,
+        type: 'power',
+        cost: 1,
+        rarity: 'uncommon',
+        description: featureDesc.length > 80 ? featureDesc.slice(0, 77) + '...' : featureDesc,
+        effects: [
+          sub.details.style === 'Dégâts' ? { type: 'strength', value: 2, target: 'self' as const } :
+          sub.details.style === 'Défenseur' ? { type: 'block', value: 15, target: 'self' as const } :
+          sub.details.style === 'Soutien' ? { type: 'heal', value: 8, target: 'self' as const } :
+          { type: 'strength', value: 1, target: 'self' as const }
+        ],
+        exhaust: true,
+        tags: [playerSubclass],
+      });
+    }
+  }
+
+  // 3. Unlockable abilities filtered by level
+  if (classData?.unlockables) {
+    const unlocked = classData.unlockables.filter((a: any) =>
+      (a.level || 99) <= playerLevel &&
+      a.actionType !== 'Passif' && a.type !== 'Passif' &&
+      (a.dice || a.heal || a.statusEffect || a.damage_dice)
+    );
+    unlocked.forEach((ab: any, i: number) => {
+      abilityCards.push(abilityToCard(ab, 100 + i));
+    });
+  }
+
+  // 4. Fallback: use playerAbilities directly if no classData
+  if (abilityCards.length === 0 && playerAbilities && playerAbilities.length > 0) {
+    const unlocked = playerAbilities.filter((a: any) =>
+      (a.level || 1) <= playerLevel &&
+      a.actionType !== 'Passif' && a.type !== 'Passif' &&
+      (a.dice || a.heal || a.statusEffect || a.damage_dice)
+    );
+    unlocked.forEach((ab: any, i: number) => {
+      abilityCards.push(abilityToCard(ab, i));
+    });
+  }
+
+  // 5. Last resort fallback: class-specific default cards
   if (abilityCards.length === 0) {
     const cls = (playerClass || '').toLowerCase();
     if (cls.includes('guerrier') || cls.includes('warrior') || cls.includes('paladin')) {
       abilityCards.push({ ...CARD_COUP_PUISSANT, id: 'coup_puissant_0' });
-    } else if (cls.includes('mage') || cls.includes('sorcier') || cls.includes('wizard')) {
+    } else if (cls.includes('mage') || cls.includes('sorcier')) {
       abilityCards.push({ ...CARD_ECLAIR, id: 'eclair_0' }, { ...CARD_BOUCLIER_ARCANE, id: 'bouclier_0' });
     } else if (cls.includes('rôdeur') || cls.includes('rodeur') || cls.includes('ranger')) {
       abilityCards.push({ ...CARD_TIR_PRECIS, id: 'tir_precis_0' }, { ...CARD_ESQUIVE, id: 'esquive_0' });
-    } else if (cls.includes('clerc') || cls.includes('cleric') || cls.includes('prêtre')) {
+    } else if (cls.includes('clerc') || cls.includes('cleric')) {
       abilityCards.push({ ...CARD_LUMIERE, id: 'lumiere_0' });
     } else if (cls.includes('voleur') || cls.includes('rogue')) {
       abilityCards.push({ ...CARD_POISON_LAME, id: 'poison_0' });
@@ -465,7 +526,7 @@ export function getStarterDeck(playerClass: string, playerAbilities?: any[], pla
     } else if (cls.includes('druide') || cls.includes('druid')) {
       abilityCards.push({ ...CARD_LUMIERE, id: 'heal_druide_0' });
     } else {
-      abilityCards.push({ ...CARD_COUP_PUISSANT, id: 'coup_puissant_0' });
+      abilityCards.push({ ...CARD_COUP_PUISSANT, id: 'default_0' });
     }
   }
 

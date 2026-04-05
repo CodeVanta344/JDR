@@ -34,6 +34,7 @@ const CardView = ({ card, index, selected, canPlay, onClick }) => {
 
 export const CardCombat = ({
   players, currentUserId, initialEnemies,
+  classesData,
   onCombatEnd, onGameOver, onRewards,
   onHPChange, onVFX, onSFX,
 }) => {
@@ -46,10 +47,22 @@ export const CardCombat = ({
   // Find current player
   const myPlayer = players?.find(p => p.user_id === currentUserId) || players?.[0];
 
-  // Init combat on mount
+  // Init combat on mount — inject classData for proper deck building
   useEffect(() => {
     if (!myPlayer || !initialEnemies?.length) return;
-    const initial = initCombat(myPlayer, initialEnemies);
+
+    // Find class data from CLASSES to get initial_ability_options + unlockables + subclasses
+    let classData = null;
+    if (classesData && myPlayer.class) {
+      const classKey = Object.keys(classesData).find(k =>
+        classesData[k].name?.toLowerCase() === myPlayer.class?.toLowerCase() ||
+        k.toLowerCase() === myPlayer.class?.toLowerCase()
+      );
+      if (classKey) classData = classesData[classKey];
+    }
+
+    const playerWithClassData = { ...myPlayer, classData };
+    const initial = initCombat(playerWithClassData, initialEnemies);
     setState(initial);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
