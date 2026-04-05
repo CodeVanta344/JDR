@@ -3023,7 +3023,7 @@ const RollOverlay = ({ rollId, roll, modifier, tacticalReason, threshold, succes
                 </div>
 
                 {/* Overlays that shouldn't be covered by Arena */}
-                {rollOverlay && <RollOverlay {...rollOverlay} onRollComplete={handleRollComplete} />}
+                {rollOverlay && <RollOverlay key={rollOverlay.rollId} {...rollOverlay} onRollComplete={handleRollComplete} />}
                 {remoteAction && <RemoteActionOverlay action={remoteAction} onComplete={() => setRemoteAction(null)} />}
 
                 {combatState === 'finished' && (

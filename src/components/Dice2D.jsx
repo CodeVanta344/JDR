@@ -130,20 +130,24 @@ export const Dice2D = ({ type = 'd100', value, onComplete, delay = 0 }) => {
   const [phase, setPhase] = useState('idle'); // idle, rolling, settling, done
   const rollRef = useRef(null);
   const hasCompletedRef = useRef(false);
+  const hasStartedRef = useRef(false);
   const onCompleteRef = useRef(onComplete);
+  const valueRef = useRef(value);
+  const typeRef = useRef(type);
 
   useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
+  useEffect(() => { valueRef.current = value; }, [value]);
 
-  const getRandomValue = useCallback(() => {
-    if (type === 'd20') return Math.floor(Math.random() * 20) + 1;
-    if (type === 'd10') return Math.floor(Math.random() * 10);
-    return Math.floor(Math.random() * 100) + 1;
-  }, [type]);
-
+  // Run animation ONCE on mount only
   useEffect(() => {
-    hasCompletedRef.current = false;
-    setPhase('idle');
-    setDisplayValue('?');
+    if (hasStartedRef.current) return;
+    hasStartedRef.current = true;
+
+    const getRand = () => {
+      if (typeRef.current === 'd20') return Math.floor(Math.random() * 20) + 1;
+      if (typeRef.current === 'd10') return Math.floor(Math.random() * 10);
+      return Math.floor(Math.random() * 100) + 1;
+    };
 
     const startTimer = setTimeout(() => {
       setPhase('rolling');
@@ -151,13 +155,12 @@ export const Dice2D = ({ type = 'd100', value, onComplete, delay = 0 }) => {
       const maxRolls = 25;
 
       rollRef.current = setInterval(() => {
-        setDisplayValue(getRandomValue());
+        setDisplayValue(getRand());
         count++;
 
-        // Slow down near the end
         if (count >= maxRolls) {
           clearInterval(rollRef.current);
-          setDisplayValue(value);
+          setDisplayValue(valueRef.current);
           setPhase('settling');
 
           setTimeout(() => {
@@ -165,19 +168,19 @@ export const Dice2D = ({ type = 'd100', value, onComplete, delay = 0 }) => {
             if (!hasCompletedRef.current) {
               hasCompletedRef.current = true;
               if (onCompleteRef.current) {
-                setTimeout(() => onCompleteRef.current(value), 600);
+                setTimeout(() => onCompleteRef.current(valueRef.current), 600);
               }
             }
           }, 500);
         }
-      }, count > 18 ? 150 : count > 12 ? 100 : 70); // Accelerate then decelerate
+      }, 70);
     }, delay);
 
     return () => {
       clearTimeout(startTimer);
       if (rollRef.current) clearInterval(rollRef.current);
     };
-  }, [value, type, delay, getRandomValue]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps — intentionally run once
 
   const isCrit = value >= 95 || value === 100;
   const isFail = value <= 5 || value === 1;
