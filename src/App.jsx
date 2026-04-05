@@ -4,7 +4,7 @@ import { WORLD_CONTEXT, BESTIARY, LEVEL_THRESHOLDS, CLASSES, ENVIRONMENTAL_RULES
 import { initializeLoreSystem } from './lore';
 import { preloadCommonData } from './lore/optimization';
 import {
-    LazyCombatManager as CombatManager,
+    // LazyCombatManager as CombatManager, // OLD grid combat — replaced by CardCombat
     LazyCharacterSheet as CharacterSheet,
     LazyCodexPanel as CodexPanel,
     LazyDMPanel as DMPanel,
@@ -23,6 +23,7 @@ import { LootModal } from './components/LootModal';
 import { NPCDialogueModal } from './components/NPCDialogueModal';
 import { DiceChallengeModal } from './components/DiceChallengeModal';
 import { CombatDistanceModal } from './components/CombatDistanceModal';
+import { CardCombat } from './components/CardCombat';
 import { formatAIContent, calculateTotalStats, calculateMaxResource, resolvePlayerAbilities, generateArenaDecor, generateRandomCharacter, getArenaConfig } from './utils/gameUtils';
 import { AudioManager } from './components/AudioManager';
 import { GameHelperModal } from './components/GameHelperModal';
@@ -2402,17 +2403,15 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
             {
                 combatMode && (
                     <Suspense fallback={LAZY_FALLBACK}>
-                    <CombatManager
-                        arenaConfig={syncedCombatState?.arenaConfig || getArenaConfig()}
+                    <CardCombat
                         players={players}
                         currentUserId={character?.user_id || profile?.id}
                         initialEnemies={combatEnemies}
-                        syncedCombatState={syncedCombatState}
-                        onUpdateCombatState={setSyncedCombatState}
-                        sessionId={session?.id}
                         onHPChange={handleHPChange}
-                        onResourceChange={handleResourceChange}
-                        onConsumeItem={handleConsumeItem}
+                        onSFX={triggerSFX}
+                        onVFX={triggerVFX}
+                        onGameOver={handleGameOver}
+                        onRewards={handleCombatRewards}
                         onCombatEnd={async (result) => {
                             // 1. Clear state locally IMMEDIATELY to prevent sync-induced re-entry
                             setCombatMode(false);
@@ -2483,13 +2482,6 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                                 }
                             } catch (e) { console.error('Post-combat narrative error:', e); }
                         }}
-                        onGameOver={handleGameOver}
-                        onRewards={handleCombatRewards}
-                        onSFX={triggerSFX}
-                        onLogAction={(m) => {
-                            console.log("Combat Log:", m.content);
-                        }}
-                        onVFX={triggerVFX}
                     />
                     </Suspense>
                 )
