@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { initCombat, playCard, endPlayerTurn, startNewPlayerTurn, restTurn, getEnemyIntention, getCurrentPlayer, getPlayer } from '../engine/CardCombatEngine';
 import { Dice2D } from './Dice2D';
-import { supabase } from '../supabaseClient';
 import './CardCombat.css';
 
 // ============================================================
@@ -103,9 +102,9 @@ const PlayerPortrait = ({ player, isActive, isSelf, damagePopups }) => (
 // MAIN CARD COMBAT COMPONENT
 // ============================================================
 
-export const CardCombat = ({
+const CardCombat = ({
   players, currentUserId, initialEnemies,
-  classesData, sessionId,
+  classesData, sessionId, supabaseClient,
   syncedCombatState, onUpdateCombatState,
   onCombatEnd, onGameOver, onRewards,
   onHPChange, onVFX, onSFX,
@@ -167,8 +166,8 @@ export const CardCombat = ({
   useEffect(() => {
     if (!sessionId) return;
 
-    const channel = supabase
-      .channel(`card_combat_${sessionId}`)
+    const channel = supabaseClient
+      ?.channel(`card_combat_${sessionId}`)
       .on('broadcast', { event: 'card_action' }, (payload) => {
         const action = payload.payload;
         if (!action || action.sourceUserId === currentUserId) return;
@@ -184,7 +183,7 @@ export const CardCombat = ({
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { if (supabaseClient && channel) supabaseClient.removeChannel(channel); };
   }, [sessionId, currentUserId]);
 
   // Broadcast state to other players
@@ -193,7 +192,7 @@ export const CardCombat = ({
     const ts = Date.now();
     lastSyncRef.current = ts;
 
-    supabase.channel(`card_combat_${sessionId}`).send({
+    supabaseClient?.channel(`card_combat_${sessionId}`)?.send({
       type: 'broadcast',
       event: 'card_action',
       payload: { type: 'state_sync', sourceUserId: currentUserId, state: { ...newState, updatedAt: ts } },

@@ -2409,6 +2409,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                         initialEnemies={combatEnemies}
                         classesData={CLASSES}
                         sessionId={session?.id}
+                        supabaseClient={supabase}
                         syncedCombatState={syncedCombatState}
                         onUpdateCombatState={setSyncedCombatState}
                         onHPChange={handleHPChange}
