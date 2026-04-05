@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { initCombat, playCard, endPlayerTurn, startNewPlayerTurn, restTurn, getEnemyIntention, getCurrentPlayer, getPlayer } from '../engine/CardCombatEngine';
+import { initCombat, playCard, endPlayerTurn, startNewPlayerTurn, restTurn, getEnemyIntention, getCurrentPlayer, getPlayer } from '../engine/CardCombatEngine.js';
 import { Dice2D } from './Dice2D';
 import './CardCombat.css';
 
