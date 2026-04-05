@@ -342,7 +342,7 @@ function parseDice(dice: string): number {
 
 export function abilityToCard(ability: any, index: number = 0): Card {
   const id = `ability_${(ability.name || 'unknown').toLowerCase().replace(/\s+/g, '_')}_${index}`;
-  const isPassive = ability.actionType === 'Passif' || ability.type === 'Passif' || ability.cooldown === 0 && !ability.dice && !ability.heal;
+  const isPassive = ability.actionType === 'Passif' || ability.type === 'Passif';
   const isHeal = !!(ability.heal || ability.target === 'ally' && ability.friendly);
   const isAoE = !!(ability.aoe);
   const hasDamage = !!(ability.dice || ability.damage_dice);
@@ -399,9 +399,33 @@ export function abilityToCard(ability: any, index: number = 0): Card {
     }
   }
 
-  // Passive powers: convert to permanent buffs
+  // Passive powers: convert to meaningful permanent effects based on description
   if (type === 'power' && effects.length === 0) {
-    effects.push({ type: 'strength', value: 1, target: 'self' });
+    const desc = (ability.desc || ability.description || '').toLowerCase();
+    if (desc.includes('critique') || desc.includes('crit')) {
+      effects.push({ type: 'strength', value: 3, target: 'self' });
+    } else if (desc.includes('attaque supp') || desc.includes('deux fois')) {
+      effects.push({ type: 'energy', value: 1 });
+      effects.push({ type: 'draw', value: 1 });
+    } else if (desc.includes('indomptable') || desc.includes('0 pv') || desc.includes('résilience')) {
+      effects.push({ type: 'block', value: 20, target: 'self' });
+    } else if (desc.includes('régénèr') || desc.includes('regen') || desc.includes('pv par tour')) {
+      effects.push({ type: 'heal', value: 8, target: 'self' });
+    } else if (desc.includes('immunité') || desc.includes('résistance') || desc.includes('immune')) {
+      effects.push({ type: 'block', value: 15, target: 'self' });
+    } else if (desc.includes('avantage') || desc.includes('bonus')) {
+      effects.push({ type: 'strength', value: 2, target: 'self' });
+    } else if (desc.includes('discrétion') || desc.includes('caché') || desc.includes('invisible')) {
+      effects.push({ type: 'block', value: 12, target: 'self' });
+      effects.push({ type: 'draw', value: 1 });
+    } else if (desc.includes('terrain') || desc.includes('vitesse')) {
+      effects.push({ type: 'dexterity', value: 2, target: 'self' });
+    } else if (desc.includes('mana') || desc.includes('ressource')) {
+      effects.push({ type: 'energy', value: 1 });
+    } else {
+      effects.push({ type: 'strength', value: 1, target: 'self' });
+      effects.push({ type: 'dexterity', value: 1, target: 'self' });
+    }
   }
 
   // If no effects generated, give a basic damage
@@ -451,7 +475,7 @@ export function getStarterDeck(
   const defenses = Array(3).fill(null).map((_, i) => ({ ...CARD_DEFENSE, id: `defense_${i}` }));
   const abilityCards: Card[] = [];
 
-  // 1. Initial class abilities (level 1 — from initial_ability_options)
+  // 1. ALL initial class abilities (level 1)
   if (classData?.initial_ability_options) {
     classData.initial_ability_options.forEach((ab: any, i: number) => {
       abilityCards.push(abilityToCard(ab, i));
@@ -484,12 +508,10 @@ export function getStarterDeck(
     }
   }
 
-  // 3. Unlockable abilities filtered by level
+  // 3. ALL unlockable abilities filtered by level (including passives)
   if (classData?.unlockables) {
     const unlocked = classData.unlockables.filter((a: any) =>
-      (a.level || 99) <= playerLevel &&
-      a.actionType !== 'Passif' && a.type !== 'Passif' &&
-      (a.dice || a.heal || a.statusEffect || a.damage_dice)
+      (a.level || 99) <= playerLevel
     );
     unlocked.forEach((ab: any, i: number) => {
       abilityCards.push(abilityToCard(ab, 100 + i));
@@ -499,9 +521,7 @@ export function getStarterDeck(
   // 4. Fallback: use playerAbilities directly if no classData
   if (abilityCards.length === 0 && playerAbilities && playerAbilities.length > 0) {
     const unlocked = playerAbilities.filter((a: any) =>
-      (a.level || 1) <= playerLevel &&
-      a.actionType !== 'Passif' && a.type !== 'Passif' &&
-      (a.dice || a.heal || a.statusEffect || a.damage_dice)
+      (a.level || 1) <= playerLevel
     );
     unlocked.forEach((ab: any, i: number) => {
       abilityCards.push(abilityToCard(ab, i));
