@@ -1,7 +1,56 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { initCombat, playCard, endPlayerTurn, startNewPlayerTurn, restTurn, getEnemyIntention, getCurrentPlayer, getPlayer } from '../engine/CardCombatEngine.js';
-import { Dice2D } from './Dice2D';
 import './CardCombat.css';
+
+// Inline simple dice component to avoid cross-chunk TDZ with Dice2D
+const InlineDice = ({ die, value, onComplete }) => {
+  const [display, setDisplay] = React.useState('?');
+  const [done, setDone] = React.useState(false);
+  const doneRef = React.useRef(false);
+
+  React.useEffect(() => {
+    let count = 0;
+    const max = die === 'd20' ? 20 : 100;
+    const interval = setInterval(() => {
+      setDisplay(Math.floor(Math.random() * max) + 1);
+      count++;
+      if (count >= 20) {
+        clearInterval(interval);
+        setDisplay(value);
+        setDone(true);
+        if (!doneRef.current) {
+          doneRef.current = true;
+          setTimeout(() => onComplete && onComplete(), 800);
+        }
+      }
+    }, 70);
+    return () => clearInterval(interval);
+  }, []); // eslint-disable-line
+
+  const isCrit = value >= (die === 'd20' ? 18 : 95);
+  const isFail = value <= (die === 'd20' ? 2 : 5);
+
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
+    }}>
+      <div style={{
+        width: 120, height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: isCrit ? 'linear-gradient(135deg, #FFD700, #B8860B)' : isFail ? 'linear-gradient(135deg, #8B0000, #5c0000)' : 'linear-gradient(135deg, #2a2540, #0d0b18)',
+        border: `3px solid ${isCrit ? '#FFD700' : isFail ? '#ff4444' : '#5a4a3a'}`,
+        borderRadius: 16, fontSize: '2.5rem', fontWeight: 900, fontFamily: "'Cinzel Decorative', serif",
+        color: isCrit ? '#1a0f08' : isFail ? '#ff6b6b' : '#e8dcc8',
+        boxShadow: isCrit ? '0 0 30px rgba(255,215,0,0.5)' : '0 8px 20px rgba(0,0,0,0.5)',
+        animation: done ? 'none' : 'spin 0.1s linear infinite',
+        transition: 'all 0.3s ease',
+      }}>
+        {display}
+      </div>
+      <div style={{ color: '#888', fontSize: '0.7rem', letterSpacing: 2 }}>{die.toUpperCase()}</div>
+      <style>{`@keyframes spin { 0%{transform:rotate(0deg) scale(0.95)} 50%{transform:rotate(5deg) scale(1)} 100%{transform:rotate(-5deg) scale(0.95)} }`}</style>
+    </div>
+  );
+};
 
 // ============================================================
 // CARD THEMES
@@ -538,7 +587,7 @@ const CardCombat = ({
 
       {/* Dice */}
       {diceRoll?.active && (
-        <div className="cc-dice-overlay"><Dice2D type={diceRoll.die} value={diceRoll.result} onComplete={handleDiceComplete} /></div>
+        <div className="cc-dice-overlay"><InlineDice die={diceRoll.die} value={diceRoll.result} onComplete={handleDiceComplete} /></div>
       )}
 
       {/* Victory */}
