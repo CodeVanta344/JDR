@@ -117,6 +117,12 @@ FORMAT DE RÉPONSE — tu DOIS répondre en JSON strict, rien d'autre:
 
 MONDE: Aethelgard - 5 régions (Val Doré, Monts Cœur-de-Fer, Sylve d'Émeraude, Côte des Orages, Terres Brûlées). 5 Sceaux magiques se brisent. Le Cercle des Cendres menace le monde. L'Aube d'Argent protège.
 
+INVENTAIRE: Le joueur a un équipement et des consommables listés dans le contexte. Mentionne-les dans la narration quand c'est pertinent ("Vous dégainez votre [arme équipée]...").
+
+QUÊTES: Si une quête progresse ou se termine, ajoute "quest_update": {"name":"...", "status":"completed/in_progress", "description":"..."} dans ta réponse JSON.
+
+PNJ: Si un PNJ change d'opinion sur le joueur, ajoute "affinity_change": 5 (ou -5). Si un PNJ révèle une info importante, ajoute "npc_memory": "résumé de l'info".
+
 SOIS STRICT: refuse les actions impossibles, vérifie les compétences de classe, le combat est mortel. Sois immersif, dramatique, et juste. Réponds TOUJOURS en JSON. Réponds TOUJOURS en français. Ne réponds JAMAIS comme un assistant de code.`,
 
   'npc-gen': `Tu es un expert Game Master pour Aethelgard. Génère un PNJ détaillé en JSON strict avec: name, age, appearance, backstory, secrets[], dialogue_samples[], quest_hooks[], stats{hp,atk,ac}. Tout en français.`,
@@ -148,7 +154,27 @@ async function processRequest(request) {
       // Build rich context from the game-master payload
       const p = request_payload;
       const parts = [];
-      if (p.player) parts.push(`JOUEUR: ${p.player.name} (${p.player.class || '?'}) Niv.${p.player.level || 1}`);
+      if (p.player) {
+        const pl = p.player;
+        const lvl = pl.level || 1;
+        parts.push(`JOUEUR: ${pl.name} (${pl.class || '?'}) Niv.${lvl}`);
+        // Stats for challenge DC calculation
+        if (pl.stats) parts.push(`STATS: FOR:${pl.stats.str||10} DEX:${pl.stats.dex||10} CON:${pl.stats.con||10} INT:${pl.stats.int||10} SAG:${pl.stats.wis||10} CHA:${pl.stats.cha||10} PER:${pl.stats.per||10} VOL:${pl.stats.wil||10}`);
+        parts.push(`HP: ${pl.hp || '?'}/${pl.max_hp || '?'} | ${pl.resource_name || 'Mana'}: ${pl.resource || '?'}/${pl.max_resource || '?'}`);
+        // Inventory summary (top 5 items)
+        if (pl.inventory?.length) {
+          const equipped = pl.inventory.filter(i => i.equipped).map(i => i.name).join(', ');
+          const consumables = pl.inventory.filter(i => ['potion','scroll','food'].includes((i.type||'').toLowerCase())).map(i => i.name).join(', ');
+          if (equipped) parts.push(`ÉQUIPEMENT: ${equipped}`);
+          if (consumables) parts.push(`CONSOMMABLES: ${consumables}`);
+        }
+        // DC scaling guide
+        parts.push(`DIFFICULTÉ: Adapte les DC au niveau ${lvl}. Niv1-3: DC 30-50. Niv4-8: DC 40-60. Niv9-15: DC 50-70. Niv16+: DC 60-80.`);
+      }
+      // Multi-player context
+      if (p.partyMembers?.length > 1) {
+        parts.push(`GROUPE: ${p.partyMembers.length} joueurs. En groupe, propose des jets à CHAQUE joueur ou un jet collectif.`);
+      }
       if (p.history?.length) parts.push(`HISTORIQUE:\n${p.history.slice(-8).map(m => `${m.role}: ${m.content}`).join('\n')}`);
       if (p.gamePhase) parts.push(`PHASE: ${p.gamePhase}`);
       if (p.currentLocation) parts.push(`LIEU: ${p.currentLocation}`);
@@ -165,13 +191,34 @@ async function processRequest(request) {
       userMessage = request_payload.message || request_payload.action || JSON.stringify(request_payload);
     }
 
-    const response = await callClaudeCode(systemPrompt, userMessage);
+    // Call Claude with 1 retry on timeout
+    let response;
+    try {
+      response = await callClaudeCode(systemPrompt, userMessage);
+    } catch (firstErr) {
+      console.warn(`⚠️ First attempt failed: ${firstErr.message}. Retrying...`);
+      response = await callClaudeCode(systemPrompt, userMessage);
+    }
 
     // Essayer de parser en JSON si possible
     let responsePayload;
     try {
       const clean = response.replace(/```(?:json|JSON|javascript|js)?\s*\n?/g, '').replace(/```\s*$/g, '').trim();
       responsePayload = JSON.parse(clean);
+      // Validate: must have at least a narrative field
+      if (!responsePayload.narrative && typeof responsePayload === 'object') {
+        // If no narrative but has other fields, extract text from first string value
+        const firstStr = Object.values(responsePayload).find(v => typeof v === 'string' && v.length > 10);
+        if (firstStr) responsePayload.narrative = firstStr;
+        else responsePayload.narrative = response;
+      }
+      // Validate challenge stat values
+      if (responsePayload.challenge?.stat) {
+        const validStats = ['str', 'dex', 'con', 'int', 'wis', 'cha', 'per', 'wil'];
+        if (!validStats.includes(responsePayload.challenge.stat)) {
+          responsePayload.challenge.stat = 'dex'; // safe fallback
+        }
+      }
     } catch {
       responsePayload = { narrative: response };
     }
@@ -185,9 +232,12 @@ async function processRequest(request) {
       const playerCombatWords = ['j\'attaque', 'je frappe', 'je charge', 'je tire sur', 'je dégaine', 'j\'agresse', 'je lance un sort sur', 'je me bats', 'je combats', 'attaquer', 'frapper'];
       const playerWantsCombat = playerCombatWords.some(w => action.includes(w));
 
-      // Narrative describes combat
-      const narrativeCombatWords = ['surgit', 'surgissent', 'attaquent', 'embuscade', 'vous assaillent', 'bondit sur', 'se jette sur', 'combat', 'dégainent', 'épée', 'lame', 'frappez', 'votre cible', 'les dés décident', 'tentez votre attaque', 'vous êtes attaqué'];
-      const narrativeIndicatesCombat = narrativeCombatWords.some(w => narrative.includes(w));
+      // Narrative describes combat — require 2+ strong combat keywords to avoid false positives
+      const strongCombatWords = ['embuscade', 'vous assaillent', 'bondit sur', 'se jette sur', 'vous êtes attaqué', 'tentez votre attaque'];
+      const weakCombatWords = ['surgit', 'surgissent', 'attaquent', 'dégainent', 'votre cible'];
+      const strongCount = strongCombatWords.filter(w => narrative.includes(w)).length;
+      const weakCount = weakCombatWords.filter(w => narrative.includes(w)).length;
+      const narrativeIndicatesCombat = strongCount >= 1 || weakCount >= 2;
 
       if (playerWantsCombat || narrativeIndicatesCombat) {
         const playerLevel = request_payload?.player?.level || 1;

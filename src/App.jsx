@@ -101,10 +101,12 @@ async function invokeGM(supabaseClient, body) {
 
         if (insertError || !request) throw new Error(insertError?.message || 'Insert failed');
 
-        // 2. Poll for response (max 30s)
+        // 2. Poll for response (max 25s, exponential backoff: 500ms → 1s → 2s → 3s)
         const startTime = Date.now();
-        while (Date.now() - startTime < 30000) {
-            await new Promise(r => setTimeout(r, 1500));
+        let pollDelay = 500;
+        while (Date.now() - startTime < 25000) {
+            await new Promise(r => setTimeout(r, pollDelay));
+            pollDelay = Math.min(3000, pollDelay * 1.5); // backoff
             const { data: updated } = await supabaseClient
                 .from('ai_requests')
                 .select('status, response_payload, error_message')
@@ -121,8 +123,16 @@ async function invokeGM(supabaseClient, body) {
         throw new Error('Timeout waiting for GM response');
     } catch (brokerError) {
         console.error('[invokeGM] Broker failed:', brokerError.message);
-        // Return a fallback narrative instead of crashing
-        return { data: { narrative: "Le Maître du Jeu se concentre... (Le serveur GM ne répond pas. Vérifiez que le gm-server est lancé sur le VPS.)" } };
+        const msg = brokerError.message || '';
+        let fallback;
+        if (msg.includes('Timeout')) {
+            fallback = "Le Maître du Jeu réfléchit longuement... La réponse prend trop de temps. Réessayez votre action.";
+        } else if (msg.includes('AI error') || msg.includes('Claude')) {
+            fallback = "Le Maître du Jeu semble perturbé par les forces arcaniques... (Erreur de l'IA. Réessayez.)";
+        } else {
+            fallback = "Le Maître du Jeu se concentre... (Le serveur GM ne répond pas. Vérifiez que le gm-server est lancé.)";
+        }
+        return { data: { narrative: fallback } };
     }
 }
 
@@ -1849,8 +1859,15 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                     handleUnlockAbility,
                     handleUpdateStats,
                     handleCodexUpdate,
-                    handleTitleUnlock,
-                    handleAffinityChange,
+                    handleTitleUnlock: (title) => {
+                        setTitles(prev => [...(prev || []), title]);
+                        addMessage({ role: 'system', content: `🏆 Titre débloqué : **${title}** !` });
+                    },
+                    handleAffinityChange: (npcName, value) => {
+                        setAffinities(prev => ({ ...prev, [npcName]: (prev[npcName] || 0) + value }));
+                        const emoji = value > 0 ? '💚' : '💔';
+                        addMessage({ role: 'system', content: `${emoji} Relation avec **${npcName}** : ${value > 0 ? '+' : ''}${value}` });
+                    },
                     initializeHostCombat,
                     addItems: (items) => handleUpdateInventory([...(character.inventory || []), ...items]),
                     isHost: session?.host_id === profile?.id,

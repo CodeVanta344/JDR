@@ -129,5 +129,36 @@ export function processAIResponse(aiResponse, ctx) {
         ctx.handleTitleUnlock(aiResponse.title_unlock);
     }
 
+    // ── Quest progression ────────────────────────────────────────────────
+    if (aiResponse.quest_update && ctx.handleCodexUpdate) {
+        const qu = aiResponse.quest_update;
+        ctx.handleCodexUpdate({
+            type: 'quest',
+            id: qu.id || qu.name,
+            name: qu.name,
+            status: qu.status || 'in_progress', // offered, accepted, in_progress, completed, failed
+            description: qu.description,
+        });
+        if (qu.status === 'completed' && ctx.addSystemMessage) {
+            ctx.addSystemMessage(`🏆 Quête terminée : **${qu.name}** !`);
+        }
+        if (qu.reward && ctx.handleExperienceGain) {
+            ctx.handleExperienceGain(qu.reward.xp || 0, `Quête: ${qu.name}`);
+        }
+    }
+
+    // ── NPC memory ───────────────────────────────────────────────────────
+    if (aiResponse.npc_memory && ctx.npcName && ctx.addSystemMessage) {
+        // Store NPC memory as a codex entry for future reference
+        if (ctx.handleCodexUpdate) {
+            ctx.handleCodexUpdate({
+                type: 'npc_memory',
+                id: `npc_${ctx.npcName}_${Date.now()}`,
+                name: ctx.npcName,
+                description: aiResponse.npc_memory,
+            });
+        }
+    }
+
     return { earlyReturn: false };
 }
