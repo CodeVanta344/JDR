@@ -452,6 +452,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                     localPlayer = {
                         ...myPlayer,
                         isEnemy: false,
+                        isAlive: true,
                         hp: myPlayer.hp ?? myPlayer.stats?.hp ?? 100,
                         maxHp: myPlayer.maxHp ?? myPlayer.stats?.maxHp ?? 100,
                         resource: myPlayer.resource ?? myPlayer.stats?.resource ?? 100,
@@ -733,6 +734,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                     resourceName: "Energie",
                     initiative: Math.floor(Math.random() * 100) + 1 + (dexMod * 5) + (perMod * 3), // Initiative d100 + DEX×5 + PER×3
                     isEnemy: false,
+                    isAlive: true,
                     portrait_url: p.portrait_url,
                     spells: combinedAbilities,
                     inventory: p.inventory || [],
@@ -780,6 +782,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                     resourceName: "Mana",
                     initiative: e.initiative || (Math.floor(Math.random() * 100) + 1 + (Math.floor(((e.dex || 10) - 10) / 2) * 5) + (Math.floor(((e.per || 10) - 10) / 2) * 3)),
                     isEnemy: true,
+                    isAlive: true,
                     user_id: null, // CRITICAL: Enemies have no user_id
                     posX: pos.x,
                     posY: pos.y,
@@ -811,6 +814,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                     resourceName: "Rage",
                     initiative: Math.floor(Math.random() * 100) + 1 + 5, // d100 + base bonus for dummy enemy
                     isEnemy: true,
+                    isAlive: true,
                     posX: 5,
                     posY: 0,
                     hasMoved: false,
@@ -1715,7 +1719,9 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                         const splashTargets = finalCombatants.filter(u =>
                             u.id !== target.id &&
                             u.hp > 0 &&
-                            u.isEnemy === target.isEnemy // same faction as primary target
+                            u.isEnemy === target.isEnemy &&
+                            Math.abs((u.posX || 0) - (target.posX || 0)) <= aoeRadius &&
+                            Math.abs((u.posY || 0) - (target.posY || 0)) <= aoeRadius
                         );
                         if (splashTargets.length > 0) {
                             addLog({ role: 'system', content: `💥 **${action.name}** explose — dégâts de zone !` });

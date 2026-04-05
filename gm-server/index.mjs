@@ -26,7 +26,7 @@ const execFileAsync = promisify(execFile);
 // ============================================================================
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || '';
 console.log(`🔑 Supabase key: ${SUPABASE_KEY ? SUPABASE_KEY.slice(0, 20) + '...' : '❌ MISSING'}`);
 const MAX_CONCURRENT = 2; // Max 2 requêtes Claude en parallèle
 const POLL_INTERVAL = 2000; // Poll toutes les 2s si realtime échoue
@@ -164,7 +164,7 @@ async function processRequest(request) {
     // Essayer de parser en JSON si possible
     let responsePayload;
     try {
-      const clean = response.replace(/```json\n?/g, '').replace(/```\n?$/g, '').trim();
+      const clean = response.replace(/```(?:json|JSON|javascript|js)?\s*\n?/g, '').replace(/```\s*$/g, '').trim();
       responsePayload = JSON.parse(clean);
     } catch {
       responsePayload = { narrative: response };
@@ -176,7 +176,7 @@ async function processRequest(request) {
       const action = (request_payload?.action || '').toLowerCase();
 
       // Player wants combat
-      const playerCombatWords = ['attaque', 'frappe', 'combat', 'charge', 'tire sur', 'dégaine', 'agresse', 'lance un sort sur', 'se bat'];
+      const playerCombatWords = ['j\'attaque', 'je frappe', 'je charge', 'je tire sur', 'je dégaine', 'j\'agresse', 'je lance un sort sur', 'je me bats', 'je combats', 'attaquer', 'frapper'];
       const playerWantsCombat = playerCombatWords.some(w => action.includes(w));
 
       // Narrative describes combat
@@ -248,14 +248,23 @@ async function processRequest(request) {
         }
 
         // Also try to extract enemy names from the narrative
+        // Extract enemy names from bold text — only proper names (capitalized, no common words)
         const nameMatches = narrative.match(/\*\*([^*]+)\*\*/g);
+        const commonWords = ['victoire', 'défaite', 'attention', 'danger', 'combat', 'round', 'tour', 'critique', 'succès', 'échec', 'mort', 'fuite'];
         if (nameMatches) {
-          nameMatches.forEach((match, i) => {
+          let nameIdx = 0;
+          for (const match of nameMatches) {
+            if (nameIdx >= enemies.length) break;
             const name = match.replace(/\*\*/g, '').trim();
-            if (i < enemies.length && name.length > 2 && name.length < 40) {
-              enemies[i].name = name;
+            const isProperName = name.length > 2 && name.length < 40 &&
+              /^[A-ZÀÂÉÈÊËÏÎÔÙÛÜÆŒÇ]/.test(name) && // starts with capital
+              !commonWords.includes(name.toLowerCase()) &&
+              !/^[A-ZÀÂÉÈÊËÏÎÔÙÛÜÆŒÇ\s!?]+$/.test(name); // not ALL CAPS/punctuation
+            if (isProperName) {
+              enemies[nameIdx].name = name;
+              nameIdx++;
             }
-          });
+          }
         }
 
         responsePayload.combat = { trigger: true, enemies };
