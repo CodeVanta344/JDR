@@ -203,6 +203,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
     const [damagePopups, setDamagePopups] = useState([]);
     const [rollOverlay, setRollOverlay] = useState(null);
     const rollActiveRef = useRef(false);
+    const turnFinishedRef = useRef(false);
     const [cooldowns, setCooldowns] = useState({});
     const [logs, setLogs] = useState([]);
     const [decor, setDecor] = useState([]);
@@ -1346,6 +1347,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         // Afficher overlay avec résultat
         if (rollActiveRef.current) return;
         rollActiveRef.current = true;
+        turnFinishedRef.current = false; // Reset for this new turn's attack
         const rollId = crypto.randomUUID();
         setRollOverlay({
             rollId,
@@ -1357,6 +1359,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
             isCritical,
             type: 'hit',
             targetId: target.id,
+            actorId: freshActor.id, // Store actor ID to avoid stale closure
             action
         });
         
@@ -1599,7 +1602,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
     };
 
     const handleRollComplete = (rollData) => {
-        const { rollId, roll, modifier, threshold, success, targetId, action } = rollData;
+        const { rollId, roll, modifier, threshold, success, targetId, actorId, action } = rollData;
         if (rollId && resolvedRollsRef.current.has(rollId)) {
             return;
         }
@@ -1609,42 +1612,41 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
 
         const liveCombatants = combatantsRef.current;
         const target = liveCombatants.find(u => u.id === targetId);
-        const liveActor = liveCombatants.find(u => u.id === currentActor?.id) || currentActor;
+        const liveActor = liveCombatants.find(u => u.id === (actorId || currentActor?.id)) || currentActor;
         const el = document.getElementById(`unit-${targetId}`);
         const rect = el ? el.getBoundingClientRect() : { x: window.innerWidth / 2, y: window.innerHeight / 2, width: 0, height: 0 };
         const cx = rect.x + rect.width / 2;
         const cy = rect.y + rect.height / 2;
 
-        addTimeout(setTimeout(() => {
-            setRollOverlay(null);
-            rollActiveRef.current = false;
-            if (success && target) {
-                // ========== COMBAT ENGINE - CALCUL DÉGÂTS (Next-Gen) ==========
-                const damageData = calculateDamageD100(liveActor, action, rollData.isCritical);
-                const damage = damageData.damage;
+        // FLAT CHAIN: immediate calculations, single setTimeout for VFX + damage
+        setRollOverlay(null);
 
-                // Engine damage result for resistance/vulnerability info
-                let resistanceMsg = '';
-                try {
-                    const engineDmg = engineResolveDamage(liveActor, target, action, rollData);
-                    if (engineDmg.resistanceApplied === 'immune') resistanceMsg = ' 🚫 **IMMUNITÉ !**';
-                    else if (engineDmg.resistanceApplied === 'resistant') resistanceMsg = ' 🛡️ **Résistance !**';
-                    else if (engineDmg.resistanceApplied === 'vulnerable') resistanceMsg = ' ⚡ **Vulnérable !**';
-                } catch(e) { /* fallback gracefully */ }
+        if (success && target) {
+            // ========== IMMEDIATE: Calculate damage ==========
+            const damageData = calculateDamageD100(liveActor, action, rollData.isCritical);
+            const damage = damageData.damage;
 
-                // Log formaté d100
-                const combatLog = formatCombatLogD100(liveActor, target, rollData, damageData) + resistanceMsg;
-                addLog({ role: 'system', content: combatLog });
+            let resistanceMsg = '';
+            try {
+                const engineDmg = engineResolveDamage(liveActor, target, action, rollData);
+                if (engineDmg.resistanceApplied === 'immune') resistanceMsg = ' 🚫 **IMMUNITÉ !**';
+                else if (engineDmg.resistanceApplied === 'resistant') resistanceMsg = ' 🛡️ **Résistance !**';
+                else if (engineDmg.resistanceApplied === 'vulnerable') resistanceMsg = ' ⚡ **Vulnérable !**';
+            } catch(e) { /* fallback */ }
 
-                setAnimatingId(liveActor.id);
-                if (onVFX) onVFX(action.name === 'Attaque' ? 'blood' : 'magic', cx, cy, action.name === 'Attaque' ? '#ff0000' : 'var(--aether-blue)');
+            const combatLog = formatCombatLogD100(liveActor, target, rollData, damageData) + resistanceMsg;
+            addLog({ role: 'system', content: combatLog });
 
-                addTimeout(setTimeout(() => {
-                    setShake(true); setFlash(true);
-                    if (onSFX) onSFX('damage');
-                    addTimeout(setTimeout(() => { setShake(false); setFlash(false); }, 500));
-                    setShakingId(target.id);
-                    setDamagePopups(prev => [...prev, { id: Math.random(), amount: damage, targetId: target.id }]);
+            setAnimatingId(liveActor.id);
+            if (onVFX) onVFX(action.name === 'Attaque' ? 'blood' : 'magic', cx, cy, action.name === 'Attaque' ? '#ff0000' : 'var(--aether-blue)');
+
+            // ========== SINGLE DELAY: Apply VFX + damage + setCombatants ==========
+            addTimeout(setTimeout(() => {
+                setShake(true); setFlash(true);
+                if (onSFX) onSFX('damage');
+                addTimeout(setTimeout(() => { setShake(false); setFlash(false); }, 500));
+                setShakingId(target.id);
+                setDamagePopups(prev => [...prev, { id: Math.random(), amount: damage, targetId: target.id }]);
 
                     const newHp = Math.max(0, target.hp - damage);
                     if (!target.isEnemy && onHPChange) onHPChange(target.id, newHp);
@@ -1805,13 +1807,13 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                         color: action.name === 'Attaque' ? '#ff0000' : 'var(--aether-blue)'
                     });
                     broadcastAction('sfx', { sfxType: 'damage' });
-                    const timeoutId = setTimeout(() => {
+
+                    // Finish turn after damage animation
+                    addTimeout(setTimeout(() => {
                         setAnimatingId(null); setShakingId(null);
-                        // CRITICAL FIX: Finish turn for ALL actors after attack, not just enemies
                         finishTurn();
-                    }, 600);
-                    addTimeout(timeoutId);
-                }, 250));
+                    }, 600));
+                }, 300));
             } else {
                 if (onVFX) onVFX('spark', cx, cy, '#ffff00');
 
@@ -1865,13 +1867,15 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                     lastAction: actionEvent
                 });
 
-                // CRITICAL FIX: Finish turn for ALL actors after attack, not just enemies
-                addTimeout(setTimeout(() => { finishTurn(); }, 1000));
+                // Finish turn after miss animation
+                addTimeout(setTimeout(() => { finishTurn(); }, 800));
             }
-        }, 1000));
     };
 
     const finishTurn = () => {
+        if (turnFinishedRef.current) return; // Prevent double-call
+        turnFinishedRef.current = true;
+        rollActiveRef.current = false; // Release dice lock HERE, not in handleRollComplete
         setAnimatingId(null); setShakingId(null);
 
         // CRITICAL FIX: Mark current actor as having acted to prevent infinite replay
@@ -1945,6 +1949,8 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
 
         setCurrentTurnIndex(nextIndex);
         setSelectedAction(null);
+        turnFinishedRef.current = false; // Reset for next actor's turn
+        rollActiveRef.current = false;   // Ensure dice lock is released
 
         const nextActor = currentCombatants[nextIndex];
         let newCombatants = [...currentCombatants];
@@ -2385,21 +2391,16 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
     };
 
 // --- ROLLOVERLAY COMPONENT — stable, never re-mounts during animation ---
-const RollOverlay = ({ rollId, roll, modifier, threshold, success, action, targetId, onRollComplete }) => {
+const RollOverlay = ({ rollId, roll, modifier, threshold, success, action, targetId, actorId, onRollComplete }) => {
     const hasCompletedRef = useRef(false);
-    const propsRef = useRef({ rollId, roll, modifier, threshold, success, action, targetId, onRollComplete });
-
-    // Capture props on first render only
-    useEffect(() => {
-        propsRef.current = { rollId, roll, modifier, threshold, success, action, targetId, onRollComplete };
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    const propsRef = useRef({ rollId, roll, modifier, threshold, success, action, targetId, actorId, onRollComplete });
 
     const handleDone = useCallback(() => {
         if (hasCompletedRef.current) return;
         hasCompletedRef.current = true;
         const p = propsRef.current;
         setTimeout(() => {
-            p.onRollComplete({ rollId: p.rollId, roll: p.roll, modifier: p.modifier, threshold: p.threshold, success: p.success, targetId: p.targetId, action: p.action });
+            p.onRollComplete({ rollId: p.rollId, roll: p.roll, modifier: p.modifier, threshold: p.threshold, success: p.success, targetId: p.targetId, actorId: p.actorId, action: p.action });
         }, 800);
     }, []);
 
