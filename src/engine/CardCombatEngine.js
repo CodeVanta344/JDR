@@ -3,7 +3,7 @@
  * Pure JS, no TypeScript. Immutable state transitions.
  */
 
-import { getStarterDeck, getRewardCards, inventoryToCards } from '../data/cards';
+import { getStarterDeck, getRewardCards, inventoryToCards } from '../data/cards.js';
 
 function shuffle(arr) {
   const a = [...arr];
