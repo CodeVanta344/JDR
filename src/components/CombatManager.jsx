@@ -2479,7 +2479,7 @@ const RollOverlay = ({ rollId, roll, modifier, tacticalReason, threshold, succes
             {/* --- RIGHT MAIN VIEW (Arena + Overlays) --- */}
             <div className="combat-viewer-container">
                 {/* Global Overlay Elements */}
-                <div className={`modal-overlay ${shake ? 'shake' : ''} ${flash ? 'flash-red' : ''}`} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1200 }}>
+                <div className={`${shake ? 'shake' : ''} ${flash ? 'flash-red' : ''}`} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1200, background: 'transparent' }}>
                     {combatState === 'finished' && !combatants.some(u => !u.isEnemy && u.hp > 0) && <GameOverScreen />}
                 </div>
 
