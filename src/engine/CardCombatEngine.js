@@ -110,11 +110,23 @@ function executeEnemyPhase(state) {
         let dmg = intention.value;
         if (enemy.weak > 0) dmg = Math.floor(dmg * 0.75);
         if (players[tIdx].vulnerable > 0) dmg = Math.floor(dmg * 1.5);
+
+        // AUTO DEFENSE ROLL — d20 passive parry
+        const defRoll = Math.floor(Math.random() * 20) + 1;
+        let parryMsg = '';
+        if (defRoll >= 18) {
+          dmg = Math.floor(dmg * 0.25);
+          parryMsg = ` 🎲d20=${defRoll} Parade parfaite !`;
+        } else if (defRoll >= 12) {
+          dmg = Math.floor(dmg * 0.5);
+          parryMsg = ` 🎲d20=${defRoll} Parade !`;
+        }
+
         const bl = Math.min(players[tIdx].block, dmg);
         players[tIdx].block -= bl;
         players[tIdx].hp -= (dmg - bl);
         if (players[tIdx].hp <= 0) { players[tIdx].hp = 0; players[tIdx].dead = true; }
-        log.push(`${intention.icon} ${enemy.name} → ${players[tIdx].name}: ${dmg} dmg${bl > 0 ? ` (${bl} bloqué)` : ''}`);
+        log.push(`${intention.icon} ${enemy.name} → ${players[tIdx].name}: ${dmg} dmg${bl > 0 ? ` (${bl} bloqué)` : ''}${parryMsg}`);
         break;
       }
       case 'block':
@@ -239,13 +251,25 @@ export function playCard(state, cardIndex, targetIndex = 0) {
         const baseDmg = diceDamage > 0 ? diceDamage : effect.value;
         let dmg = baseDmg + player.strength;
         if (player.weak > 0) dmg = Math.floor(dmg * 0.75);
+
+        // AUTO CRIT ROLL — d100 on every attack
+        const critRoll = Math.floor(Math.random() * 100) + 1;
+        let critMsg = '';
+        if (critRoll >= 95) {
+          dmg = dmg * 2;
+          critMsg = ' ✦ CRITIQUE !';
+        } else if (critRoll <= 5) {
+          dmg = Math.floor(dmg * 0.5);
+          critMsg = ' ✕ Raté...';
+        }
+
         if (target === 'all_enemies') {
           enemies.forEach(e => {
             if (!e.dead) {
               let fd = dmg; if (e.vulnerable > 0) fd = Math.floor(fd * 1.5);
               const bl = Math.min(e.block, fd); e.block -= bl; e.hp -= (fd - bl);
               if (e.hp <= 0) { e.hp = 0; e.dead = true; }
-              log.push(`💥 ${player.name}: ${card.name} → ${e.name} -${fd - bl} PV`);
+              log.push(`💥 ${player.name}: ${card.name} → ${e.name} -${fd - bl} PV${critMsg}`);
             }
           });
         } else {
@@ -254,13 +278,13 @@ export function playCard(state, cardIndex, targetIndex = 0) {
             let fd = dmg; if (e.vulnerable > 0) fd = Math.floor(fd * 1.5);
             const bl = Math.min(e.block, fd); e.block -= bl; e.hp -= (fd - bl);
             if (e.hp <= 0) { e.hp = 0; e.dead = true; }
-            log.push(`⚔️ ${player.name}: ${card.name} → ${e.name} -${fd - bl} PV`);
+            log.push(`⚔️ ${player.name}: ${card.name} → ${e.name} -${fd - bl} PV${critMsg}`);
           }
         }
         break;
       }
-      case 'block': { const blk = effect.value + player.dexterity; player.block += blk; log.push(`🛡️ ${player.name}: +${blk} Block`); break; }
-      case 'heal': { const h = Math.min(effect.value, player.maxHp - player.hp); player.hp += h; log.push(`💖 ${player.name}: +${h} PV`); break; }
+      case 'block': { const baseBlk = diceDamage > 0 ? diceDamage : effect.value; const blk = baseBlk + player.dexterity; player.block += blk; log.push(`🛡️ ${player.name}: +${blk} Block`); break; }
+      case 'heal': { const baseHeal = diceDamage > 0 ? diceDamage : effect.value; const h = Math.min(baseHeal, player.maxHp - player.hp); player.hp += h; log.push(`💖 ${player.name}: +${h} PV`); break; }
       case 'draw': extraDraw += effect.value; break;
       case 'energy': player.energy += effect.value; break;
       case 'poison': if (enemies[targetIndex]) { enemies[targetIndex].poison += effect.value; log.push(`☠️ +${effect.value} Poison → ${enemies[targetIndex].name}`); } break;

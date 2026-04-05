@@ -300,6 +300,45 @@ export const CARD_MALEDICTION= {
 };
 
 // ============================================================
+// DICE CARDS — variable power
+// ============================================================
+
+export const CARD_COUP_CHANCE = {
+  id: 'coup_chance',
+  name: 'Coup de Chance',
+  type: 'attack',
+  cost: 10,
+  rarity: 'uncommon',
+  description: 'Lance 1d20 × 1.5 dégâts. La chance sourit aux audacieux.',
+  effects: [{ type: 'damage', value: 0, target: 'enemy' }],
+  diceRoll: { die: 'd20', multiplier: 1.5, bonus: 0 },
+  needsTarget: true,
+};
+
+export const CARD_BOUCLIER_INSTABLE = {
+  id: 'bouclier_instable',
+  name: 'Bouclier Instable',
+  type: 'skill',
+  cost: 8,
+  rarity: 'uncommon',
+  description: 'Lance 1d20 × 0.8 de Blocage. Imprévisible mais puissant.',
+  effects: [{ type: 'block', value: 0, target: 'self' }],
+  diceRoll: { die: 'd20', multiplier: 0.8, bonus: 2 },
+};
+
+export const CARD_DRAIN_VITAL = {
+  id: 'drain_vital',
+  name: 'Drain Vital',
+  type: 'skill',
+  cost: 15,
+  rarity: 'rare',
+  description: 'Lance 1d20 soins. Draine la force vitale ambiante.',
+  effects: [{ type: 'heal', value: 0, target: 'self' }],
+  diceRoll: { die: 'd20', multiplier: 1, bonus: 3 },
+  exhaust: true,
+};
+
+// ============================================================
 // DECK BUILDERS
 // ============================================================
 
@@ -307,6 +346,7 @@ export const ALL_REWARD_CARDS = [
   CARD_CHARGE, CARD_RIPOSTE, CARD_CONCENTRATION, CARD_POISON_LAME, CARD_FORTIFICATION,
   CARD_COUP_DESTIN, CARD_TOURBILLON, CARD_SECOND_SOUFFLE, CARD_AFFAIBLIR, CARD_VULNERABILITE,
   CARD_ROULETTE, CARD_RAGE, CARD_AGILITE, CARD_EXECUTION,
+  CARD_COUP_CHANCE, CARD_BOUCLIER_INSTABLE, CARD_DRAIN_VITAL,
 ];
 
 // ============================================================

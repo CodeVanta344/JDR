@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { initCombat, playCard, endPlayerTurn, startNewPlayerTurn, restTurn, getEnemyIntention, getCurrentPlayer, getPlayer } from '../engine/CardCombatEngine.js';
+import { itemToCard } from '../data/cards.js';
 import './CardCombat.css';
 
 // Inline simple dice component to avoid cross-chunk TDZ with Dice2D
@@ -161,9 +162,10 @@ const CardCombat = ({
   const [state, setState] = useState(null);
   const [shakingEnemyId, setShakingEnemyId] = useState(null);
   const [damagePopups, setDamagePopups] = useState([]);
-  const [phaseBanner, setPhaseBanner] = useState(null); // { text, type }
-  const [screenFlash, setScreenFlash] = useState(null); // 'damage' | 'heal' | 'block'
-  const [actionToast, setActionToast] = useState(null); // { player, text }
+  const [phaseBanner, setPhaseBanner] = useState(null);
+  const [screenFlash, setScreenFlash] = useState(null);
+  const [actionToast, setActionToast] = useState(null);
+  const [showInventory, setShowInventory] = useState(false);
   const popupIdRef = useRef(0);
   const lastSyncRef = useRef(0);
   const isHost = useRef(false);
@@ -558,10 +560,72 @@ const CardCombat = ({
         </div>
 
         <div className="cc-action-buttons">
+          <button className="cc-rest-btn" onClick={() => setShowInventory(!showInventory)} title="Inventaire">🎒</button>
           <button className="cc-rest-btn" onClick={handleRest} disabled={!isMyTurn}>😴 REPOS</button>
           <button className="cc-end-turn" onClick={handleEndTurn} disabled={!isMyTurn}>⚔️ FIN DE TOUR</button>
         </div>
       </div>
+
+      {/* Inventory Overlay */}
+      {showInventory && (
+        <div className="cc-inventory-overlay" onClick={() => setShowInventory(false)}>
+          <div className="cc-inventory-panel" onClick={e => e.stopPropagation()}>
+            <div className="cc-inventory-header">
+              <span>🎒 INVENTAIRE</span>
+              <button onClick={() => setShowInventory(false)} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.2rem' }}>✕</button>
+            </div>
+            <div className="cc-inventory-list">
+              {(myPlayer?.inventory || []).map((item, idx) => {
+                const isConsumable = ['potion', 'scroll', 'food', 'bomb', 'consumable'].includes((item.type || '').toLowerCase());
+                const isEquipped = item.equipped;
+                return (
+                  <div key={idx} className={`cc-inv-item ${isEquipped ? 'equipped' : ''}`}>
+                    <div className="cc-inv-item-info">
+                      <span className="cc-inv-item-name">{item.name}</span>
+                      {item.stats && (
+                        <span className="cc-inv-item-stats">
+                          {Object.entries(item.stats).map(([k, v]) => v ? `${k}:${v > 0 ? '+' : ''}${v}` : '').filter(Boolean).join(' ')}
+                        </span>
+                      )}
+                    </div>
+                    <div className="cc-inv-item-actions">
+                      {isEquipped && <span className="cc-inv-equipped-badge">ÉQUIPÉ</span>}
+                      {isConsumable && isMyTurn && (
+                        <button className="cc-inv-use-btn" onClick={() => {
+                          setShowInventory(false);
+                          // Convert item to card and auto-play it
+                          const card = itemToCard(item, idx);
+                          if (card && state) {
+                            // Add card to hand and play it
+                            const pIdx = state.currentPlayerIndex;
+                            let newState = { ...state };
+                            const p = { ...newState.players[pIdx] };
+                            p.hand = [...p.hand, card];
+                            newState.players = newState.players.map((pl, i) => i === pIdx ? p : pl);
+                            // Play the last card (the item we just added)
+                            const result = playCard(newState, p.hand.length - 1);
+                            setState(result);
+                            broadcastState(result);
+                            // Auto end turn (items consume turn)
+                            setTimeout(() => {
+                              const after = endPlayerTurn(result);
+                              setState(after);
+                              broadcastState(after);
+                            }, 600);
+                          }
+                        }}>Utiliser</button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              {(!myPlayer?.inventory || myPlayer.inventory.length === 0) && (
+                <div style={{ color: '#666', textAlign: 'center', padding: 20 }}>Inventaire vide</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Phase Banner */}
       {phaseBanner && (
