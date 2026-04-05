@@ -1908,6 +1908,25 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
             loops++;
         }
 
+        // CRITICAL: If all combatants are dead or one side is wiped, end combat
+        if (loops >= currentCombatants.length || currentCombatants[nextIndex].hp <= 0) {
+            const playersAlive = currentCombatants.some(u => !u.isEnemy && u.hp > 0);
+            const enemiesAlive = currentCombatants.some(u => u.isEnemy && u.hp > 0);
+            if (!enemiesAlive) {
+                setCombatState('finished');
+                addLog({ role: 'system', content: `🏆 **VICTOIRE !** Les ennemis ont été terrassés.` });
+                if (onRewards) onRewards(currentCombatants.filter(u => u.isEnemy));
+            } else if (!playersAlive) {
+                setCombatState('finished');
+                addLog({ role: 'system', content: `💀 **DÉFAITE...** La compagnie a succombé.` });
+                if (onGameOver) onGameOver();
+            } else {
+                // Edge case: everyone dead — force end
+                setCombatState('finished');
+            }
+            return;
+        }
+
         // Check if we completed a full round (wrapped back to start)
         const newRound = nextIndex < currentTurnIndex ? round + 1 : round;
         if (nextIndex < currentTurnIndex) {
@@ -2013,10 +2032,26 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                 return;
             }
 
-            // Check if actor died from status effects
-            if (!statusResult.updatedCombatant.isAlive) {
+            // Check if actor died from status effects (only log if they were alive before)
+            if (!statusResult.updatedCombatant.isAlive || (statusResult.updatedCombatant.hp || 0) <= 0) {
                 setCombatants(newCombatants);
-                addLog({ role: 'system', content: `💀 **${nextActor.name}** succombe à ses blessures !` });
+                if (nextActor.hp > 0) {
+                    addLog({ role: 'system', content: `💀 **${nextActor.name}** succombe à ses blessures !` });
+                }
+                // Check if combat should end
+                const playersStillAlive = newCombatants.some(u => !u.isEnemy && u.hp > 0);
+                const enemiesStillAlive = newCombatants.some(u => u.isEnemy && u.hp > 0);
+                if (!enemiesStillAlive) {
+                    setCombatState('finished');
+                    addLog({ role: 'system', content: `🏆 **VICTOIRE !** Les ennemis ont été terrassés.` });
+                    if (onRewards) onRewards(newCombatants.filter(u => u.isEnemy));
+                    return;
+                } else if (!playersStillAlive) {
+                    setCombatState('finished');
+                    addLog({ role: 'system', content: `💀 **DÉFAITE...** La compagnie a succombé.` });
+                    if (onGameOver) onGameOver();
+                    return;
+                }
                 if (onUpdateCombatState) onUpdateCombatState({
                     combatants: newCombatants, turnIndex: nextIndex, round: newRound, active: true, logs, updatedAt: Date.now()
                 });
