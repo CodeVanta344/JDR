@@ -2033,7 +2033,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
             }
 
             // Check if actor died from status effects (only log if they were alive before)
-            if (!statusResult.updatedCombatant.isAlive || (statusResult.updatedCombatant.hp || 0) <= 0) {
+            if (statusResult.updatedCombatant.isAlive === false || statusResult.updatedCombatant.hp <= 0) {
                 setCombatants(newCombatants);
                 if (nextActor.hp > 0) {
                     addLog({ role: 'system', content: `💀 **${nextActor.name}** succombe à ses blessures !` });
