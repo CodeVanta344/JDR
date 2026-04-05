@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { initCombat, playCard, endPlayerTurn, startNewPlayerTurn, restTurn, getEnemyIntention } from '../engine/CardCombatEngine';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { initCombat, playCard, endPlayerTurn, startNewPlayerTurn, restTurn, getEnemyIntention, getCurrentPlayer, getPlayer } from '../engine/CardCombatEngine';
 import { Dice2D } from './Dice2D';
+import { supabase } from '../supabaseClient';
 import './CardCombat.css';
 
 // ============================================================
-// CARD COMPONENT
+// CARD THEMES
 // ============================================================
 
 const CARD_THEMES = {
@@ -15,6 +16,10 @@ const CARD_THEMES = {
   item:   { icon: '🧪', accentColor: '#f39c12', gradTop: '#3a2a10', gradBot: '#1a1508', border: '#8c6a2a', label: 'OBJET' },
 };
 
+// ============================================================
+// CARD VIEW COMPONENT
+// ============================================================
+
 const CardView = ({ card, index, selected, canPlay, onClick }) => {
   const isItem = card.isItem || card.tags?.includes('item');
   const theme = isItem ? CARD_THEMES.item : (CARD_THEMES[card.type] || CARD_THEMES.attack);
@@ -22,67 +27,77 @@ const CardView = ({ card, index, selected, canPlay, onClick }) => {
   const cardLabel = isItem ? 'OBJET' : theme.label;
   const accentColor = isItem ? (card.itemRarityColor || theme.accentColor) : theme.accentColor;
 
-  // Build effect summary text
   const effectSummary = card.effects.map(e => {
     switch (e.type) {
-      case 'damage': return `⚔️ ${e.value} ${e.target === 'all_enemies' ? '(tous)' : ''}`;
-      case 'block': return `🛡️ ${e.value}`;
-      case 'heal': return `💖 ${e.value}`;
-      case 'draw': return `🃏 +${e.value}`;
-      case 'energy': return `⚡ +${e.value}`;
-      case 'poison': return `☠️ ${e.value}`;
-      case 'weak': return `😵 ${e.value}`;
-      case 'vulnerable': return `🎯 ${e.value}`;
-      case 'strength': return `💪 +${e.value}`;
-      case 'dexterity': return `🏃 +${e.value}`;
+      case 'damage': return `⚔️${e.value}${e.target === 'all_enemies' ? '(tous)' : ''}`;
+      case 'block': return `🛡️${e.value}`;
+      case 'heal': return `💖${e.value}`;
+      case 'draw': return `🃏+${e.value}`;
+      case 'energy': return `⚡+${e.value}`;
+      case 'poison': return `☠️${e.value}`;
+      case 'weak': return `😵${e.value}`;
+      case 'vulnerable': return `🎯${e.value}`;
+      case 'strength': return `💪+${e.value}`;
+      case 'dexterity': return `🏃+${e.value}`;
       default: return '';
     }
-  }).filter(Boolean).join('  ');
+  }).filter(Boolean).join(' ');
 
   return (
-    <div
-      className={`cc-card ${selected ? 'selected' : ''} ${!canPlay ? 'unplayable' : ''}`}
-      style={{ zIndex: index + 1, '--accent': accentColor }}
-      onClick={() => canPlay && onClick(index)}
-    >
-      {/* Cost orb — show resource cost or "TOUR" for items */}
+    <div className={`cc-card ${selected ? 'selected' : ''} ${!canPlay ? 'unplayable' : ''}`} style={{ zIndex: index + 1 }} onClick={() => canPlay && onClick(index)}>
       <div className="cc-card-cost" style={{ background: `radial-gradient(circle, ${accentColor}, ${theme.border})` }}>
         {isItem ? '⟳' : (card.cost >= 0 ? card.cost : '✕')}
       </div>
-
       <div className="cc-card-inner" style={{
-        background: isItem
-          ? `linear-gradient(180deg, ${theme.gradTop} 0%, ${theme.gradBot} 100%), repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,255,255,0.02) 8px, rgba(255,255,255,0.02) 16px)`
-          : `linear-gradient(180deg, ${theme.gradTop} 0%, ${theme.gradBot} 100%)`,
+        background: `linear-gradient(180deg, ${theme.gradTop} 0%, ${theme.gradBot} 100%)`,
         borderColor: isItem ? accentColor : theme.border,
       }}>
-        {/* Type label */}
         <div className="cc-card-type-label" style={{ color: accentColor }}>{cardLabel}</div>
-
-        {/* Card name */}
         <div className="cc-card-name">{card.name}</div>
-
-        {/* Art area with icon */}
         <div className="cc-card-art" style={{ borderColor: `${accentColor}33` }}>
           <span className="cc-card-icon">{cardIcon}</span>
           {card.diceRoll && <span className="cc-card-dice-badge">🎲 {card.diceRoll.die}</span>}
         </div>
-
-        {/* Effect numbers - big visible feedback */}
         <div className="cc-card-effects">{effectSummary}</div>
-
-        {/* Description */}
         <div className="cc-card-desc">{card.description}</div>
       </div>
-
-      {/* Rarity gem */}
       <div className={`cc-card-rarity ${card.rarity}`} />
-
-      {/* Exhaust indicator */}
       {card.exhaust && <div className="cc-card-exhaust">ÉPUISER</div>}
     </div>
   );
 };
+
+// ============================================================
+// PLAYER PORTRAIT COMPONENT
+// ============================================================
+
+const PlayerPortrait = ({ player, isActive, isSelf, damagePopups }) => (
+  <div className={`cc-player-area ${isActive ? 'active-player' : ''} ${player.dead ? 'dead' : ''}`}>
+    <div className="cc-player-portrait" style={{ borderColor: isSelf ? '#d4af37' : '#3a5a8c' }}>
+      {player.portrait_url
+        ? <img src={player.portrait_url} alt={player.name} />
+        : <div className="cc-player-token">{isSelf ? '⚔️' : '🛡️'}</div>
+      }
+      {player.block > 0 && <div className="cc-block-badge">{player.block}</div>}
+      {damagePopups.filter(p => p.targetId === player.id).map(p => (
+        <div key={p.id} className={`cc-damage-popup ${p.type}`}>{p.type === 'heal' ? '+' : '-'}{p.amount}</div>
+      ))}
+    </div>
+    <div className="cc-hp-bar">
+      <div className="cc-hp-fill player" style={{ width: `${Math.max(0, (player.hp / player.maxHp) * 100)}%` }} />
+      <div className="cc-hp-text">{player.hp}/{player.maxHp}</div>
+    </div>
+    <div className="cc-player-name" style={{ color: isSelf ? '#d4af37' : '#8bb8ff' }}>
+      {player.name?.toUpperCase()} {isActive && '★'}
+    </div>
+    <div className="cc-status-row">
+      {player.strength > 0 && <div className="cc-status-badge str">💪{player.strength}</div>}
+      {player.dexterity > 0 && <div className="cc-status-badge dex">🏃{player.dexterity}</div>}
+      {player.poison > 0 && <div className="cc-status-badge poison">☠️{player.poison}</div>}
+      {player.weak > 0 && <div className="cc-status-badge weak">😵{player.weak}</div>}
+    </div>
+  </div>
+);
 
 // ============================================================
 // MAIN CARD COMBAT COMPONENT
@@ -90,7 +105,8 @@ const CardView = ({ card, index, selected, canPlay, onClick }) => {
 
 export const CardCombat = ({
   players, currentUserId, initialEnemies,
-  classesData,
+  classesData, sessionId,
+  syncedCombatState, onUpdateCombatState,
   onCombatEnd, onGameOver, onRewards,
   onHPChange, onVFX, onSFX,
 }) => {
@@ -98,64 +114,117 @@ export const CardCombat = ({
   const [shakingEnemyId, setShakingEnemyId] = useState(null);
   const [damagePopups, setDamagePopups] = useState([]);
   const popupIdRef = useRef(0);
-  const enemyTurnTimerRef = useRef(null);
+  const lastSyncRef = useRef(0);
+  const isHost = useRef(false);
 
-  // Find current player
-  const myPlayer = players?.find(p => p.user_id === currentUserId) || players?.[0];
-
-  // Init combat on mount — inject classData for proper deck building
+  // Am I the host? (first player or session host)
   useEffect(() => {
-    if (!myPlayer || !initialEnemies?.length) return;
+    isHost.current = players?.[0]?.user_id === currentUserId;
+  }, [players, currentUserId]);
 
-    // Find class data from CLASSES to get initial_ability_options + unlockables + subclasses
-    let classData = null;
-    if (classesData && myPlayer.class) {
-      const classKey = Object.keys(classesData).find(k =>
-        classesData[k].name?.toLowerCase() === myPlayer.class?.toLowerCase() ||
-        k.toLowerCase() === myPlayer.class?.toLowerCase()
-      );
-      if (classKey) classData = classesData[classKey];
-    }
+  // Find my player
+  const myPlayerId = useMemo(() => {
+    const me = players?.find(p => p.user_id === currentUserId);
+    return me?.user_id || me?.id || currentUserId;
+  }, [players, currentUserId]);
 
-    const playerWithClassData = { ...myPlayer, classData };
-    const initial = initCombat(playerWithClassData, initialEnemies);
+  // ============================================================
+  // INIT COMBAT
+  // ============================================================
+
+  useEffect(() => {
+    if (!players?.length || !initialEnemies?.length) return;
+
+    // Enrich players with classData
+    const enriched = players.map(p => {
+      let classData = null;
+      if (classesData && p.class) {
+        const key = Object.keys(classesData).find(k =>
+          classesData[k].name?.toLowerCase() === p.class?.toLowerCase() || k.toLowerCase() === p.class?.toLowerCase()
+        );
+        if (key) classData = classesData[key];
+      }
+      return { ...p, classData };
+    });
+
+    const initial = initCombat(enriched, initialEnemies);
     setState(initial);
+
+    // Sync initial state
+    if (onUpdateCombatState) {
+      onUpdateCombatState({ ...initial, active: true, updatedAt: Date.now() });
+    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Handle enemy animation phase → start new player turn
+  // ============================================================
+  // SUPABASE REALTIME SYNC
+  // ============================================================
+
+  useEffect(() => {
+    if (!sessionId) return;
+
+    const channel = supabase
+      .channel(`card_combat_${sessionId}`)
+      .on('broadcast', { event: 'card_action' }, (payload) => {
+        const action = payload.payload;
+        if (!action || action.sourceUserId === currentUserId) return;
+
+        // Apply remote state update
+        if (action.type === 'state_sync' && action.state) {
+          const remoteState = action.state;
+          if (remoteState.updatedAt > lastSyncRef.current) {
+            lastSyncRef.current = remoteState.updatedAt;
+            setState(remoteState);
+          }
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [sessionId, currentUserId]);
+
+  // Broadcast state to other players
+  const broadcastState = useCallback((newState) => {
+    if (!sessionId) return;
+    const ts = Date.now();
+    lastSyncRef.current = ts;
+
+    supabase.channel(`card_combat_${sessionId}`).send({
+      type: 'broadcast',
+      event: 'card_action',
+      payload: { type: 'state_sync', sourceUserId: currentUserId, state: { ...newState, updatedAt: ts } },
+    });
+
+    if (onUpdateCombatState) {
+      onUpdateCombatState({ ...newState, active: true, updatedAt: ts });
+    }
+  }, [sessionId, currentUserId, onUpdateCombatState]);
+
+  // ============================================================
+  // ENEMY ANIMATION → NEW PLAYER TURN
+  // ============================================================
+
   useEffect(() => {
     if (!state || state.phase !== 'enemy_animating') return;
 
-    // Shake enemies during their turn
     state.enemies.forEach((e, i) => {
       if (!e.dead) {
-        setTimeout(() => {
-          setShakingEnemyId(e.id);
-          setTimeout(() => setShakingEnemyId(null), 400);
-        }, i * 600);
+        setTimeout(() => { setShakingEnemyId(e.id); setTimeout(() => setShakingEnemyId(null), 400); }, i * 500);
       }
     });
 
-    // After all enemy animations, start new player turn
-    const delay = Math.max(1000, state.enemies.filter(e => !e.dead).length * 600 + 500);
-    enemyTurnTimerRef.current = setTimeout(() => {
-      if (state.phase === 'enemy_animating') {
-        const newState = startNewPlayerTurn(state);
-        setState(newState);
-      }
+    const delay = Math.max(1200, state.enemies.filter(e => !e.dead).length * 500 + 500);
+    const timer = setTimeout(() => {
+      const newState = startNewPlayerTurn(state);
+      setState(newState);
+      broadcastState(newState);
     }, delay);
 
-    return () => clearTimeout(enemyTurnTimerRef.current);
+    return () => clearTimeout(timer);
   }, [state?.phase, state?.turn]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Sync HP to parent
-  useEffect(() => {
-    if (!state || !myPlayer) return;
-    if (onHPChange) onHPChange(myPlayer.id, state.player.hp);
-  }, [state?.player?.hp]); // eslint-disable-line react-hooks/exhaustive-deps
-
   // ============================================================
-  // HANDLERS
+  // HELPERS
   // ============================================================
 
   const addDamagePopup = useCallback((targetId, amount, type = 'damage') => {
@@ -164,154 +233,118 @@ export const CardCombat = ({
     setTimeout(() => setDamagePopups(prev => prev.filter(p => p.id !== id)), 1000);
   }, []);
 
+  // Is it MY turn?
+  const isMyTurn = state?.phase === 'player' && state.players[state.currentPlayerIndex]?.id === myPlayerId;
+  const currentPlayer = state ? getCurrentPlayer(state) : null;
+  const myPlayerState = state ? getPlayer(state, myPlayerId) : null;
+
+  // ============================================================
+  // CARD HANDLERS
+  // ============================================================
+
   const handleCardClick = useCallback((cardIndex) => {
-    if (!state || state.phase !== 'player') return;
-    const card = state.hand[cardIndex];
-    if (!card || card.cost > state.player.energy || card.cost < 0) return;
+    if (!state || !isMyTurn) return;
+    const card = currentPlayer?.hand[cardIndex];
+    if (!card || card.cost > currentPlayer.energy || card.cost < 0) return;
 
     if (card.needsTarget) {
-      // Select card, wait for target click
       setState(prev => ({ ...prev, selectedCardIndex: cardIndex }));
     } else {
-      // Play immediately (no target needed)
       const oldEnemies = state.enemies.map(e => ({ ...e }));
       let newState = playCard(state, cardIndex);
 
-      // Items consume the full turn — auto end turn after playing
+      // Item: auto-end turn
       const isItem = card.isItem || card.tags?.includes('item');
       if (isItem && newState.phase === 'player') {
-        // Small delay then end turn
         setTimeout(() => {
-          const oldHp = newState.player.hp;
-          const afterTurn = endPlayerTurn(newState);
-          if (afterTurn.player.hp < oldHp) {
-            addDamagePopup('player', oldHp - afterTurn.player.hp);
-          }
-          setState(afterTurn);
+          const after = endPlayerTurn(newState);
+          setState(after);
+          broadcastState(after);
         }, 600);
         setState(newState);
+        broadcastState(newState);
         return;
       }
 
-      // Trigger VFX for block/heal
-      if (card.effects.some(e => e.type === 'block')) {
-        if (onVFX) onVFX('shield', window.innerWidth * 0.25, window.innerHeight * 0.4, '#3b82f6');
-      }
-      if (card.effects.some(e => e.type === 'heal')) {
-        if (onVFX) onVFX('heal', window.innerWidth * 0.25, window.innerHeight * 0.4, '#22c55e');
-      }
-      // AoE damage
+      // VFX
+      if (card.effects.some(e => e.type === 'block')) { if (onVFX) onVFX('shield', window.innerWidth * 0.2, window.innerHeight * 0.4, '#3b82f6'); }
+      if (card.effects.some(e => e.type === 'heal')) { if (onVFX) onVFX('heal', window.innerWidth * 0.2, window.innerHeight * 0.4, '#22c55e'); }
       if (card.effects.some(e => e.target === 'all_enemies')) {
         newState.enemies.forEach((e, i) => {
-          if (oldEnemies[i] && e.hp < oldEnemies[i].hp) {
-            addDamagePopup(e.id, oldEnemies[i].hp - e.hp);
-            setShakingEnemyId(e.id);
-            setTimeout(() => setShakingEnemyId(null), 400);
-          }
+          if (oldEnemies[i] && e.hp < oldEnemies[i].hp) addDamagePopup(e.id, oldEnemies[i].hp - e.hp);
         });
         if (onVFX) onVFX('fire', window.innerWidth * 0.7, window.innerHeight * 0.4, '#ff6600');
       }
-
       if (onSFX) onSFX('magic');
       setState(newState);
+      broadcastState(newState);
     }
-  }, [state, onVFX, onSFX, addDamagePopup]);
+  }, [state, isMyTurn, currentPlayer, onVFX, onSFX, addDamagePopup, broadcastState]);
 
   const handleEnemyClick = useCallback((enemyIndex) => {
-    if (!state || state.phase !== 'player') return;
+    if (!state || !isMyTurn || state.selectedCardIndex === null) return;
+    const card = currentPlayer?.hand[state.selectedCardIndex];
+    if (!card) return;
 
-    if (state.selectedCardIndex !== null) {
-      const card = state.hand[state.selectedCardIndex];
-      if (!card) return;
-
-      // Check for dice roll
-      if (card.diceRoll && !state.diceRoll) {
-        const newState = playCard(state, state.selectedCardIndex, enemyIndex);
-        setState(newState); // This sets diceRoll active
-        return;
-      }
-
-      const oldEnemy = { ...state.enemies[enemyIndex] };
-      const newState = playCard(state, state.selectedCardIndex, enemyIndex);
-
-      // VFX + damage popup
-      const enemy = newState.enemies[enemyIndex];
-      if (enemy && oldEnemy.hp > enemy.hp) {
-        const dmg = oldEnemy.hp - enemy.hp;
-        addDamagePopup(enemy.id, dmg);
-        setShakingEnemyId(enemy.id);
-        setTimeout(() => setShakingEnemyId(null), 400);
-        if (onVFX) onVFX(card.type === 'attack' ? 'blood' : 'magic', window.innerWidth * 0.7, window.innerHeight * 0.4, '#ff0000');
-        if (onSFX) onSFX('damage');
-      }
-
-      setState(newState);
+    if (card.diceRoll && !state.diceRoll) {
+      const ns = playCard(state, state.selectedCardIndex, enemyIndex);
+      setState(ns);
+      return;
     }
-  }, [state, onVFX, onSFX, addDamagePopup]);
 
-  const handleDiceComplete = useCallback(() => {
-    if (!state?.diceRoll) return;
-    const { cardIndex, targetIndex } = state.diceRoll;
+    const oldEnemy = { ...state.enemies[enemyIndex] };
+    const newState = playCard(state, state.selectedCardIndex, enemyIndex);
+    const enemy = newState.enemies[enemyIndex];
 
-    const oldEnemy = { ...state.enemies[targetIndex] };
-    const newState = playCard(state, cardIndex, targetIndex);
-
-    const enemy = newState.enemies[targetIndex];
     if (enemy && oldEnemy.hp > enemy.hp) {
       addDamagePopup(enemy.id, oldEnemy.hp - enemy.hp);
       setShakingEnemyId(enemy.id);
       setTimeout(() => setShakingEnemyId(null), 400);
-      if (onVFX) onVFX('magic', window.innerWidth * 0.7, window.innerHeight * 0.4, '#d4af37');
+      if (onVFX) onVFX('blood', window.innerWidth * 0.7, window.innerHeight * 0.4, '#ff0000');
       if (onSFX) onSFX('damage');
     }
 
     setState(newState);
-  }, [state, onVFX, onSFX, addDamagePopup]);
+    broadcastState(newState);
+  }, [state, isMyTurn, currentPlayer, onVFX, onSFX, addDamagePopup, broadcastState]);
+
+  const handleDiceComplete = useCallback(() => {
+    if (!state?.diceRoll) return;
+    const { cardIndex, targetIndex } = state.diceRoll;
+    const oldEnemy = { ...state.enemies[targetIndex] };
+    const newState = playCard(state, cardIndex, targetIndex);
+    const enemy = newState.enemies[targetIndex];
+
+    if (enemy && oldEnemy.hp > enemy.hp) {
+      addDamagePopup(enemy.id, oldEnemy.hp - enemy.hp);
+      if (onVFX) onVFX('magic', window.innerWidth * 0.7, window.innerHeight * 0.4, '#d4af37');
+    }
+    setState(newState);
+    broadcastState(newState);
+  }, [state, onVFX, addDamagePopup, broadcastState]);
 
   const handleEndTurn = useCallback(() => {
-    if (!state || state.phase !== 'player') return;
+    if (!state || !isMyTurn) return;
     if (onSFX) onSFX('click');
-
-    const oldPlayerHp = state.player.hp;
+    const oldHps = state.players.map(p => p.hp);
     const newState = endPlayerTurn(state);
-
-    if (newState.player.hp < oldPlayerHp) {
-      addDamagePopup('player', oldPlayerHp - newState.player.hp);
-      if (onVFX) onVFX('blood', window.innerWidth * 0.25, window.innerHeight * 0.4, '#ff0000');
-    }
-
+    // Damage popups for players hit by enemies
+    newState.players.forEach((p, i) => {
+      if (p.hp < oldHps[i]) addDamagePopup(p.id, oldHps[i] - p.hp);
+    });
     setState(newState);
-  }, [state, onSFX, onVFX, addDamagePopup]);
+    broadcastState(newState);
+  }, [state, isMyTurn, onSFX, addDamagePopup, broadcastState]);
 
   const handleRest = useCallback(() => {
-    if (!state || state.phase !== 'player') return;
+    if (!state || !isMyTurn) return;
     if (onSFX) onSFX('magic');
-    if (onVFX) onVFX('heal', window.innerWidth * 0.25, window.innerHeight * 0.4, '#60a5fa');
-
-    const oldPlayerHp = state.player.hp;
     const newState = restTurn(state);
-
-    if (newState.player.hp < oldPlayerHp) {
-      addDamagePopup('player', oldPlayerHp - newState.player.hp);
-    }
-
     setState(newState);
-  }, [state, onSFX, onVFX, addDamagePopup]);
+    broadcastState(newState);
+  }, [state, isMyTurn, onSFX, broadcastState]);
 
   const handleRewardPick = useCallback((card) => {
-    if (!state) return;
-    // Add card to deck (will be in discard pile for next combat)
-    setState(prev => ({
-      ...prev,
-      discard: [...prev.discard, card],
-      phase: 'victory',
-    }));
-    // Trigger combat end
-    if (onRewards) onRewards(state.enemies);
-    if (onCombatEnd) onCombatEnd({ victory: true });
-  }, [state, onRewards, onCombatEnd]);
-
-  const handleSkipReward = useCallback(() => {
     if (onRewards) onRewards(state?.enemies || []);
     if (onCombatEnd) onCombatEnd({ victory: true });
   }, [state, onRewards, onCombatEnd]);
@@ -322,190 +355,140 @@ export const CardCombat = ({
 
   if (!state) return <div className="card-combat-viewport"><div style={{ color: '#888', textAlign: 'center', marginTop: '40vh' }}>Chargement du combat...</div></div>;
 
-  const { player, enemies, hand, deck, discard, turn, phase, log, selectedCardIndex, diceRoll, rewardCards } = state;
+  const { enemies, turn, phase, log, selectedCardIndex, diceRoll, rewardCards } = state;
+  const hand = isMyTurn && currentPlayer ? currentPlayer.hand : [];
+  const energy = myPlayerState?.energy || 0;
+  const maxEnergy = myPlayerState?.maxEnergy || 100;
+  const resourceName = myPlayerState?.resourceName || 'Mana';
 
   return (
     <div className="card-combat-viewport">
       {/* Top Bar */}
       <div className="cc-top-bar">
-        <div className="cc-turn-info">TOUR {turn}</div>
-        <div style={{ color: '#888', fontSize: '0.7rem' }}>
-          {phase === 'player' ? 'VOTRE TOUR' : phase === 'enemy_animating' ? 'TOUR ENNEMI...' : ''}
+        <div className="cc-turn-info">ROUND {turn}</div>
+        <div style={{ color: isMyTurn ? '#d4af37' : '#888', fontSize: '0.75rem', fontWeight: 700 }}>
+          {phase === 'player' ? (isMyTurn ? '★ VOTRE TOUR' : `Tour de ${currentPlayer?.name || '...'}`) : phase === 'enemy_animating' ? 'TOUR ENNEMI...' : ''}
         </div>
         <button className="cc-flee-btn" onClick={() => onCombatEnd?.({ victory: false, flight: true })}>FUIR</button>
       </div>
 
       {/* Battlefield */}
       <div className="cc-battlefield">
-        {/* Player */}
-        <div className="cc-player-area">
-          <div className="cc-player-portrait">
-            {myPlayer?.portrait_url
-              ? <img src={myPlayer.portrait_url} alt={myPlayer.name} />
-              : <div className="cc-player-token">⚔️</div>
-            }
-            {player.block > 0 && <div className="cc-block-badge">{player.block}</div>}
-            {damagePopups.filter(p => p.targetId === 'player').map(p => (
-              <div key={p.id} className={`cc-damage-popup ${p.type}`}>-{p.amount}</div>
-            ))}
-          </div>
-          <div className="cc-hp-bar">
-            <div className="cc-hp-fill player" style={{ width: `${(player.hp / player.maxHp) * 100}%` }} />
-            <div className="cc-hp-text">{player.hp} / {player.maxHp}</div>
-          </div>
-          <div className="cc-player-name">{myPlayer?.name?.toUpperCase() || 'JOUEUR'}</div>
-          {/* Status effects panel */}
-          <div className="cc-status-row">
-            {player.strength > 0 && <div className="cc-status-badge str">💪 {player.strength}</div>}
-            {player.dexterity > 0 && <div className="cc-status-badge dex">🏃 {player.dexterity}</div>}
-            {player.poison > 0 && <div className="cc-status-badge poison">☠️ {player.poison}</div>}
-            {player.weak > 0 && <div className="cc-status-badge weak">😵 {player.weak}</div>}
-            {player.vulnerable > 0 && <div className="cc-status-badge vuln">🎯 {player.vulnerable}</div>}
-          </div>
+        {/* All Players */}
+        <div className="cc-players-column">
+          {state.players.map((p, i) => (
+            <PlayerPortrait
+              key={p.id}
+              player={p}
+              isActive={state.currentPlayerIndex === i && phase === 'player'}
+              isSelf={p.id === myPlayerId}
+              damagePopups={damagePopups}
+            />
+          ))}
         </div>
 
         {/* Enemies */}
         <div className="cc-enemies-area">
           {enemies.map((enemy, i) => {
             const intention = getEnemyIntention(enemy);
+            const targetName = state.players.find(p => p.id === intention.targetPlayerId)?.name;
             return (
-              <div
-                key={enemy.id}
-                className={`cc-enemy ${enemy.dead ? 'dead' : ''} ${selectedCardIndex !== null && !enemy.dead ? 'targetable' : ''} ${shakingEnemyId === enemy.id ? 'shake' : ''}`}
-                onClick={() => handleEnemyClick(i)}
-              >
+              <div key={enemy.id} className={`cc-enemy ${enemy.dead ? 'dead' : ''} ${selectedCardIndex !== null && !enemy.dead ? 'targetable' : ''} ${shakingEnemyId === enemy.id ? 'shake' : ''}`}
+                onClick={() => handleEnemyClick(i)}>
                 <div className="cc-intention">
                   <span>{intention.icon}</span>
                   {intention.type === 'attack' && <span className="cc-intention-value">{intention.value}</span>}
-                  {intention.type === 'block' && <span style={{ color: '#3b82f6' }}>{intention.value}</span>}
+                  {targetName && <span style={{ fontSize: '0.55rem', color: '#aaa' }}>→{targetName}</span>}
                 </div>
                 <div className="cc-enemy-portrait">
-                  {enemy.portrait_url
-                    ? <img src={enemy.portrait_url} alt={enemy.name} onError={(e) => { e.target.style.display = 'none'; }} />
-                    : null
-                  }
+                  {enemy.portrait_url ? <img src={enemy.portrait_url} alt={enemy.name} onError={e => { e.target.style.display = 'none'; }} /> : null}
                   <div className="cc-enemy-token" style={{ display: enemy.portrait_url ? 'none' : 'flex' }}>👹</div>
                   {enemy.block > 0 && <div className="cc-block-badge">{enemy.block}</div>}
                   {damagePopups.filter(p => p.targetId === enemy.id).map(p => (
-                    <div key={p.id} className={`cc-damage-popup ${p.type}`}>-{p.amount}</div>
+                    <div key={p.id} className="cc-damage-popup">-{p.amount}</div>
                   ))}
                 </div>
                 <div className="cc-hp-bar" style={{ width: 100 }}>
-                  <div className="cc-hp-fill enemy" style={{ width: `${(enemy.hp / enemy.maxHp) * 100}%` }} />
-                  <div className="cc-hp-text">{enemy.hp} / {enemy.maxHp}</div>
+                  <div className="cc-hp-fill enemy" style={{ width: `${Math.max(0, (enemy.hp / enemy.maxHp) * 100)}%` }} />
+                  <div className="cc-hp-text">{enemy.hp}/{enemy.maxHp}</div>
                 </div>
                 <div className="cc-enemy-name">{enemy.name?.toUpperCase()}</div>
-                {enemy.poison > 0 && <div style={{ color: '#a855f7', fontSize: '0.55rem' }}>☠️ {enemy.poison}</div>}
-                {enemy.weak > 0 && <div style={{ color: '#fbbf24', fontSize: '0.55rem' }}>😵 {enemy.weak}</div>}
-                {enemy.vulnerable > 0 && <div style={{ color: '#f87171', fontSize: '0.55rem' }}>🎯 {enemy.vulnerable}</div>}
+                {enemy.poison > 0 && <div style={{ color: '#a855f7', fontSize: '0.5rem' }}>☠️{enemy.poison}</div>}
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* Combat Log */}
+      {/* Log */}
       <div className="cc-log">
-        {log.slice(-12).map((entry, i) => (
-          <div key={i} className="cc-log-entry">{entry}</div>
-        ))}
+        {log.slice(-15).map((entry, i) => <div key={i} className="cc-log-entry">{entry}</div>)}
       </div>
 
-      {/* Hand of Cards */}
+      {/* Hand */}
       <div className="cc-hand-area">
         <div className="cc-deck-pile">
-          <div className="cc-pile-count">{deck.length}</div>
+          <div className="cc-pile-count">{myPlayerState?.deck?.length || 0}</div>
           <div>PIOCHE</div>
         </div>
 
         <div className="cc-hand">
-          {hand.map((card, i) => (
-            <CardView
-              key={card.id + '_' + i}
-              card={card}
-              index={i}
-              selected={selectedCardIndex === i}
-              canPlay={phase === 'player' && card.cost >= 0 && card.cost <= player.energy}
-              onClick={handleCardClick}
-            />
-          ))}
+          {isMyTurn ? hand.map((card, i) => (
+            <CardView key={card.id + '_' + i} card={card} index={i} selected={selectedCardIndex === i}
+              canPlay={isMyTurn && card.cost >= 0 && card.cost <= energy}
+              onClick={handleCardClick} />
+          )) : (
+            <div style={{ color: '#666', fontSize: '0.8rem', padding: '40px', letterSpacing: 2 }}>
+              {phase === 'player' ? `En attente de ${currentPlayer?.name || '...'}...` : 'Tour ennemi...'}
+            </div>
+          )}
         </div>
 
         <div className="cc-discard-pile">
-          <div className="cc-pile-count">{discard.length}</div>
+          <div className="cc-pile-count">{myPlayerState?.discard?.length || 0}</div>
           <div>DÉFAUSSE</div>
         </div>
 
-        {/* Resource display */}
         <div className="cc-energy">
           <div className="cc-resource-bar-wrap">
-            <div className="cc-resource-label">{player.resourceName || 'Mana'}</div>
+            <div className="cc-resource-label">{resourceName}</div>
             <div className="cc-resource-bar">
-              <div className="cc-resource-fill" style={{ width: `${(player.energy / player.maxEnergy) * 100}%` }} />
-              <div className="cc-resource-text">{player.energy} / {player.maxEnergy}</div>
+              <div className="cc-resource-fill" style={{ width: `${(energy / maxEnergy) * 100}%` }} />
+              <div className="cc-resource-text">{energy}/{maxEnergy}</div>
             </div>
           </div>
         </div>
 
-        {/* Action buttons */}
         <div className="cc-action-buttons">
-          <button
-            className="cc-rest-btn"
-            onClick={handleRest}
-            disabled={phase !== 'player'}
-            title="Passe le tour, récupère 25% de ressource"
-          >
-            😴 REPOS
-          </button>
-          <button
-            className="cc-end-turn"
-            onClick={handleEndTurn}
-            disabled={phase !== 'player'}
-          >
-            ⚔️ FIN DE TOUR
-          </button>
+          <button className="cc-rest-btn" onClick={handleRest} disabled={!isMyTurn}>😴 REPOS</button>
+          <button className="cc-end-turn" onClick={handleEndTurn} disabled={!isMyTurn}>⚔️ FIN DE TOUR</button>
         </div>
       </div>
 
-      {/* Dice Roll Overlay */}
+      {/* Dice */}
       {diceRoll?.active && (
-        <div className="cc-dice-overlay">
-          <Dice2D type={diceRoll.die} value={diceRoll.result} onComplete={handleDiceComplete} />
-        </div>
+        <div className="cc-dice-overlay"><Dice2D type={diceRoll.die} value={diceRoll.result} onComplete={handleDiceComplete} /></div>
       )}
 
-      {/* Victory / Reward Screen */}
+      {/* Victory */}
       {phase === 'victory' && rewardCards.length > 0 && (
         <div className="cc-reward-overlay">
           <div className="cc-reward-title">VICTOIRE !</div>
-          <div style={{ color: '#aaa', marginBottom: 24, fontSize: '0.8rem' }}>Choisissez une carte à ajouter</div>
+          <div style={{ color: '#aaa', marginBottom: 24, fontSize: '0.8rem' }}>Choisissez une carte</div>
           <div className="cc-reward-cards">
             {rewardCards.map((card, i) => (
-              <CardView
-                key={card.id}
-                card={card}
-                index={i}
-                selected={false}
-                canPlay={true}
-                onClick={() => handleRewardPick(card)}
-              />
+              <CardView key={card.id} card={card} index={i} selected={false} canPlay={true} onClick={() => handleRewardPick(card)} />
             ))}
           </div>
-          <button className="cc-skip-btn" onClick={handleSkipReward}>PASSER</button>
+          <button className="cc-skip-btn" onClick={() => handleRewardPick(null)}>PASSER</button>
         </div>
       )}
 
-      {/* Defeat Screen */}
+      {/* Defeat */}
       {phase === 'defeat' && (
         <div className="cc-defeat-overlay">
           <div className="cc-defeat-title">DÉFAITE</div>
-          <button
-            className="cc-flee-btn"
-            style={{ marginTop: 24, fontSize: '1rem', padding: '12px 32px' }}
-            onClick={() => onGameOver?.()}
-          >
-            RECOMMENCER
-          </button>
+          <button className="cc-flee-btn" style={{ marginTop: 24, fontSize: '1rem', padding: '12px 32px' }} onClick={() => onGameOver?.()}>RECOMMENCER</button>
         </div>
       )}
     </div>

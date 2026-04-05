@@ -1,6 +1,7 @@
 /**
- * CARD COMBAT ENGINE — Slay the Spire style
+ * CARD COMBAT ENGINE — Slay the Spire style, MULTIPLAYER COOP
  * Pure functions, no React. Immutable state transitions.
+ * Supports 1-4 players taking turns sequentially against shared enemies.
  */
 
 import { Card, getStarterDeck, getRewardCards, inventoryToCards } from '../data/cards';
@@ -12,7 +13,8 @@ import { Card, getStarterDeck, getRewardCards, inventoryToCards } from '../data/
 export interface EnemyIntention {
   type: 'attack' | 'block' | 'buff' | 'debuff';
   value: number;
-  icon: string; // emoji
+  icon: string;
+  targetPlayerId?: string; // which player the enemy targets
 }
 
 export interface CombatEnemy {
@@ -22,42 +24,51 @@ export interface CombatEnemy {
   maxHp: number;
   block: number;
   poison: number;
-  weak: number;       // turns of weakness (deal 25% less damage)
-  vulnerable: number; // turns of vulnerability (take 50% more damage)
+  weak: number;
+  vulnerable: number;
   pattern: EnemyIntention[];
   patternIndex: number;
   portrait_url?: string;
   dead: boolean;
 }
 
-export interface PlayerState {
+export interface PlayerCombatState {
+  id: string;
+  name: string;
   hp: number;
   maxHp: number;
   block: number;
-  energy: number;       // current resource (Mana/Endurance/Arcane)
-  maxEnergy: number;    // max resource
-  resourceName: string; // "Mana", "Endurance", "Arcane", etc.
+  energy: number;
+  maxEnergy: number;
+  resourceName: string;
   strength: number;
   dexterity: number;
   poison: number;
   weak: number;
   vulnerable: number;
-}
-
-export interface CombatState {
-  player: PlayerState;
-  enemies: CombatEnemy[];
   deck: Card[];
   hand: Card[];
   discard: Card[];
   exhaust: Card[];
-  turn: number;
+  hasEndedTurn: boolean;
+  portrait_url?: string;
+  dead: boolean;
+}
+
+export interface CombatState {
+  players: PlayerCombatState[];
+  enemies: CombatEnemy[];
+  currentPlayerIndex: number; // which player is currently playing
+  turn: number; // round number
   phase: 'player' | 'enemy_animating' | 'reward' | 'victory' | 'defeat';
   log: string[];
   selectedCardIndex: number | null;
   rewardCards: Card[];
   diceRoll: { active: boolean; die: 'd20' | 'd100'; result: number; cardIndex: number; targetIndex: number } | null;
 }
+
+// Back-compat: expose PlayerState as alias
+export type PlayerState = PlayerCombatState;
 
 // ============================================================
 // HELPERS
@@ -73,109 +84,103 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 function rollDie(die: 'd20' | 'd100'): number {
-  return die === 'd20'
-    ? Math.floor(Math.random() * 20) + 1
-    : Math.floor(Math.random() * 100) + 1;
+  return die === 'd20' ? Math.floor(Math.random() * 20) + 1 : Math.floor(Math.random() * 100) + 1;
+}
+
+function parseDice(dice: string): number {
+  if (!dice) return 0;
+  const m = dice.match(/(\d+)d(\d+)(?:\+(\d+))?/);
+  if (!m) return 0;
+  return Math.floor(parseInt(m[1]) * (parseInt(m[2]) + 1) / 2) + (parseInt(m[3]) || 0);
+}
+
+// ============================================================
+// EQUIPMENT HELPERS
+// ============================================================
+
+function computeEquipmentBonus(player: any, stat: string): number {
+  return (player.inventory || []).reduce((sum: number, item: any) =>
+    sum + (item.equipped && item.stats ? (item.stats[stat] || 0) : 0), 0);
+}
+
+function computeEquipmentAC(player: any): number {
+  return (player.inventory || []).reduce((sum: number, item: any) =>
+    sum + (item.equipped && item.stats?.armor ? item.stats.armor : 0), 0);
 }
 
 // ============================================================
 // ENEMY PATTERNS
 // ============================================================
 
-function generatePattern(enemy: any): EnemyIntention[] {
+function generatePattern(enemy: any, playerIds: string[]): EnemyIntention[] {
   const atk = enemy.atk || enemy.stats?.str || 8;
   const level = enemy.level || enemy.cr || 1;
   const baseDmg = Math.max(4, Math.floor(atk * (1 + level * 0.1)));
 
-  // Simple alternating pattern — attack, attack, block, repeat
+  // Cycle through targets
   return [
-    { type: 'attack', value: baseDmg, icon: '⚔️' },
-    { type: 'attack', value: Math.floor(baseDmg * 0.8), icon: '⚔️' },
+    { type: 'attack', value: baseDmg, icon: '⚔️', targetPlayerId: playerIds[0] },
+    { type: 'attack', value: Math.floor(baseDmg * 0.8), icon: '⚔️', targetPlayerId: playerIds[Math.floor(Math.random() * playerIds.length)] },
     { type: 'block', value: Math.floor(baseDmg * 0.6), icon: '🛡️' },
-    { type: 'attack', value: Math.floor(baseDmg * 1.3), icon: '💥' },
+    { type: 'attack', value: Math.floor(baseDmg * 1.3), icon: '💥', targetPlayerId: playerIds[Math.floor(Math.random() * playerIds.length)] },
     { type: 'buff', value: 1, icon: '💪' },
   ];
 }
 
 // ============================================================
-// EQUIPMENT STAT HELPERS
+// INIT — MULTI-PLAYER
 // ============================================================
 
-function computeEquipmentBonus(player: any, stat: string): number {
-  const inventory = player.inventory || [];
-  let bonus = 0;
-  for (const item of inventory) {
-    if (item.equipped && item.stats) {
-      bonus += (item.stats[stat] || 0);
-    }
-  }
-  return bonus;
-}
+export function initCombat(rawPlayers: any[], rawEnemies: any[]): CombatState {
+  const playerIds = rawPlayers.map(p => p.user_id || p.id || `p_${Math.random()}`);
 
-function computeEquipmentAC(player: any): number {
-  const inventory = player.inventory || [];
-  let ac = 0;
-  for (const item of inventory) {
-    if (item.equipped && item.stats?.armor) {
-      ac += item.stats.armor;
-    }
-  }
-  return ac;
-}
+  const players: PlayerCombatState[] = rawPlayers.map((p, i) => {
+    const abilities = p.abilities || p.unlockables || p.spells || [];
+    const playerLevel = p.level || 1;
+    const classData = p.classData || null;
+    const playerSubclass = p.subclass || '';
+    const abilityCards = getStarterDeck(p.class || p.className || '', abilities, playerLevel, classData, playerSubclass);
+    const itemCards = inventoryToCards(p.inventory || []);
+    const fullDeck = shuffle([...abilityCards, ...itemCards]);
 
-// ============================================================
-// INIT
-// ============================================================
-
-export function initCombat(player: any, rawEnemies: any[]): CombatState {
-  const abilities = player.abilities || player.unlockables || player.spells || [];
-  const playerLevel = player.level || 1;
-  const playerClass = player.class || player.className || '';
-  const classData = player.classData || null;
-  const playerSubclass = player.subclass || '';
-  const abilityCards = getStarterDeck(playerClass, abilities, playerLevel, classData, playerSubclass);
-
-  // Add consumable items from inventory as playable cards
-  const itemCards = inventoryToCards(player.inventory || []);
-  const deck = shuffle([...abilityCards, ...itemCards]);
-
-  const hand = deck.slice(0, 5);
-  const remaining = deck.slice(5);
+    return {
+      id: playerIds[i],
+      name: p.name || `Joueur ${i + 1}`,
+      hp: p.hp || p.stats?.hp || 50,
+      maxHp: p.maxHp || p.max_hp || p.stats?.maxHp || 50,
+      block: computeEquipmentAC(p),
+      energy: p.resource || p.max_resource || 100,
+      maxEnergy: p.max_resource || 100,
+      resourceName: p.resource_name || 'Mana',
+      strength: computeEquipmentBonus(p, 'strength') + computeEquipmentBonus(p, 'attackBonus'),
+      dexterity: computeEquipmentBonus(p, 'dexterity'),
+      poison: 0, weak: 0, vulnerable: 0,
+      deck: fullDeck.slice(5),
+      hand: fullDeck.slice(0, 5),
+      discard: [],
+      exhaust: [],
+      hasEndedTurn: false,
+      portrait_url: p.portrait_url || p.portrait,
+      dead: false,
+    };
+  });
 
   const enemies: CombatEnemy[] = rawEnemies.map((e, i) => ({
     id: e.id || `enemy_${i}`,
     name: e.name || `Ennemi ${i + 1}`,
     hp: e.hp || e.maxHp || 20,
     maxHp: e.maxHp || e.hp || 20,
-    block: 0,
-    poison: 0,
-    weak: 0,
-    vulnerable: 0,
-    pattern: generatePattern(e),
+    block: 0, poison: 0, weak: 0, vulnerable: 0,
+    pattern: generatePattern(e, playerIds),
     patternIndex: 0,
     portrait_url: e.portrait_url || e.portrait,
     dead: false,
   }));
 
   return {
-    player: {
-      hp: player.hp || player.stats?.hp || 50,
-      maxHp: player.maxHp || player.max_hp || player.stats?.maxHp || 50,
-      block: computeEquipmentAC(player),
-      energy: player.resource || player.max_resource || 100,
-      maxEnergy: player.max_resource || 100,
-      resourceName: player.resource_name || 'Mana',
-      strength: computeEquipmentBonus(player, 'strength') + computeEquipmentBonus(player, 'attackBonus'),
-      dexterity: computeEquipmentBonus(player, 'dexterity'),
-      poison: 0,
-      weak: 0,
-      vulnerable: 0,
-    },
+    players,
     enemies,
-    deck: remaining,
-    hand,
-    discard: [],
-    exhaust: [],
+    currentPlayerIndex: 0,
     turn: 1,
     phase: 'player',
     log: ['⚔️ Le combat commence !'],
@@ -186,14 +191,13 @@ export function initCombat(player: any, rawEnemies: any[]): CombatState {
 }
 
 // ============================================================
-// DRAW CARDS
+// DRAW CARDS (for a specific player)
 // ============================================================
 
-export function drawCards(state: CombatState, count: number): CombatState {
-  let { deck, hand, discard } = state;
-  deck = [...deck];
-  hand = [...hand];
-  discard = [...discard];
+function drawCardsForPlayer(p: PlayerCombatState, count: number): PlayerCombatState {
+  let deck = [...p.deck];
+  let hand = [...p.hand];
+  let discard = [...p.discard];
 
   for (let i = 0; i < count; i++) {
     if (deck.length === 0) {
@@ -204,299 +208,257 @@ export function drawCards(state: CombatState, count: number): CombatState {
     hand.push(deck.shift()!);
   }
 
-  return { ...state, deck, hand, discard };
+  return { ...p, deck, hand, discard };
+}
+
+export function drawCards(state: CombatState, count: number): CombatState {
+  const idx = state.currentPlayerIndex;
+  const players = state.players.map((p, i) => i === idx ? drawCardsForPlayer(p, count) : p);
+  return { ...state, players };
 }
 
 // ============================================================
-// PLAY CARD
+// PLAY CARD (for current player)
 // ============================================================
 
 export function playCard(state: CombatState, cardIndex: number, targetIndex: number = 0): CombatState {
   if (state.phase !== 'player') return state;
+  const pIdx = state.currentPlayerIndex;
+  let player = { ...state.players[pIdx] };
 
-  const card = state.hand[cardIndex];
-  if (!card || card.cost < 0) return state; // curse = unplayable
-  if (card.cost > state.player.energy) return state;
+  const card = player.hand[cardIndex];
+  if (!card || card.cost < 0) return state;
+  if (card.cost > player.energy) return state;
 
-  // Check if dice roll is needed
+  // Dice roll check
   if (card.diceRoll && !state.diceRoll) {
     return {
       ...state,
-      diceRoll: {
-        active: true,
-        die: card.diceRoll.die,
-        result: rollDie(card.diceRoll.die),
-        cardIndex,
-        targetIndex,
-      },
+      diceRoll: { active: true, die: card.diceRoll.die, result: rollDie(card.diceRoll.die), cardIndex, targetIndex },
     };
   }
 
-  let newState = { ...state };
-  let player = { ...newState.player };
-  let enemies = newState.enemies.map(e => ({ ...e }));
-  const log = [...newState.log];
+  let enemies = state.enemies.map(e => ({ ...e }));
+  const log = [...state.log];
   let extraDraw = 0;
 
-  // Consume energy
   player.energy -= card.cost;
 
-  // Dice damage override
+  // Dice damage
   let diceDamage = 0;
   if (state.diceRoll && card.diceRoll) {
     const roll = state.diceRoll.result;
     if (card.id === 'roulette_arcane') {
-      // Special: d100 threshold
       diceDamage = roll < 50 ? 8 : 20;
-      if (roll >= 50) {
-        enemies[targetIndex].poison += 4;
-        log.push(`🎲 d100 = ${roll} → 20 dégâts + 4 Poison !`);
-      } else {
-        log.push(`🎲 d100 = ${roll} → 8 dégâts`);
-      }
+      if (roll >= 50) { enemies[targetIndex].poison += 4; log.push(`🎲 d100=${roll} → 20 dmg + 4 Poison !`); }
+      else log.push(`🎲 d100=${roll} → 8 dmg`);
     } else {
       diceDamage = roll * (card.diceRoll.multiplier || 1) + (card.diceRoll.bonus || 0);
-      log.push(`🎲 ${card.diceRoll.die} = ${roll} → ${diceDamage} dégâts`);
+      log.push(`🎲 ${card.diceRoll.die}=${roll} → ${diceDamage} dmg`);
     }
   }
 
   // Apply effects
   for (const effect of card.effects) {
     const target = effect.target || 'enemy';
-
     switch (effect.type) {
       case 'damage': {
         const baseDmg = diceDamage > 0 ? diceDamage : effect.value;
-        let dmg = baseDmg + player.strength; // strength includes equipment attackBonus
+        let dmg = baseDmg + player.strength;
         if (player.weak > 0) dmg = Math.floor(dmg * 0.75);
 
         if (target === 'all_enemies') {
-          enemies.forEach((e, i) => {
+          enemies.forEach(e => {
             if (!e.dead) {
-              let finalDmg = dmg;
-              if (e.vulnerable > 0) finalDmg = Math.floor(finalDmg * 1.5);
-              const blocked = Math.min(e.block, finalDmg);
-              e.block -= blocked;
-              e.hp -= (finalDmg - blocked);
+              let fd = dmg; if (e.vulnerable > 0) fd = Math.floor(fd * 1.5);
+              const bl = Math.min(e.block, fd); e.block -= bl; e.hp -= (fd - bl);
               if (e.hp <= 0) { e.hp = 0; e.dead = true; }
-              log.push(`💥 ${card.name} → ${e.name} : -${finalDmg - blocked} PV`);
+              log.push(`💥 ${player.name}: ${card.name} → ${e.name} -${fd - bl} PV`);
             }
           });
         } else {
           const e = enemies[targetIndex];
           if (e && !e.dead) {
-            let finalDmg = dmg;
-            if (e.vulnerable > 0) finalDmg = Math.floor(finalDmg * 1.5);
-            const blocked = Math.min(e.block, finalDmg);
-            e.block -= blocked;
-            e.hp -= (finalDmg - blocked);
+            let fd = dmg; if (e.vulnerable > 0) fd = Math.floor(fd * 1.5);
+            const bl = Math.min(e.block, fd); e.block -= bl; e.hp -= (fd - bl);
             if (e.hp <= 0) { e.hp = 0; e.dead = true; }
-            log.push(`⚔️ ${card.name} → ${e.name} : -${finalDmg - blocked} PV${blocked > 0 ? ` (${blocked} bloqué)` : ''}`);
+            log.push(`⚔️ ${player.name}: ${card.name} → ${e.name} -${fd - bl} PV`);
           }
         }
         break;
       }
-      case 'block': {
-        const blk = effect.value + player.dexterity;
-        player.block += blk;
-        log.push(`🛡️ ${card.name} : +${blk} Blocage`);
-        break;
-      }
-      case 'heal': {
-        const heal = Math.min(effect.value, player.maxHp - player.hp);
-        player.hp += heal;
-        log.push(`💖 ${card.name} : +${heal} PV`);
-        break;
-      }
-      case 'draw':
-        extraDraw += effect.value;
-        break;
-      case 'energy':
-        player.energy += effect.value;
-        break;
-      case 'poison':
-        if (target === 'enemy') {
-          enemies[targetIndex].poison += effect.value;
-          log.push(`☠️ ${card.name} : +${effect.value} Poison sur ${enemies[targetIndex].name}`);
-        }
-        break;
-      case 'weak':
-        if (target === 'enemy') {
-          enemies[targetIndex].weak += effect.value;
-          log.push(`😵 +${effect.value} Faiblesse sur ${enemies[targetIndex].name}`);
-        }
-        break;
-      case 'vulnerable':
-        if (target === 'enemy') {
-          enemies[targetIndex].vulnerable += effect.value;
-          log.push(`🎯 +${effect.value} Vulnérabilité sur ${enemies[targetIndex].name}`);
-        }
-        break;
-      case 'strength':
-        player.strength += effect.value;
-        log.push(`💪 +${effect.value} Force (permanent)`);
-        break;
-      case 'dexterity':
-        player.dexterity += effect.value;
-        log.push(`🏃 +${effect.value} Dextérité (permanent)`);
-        break;
+      case 'block': { const blk = effect.value + player.dexterity; player.block += blk; log.push(`🛡️ ${player.name}: +${blk} Block`); break; }
+      case 'heal': { const h = Math.min(effect.value, player.maxHp - player.hp); player.hp += h; log.push(`💖 ${player.name}: +${h} PV`); break; }
+      case 'draw': extraDraw += effect.value; break;
+      case 'energy': player.energy += effect.value; break;
+      case 'poison': if (enemies[targetIndex]) { enemies[targetIndex].poison += effect.value; log.push(`☠️ ${player.name}: +${effect.value} Poison → ${enemies[targetIndex].name}`); } break;
+      case 'weak': if (enemies[targetIndex]) { enemies[targetIndex].weak += effect.value; } break;
+      case 'vulnerable': if (enemies[targetIndex]) { enemies[targetIndex].vulnerable += effect.value; } break;
+      case 'strength': player.strength += effect.value; log.push(`💪 ${player.name}: +${effect.value} Force`); break;
+      case 'dexterity': player.dexterity += effect.value; log.push(`🏃 ${player.name}: +${effect.value} Dextérité`); break;
     }
   }
 
-  // Move card to discard or exhaust
-  const newHand = newState.hand.filter((_, i) => i !== cardIndex);
-  const newDiscard = card.exhaust ? [...newState.discard] : [...newState.discard, card];
-  const newExhaust = card.exhaust ? [...newState.exhaust, card] : [...newState.exhaust];
+  // Move card
+  const newHand = player.hand.filter((_, i) => i !== cardIndex);
+  player.hand = newHand;
+  if (card.exhaust) player.exhaust = [...player.exhaust, card];
+  else player.discard = [...player.discard, card];
 
-  newState = {
-    ...newState,
-    player,
-    enemies,
-    hand: newHand,
-    discard: newDiscard,
-    exhaust: newExhaust,
-    log,
-    selectedCardIndex: null,
-    diceRoll: null,
-  };
+  const players = state.players.map((p, i) => i === pIdx ? player : p);
+  let newState: CombatState = { ...state, players, enemies, log, selectedCardIndex: null, diceRoll: null };
 
-  // Draw extra cards
   if (extraDraw > 0) {
     newState = drawCards(newState, extraDraw);
-    log.push(`🃏 Pioche ${extraDraw} carte(s)`);
-  }
-
-  // Check enemy kills
-  if (card.id === 'execution' && enemies[targetIndex]?.dead) {
-    player.energy = Math.min(player.maxEnergy, player.energy + 1);
-    log.push(`⚡ Exécution réussie : +1 Énergie !`);
+    log.push(`🃏 ${player.name} pioche ${extraDraw} carte(s)`);
   }
 
   return checkCombatEnd(newState);
 }
 
 // ============================================================
-// END PLAYER TURN → ENEMY TURN
+// END PLAYER TURN → next player or enemy phase
 // ============================================================
 
-// REST: Skip turn, recover 25% max resource
 export function restTurn(state: CombatState): CombatState {
   if (state.phase !== 'player') return state;
-
-  const player = { ...state.player };
-  const recoveryAmount = Math.floor(player.maxEnergy * 0.25);
-  player.energy = Math.min(player.maxEnergy, player.energy + recoveryAmount);
-
-  const log = [...state.log, `😴 Repos — +${recoveryAmount} ${player.resourceName}`];
-
-  // Same as endPlayerTurn but with resource recovery
-  return endPlayerTurn({ ...state, player, log });
+  const pIdx = state.currentPlayerIndex;
+  let player = { ...state.players[pIdx] };
+  const recovery = Math.floor(player.maxEnergy * 0.25);
+  player.energy = Math.min(player.maxEnergy, player.energy + recovery);
+  const log = [...state.log, `😴 ${player.name} se repose — +${recovery} ${player.resourceName}`];
+  const players = state.players.map((p, i) => i === pIdx ? player : p);
+  return endPlayerTurn({ ...state, players, log });
 }
 
 export function endPlayerTurn(state: CombatState): CombatState {
   if (state.phase !== 'player') return state;
+  const pIdx = state.currentPlayerIndex;
 
-  let player = { ...state.player };
-  let enemies = state.enemies.map(e => ({ ...e }));
-  const log = [...state.log];
+  // Mark current player as ended, discard hand
+  let players = state.players.map((p, i) => {
+    if (i !== pIdx) return p;
+    return { ...p, hasEndedTurn: true, discard: [...p.discard, ...p.hand], hand: [], block: 0 };
+  });
 
-  // Discard remaining hand
-  const newDiscard = [...state.discard, ...state.hand];
+  // Apply poison/debuffs to current player
+  let cp = { ...players[pIdx] };
+  if (cp.poison > 0) { cp.hp -= cp.poison; cp.poison--; state.log.push(`☠️ ${cp.name}: -${cp.poison + 1} Poison`); }
+  if (cp.weak > 0) cp.weak--;
+  if (cp.vulnerable > 0) cp.vulnerable--;
+  if (cp.hp <= 0) { cp.hp = 0; cp.dead = true; }
+  players = players.map((p, i) => i === pIdx ? cp : p);
 
-  // Reset player block
-  player.block = 0;
-
-  // Apply poison to player
-  if (player.poison > 0) {
-    player.hp -= player.poison;
-    log.push(`☠️ Poison : -${player.poison} PV`);
-    player.poison--;
+  // Find next alive player who hasn't ended turn
+  let nextIdx = -1;
+  for (let i = 1; i <= players.length; i++) {
+    const candidate = (pIdx + i) % players.length;
+    if (!players[candidate].dead && !players[candidate].hasEndedTurn) {
+      nextIdx = candidate;
+      break;
+    }
   }
 
-  // Decrement player debuffs
-  if (player.weak > 0) player.weak--;
-  if (player.vulnerable > 0) player.vulnerable--;
+  if (nextIdx >= 0) {
+    // Next player's turn
+    return checkCombatEnd({
+      ...state, players, currentPlayerIndex: nextIdx, selectedCardIndex: null, diceRoll: null,
+      log: [...state.log, `--- Tour de ${players[nextIdx].name} ---`],
+    });
+  }
 
-  // Enemy turns
-  log.push(`--- Tour ennemi ---`);
+  // All players done → ENEMY PHASE
+  return executeEnemyPhase({ ...state, players, phase: 'enemy_animating' });
+}
+
+// ============================================================
+// ENEMY PHASE
+// ============================================================
+
+function executeEnemyPhase(state: CombatState): CombatState {
+  let players = state.players.map(p => ({ ...p }));
+  let enemies = state.enemies.map(e => ({ ...e }));
+  const log = [...state.log, `--- Tour des ennemis ---`];
+
   for (const enemy of enemies) {
     if (enemy.dead) continue;
 
-    // Apply poison to enemy
+    // Poison
     if (enemy.poison > 0) {
       enemy.hp -= enemy.poison;
-      log.push(`☠️ ${enemy.name} : -${enemy.poison} Poison`);
+      log.push(`☠️ ${enemy.name}: -${enemy.poison} Poison`);
       enemy.poison--;
       if (enemy.hp <= 0) { enemy.hp = 0; enemy.dead = true; continue; }
     }
 
-    // Reset enemy block
     enemy.block = 0;
 
     // Execute intention
     const intention = enemy.pattern[enemy.patternIndex % enemy.pattern.length];
+    const alivePlayers = players.filter(p => !p.dead);
+    if (alivePlayers.length === 0) break;
+
+    // Pick target: prefer the intended target, fallback to random alive
+    let targetPlayer = alivePlayers.find(p => p.id === intention.targetPlayerId) || alivePlayers[Math.floor(Math.random() * alivePlayers.length)];
+    const tIdx = players.findIndex(p => p.id === targetPlayer.id);
+
     switch (intention.type) {
       case 'attack': {
         let dmg = intention.value;
         if (enemy.weak > 0) dmg = Math.floor(dmg * 0.75);
-        if (player.vulnerable > 0) dmg = Math.floor(dmg * 1.5);
-
-        const blocked = Math.min(player.block, dmg);
-        player.block -= blocked;
-        player.hp -= (dmg - blocked);
-        log.push(`${intention.icon} ${enemy.name} attaque : ${dmg} dégâts${blocked > 0 ? ` (${blocked} bloqué)` : ''}`);
+        if (players[tIdx].vulnerable > 0) dmg = Math.floor(dmg * 1.5);
+        const bl = Math.min(players[tIdx].block, dmg);
+        players[tIdx].block -= bl;
+        players[tIdx].hp -= (dmg - bl);
+        if (players[tIdx].hp <= 0) { players[tIdx].hp = 0; players[tIdx].dead = true; }
+        log.push(`${intention.icon} ${enemy.name} → ${players[tIdx].name}: ${dmg} dmg${bl > 0 ? ` (${bl} bloqué)` : ''}`);
         break;
       }
       case 'block':
         enemy.block += intention.value;
-        log.push(`🛡️ ${enemy.name} se défend : +${intention.value} Blocage`);
+        log.push(`🛡️ ${enemy.name}: +${intention.value} Block`);
         break;
       case 'buff':
-        // Simple: next attack deals more
         log.push(`💪 ${enemy.name} se renforce !`);
         break;
       case 'debuff':
-        player.weak += 1;
-        log.push(`😵 ${enemy.name} vous affaiblit !`);
+        if (tIdx >= 0) { players[tIdx].weak += 1; log.push(`😵 ${enemy.name} affaiblit ${players[tIdx].name} !`); }
         break;
     }
 
-    // Decrement debuffs
     if (enemy.weak > 0) enemy.weak--;
     if (enemy.vulnerable > 0) enemy.vulnerable--;
-
-    // Advance pattern
     enemy.patternIndex++;
   }
 
-  // New turn: draw 5, reset energy
-  let newState: CombatState = {
+  // New round: reset all players, draw 5 for each
+  const newTurn = state.turn + 1;
+  players = players.map(p => {
+    if (p.dead) return p;
+    let updated = { ...p, hasEndedTurn: false, block: 0 };
+    updated = drawCardsForPlayer(updated, 5);
+    return updated;
+  });
+
+  // Find first alive player
+  const firstAlive = players.findIndex(p => !p.dead);
+
+  return checkCombatEnd({
     ...state,
-    player,
+    players,
     enemies,
-    hand: [],
-    discard: newDiscard,
-    turn: state.turn + 1,
-    phase: 'enemy_animating', // briefly show enemy actions
-    log,
+    turn: newTurn,
+    currentPlayerIndex: firstAlive >= 0 ? firstAlive : 0,
+    phase: 'enemy_animating', // UI will transition to 'player' after animation
+    log: [...log, `--- Round ${newTurn} ---`],
     selectedCardIndex: null,
     diceRoll: null,
-  };
-
-  return checkCombatEnd(newState);
+    rewardCards: state.rewardCards,
+  });
 }
 
 export function startNewPlayerTurn(state: CombatState): CombatState {
-  let newState = {
-    ...state,
-    player: { ...state.player, block: 0 }, // Block resets, resource does NOT auto-refill
-    phase: 'player' as const,
-    log: [...state.log, `--- Tour ${state.turn} ---`],
-  };
-
-  // Draw 5 cards
-  newState = drawCards(newState, 5);
-  return newState;
+  return { ...state, phase: 'player' };
 }
 
 // ============================================================
@@ -504,27 +466,31 @@ export function startNewPlayerTurn(state: CombatState): CombatState {
 // ============================================================
 
 function checkCombatEnd(state: CombatState): CombatState {
-  if (state.player.hp <= 0) {
+  const allPlayersDead = state.players.every(p => p.dead);
+  if (allPlayersDead) {
     return { ...state, phase: 'defeat', log: [...state.log, '💀 Défaite...'] };
   }
-
-  const allDead = state.enemies.every(e => e.dead);
-  if (allDead) {
-    return {
-      ...state,
-      phase: 'victory',
-      rewardCards: getRewardCards(3),
-      log: [...state.log, '🏆 Victoire !'],
-    };
+  const allEnemiesDead = state.enemies.every(e => e.dead);
+  if (allEnemiesDead) {
+    return { ...state, phase: 'victory', rewardCards: getRewardCards(3), log: [...state.log, '🏆 Victoire !'] };
   }
-
   return state;
 }
 
 // ============================================================
-// GET NEXT ENEMY INTENTION (for display)
+// HELPERS
 // ============================================================
 
 export function getEnemyIntention(enemy: CombatEnemy): EnemyIntention {
   return enemy.pattern[enemy.patternIndex % enemy.pattern.length];
+}
+
+export function getCurrentPlayer(state: CombatState): PlayerCombatState | null {
+  return state.players[state.currentPlayerIndex] || null;
+}
+
+// Back-compat: single player accessor
+export function getPlayer(state: CombatState, userId?: string): PlayerCombatState | null {
+  if (userId) return state.players.find(p => p.id === userId) || null;
+  return state.players[0] || null;
 }

@@ -2408,6 +2408,9 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                         currentUserId={character?.user_id || profile?.id}
                         initialEnemies={combatEnemies}
                         classesData={CLASSES}
+                        sessionId={session?.id}
+                        syncedCombatState={syncedCombatState}
+                        onUpdateCombatState={setSyncedCombatState}
                         onHPChange={handleHPChange}
                         onSFX={triggerSFX}
                         onVFX={triggerVFX}

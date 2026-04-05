@@ -54,12 +54,33 @@
   position: relative;
 }
 
+/* === PLAYERS COLUMN (multi) === */
+.cc-players-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+}
+
 /* === PLAYER AREA === */
 .cc-player-area {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  transition: all 0.3s ease;
+  padding: 8px;
+  border-radius: 12px;
+}
+
+.cc-player-area.active-player {
+  background: rgba(212, 175, 55, 0.08);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.15);
+}
+
+.cc-player-area.dead {
+  opacity: 0.35;
+  filter: grayscale(0.8);
 }
 
 .cc-player-portrait {
