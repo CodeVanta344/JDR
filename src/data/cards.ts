@@ -430,17 +430,19 @@ export function abilityToCard(ability: any, index: number = 0): Card {
   };
 }
 
-export function getStarterDeck(playerClass: string, playerAbilities?: any[]): Card[] {
+export function getStarterDeck(playerClass: string, playerAbilities?: any[], playerLevel: number = 1): Card[] {
   const frappes = Array(5).fill(null).map((_, i) => ({ ...CARD_FRAPPE, id: `frappe_${i}` }));
   const defenses = Array(3).fill(null).map((_, i) => ({ ...CARD_DEFENSE, id: `defense_${i}` }));
 
-  // Convert player abilities to cards (max 4 ability cards in starter deck)
+  // Convert player abilities to cards — ONLY abilities unlocked at current level
   const abilityCards: Card[] = [];
   if (playerAbilities && playerAbilities.length > 0) {
-    const nonPassive = playerAbilities.filter(a =>
-      a.actionType !== 'Passif' && a.type !== 'Passif' && (a.dice || a.heal || a.statusEffect || a.damage_dice)
+    const unlocked = playerAbilities.filter(a =>
+      (a.level || 1) <= playerLevel &&
+      a.actionType !== 'Passif' && a.type !== 'Passif' &&
+      (a.dice || a.heal || a.statusEffect || a.damage_dice)
     );
-    nonPassive.slice(0, 4).forEach((ab, i) => {
+    unlocked.forEach((ab, i) => {
       abilityCards.push(abilityToCard(ab, i));
     });
   }

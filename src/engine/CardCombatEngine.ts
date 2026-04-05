@@ -102,7 +102,8 @@ function generatePattern(enemy: any): EnemyIntention[] {
 
 export function initCombat(player: any, rawEnemies: any[]): CombatState {
   const abilities = player.abilities || player.unlockables || player.spells || [];
-  const deck = shuffle(getStarterDeck(player.class || player.className || '', abilities));
+  const playerLevel = player.level || 1;
+  const deck = shuffle(getStarterDeck(player.class || player.className || '', abilities, playerLevel));
 
   const hand = deck.slice(0, 5);
   const remaining = deck.slice(5);
