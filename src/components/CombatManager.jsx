@@ -202,6 +202,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
     const [, setShakingId] = useState(null);
     const [damagePopups, setDamagePopups] = useState([]);
     const [rollOverlay, setRollOverlay] = useState(null);
+    const rollActiveRef = useRef(false);
     const [cooldowns, setCooldowns] = useState({});
     const [logs, setLogs] = useState([]);
     const [decor, setDecor] = useState([]);
@@ -1276,8 +1277,8 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         }
         lastAttackRef.current = { timestamp: now, actorId: freshActor.id, targetId: target.id };
 
-        // PROTECTION CRITIQUE : Empêcher un nouvel overlay si un est déjà actif (pour éviter les doubles animations)
-        if (rollOverlay) {
+        // PROTECTION CRITIQUE : Empêcher un nouvel overlay si un est déjà actif
+        if (rollActiveRef.current) {
             debugLog('[executeAttack] Blocked: dice roll already in progress');
             return;
         }
@@ -1342,8 +1343,9 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
         const rollData = rollAttackD100(freshActor, target, actorLevel, tacticalBonus, action);
         const { roll, modifier, success, isCritical } = rollData;
 
-        // Afficher overlay avec résultat — guard against double-set
-        if (rollOverlay) return; // Already showing a roll
+        // Afficher overlay avec résultat
+        if (rollActiveRef.current) return;
+        rollActiveRef.current = true;
         const rollId = crypto.randomUUID();
         setRollOverlay({
             rollId,
@@ -1615,6 +1617,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
 
         addTimeout(setTimeout(() => {
             setRollOverlay(null);
+            rollActiveRef.current = false;
             if (success && target) {
                 // ========== COMBAT ENGINE - CALCUL DÉGÂTS (Next-Gen) ==========
                 const damageData = calculateDamageD100(liveActor, action, rollData.isCritical);
