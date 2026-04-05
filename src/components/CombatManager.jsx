@@ -2716,8 +2716,8 @@ const RollOverlay = ({ rollId, roll, modifier, tacticalReason, threshold, succes
                             return (
                                 <div key={u.id} style={{ position: 'absolute', left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)' }}>
                                     <UnitCard unit={u} style={{
-                                        width: `${100 / arenaConfig.blocksX}%`,
-                                        height: `${100 / arenaConfig.blocksY}%`,
+                                        width: `${Math.max(3.5, 100 / arenaConfig.blocksX * 2)}%`,
+                                        height: `${Math.max(3.5, 100 / arenaConfig.blocksY * 2)}%`,
                                         transition: isAnimating ? 'none' : 'left 0.8s cubic-bezier(0.4, 0, 0.2, 1), top 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
                                     }} />
                                     {/* Stun indicator */}
