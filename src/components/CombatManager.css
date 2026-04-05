@@ -386,6 +386,25 @@
     color: #ff8b8b;
 }
 
+/* === FACTION BORDERS — player blue, enemy red === */
+.unit-portrait-wrapper.player-unit::before {
+    background: linear-gradient(145deg, #3a5a8c 0%, #5a8abf 25%, #8bb8ff 50%, #5a8abf 75%, #3a5a8c 100%);
+}
+
+.unit-portrait-wrapper.enemy-unit::before {
+    background: linear-gradient(145deg, #8c3a3a 0%, #bf5a5a 25%, #ff8b8b 50%, #bf5a5a 75%, #8c3a3a 100%);
+}
+
+.active-turn .unit-portrait-wrapper.player-unit::before {
+    background: linear-gradient(145deg, #5a8abf 0%, #8bb8ff 25%, #c8dfff 50%, #8bb8ff 75%, #5a8abf 100%);
+    box-shadow: 0 0 25px rgba(100, 160, 255, 0.8);
+}
+
+.active-turn .unit-portrait-wrapper.enemy-unit::before {
+    background: linear-gradient(145deg, #bf5a5a 0%, #ff8b8b 25%, #ffcccc 50%, #ff8b8b 75%, #bf5a5a 100%);
+    box-shadow: 0 0 25px rgba(255, 100, 100, 0.8);
+}
+
 /* Premium double-ring selection indicator */
 .unit-selection-ring {
     position: absolute;
@@ -497,21 +516,22 @@
 /* --- HUD ELEMENTS - CLEAN MODERN --- */
 .unit-name-plate {
     position: absolute;
-    bottom: -22px;
+    bottom: -24px;
     left: 50%;
     transform: translateX(-50%);
-    background: linear-gradient(135deg, rgba(20, 20, 25, 0.9), rgba(10, 10, 15, 0.95));
+    background: linear-gradient(135deg, rgba(10, 10, 15, 0.95), rgba(5, 5, 10, 0.98));
     backdrop-filter: blur(10px);
-    padding: 4px 12px;
+    padding: 4px 14px;
     border-radius: 16px;
-    border: 1px solid rgba(212, 175, 55, 0.3);
+    border: 1.5px solid rgba(212, 175, 55, 0.4);
     color: #fff;
-    font-size: 0.6rem;
+    font-size: 0.65rem;
     font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
+    letter-spacing: 1px;
     white-space: nowrap;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 10px rgba(212, 175, 55, 0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7), 0 0 10px rgba(212, 175, 55, 0.15);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
 }
 
 .stat-orb {

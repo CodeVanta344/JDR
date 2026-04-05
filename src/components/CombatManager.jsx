@@ -2330,7 +2330,7 @@ export const CombatManager = ({ arenaConfig = { blocksX: 40, blocksY: 40, shapeT
                     <div className="facing-arrow" />
                 </div>
 
-                <div className="unit-portrait-wrapper">
+                <div className={`unit-portrait-wrapper ${unit.isEnemy ? 'enemy-unit' : 'player-unit'}`}>
                     {unit.portrait_url ? (
                         <img src={unit.portrait_url}
                             className="unit-portrait"
