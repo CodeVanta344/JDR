@@ -2570,7 +2570,7 @@ Consigne: décris le résultat concret dans la fiction et propose la suite immé
                     <NPCDialogueModal
                         npc={activeNPC}
                         messages={npcConversations[activeNPC.name] || []}
-                        onSendMessage={handleNPCMessage}
+                        onSendMessage={(msg) => handleNPCMessage(msg, activeNPC.name)}
                         onClose={() => setActiveNPC(null)}
                         loading={loading}
                     />
