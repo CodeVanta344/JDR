@@ -13,9 +13,9 @@ export const CARD_FRAPPE= {
   id: 'frappe',
   name: 'Frappe',
   type: 'attack',
-  cost: 0, // Basic attack = free
+  cost: 5,
   rarity: 'starter',
-  description: 'Inflige 6 dégâts.',
+  description: 'Inflige 6 dégâts. Coûte 5.',
   effects: [{ type: 'damage', value: 6, target: 'enemy' }],
   needsTarget: true,
   tags: ['basic'],
@@ -25,9 +25,9 @@ export const CARD_DEFENSE= {
   id: 'defense',
   name: 'Défense',
   type: 'skill',
-  cost: 0, // Basic defense = free
+  cost: 5,
   rarity: 'starter',
-  description: 'Gagne 5 de Blocage.',
+  description: 'Gagne 5 de Blocage. Coûte 5.',
   effects: [{ type: 'block', value: 5, target: 'self' }],
   tags: ['basic'],
 };
@@ -91,9 +91,9 @@ export const CARD_ESQUIVE= {
   id: 'esquive',
   name: 'Esquive',
   type: 'skill',
-  cost: 0,
+  cost: 5,
   rarity: 'starter',
-  description: 'Gagne 4 Blocage. Pioche 1 carte.',
+  description: 'Gagne 4 Blocage. Pioche 1 carte. Coûte 5.',
   effects: [
     { type: 'block', value: 4, target: 'self' },
     { type: 'draw', value: 1 },
@@ -146,9 +146,9 @@ export const CARD_CONCENTRATION= {
   id: 'concentration',
   name: 'Concentration',
   type: 'skill',
-  cost: 0,
+  cost: 8,
   rarity: 'common',
-  description: 'Pioche 2 cartes.',
+  description: 'Pioche 2 cartes. Coûte 8.',
   effects: [{ type: 'draw', value: 2 }],
 };
 
@@ -336,8 +336,8 @@ export function abilityToCard(ability, index = 0) {
   else if (hasDamage && !isHeal) type = 'attack';
   else if (isHeal) type = 'skill';
 
-  // Use the actual resource cost from the ability (Mana/Endurance/Arcane)
-  let cost = ability.cost || 0;
+  // Use the actual resource cost — minimum 5 (nothing is free)
+  let cost = Math.max(5, ability.cost || 5);
 
   // Determine rarity from level
   let rarity = 'common';

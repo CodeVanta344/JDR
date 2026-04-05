@@ -590,16 +590,14 @@ const CardCombat = ({
       )}
 
       {/* Victory */}
-      {phase === 'victory' && rewardCards.length > 0 && (
+      {phase === 'victory' && (
         <div className="cc-reward-overlay">
           <div className="cc-reward-title">VICTOIRE !</div>
-          <div style={{ color: '#aaa', marginBottom: 24, fontSize: '0.8rem' }}>Choisissez une carte</div>
-          <div className="cc-reward-cards">
-            {rewardCards.map((card, i) => (
-              <CardView key={card.id} card={card} index={i} selected={false} canPlay={true} onClick={() => handleRewardPick(card)} />
-            ))}
-          </div>
-          <button className="cc-skip-btn" onClick={() => handleRewardPick(null)}>PASSER</button>
+          <div style={{ color: '#aaa', marginBottom: 24, fontSize: '0.8rem' }}>Vous avez vaincu vos ennemis !</div>
+          <button className="cc-end-turn" style={{ marginTop: 16 }} onClick={() => {
+            if (onRewards) onRewards(state?.enemies || []);
+            if (onCombatEnd) onCombatEnd({ victory: true });
+          }}>CONTINUER</button>
         </div>
       )}
 
