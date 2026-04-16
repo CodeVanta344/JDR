@@ -8,7 +8,10 @@
   position: fixed;
   inset: 0;
   z-index: 2000;
-  background: radial-gradient(ellipse at center, #1a1525 0%, #0a0810 100%);
+  background:
+    radial-gradient(ellipse at 30% 40%, rgba(40, 20, 60, 0.6) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 30%, rgba(20, 40, 60, 0.4) 0%, transparent 50%),
+    linear-gradient(180deg, #0c0a15 0%, #1a1028 40%, #0d0b18 100%);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -44,14 +47,16 @@
 }
 .cc-flee-btn:hover { background: rgba(255,68,68,0.3); }
 
-/* === BATTLEFIELD === */
+/* === BATTLEFIELD — StS2 style: big characters, floor line === */
 .cc-battlefield {
   flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: space-around;
-  padding: 0 5%;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 8% 20px;
   position: relative;
+  /* Floor line effect */
+  background: linear-gradient(to top, rgba(40,30,50,0.4) 0%, transparent 15%);
 }
 
 /* === PLAYERS COLUMN (multi) === */
@@ -84,13 +89,14 @@
 }
 
 .cc-player-portrait {
-  width: 120px;
-  height: 120px;
+  width: 140px;
+  height: 140px;
   border-radius: 50%;
   border: 4px solid #3a5a8c;
-  box-shadow: 0 0 20px rgba(60,120,220,0.3);
+  box-shadow: 0 0 25px rgba(60,120,220,0.4), 0 8px 20px rgba(0,0,0,0.5);
   overflow: hidden;
   position: relative;
+  background: #0a0a1a;
 }
 
 .cc-player-portrait img {
@@ -128,13 +134,14 @@
 }
 
 .cc-hp-bar {
-  width: 130px;
-  height: 14px;
+  width: 150px;
+  height: 18px;
   background: #1a1015;
-  border-radius: 7px;
-  border: 1px solid #333;
+  border-radius: 9px;
+  border: 2px solid #333;
   overflow: hidden;
   position: relative;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
 }
 
 .cc-hp-fill {
@@ -195,13 +202,14 @@
 }
 
 .cc-enemy-portrait {
-  width: 100px;
-  height: 100px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
-  border: 3px solid #8c3a3a;
-  box-shadow: 0 0 15px rgba(220,60,60,0.3);
+  border: 4px solid #8c3a3a;
+  box-shadow: 0 0 20px rgba(220,60,60,0.4), 0 8px 20px rgba(0,0,0,0.5);
   overflow: hidden;
   position: relative;
+  background: #1a0a0a;
 }
 
 .cc-enemy-portrait img { width: 100%; height: 100%; object-fit: cover; }
@@ -218,20 +226,21 @@
 
 .cc-intention {
   position: absolute;
-  top: -30px;
+  top: -40px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(10,10,15,0.9);
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 8px;
-  padding: 4px 10px;
+  background: rgba(0,0,0,0.85);
+  border: 2px solid rgba(255,100,100,0.4);
+  border-radius: 12px;
+  padding: 6px 14px;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   white-space: nowrap;
-  font-size: 0.75rem;
-  color: #ccc;
+  font-size: 0.9rem;
+  color: #eee;
   animation: ccIntentionPulse 2s ease-in-out infinite;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
 
 @keyframes ccIntentionPulse {
@@ -273,12 +282,12 @@
 /* === HAND OF CARDS === */
 .cc-hand-area {
   position: relative;
-  padding: 16px 0 8px;
+  padding: 10px 0 0;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  min-height: 200px;
-  background: linear-gradient(to top, rgba(0,0,0,0.5), transparent);
+  min-height: 220px;
+  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 40%, transparent 100%);
 }
 
 .cc-deck-pile, .cc-discard-pile {
@@ -319,35 +328,35 @@
   perspective: 800px;
 }
 
-/* === SINGLE CARD — PREMIUM DESIGN === */
+/* === SINGLE CARD — StS2 STYLE === */
 .cc-card {
-  width: 130px;
-  height: 185px;
+  width: 140px;
+  height: 200px;
   border-radius: 12px;
   position: relative;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   transform-origin: bottom center;
   flex-shrink: 0;
-  margin: 0 -10px;
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+  margin: 0 -6px;
+  filter: drop-shadow(0 6px 12px rgba(0,0,0,0.5));
 }
 
 .cc-card:hover {
-  transform: translateY(-50px) scale(1.25);
+  transform: translateY(-60px) scale(1.35);
   z-index: 100 !important;
-  filter: drop-shadow(0 20px 40px rgba(0,0,0,0.7));
+  filter: drop-shadow(0 25px 50px rgba(0,0,0,0.8));
 }
 
 .cc-card.selected {
-  transform: translateY(-55px) scale(1.3);
+  transform: translateY(-65px) scale(1.4);
   z-index: 101 !important;
-  filter: drop-shadow(0 0 20px var(--accent, #d4af37));
+  filter: drop-shadow(0 0 25px var(--accent, #d4af37));
 }
 
 .cc-card.unplayable {
-  opacity: 0.4;
-  filter: grayscale(0.7) brightness(0.7);
+  opacity: 0.35;
+  filter: grayscale(0.8) brightness(0.6);
   cursor: not-allowed;
 }
 
@@ -526,11 +535,11 @@
 .cc-status-badge.weak { background: rgba(251,191,36,0.2); border-color: #fbbf24; color: #fcd34d; }
 .cc-status-badge.vuln { background: rgba(248,113,113,0.2); border-color: #f87171; color: #fca5a5; }
 
-/* === RESOURCE BAR === */
+/* === RESOURCE BAR — StS2 energy orb style === */
 .cc-energy {
   position: absolute;
-  bottom: 20px;
-  left: 24px;
+  bottom: 16px;
+  left: 120px;
   display: flex;
   align-items: center;
 }
@@ -628,17 +637,20 @@
 /* === COMBAT LOG === */
 .cc-log {
   position: absolute;
-  top: 60px;
-  left: 16px;
-  width: 280px;
-  max-height: 200px;
+  top: 50px;
+  left: 12px;
+  width: 260px;
+  max-height: 160px;
   overflow-y: auto;
-  padding: 8px;
-  background: rgba(0,0,0,0.4);
+  padding: 6px 8px;
+  background: rgba(0,0,0,0.3);
   border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.03);
   z-index: 5;
+  opacity: 0.7;
+  transition: opacity 0.3s;
 }
+.cc-log:hover { opacity: 1; }
 
 .cc-log::-webkit-scrollbar { width: 4px; }
 .cc-log::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
